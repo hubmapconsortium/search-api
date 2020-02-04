@@ -1,0 +1,35 @@
+version: "3.7"
+
+# Will use the hostname when talking between services on the same network
+services:
+  
+  hubmap-elasticsearch:
+    image: elasticsearch:7.5.2
+    hostname: hubmap-elasticsearch
+    container_name: hubmap-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms7g -Xmx7g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - gateway_hubmap
+    ports:
+      - "9200:9200"
+
+  hubmap-kibana:
+    image: docker.elastic.co/kibana/kibana:6.3.2
+    hostname: hubmap-kibana
+    container_name: hubmap-kibana
+    ports:
+      - "5601:5601"
+
+networks:
+  # This is the network created by gateway to enable communicaton between multiple docker-compose projects
+  gateway_hubmap:
+    external: true
