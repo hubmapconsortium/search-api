@@ -22,7 +22,7 @@ services:
       - "9200:9200"
 
   hubmap-kibana:
-    image: docker.elastic.co/kibana/kibana:6.3.2
+    image: docker.elastic.co/kibana/kibana:7.5.2
     hostname: hubmap-kibana
     container_name: hubmap-kibana
     environment:
