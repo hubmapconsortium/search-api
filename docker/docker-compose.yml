@@ -9,7 +9,6 @@ services:
     container_name: hubmap-elasticsearch
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms7g -Xmx7g"
     ulimits:
       memlock:
         soft: -1
@@ -26,8 +25,14 @@ services:
     image: docker.elastic.co/kibana/kibana:6.3.2
     hostname: hubmap-kibana
     container_name: hubmap-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://hubmap-elasticsearch:9200
+    networks:
+      - gateway_hubmap
     ports:
       - "5601:5601"
+    depends_on:
+      - hubmap-elasticsearch
 
 networks:
   # This is the network created by gateway to enable communicaton between multiple docker-compose projects
