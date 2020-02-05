@@ -8,18 +8,17 @@ services:
     hostname: hubmap-elasticsearch
     container_name: hubmap-elasticsearch
     environment:
+      # Start a single-node Elasticsearch cluster for development to bypass the bootstrap checks
       - discovery.type=single-node
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
     networks:
       - gateway_hubmap
     ports:
       - "9200:9200"
+    volumes:
+      # Mount data for data persistence cross container restarts
+      - "./data:/usr/share/elasticsearch/data"
+      # Mount logging files from container to host
+      - "./logs:/usr/share/elasticsearch/logs"
 
   hubmap-kibana:
     image: docker.elastic.co/kibana/kibana:7.5.2
