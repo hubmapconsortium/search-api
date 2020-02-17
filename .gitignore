@@ -1,3 +1,8 @@
 # Docker stuff
 docker/data
 docker/logs
+
+elasticsearch/.vscode/
+elasticsearch/instance
+elasticsearch/conf.py
+__pycache__/
