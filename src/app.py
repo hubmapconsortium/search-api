@@ -1,6 +1,8 @@
 import sys
 import os
 from flask import Flask
+from src.elasticsearch.main import Main
+import threading
 
 app = Flask(__name__)
 
@@ -11,6 +13,12 @@ app.config.from_pyfile('app.cfg')
 def hello_world():
     return 'Hello, World!'
 
-@app.route('/translate/<uuid>', methods=['GET'])
-def translate():
+@app.route('/reindex/<uuid>', methods=['PUT'])
+def reindex(uuid):
+    try:
+        main = Main('entities')
+        t1 = threading.Thread(target=main.reindex, args=uuid)
+        t1.start()
+    except Exception as e:
+        print(e)
     return 'OK'

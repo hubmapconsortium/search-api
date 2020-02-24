@@ -1,6 +1,6 @@
 from neo4j import TransactionError, CypherError
-from db_reader import DBReader
-from es_writer import ESWriter
+from src.libs.db_reader import DBReader
+from src.libs.es_writer import ESWriter
 import sys, json, time, concurrent.futures
 import conf
 
@@ -35,6 +35,19 @@ class Main:
             self.eswriter.wrtire_document(self.index_name, doc)
         return f"Done. {donor.get('hubmap_identifier', 'hubmap_identifier missing')}"
 
+    def reindex(self, uuid):
+        entity = self.dbreader.get_entity(uuid)
+        acenstors = self.dbreader.get_all_ancenstors(uuid)
+        descendants = self.dbreader.get_all_descendants(uuid)
+        nodes = [entity] + acenstors + descendants
+
+        for node in nodes:
+            print(node.get('hubmap_identifier', None))
+            doc = self.generate_doc(node)
+            self.eswriter.wrtire_document(self.index_name, doc)
+        
+        return f"Done."
+
     def generate_doc(self, entity):
         try:
             ancenstors = self.dbreader.get_all_ancenstors(entity.get('uuid', None))
@@ -44,9 +57,23 @@ class Main:
             entity['descentdant_ids'] = [d.get('uuid', 'missing') for d in descentdants]
             entity['ancenstors'] = ancenstors
             entity['descentdants'] = descentdants
+            entity['access_group'] = self.access_group(entity)
         
             return json.dumps(entity)
 
+        except Exception as e:
+            print(e)
+    
+    def access_group(self, entity):
+        try:
+            if entity['entitytype'] == 'Dataset':
+                if entity['status'] == 'Published' and entity['phi'] == 'no':
+                    return 'Open'
+                else:
+                    return 'Readonly'
+            else:
+                return 'Readonly'
+        
         except Exception as e:
             print(e)
 

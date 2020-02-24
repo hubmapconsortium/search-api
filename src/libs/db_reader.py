@@ -39,14 +39,17 @@ class DBReader:
         '''
         get entity by uuid
         '''
-        entity = None
+        entity = {}
         with self.driver.session() as session:
             try:
-                stmt = f'MATCH (n:Entity) WHERE n.uuid=\'{uuid}\' RETURN n'
+                stmt = f'MATCH (e:Entity), (e)-[r1:HAS_METADATA]->(m) WHERE e.uuid=\'{uuid}\' RETURN e, m'
                 
                 count = 0
-                for record in session.run(stmt):
-                    entity = record.get('n', None)
+                for record in session.run(stmt, uuid=uuid):
+                    entity.update(record.get('e')._properties)
+                    for key, value in record.get('m')._properties.items():
+                        entity.setdefault(key, value)
+
                     count += 1
                 
                 if count > 1:
