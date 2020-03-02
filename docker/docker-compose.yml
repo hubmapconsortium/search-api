@@ -14,7 +14,7 @@ services:
       - HOST_UID=1000
     volumes:
       # Mount the app config to container in order to keep it outside of the image
-      - "../src/instance:/usr/src/app/src/instance"
+      - "../src:/usr/src/app/src"
       # Mount the logging to container
       - "../log:/usr/src/app/log"
     networks:

@@ -4,6 +4,8 @@ docker/search-api/src
 
 src/instance/app.cfg
 
+log/*.log
+
 elasticsearch/.vscode/
 elasticsearch/instance
 elasticsearch/conf.py
