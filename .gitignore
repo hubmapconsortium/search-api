@@ -1,6 +1,6 @@
 # Docker stuff
 docker/data
-docker/logs
+docker/search-api/src
 
 src/instance/app.cfg
 
