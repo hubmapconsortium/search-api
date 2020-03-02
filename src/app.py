@@ -1,7 +1,7 @@
 import sys
 import os
 from flask import Flask
-from src.elasticsearch.main import Main
+from elasticsearch.main import Main
 import threading
 import requests
 
