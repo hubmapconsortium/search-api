@@ -6,7 +6,8 @@ src/instance/app.cfg
 
 log/*.log
 
-elasticsearch/.vscode/
-elasticsearch/instance
-elasticsearch/conf.py
+src/elasticsearch/.vscode/
+src/elasticsearch/instance
+src/elasticsearch/conf.py
+
 __pycache__/
