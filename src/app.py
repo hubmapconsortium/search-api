@@ -1,7 +1,8 @@
 import sys
 import os
-from flask import Flask
 from elasticsearch.main import Main
+from flask import Flask, jsonify, abort, request, make_response, json, Response
+#from src.elasticsearch.main import Main
 import threading
 import requests
 
@@ -14,6 +15,9 @@ from pprint import pprint
 # Specify the absolute path of the instance folder and use the config file relative to the instance path
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
+
+# Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
+app.config['ELASTICSEARCH_HOST'] = app.config['ELASTICSEARCH_HOST'].strip('/')
 
 ####################################################################################################
 ## Default route
@@ -32,6 +36,9 @@ def index():
 # Since not all clients support GET with body, POST is used here
 @app.route('/search', methods = ['POST'])
 def search():
+    access_group_open = "Open"
+    access_group_readonly = "Readonly"
+
     if not request.is_json:
         abort(400, jsonify( { 'error': 'This search request requries a json body' } ))
 
@@ -39,17 +46,22 @@ def search():
 
     user_info = get_user_info_for_access_check(request, True)
 
+    pprint("======user_info======")
+    pprint(user_info)
+
     access_group = None
 
     # If returns error response, invalid header or token
     # Modify the search json and only search on the documents with `access_group` attribute's value as "Open"
     if isinstance(user_info, Response):
-        access_group = "Open"
-        
-    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
-    # Key 'hmgroupids' presents only when group_required is True
-    if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
-        access_group = "Readonly"
+        access_group = access_group_open
+    else:
+        # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
+        # Key 'hmgroupids' presents only when group_required is True
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+            access_group = access_group_readonly
+        else:
+            access_group = access_group_open
 
     access_group_query = {
       "match_phrase": {
@@ -89,7 +101,7 @@ def reindex(uuid):
 # HuBMAP commons AuthHelper handles "MAuthorization" or "Authorization"
 def init_auth_helper():
     if AuthHelper.isInitialized() == False:
-        auth_helper = AuthHelper.create(app.config['GLOBUS_APP_ID'], app.config['GLOBUS_APP_SECRET'])
+        auth_helper = AuthHelper.create(app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'])
     else:
         auth_helper = AuthHelper.instance()
     
