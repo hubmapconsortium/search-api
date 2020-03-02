@@ -1,0 +1,8 @@
+ELASTICSEARCH_HOST = "http://hubmap-elasticsearch:9200"
+
+# Globus app client ID and secret
+GLOBUS_APP_ID = ''
+GLOBUS_APP_SECRET = ''
+
+# Globus Hubmap-Read group UUID
+GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'

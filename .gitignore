@@ -1,6 +1,8 @@
 # Docker stuff
 docker/data
-docker/logs
+docker/search-api/src
+
+src/instance/app.cfg
 
 src/elasticsearch/.vscode/
 src/elasticsearch/instance
