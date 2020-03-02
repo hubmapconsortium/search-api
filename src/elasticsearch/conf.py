@@ -7,3 +7,5 @@ NEO4J_PASSWORD = 'td8@-F7yC8cjrJ?3'
 # AWS ElasticSearch Endpoint
 ELASTICSEARCH_CONF = {'ELASTICSEARCH_DOMAIN_ENDPOINT': 'https://search-hubmap-entity-es-dev-zhdpuhhf2vjpvqfq7zmn2gdgqq.us-east-1.es.amazonaws.com'}
 ELASTICSEARCH_DOMAIN_ENDPOINT = 'https://search-hubmap-entity-es-dev-zhdpuhhf2vjpvqfq7zmn2gdgqq.us-east-1.es.amazonaws.com'
+
+ENTITY_WEBSERVICE_URL = 'http://localhost:5000/'

@@ -30,6 +30,8 @@ pipenv install
 
 # install hubmapconsortium/commons individually because it sits on github. #egg speficy the package name in your local development enviorment.
 pipenv install -e git+git://github.com/hubmapconsortium/commons.git#egg=hubmap-commons
+# if you are developing commons lib also, install it from  your local directory.
+pipenv install -e ../commons (relative path to your commons)
 ```
 
 4. Run the script
