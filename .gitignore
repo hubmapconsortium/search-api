@@ -2,6 +2,8 @@
 docker/data
 docker/logs
 
+src/instance/app.cfg
+
 elasticsearch/.vscode/
 elasticsearch/instance
 elasticsearch/conf.py
