@@ -1,8 +1,8 @@
 from neo4j import TransactionError, CypherError
-from src.libs.db_reader import DBReader
-from src.libs.es_writer import ESWriter
+from libs.db_reader import DBReader
+from libs.es_writer import ESWriter
 import sys, json, time, concurrent.futures
-import conf
+import elasticsearch.conf
 
 class Main:
 
