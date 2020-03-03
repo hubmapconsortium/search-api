@@ -31,11 +31,6 @@ services:
       - gateway_hubmap
     ports:
       - "9200:9200"
-    volumes:
-      # Mount data for data persistence cross container restarts
-      - "./data:/usr/share/elasticsearch/data"
-      # Mount logging files from container to host
-      - "./logs:/usr/share/elasticsearch/logs"
 
   hubmap-kibana:
     image: docker.elastic.co/kibana/kibana:7.5.2
