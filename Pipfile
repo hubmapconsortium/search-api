@@ -10,7 +10,7 @@ neo4j = "*"
 request = "*"
 flask = "*"
 hubmap-commons = {editable = true,git = "git://github.com/hubmapconsortium/commons.git"}
-search-api = {path = "."}
+search-api = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"
