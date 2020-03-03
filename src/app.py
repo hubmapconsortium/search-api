@@ -36,11 +36,12 @@ def index():
 @app.route('/search', methods = ['POST'])
 def search():
     access_group_open = "Open"
-    access_group_readonly = "Readonly"
 
+    # Always expect a json body
     if not request.is_json:
         abort(400, jsonify( { 'error': 'This search request requries a json body' } ))
 
+    # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
     user_info = get_user_info_for_access_check(request, True)
@@ -48,37 +49,40 @@ def search():
     pprint("======user_info======")
     pprint(user_info)
 
-    access_group = None
+    modify_query = False
 
     # If returns error response, invalid header or token
     # Modify the search json and only search on the documents with `access_group` attribute's value as "Open"
     if isinstance(user_info, Response):
-        access_group = access_group_open
+        modify_query = True
+    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
+    # Key 'hmgroupids' presents only when group_required is True
     else:
-        # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
-        # Key 'hmgroupids' presents only when group_required is True
-        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
-            access_group = access_group_readonly
-        else:
-            access_group = access_group_open
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
+            modify_query = True
 
-    access_group_query = {
-      "match_phrase": {
-        "access_group": {
-          "query": access_group
+    # Modify the orgional json data by adding the query if modify_query == True
+    # Otherwise pass through the query as is
+    if modify_query:
+        # dict object
+        query_to_add = {
+            "match_phrase": {
+                "access_group": {
+                    "query": access_group_open
+                }
+            }
         }
-      }
-    }
 
-    # Modify the incoming json data by adding the query
-    final_json_data = json_data["query"]["bool"]["must"].append(access_group_query)
-    
+        query_must_list = json_data["query"]["bool"]["must"]
+        query_must_list.append(query_to_add)
+
     # Pass the search json to elasticsearch
     target_url = app.config['ELASTICSEARCH_HOST'] + '/' + '_search'
-    response = requests.post(url = target_url, data = final_json_data)
+    # Make a request with json data (adds content-type: application/json automatically)
+    resp = requests.post(url = target_url, json = json_data)
 
-    # return the elasticsearch resulting json
-    return response.json()
+    # return the elasticsearch resulting json data as json string
+    return jsonify(resp.json())
 
 
 @app.route('/reindex/<uuid>', methods=['PUT'])
