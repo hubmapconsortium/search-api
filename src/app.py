@@ -89,7 +89,7 @@ def search():
 def reindex(uuid):
     try:
         main = Main('entities')
-        t1 = threading.Thread(target=main.reindex, args=uuid)
+        t1 = threading.Thread(target=main.reindex, args=[uuid])
         t1.start()
     except Exception as e:
         print(e)

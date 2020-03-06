@@ -39,7 +39,7 @@ class App:
 
     def reindex(self, uuid):
         entity = self.dbreader.get_entity(uuid)
-        acenstors = self.dbreader.get_all_ancenstors(uuid)
+        acenstors = self.dbreader.get_all_ancestors(uuid)
         descendants = self.dbreader.get_all_descendants(uuid)
         nodes = [entity] + acenstors + descendants
 
@@ -52,13 +52,13 @@ class App:
 
     def generate_doc(self, entity):
         try:
-            ancenstors = requests.get(conf.ENTITY_WEBSERVICE_URL + "/entities/ancenstors/" + entity.get('uuid', None)).json()
-            descentdants = requests.get(conf.ENTITY_WEBSERVICE_URL + "/entities/descendants/" + entity.get('uuid', None)).json()
+            ancestors = requests.get(conf.ENTITY_WEBSERVICE_URL + "/entities/ancestors/" + entity.get('uuid', None)).json()
+            descendants = requests.get(conf.ENTITY_WEBSERVICE_URL + "/entities/descendants/" + entity.get('uuid', None)).json()
             # build json
-            entity['ancenstor_ids'] = [a.get('uuid', 'missing') for a in ancenstors]
-            entity['descentdant_ids'] = [d.get('uuid', 'missing') for d in descentdants]
-            entity['ancenstors'] = ancenstors
-            entity['descentdants'] = descentdants
+            entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
+            entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
+            entity['ancestors'] = ancestors
+            entity['descendants'] = descendants
             entity['access_group'] = self.access_group(entity)
         
             return json.dumps(entity)
@@ -85,8 +85,8 @@ if __name__ == '__main__':
     except IndexError as ie:
         index_name = input("Please enter index name (Warning: All documents in this index will be clear out first): ")
     
-    start = time.process_time()
+    start = time.time()
     app = App(index_name)
     app.main()
-    end = time.process_time()
+    end = time.time()
     print(end - start)

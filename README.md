@@ -1,6 +1,5 @@
 # HuBMAP Search API
 
-
 ## Overview of tools
 
 - [Docker Engine](https://docs.docker.com/install/)
@@ -12,8 +11,13 @@ Note: Docker Compose requires Docker to be installed and running first.
 
 To start up the Elasticsearch and Kibana containers:
 
-````
+```
 cd docker
 sudo docker-compose up -d
-````
+```
 
+To solve the import error
+
+```
+pip install -e .
+```

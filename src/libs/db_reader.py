@@ -3,6 +3,7 @@ from neo4j import TransactionError, CypherError
 from hubmap_commons.hubmap_const import HubmapConst
 from pprint import pprint
 import json
+import ast
 
 class DBReader:
 
@@ -63,9 +64,9 @@ class DBReader:
                 pprint(be)
                 raise be
 
-    def get_all_ancenstors(self, uuid):
+    def get_all_ancestors(self, uuid):
         '''
-        Get all ancenstors by uuid
+        Get all ancestors by uuid
         '''
         with self.driver.session() as session:
             ancestor_ids = []
@@ -108,7 +109,12 @@ class DBReader:
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        descendant.setdefault(key, value)
+                        if key == 'ingest_metadata':
+                            ingest_metadata = ast.literal_eval(value)
+                            for key, value in ingest_metadata.items():
+                                descendant.setdefault(key, value)
+                        else:
+                            descendant.setdefault(key, value)
                     descendants.append(descendant)
 
                 return descendants               
