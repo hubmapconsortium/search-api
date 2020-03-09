@@ -9,5 +9,6 @@ log/*.log
 src/elasticsearch/.vscode/
 src/elasticsearch/instance
 src/elasticsearch/conf.py
+src/elasticsearch/conf.ini
 
 __pycache__/

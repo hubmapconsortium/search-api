@@ -93,7 +93,7 @@ def reindex(uuid):
         t1.start()
     except Exception as e:
         print(e)
-    return 'OK'
+    return 'OK', 202
 
 
 ####################################################################################################

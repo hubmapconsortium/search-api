@@ -2,13 +2,16 @@ from neo4j import TransactionError, CypherError
 from src.libs.db_reader import DBReader
 from src.libs.es_writer import ESWriter
 import sys, json, time, concurrent.futures
-import src.elasticsearch.conf as conf
+import configparser
+import ast
+
+config = configparser.ConfigParser()
+config.read('conf.ini')
 
 class Main:
-
     def __init__(self, index_name):
-        self.dbreader = DBReader(conf.NEO4J_CONF)
-        self.eswriter = ESWriter(conf.ELASTICSEARCH_CONF)
+        self.dbreader = DBReader(ast.literal_eval(config['NEO4J']['NEO4J_CONF']))
+        self.eswriter = ESWriter(ast.literal_eval(config['ELASTICSEARCH']['ELASTICSEARCH_CONF']))
         self.index_name = index_name
 
     def main(self):
