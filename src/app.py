@@ -1,6 +1,6 @@
 import sys
 import os
-from elasticsearch.main import Main
+from elasticsearch.indexer import Indexer
 from flask import Flask, jsonify, abort, request, make_response, json, Response
 import threading
 import requests
@@ -88,8 +88,8 @@ def search():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        main = Main('entities')
-        t1 = threading.Thread(target=main.reindex, args=[uuid])
+        indexer = Indexer('entities', app.config['NEO4J_CONF'], app.config['ELASTICSEARCH_CONF'], app.config['ENTITY_WEBSERVICE_URL'])
+        t1 = threading.Thread(target=indexer.reindex, args=[uuid])
         t1.start()
     except Exception as e:
         print(e)
