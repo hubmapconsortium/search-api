@@ -1,4 +1,4 @@
-from src.libs.neo4j_connection import Neo4jConnection
+from libs.neo4j_connection import Neo4jConnection
 from neo4j import TransactionError, CypherError
 from hubmap_commons.hubmap_const import HubmapConst
 from pprint import pprint
