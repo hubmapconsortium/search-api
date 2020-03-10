@@ -3,6 +3,11 @@ from src.libs.db_reader import DBReader
 from src.libs.es_writer import ESWriter
 import sys, json, time, concurrent.futures
 import requests
+import configparser
+import ast
+
+config = configparser.ConfigParser()
+config.read('conf.ini')
 
 class Indexer:
 
@@ -38,9 +43,9 @@ class Indexer:
         return f"Done. {donor.get('hubmap_identifier', 'hubmap_identifier missing')}"
 
     def reindex(self, uuid):
-        entity = self.dbreader.get_entity(uuid)
-        acenstors = self.dbreader.get_all_ancestors(uuid)
-        descendants = self.dbreader.get_all_descendants(uuid)
+        entity = requests.get(self.entity_webservice_url + "/entities/" + donor.get('uuid', None)).json()
+        ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + entity.get('uuid', None)).json()
+        descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + entity.get('uuid', None)).json()
         nodes = [entity] + acenstors + descendants
 
         for node in nodes:
@@ -86,7 +91,7 @@ if __name__ == '__main__':
         index_name = input("Please enter index name (Warning: All documents in this index will be clear out first): ")
     
     start = time.time()
-    app = App(index_name)
-    app.main()
+    indexer = Indexer(index_name, ast.literal_eval(config['ELASTICSEARCH']['ELASTICSEARCH_CONF']), ast.literal_eval(config['ELASTICSEARCH']['ELASTICSEARCH_CONF']), config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    indexer.main()
     end = time.time()
     print(end - start)

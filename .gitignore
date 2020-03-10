@@ -10,5 +10,6 @@ src/elasticsearch/.vscode/
 src/elasticsearch/instance
 src/elasticsearch/conf.py
 src/elasticsearch/conf.ini
+src/search_api.egg-info
 
 __pycache__/
