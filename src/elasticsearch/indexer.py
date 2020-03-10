@@ -1,5 +1,4 @@
 from neo4j import TransactionError, CypherError
-from libs.db_reader import DBReader
 from libs.es_writer import ESWriter
 import sys, json, time, concurrent.futures
 import requests
@@ -11,9 +10,8 @@ config.read('conf.ini')
 
 class Indexer:
 
-    def __init__(self, index_name, neo4j_conf, elasticsearch_conf, entity_webservice_url):
-        self.dbreader = DBReader(neo4j_conf)
-        self.eswriter = ESWriter(elasticsearch_conf)
+    def __init__(self, index_name, elasticsearch_url, entity_webservice_url):
+        self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
         self.index_name = index_name
 
@@ -30,8 +28,6 @@ class Indexer:
         
         except Exception as e:
             print(e)
-        else:
-            self.dbreader.driver.close()
 
     def index_tree(self, donor):
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()

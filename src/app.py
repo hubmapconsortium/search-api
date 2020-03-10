@@ -16,7 +16,7 @@ app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname
 app.config.from_pyfile('app.cfg')
 
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
-app.config['ELASTICSEARCH_HOST'] = app.config['ELASTICSEARCH_HOST'].strip('/')
+app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 
 ####################################################################################################
 ## Default route
@@ -77,7 +77,7 @@ def search():
         query_must_list.append(query_to_add)
 
     # Pass the search json to elasticsearch
-    target_url = app.config['ELASTICSEARCH_HOST'] + '/' + '_search'
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search'
     # Make a request with json data (adds content-type: application/json automatically)
     resp = requests.post(url = target_url, json = json_data)
 

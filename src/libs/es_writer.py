@@ -3,12 +3,12 @@ import json
 import os
 
 class ESWriter:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, elasticsearch_url):
+        self.elasticsearch_url = elasticsearch_url
 
     def wrtire_document(self, index_name, doc):
         try:
-            rspn = requests.post(f"{self.config['ELASTICSEARCH_DOMAIN_ENDPOINT']}/{index_name}/_doc",
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc",
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
@@ -18,10 +18,10 @@ class ESWriter:
         except Exception as e:
             print(str(e))
 
-        # rspn = requests.get(f"{self.config['ELASTICSEARCH_DOMAIN_ENDPOINT']}/{index_name}/_search?pretty")
+        # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
 
     def remove_index(self, index_name):
-        rspn = requests.delete(f"{self.config['ELASTICSEARCH_DOMAIN_ENDPOINT']}/{index_name}")
+        rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
 
 # if __name__ == '__main__':
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
