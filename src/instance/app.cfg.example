@@ -1,4 +1,5 @@
 ELASTICSEARCH_HOST = "http://hubmap-elasticsearch:9200"
+
 # Neo4j connection
 NEO4J_CONF = {'NEO4J_SERVER':'bolt://hubmap-neo4j:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': '123'}
 NEO4J_SERVER = 'bolt://hubmap-neo4j:7687'
@@ -12,8 +13,8 @@ ELASTICSEARCH_DOMAIN_ENDPOINT = 'https://search-hubmap-entity-es-dev-zhdpuhhf2vj
 ENTITY_WEBSERVICE_URL = 'http://localhost:5003/'
 
 # Globus app client ID and secret
-GLOBUS_APP_ID = ''
-GLOBUS_APP_SECRET = ''
+APP_CLIENT_ID = ''
+APP_CLIENT_SECRET = ''
 
 # Globus Hubmap-Read group UUID
 GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
