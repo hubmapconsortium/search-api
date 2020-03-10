@@ -1,7 +1,12 @@
 # AWS ElasticSearch Endpoint
+# Don't use the trailing slash /
+# On localhost docker deployment use: ELASTICSEARCH_HOST = "http://hubmap-elasticsearch:9200"
 ELASTICSEARCH_URL = 'https://search-hubmap-entity-es-dev-zhdpuhhf2vjpvqfq7zmn2gdgqq.us-east-1.es.amazonaws.com'
 
-ENTITY_WEBSERVICE_URL = 'http://localhost:5003/'
+# Entity-API service
+# Default value works with docker deployment on localhost, dev, test, and prod
+# Don't use the trailing slash /
+ENTITY_WEBSERVICE_URL = 'http://entity-api:5000'
 
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
