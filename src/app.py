@@ -74,6 +74,13 @@ def search():
         }
 
         query_must_list = json_data["query"]["bool"]["must"]
+
+        # If by any chance the request json contains match phrase with `access_group`,
+        # we'll remove it first before adding the modified query
+        for obj in query_must_list:
+        	if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
+        		query_must_list.remove(obj)
+
         query_must_list.append(query_to_add)
 
     # Pass the search json to elasticsearch
