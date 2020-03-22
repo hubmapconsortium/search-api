@@ -18,6 +18,11 @@ app.config.from_pyfile('app.cfg')
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 
+# Error handler for 400 Bad request with custom error message
+@app.errorhandler(400)
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
+
 ####################################################################################################
 ## Default route
 ####################################################################################################
@@ -39,7 +44,7 @@ def search():
 
     # Always expect a json body
     if not request.is_json:
-        abort(400, jsonify( { 'error': 'This search request requries a json body' } ))
+        abort(400, description = 'This search request requries a json body')
 
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
@@ -64,9 +69,16 @@ def search():
     pprint("======modify_query======")
     pprint(modify_query)
     
-    # Modify the orgional json data by adding the query if modify_query == True
+    # Modify the orgional json data if invalid authorization token provided 
+    # or the user doesn't belong to the HuBMAP read group
     # Otherwise pass through the query as is
     if modify_query:
+        # If by any chance the request json contains match phrase with `access_group`,
+        # we'll response 400 error for security concern
+        for obj in query_must_list:
+        	if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
+        		abort(400, description = 'You can not use "access_group" in request JSON.')
+
         # dict object
         query_to_add = {
             "match_phrase": {
@@ -77,16 +89,12 @@ def search():
         }
 
         query_must_list = json_data["query"]["bool"]["must"]
-
-        # If by any chance the request json contains match phrase with `access_group`,
-        # we'll remove it first before adding the modified query
-        for obj in query_must_list:
-        	if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
-        		query_must_list.remove(obj)
-
+        # Modify the request json when "access_group" is not used in the request
         query_must_list.append(query_to_add)
 
-    # Pass the search json to elasticsearch
+    # When the user belongs to the HuBMAP read group,
+    # simply pass the search json to elasticsearch
+    # The request json may contain "access_group" in this case
     target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search'
     # Make a request with json data (adds content-type: application/json automatically)
     resp = requests.post(url = target_url, json = json_data)
