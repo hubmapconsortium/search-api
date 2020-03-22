@@ -79,7 +79,7 @@ def search():
         # we'll response 400 error for security concern
         for obj in query_must_list:
         	if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
-        		abort(400, description = 'You can not use "access_group" in request JSON.')
+        		abort(400, description = "You can not use 'access_group' in request JSON")
 
         # dict object
         query_to_add = {
