@@ -73,6 +73,8 @@ def search():
     # or the user doesn't belong to the HuBMAP read group
     # Otherwise pass through the query as is
     if modify_query:
+        query_must_list = json_data["query"]["bool"]["must"]
+        
         # If by any chance the request json contains match phrase with `access_group`,
         # we'll response 400 error for security concern
         for obj in query_must_list:
@@ -88,7 +90,6 @@ def search():
             }
         }
 
-        query_must_list = json_data["query"]["bool"]["must"]
         # Modify the request json when "access_group" is not used in the request
         query_must_list.append(query_to_add)
 
