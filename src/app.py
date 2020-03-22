@@ -61,6 +61,9 @@ def search():
         if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
             modify_query = True
 
+    pprint("======modify_query======")
+    pprint(modify_query)
+    
     # Modify the orgional json data by adding the query if modify_query == True
     # Otherwise pass through the query as is
     if modify_query:
