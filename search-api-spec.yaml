@@ -1,0 +1,30 @@
+openapi: 3.0.0
+info:
+  description: |
+    This is the HuBMAP Search API specification
+    [https://hubmapconsortium.org](https://hubmapconsortium.org)
+  version: "0.1.0"
+  title: HuBMAP Search API
+  termsOfService: "https://hubmapconsortium.org"
+  contact:
+    email: apiteam@hubmap.org
+
+tags:
+  - name: elasticsearch
+    description: Operations pertaining to datasets indexed in elasticsearch
+    externalDocs:
+      description: Find out more about our indexed dataset
+      url: "https://hubmapconsortium.org"
+
+paths:
+  /search:
+    post:
+      tags:
+        - search
+      summary: Execute a search query and get back search hits that match the query
+      operationId: search
+      responses:
+        "200":
+          description: Returns search hits that match the query defined in the request
+        "400":
+          description: Client error due to missing or invalid JSON body in request
