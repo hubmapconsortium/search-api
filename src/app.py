@@ -88,7 +88,7 @@ def search():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        indexer = Indexer('entities', app.config['NEO4J_CONF'], app.config['ELASTICSEARCH_CONF'], app.config['ENTITY_WEBSERVICE_URL'])
+        indexer = Indexer('entities', app.config['ELASTICSEARCH_URL'], app.config['ENTITY_WEBSERVICE_URL'])
         t1 = threading.Thread(target=indexer.reindex, args=[uuid])
         t1.start()
     except Exception as e:
