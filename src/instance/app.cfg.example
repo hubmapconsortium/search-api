@@ -6,7 +6,7 @@ ELASTICSEARCH_URL = ''
 # Entity-API service
 # Default value works with docker deployment on localhost, dev, test, and prod
 # Don't use the trailing slash /
-ENTITY_WEBSERVICE_URL = 'http://entity-api:5000'
+ENTITY_WEBSERVICE_URL = 'http://hubmap-auth:3333'
 
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
