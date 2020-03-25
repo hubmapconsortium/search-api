@@ -28,3 +28,19 @@ paths:
           description: Returns search hits that match the query defined in the request
         "400":
           description: Client error due to missing or invalid JSON body in request
+  "/reindex/{identifier}": 
+    put:
+      tags:
+        - reindex
+      summary: Reindex for a given UUID of dataset
+      operationId: reindex
+      parameters:
+        - name: identifier
+          in: path
+          description: The unique identifier of collection.  This must be a UUID.
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: The request has been accepted and reindex is in process
