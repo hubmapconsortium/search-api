@@ -47,6 +47,7 @@ class Indexer:
         for node in nodes:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
+            self.eswriter.delete_document(self.index_name, node['uuid'])
             self.eswriter.wrtire_document(self.index_name, doc)
         
         return f"Done."

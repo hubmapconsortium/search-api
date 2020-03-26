@@ -20,6 +20,17 @@ class ESWriter:
 
         # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
 
+    def delete_document(self, index_name, uuid):
+        try:
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
+                            headers={'Content-Type': 'application/json'})
+            if rspn.ok:
+                print("OK")
+            else:
+                print(rspn.text)
+        except Exception as e:
+            print(str(e))
+
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
 
