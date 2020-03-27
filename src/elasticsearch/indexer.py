@@ -39,9 +39,15 @@ class Indexer:
         return f"Done. {donor.get('hubmap_identifier', 'hubmap_identifier missing')}"
 
     def reindex(self, uuid):
+        print(f"Before /entities/uuid/{uuid} call")
         entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
+        print(f"After /entities/uuid/{uuid} call")
+        print(f"Before /entities/ancestors/{uuid} call")
         ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
+        print(f"After /entities/ancestors/{uuid} call")
+        print(f"Before /entities/descendants/{uuid} call")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
+        print(f"After /entities/descendants/{uuid} call")
         nodes = [entity] + ancestors + descendants
 
         for node in nodes:
