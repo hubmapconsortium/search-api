@@ -40,6 +40,7 @@ class Indexer:
 
     def reindex(self, uuid):
         print(f"Before /entities/uuid/{uuid} call")
+        print(self.entity_webservice_url + "/entities/uuid/" + uuid)
         entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
         print(f"After /entities/uuid/{uuid} call")
         print(f"Before /entities/ancestors/{uuid} call")
