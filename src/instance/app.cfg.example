@@ -1,6 +1,7 @@
 # AWS ElasticSearch Endpoint
 # Works regardless of the trailing slash /
-# On localhost docker deployment use: ELASTICSEARCH_HOST = "http://hubmap-elasticsearch:9200"
+# On localhost docker deployment use: 
+# ELASTICSEARCH_URL = "http://hubmap-elasticsearch:9200"
 ELASTICSEARCH_URL = ''
 
 # Entity-API service
