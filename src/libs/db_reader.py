@@ -49,7 +49,12 @@ class DBReader:
                 for record in session.run(stmt, uuid=uuid):
                     entity.update(record.get('e')._properties)
                     for key, value in record.get('m')._properties.items():
-                        entity.setdefault(key, value)
+                        if key == 'ingest_metadata':
+                            ingest_metadata = ast.literal_eval(value)
+                            for key, value in ingest_metadata.items():
+                                entity.setdefault(key, value)
+                        else:
+                            entity.setdefault(key, value)
 
                     count += 1
                 
@@ -109,12 +114,13 @@ class DBReader:
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        if key == 'ingest_metadata':
-                            ingest_metadata = ast.literal_eval(value)
-                            for key, value in ingest_metadata.items():
-                                descendant.setdefault(key, value)
-                        else:
-                            descendant.setdefault(key, value)
+                        descendant.setdefault(key, value)s
+                        # if key == 'ingest_metadata':
+                        #     ingest_metadata = ast.literal_eval(value)
+                        #     for key, value in ingest_metadata.items():
+                        #         descendant.setdefault(key, value)
+                        # else:
+                        #     descendant.setdefault(key, value)
                     descendants.append(descendant)
 
                 return descendants               
