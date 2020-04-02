@@ -6,13 +6,13 @@ class ESWriter:
     def __init__(self, elasticsearch_url):
         self.elasticsearch_url = elasticsearch_url
 
-    def wrtire_document(self, index_name, doc):
+    def write_document(self, index_name, doc):
         try:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc",
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                print("OK")
+                print("write doc done")
             else:
                 print(rspn.text)
         except Exception as e:
@@ -25,7 +25,7 @@ class ESWriter:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
                             headers={'Content-Type': 'application/json'})
             if rspn.ok:
-                print("OK")
+                print(f"doc: {uuid} deleted")
             else:
                 print(rspn.text)
         except Exception as e:
@@ -38,4 +38,4 @@ class ESWriter:
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
 #     node = db_reader.get_donor('TEST0010')
 #     es_writer = ESWriter({'ELASTICSEARCH_DOMAIN_ENDPOINT': 'https://search-hubmap-entity-es-dev-zhdpuhhf2vjpvqfq7zmn2gdgqq.us-east-1.es.amazonaws.com'})
-#     es_writer.wrtire_document(json.dumps(node))
+#     es_writer.write_document(json.dumps(node))

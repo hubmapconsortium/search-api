@@ -35,7 +35,7 @@ class Main:
         for node in [donor] + descendants:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
-            self.eswriter.wrtire_document(self.index_name, doc)
+            self.eswriter.write_document(self.index_name, doc)
         return f"Done. {donor.get('hubmap_identifier', 'hubmap_identifier missing')}"
 
     def reindex(self, uuid):
@@ -47,7 +47,7 @@ class Main:
         for node in nodes:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
-            self.eswriter.wrtire_document(self.index_name, doc)
+            self.eswriter.write_document(self.index_name, doc)
         
         return f"Done."
 

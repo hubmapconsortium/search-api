@@ -34,13 +34,14 @@ class Indexer:
         for node in [donor] + descendants:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
-            self.eswriter.wrtire_document(self.index_name, doc)
+            self.eswriter.write_document(self.index_name, doc)
 
         return f"Done. {donor.get('hubmap_identifier', 'hubmap_identifier missing')}"
 
     def reindex(self, uuid):
         print(f"Before /entities/uuid/{uuid} call")
         print(self.entity_webservice_url + "/entities/uuid/" + uuid)
+        # import pdb; pdb.set_trace()
         entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
         print(f"After /entities/uuid/{uuid} call")
         print(f"Before /entities/ancestors/{uuid} call")
@@ -55,7 +56,7 @@ class Indexer:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
             self.eswriter.delete_document(self.index_name, node['uuid'])
-            self.eswriter.wrtire_document(self.index_name, doc)
+            self.eswriter.write_document(self.index_name, doc)
         
         return f"Done."
 
@@ -63,13 +64,20 @@ class Indexer:
         try:
             ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + entity.get('uuid', None)).json()
             descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + entity.get('uuid', None)).json()
+
+            for a in ancestors:
+                a.pop('files', None)
+                a.pop('metadata', None)
+            for d in descendants:
+                d.pop('files', None)
+                d.pop('metadata', None)
             # build json
             entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
             entity['access_group'] = self.access_group(entity)
-        
+
             return json.dumps(entity)
 
         except Exception as e:
