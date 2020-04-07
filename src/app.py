@@ -37,8 +37,7 @@ def index():
 ####################################################################################################
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
-# Since not all clients support GET with body, POST is used here
-@app.route('/search', methods = ['POST'])
+@app.route('/search', methods = ['GET', 'POST'])
 def search():
     access_group_open = "Open"
 
