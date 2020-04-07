@@ -15,7 +15,7 @@ To start up the Elasticsearch and Kibana containers:
 cd docker
 sudo docker-compose up -d
 ```
-## Usage
+## Usage Examples
 
 The search endpoint is
 ````
@@ -29,7 +29,7 @@ Below is the sample JSON in the request.
 ````
 {
   "version": true,
-  "size": 500,
+  "size": 5000,
   "sort": [
     {
       "_score": {
@@ -60,12 +60,56 @@ Below is the sample JSON in the request.
 }
 ````
 
+You can also narrow down the search by adding a match phrase like this:
+
+````
+{
+  "version": true,
+  "size": 5000,
+  "sort": [
+    {
+      "_score": {
+        "order": "desc"
+      }
+    }
+  ],
+  "_source": {
+    "excludes": []
+  },
+  "stored_fields": [
+    "*"
+  ],
+  "script_fields": {},
+  "docvalue_fields": [],
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "display_doi": {
+              "query": "HBM762.FHCT.952"
+            }
+          }
+        }
+      ],
+      "filter": [
+        {
+          "match_all": {}
+        }
+      ],
+      "should": [],
+      "must_not": []
+    }
+  }
+}
+````
+
 For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the search with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
 
 ````
 {
   "version": true,
-  "size": 500,
+  "size": 5000,
   "sort": [
     {
       "_score": {
