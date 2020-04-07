@@ -19,9 +19,10 @@ sudo docker-compose up -d
 
 The search endpoint is
 ````
-POST https://search-api.dev.hubmapconsortium.org/search
+https://search-api.dev.hubmapconsortium.org/search
 ````
-It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
+
+Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
 
 Below is the sample JSON in the request. 
 
