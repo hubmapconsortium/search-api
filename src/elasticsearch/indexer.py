@@ -41,7 +41,6 @@ class Indexer:
     def reindex(self, uuid):
         print(f"Before /entities/uuid/{uuid} call")
         print(self.entity_webservice_url + "/entities/uuid/" + uuid)
-        # import pdb; pdb.set_trace()
         entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
         print(f"After /entities/uuid/{uuid} call")
         print(f"Before /entities/ancestors/{uuid} call")
@@ -66,17 +65,19 @@ class Indexer:
             descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + entity.get('uuid', None)).json()
 
             for a in ancestors:
-                a.pop('files', None)
-                a.pop('metadata', None)
+                if 'ingest_metadata' in a:
+                    a['ingest_metadata'] = str(a['ingest_metadata'])
             for d in descendants:
-                d.pop('files', None)
-                d.pop('metadata', None)
+                if 'ingest_metadata' in d:
+                    d['ingest_metadata'] = str(d['ingest_metadata'])
             # build json
             entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
             entity['access_group'] = self.access_group(entity)
+            if 'ingest_metadata' in entity:
+                entity['ingest_metadata'] = ast.literal_eval(entity['ingest_metadata'])
 
             return json.dumps(entity)
 
@@ -103,7 +104,7 @@ if __name__ == '__main__':
         index_name = input("Please enter index name (Warning: All documents in this index will be clear out first): ")
     
     start = time.time()
-    indexer = Indexer(index_name, ast.literal_eval(config['ELASTICSEARCH']['ELASTICSEARCH_CONF']), ast.literal_eval(config['ELASTICSEARCH']['ELASTICSEARCH_CONF']), config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    indexer = Indexer(index_name, config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
     print(end - start)
