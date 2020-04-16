@@ -24,6 +24,25 @@ https://search-api.dev.hubmapconsortium.org/search
 
 Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
 
+### With Python Requests
+
+```
+query = {
+    'query': {
+        'match': {
+            'uuid': uuid
+        }
+    }
+}
+response = requests.post(
+    'https://search-api.dev.hubmapconsortium.org/search',
+    json=query,
+    headers={'Authorization': 'Bearer ' + nexus_token})
+hits = response.json()['hits']['hits']
+```
+
+### Longer JSON Examples
+
 Below is the sample JSON in the request. 
 
 ````
