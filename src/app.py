@@ -48,6 +48,10 @@ def search():
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
+    # The query being sent in the body must be nested in a query key
+    if "query" not in json_data:
+    	abort(400, description = 'The query being sent in the json body must be nested in a "query" key')
+
     user_info = get_user_info_for_access_check(request, True)
 
     pprint("======user_info======")
