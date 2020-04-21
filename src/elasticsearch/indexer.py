@@ -55,7 +55,7 @@ class Indexer:
             print(node.get('hubmap_identifier', None))
             doc = self.generate_doc(node)
             self.eswriter.delete_document(self.index_name, node['uuid'])
-            self.eswriter.write_document(self.index_name, doc)
+            self.eswriter.write_document(self.index_name, doc, node['uuid'])
         
         return f"Done."
 
@@ -71,6 +71,7 @@ class Indexer:
                 if 'ingest_metadata' in d:
                     d['ingest_metadata'] = str(d['ingest_metadata'])
             # build json
+            # entity['_id'] = entity.get('uuid', None)
             entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
             entity['ancestors'] = ancestors

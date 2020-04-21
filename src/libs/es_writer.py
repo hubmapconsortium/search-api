@@ -6,9 +6,9 @@ class ESWriter:
     def __init__(self, elasticsearch_url):
         self.elasticsearch_url = elasticsearch_url
 
-    def write_document(self, index_name, doc):
+    def write_document(self, index_name, doc, uuid):
         try:
-            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc",
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}",
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
