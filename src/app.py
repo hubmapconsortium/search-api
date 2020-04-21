@@ -21,7 +21,7 @@ app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 # Error handler for 400 Bad request with custom error message
 @app.errorhandler(400)
 def resource_not_found(e):
-    return jsonify(error=str(e)), 404
+    return jsonify(error=str(e)), 400
 
 ####################################################################################################
 ## Default route
