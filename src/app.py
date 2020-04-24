@@ -5,6 +5,8 @@ from flask import Flask, jsonify, abort, request, make_response, json, Response
 import threading
 import requests
 
+import json
+
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
@@ -138,7 +140,7 @@ def search():
                 bad_request(err_msg_denied_access_group_usage)
 
             # When check passes, convert the leaf query into a compound query with modification
-            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+            convert_leaf_to_compound(json_data, "match", leaf_query_to_add)
 
         # Case of leaf query - match_phrase
         elif "match_phrase" in json_data["query"]:
@@ -147,7 +149,7 @@ def search():
                 bad_request(err_msg_denied_access_group_usage)
 
             # When check passes, convert the leaf query into a compound query with modification
-            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+            convert_leaf_to_compound(json_data, "match_phrase", leaf_query_to_add)
 
         # Another case of leaf query - term
         elif "term" in json_data["query"]:
@@ -156,7 +158,7 @@ def search():
                 bad_request(err_msg_denied_access_group_usage)
 
             # When check passes, convert the leaf query into a compound query with modification
-            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+            convert_leaf_to_compound(json_data, "term", leaf_query_to_add)
 
         # Other unsupported queries regardless of leaf or compound
         else:
@@ -212,12 +214,21 @@ def bad_request(err_msg):
     abort(400, description = err_msg)
 
 # Convert the orginal leaf query into a compound query with modification
-def convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add):
+def convert_leaf_to_compound(json_data, key, leaf_query_to_add):
+    # Add new property "bool" -> "must"
     json_data["query"]["bool"] = {}
     json_data["query"]["bool"]["must"] = []
+
+    # Move the original leaf query to the must list
+    orig_leaf_query = {
+        key: json_data["query"][key]
+    }
+
+    json_data["query"]["bool"]["must"].append(orig_leaf_query)
+    # Also add the access_group match restriction
     json_data["query"]["bool"]["must"].append(leaf_query_to_add)
 
     # And delete the leaf query from original query otherwise it's invalid format
-    del orig_leaf_query_obj
+    del json_data["query"][key]
 
-    pprint(json_data)
+    pprint (json_data)
