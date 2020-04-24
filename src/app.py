@@ -76,25 +76,92 @@ def search():
     # or the user doesn't belong to the HuBMAP read group
     # Otherwise pass through the query as is
     if modify_query:
-        query_must_list = json_data["query"]["bool"]["must"]
+        # Error message if 'access_group' used in the orginal query
+        err_msg_denied_access_group_usage = "You can not use 'access_group' in request JSON"
         
-        # If by any chance the request json contains match phrase with `access_group`,
-        # we'll response 400 error for security concern
-        for obj in query_must_list:
-        	if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
-        		abort(400, description = "You can not use 'access_group' in request JSON")
+        # Error message for unsupported query clauses
+        err_msg_unsupported_query_clause = "Sorry, the request JSON contains unsupported search query clause"
 
-        # dict object
-        query_to_add = {
-            "match_phrase": {
-                "access_group": {
-                    "query": access_group_open
-                }
+        # Leaf query to be added for access open data only
+        leaf_query_to_add = {
+            "match": {
+                "access_group": access_group_open
             }
         }
 
-        # Modify the request json when "access_group" is not used in the request
-        query_must_list.append(query_to_add)
+        # We'll first need to decide if the original query is a leaf query or compound query
+        # Case of compound query
+        if "bool" in json_data["query"]:
+            bool_query_obj = json_data["query"]["bool"]
+
+            # "must": The clause (query) must appear in matching documents and will contribute to the score
+            if "must" in bool_query_obj and "filter" not in bool_query_obj:
+                query_clause_list = bool_query_obj["must"]
+
+            # "filter": The clause (query) must appear in matching documents. However unlike "must" the score of the query will be ignored
+            if "filter" in bool_query_obj and "must" not in bool_query_obj:
+                query_clause_list = bool_query_obj["filter"]
+
+            # When both "must" and "filter" clauses present, modify the "must" list
+            if "must" in bool_query_obj and "filter" in bool_query_obj:
+                query_clause_list = bool_query_obj["must"]
+
+            # When neither "must" nor "filter" clause presents, add an empty "must" list
+            if "must" not in bool_query_obj and "filter" not in bool_query_obj:
+                bool_query_obj["must"] = []
+                query_clause_list = bool_query_obj["must"]
+
+            # If by any chance the request json contains `access_group`,
+            # we'll response 400 error for security concern
+            for obj in query_clause_list:
+                # The `access_group` field contains a single word at this moment, 
+                # so we'll cover all possible cases below
+
+                # Case 1: simple "match"
+                # Matches if one term is a match, doesn't care about the order of terms
+                if 'match' in obj and 'access_group' in obj['match']:
+                    bad_request(err_msg_denied_access_group_usage)
+
+                # Case 2: "match_phrase"
+                # Matches only if the terms come in the same order
+                if 'match_phrase' in obj and 'access_group' in obj['match_phrase']:
+                    bad_request(err_msg_denied_access_group_usage)
+            
+            # When the checks pass("access_group" is not used in the request)
+            # we'll modify the orginal query with this simple leaf query(dict object)
+            query_clause_list.append(leaf_query_to_add)
+        
+        # Case of leaf query - match
+        elif "match" in json_data["query"]:
+            orig_leaf_query_obj = json_data["query"]["match"]
+            if 'access_group' in orig_leaf_query_obj:
+                bad_request(err_msg_denied_access_group_usage)
+
+            # When check passes, convert the leaf query into a compound query with modification
+            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+
+        # Case of leaf query - match_phrase
+        elif "match_phrase" in json_data["query"]:
+            orig_leaf_query_obj = json_data["query"]["match_phrase"]
+            if 'access_group' in orig_leaf_query_obj:
+                bad_request(err_msg_denied_access_group_usage)
+
+            # When check passes, convert the leaf query into a compound query with modification
+            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+
+        # Another case of leaf query - term
+        elif "term" in json_data["query"]:
+            orig_leaf_query_obj = json_data["query"]["term"]
+            if 'access_group' in orig_leaf_query_obj:
+                bad_request(err_msg_denied_access_group_usage)
+
+            # When check passes, convert the leaf query into a compound query with modification
+            convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add)
+
+        # Other unsupported queries regardless of leaf or compound
+        else:
+            bad_request(err_msg_unsupported_query_clause)
+
 
     # When the user belongs to the HuBMAP read group,
     # simply pass the search json to elasticsearch
@@ -140,3 +207,17 @@ def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
 
+# Throws error for bad reqeust
+def bad_request(err_msg):
+    abort(400, description = err_msg)
+
+# Convert the orginal leaf query into a compound query with modification
+def convert_leaf_to_compound(json_data, orig_leaf_query_obj, leaf_query_to_add):
+    json_data["query"]["bool"] = {}
+    json_data["query"]["bool"]["must"] = []
+    json_data["query"]["bool"]["must"].append(leaf_query_to_add)
+
+    # And delete the leaf query from original query otherwise it's invalid format
+    del orig_leaf_query_obj
+
+    pprint(json_data)

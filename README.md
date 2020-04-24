@@ -24,6 +24,17 @@ https://search-api.dev.hubmapconsortium.org/search
 
 Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
 
+When you build the JSON query, every query must start with "query" clause:
+
+````
+{
+    "query": {
+         
+    }
+    ...
+}
+````
+
 ### With Python Requests
 
 ```
