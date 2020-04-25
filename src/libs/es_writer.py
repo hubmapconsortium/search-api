@@ -14,7 +14,8 @@ class ESWriter:
             if rspn.ok:
                 print("write doc done")
             else:
-                print(rspn.text)
+                print(f"""error happened when writing {uuid} to elasticsearch\n
+                        Error Message: {rspn.text}""")
         except Exception as e:
             print(str(e))
 
@@ -33,6 +34,11 @@ class ESWriter:
 
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
+    
+    def create_index(self, index_name):
+        rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
+                            headers={'Content-Type': 'application/json'},
+                            data={"settings": {"index.mapping.total_fields.limit": 2000}})
 
 # if __name__ == '__main__':
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
