@@ -23,10 +23,3 @@ diff --ignore-blank-lines definitions{,.test}.yaml \
   || die "To refresh: $CMD > definitions.yaml"
 rm definitions.test.yaml
 end definitions
-
-start changelog
-if [ "$TRAVIS_BRANCH" != 'master' ]; then
-  diff CHANGELOG.md <(curl -s https://raw.githubusercontent.com/hubmapconsortium/search-schema/master/CHANGELOG.md) \
-    && die 'Update CHANGELOG.md'
-fi
-end changelog
