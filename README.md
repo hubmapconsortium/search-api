@@ -8,21 +8,7 @@ deployed as a Docker container. This repo provides:
 
 Development of the API can be somewhat independent of development of the schema.
 
-## Overview of tools
 
-- [Docker Engine](https://docs.docker.com/install/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
-Note: Docker Compose requires Docker to be installed and running first.
-
-## Setup local development with Elasticsearch and Kibana with Docker Compose
-
-To start up the Elasticsearch and Kibana containers:
-
-```
-cd docker
-sudo docker-compose up -d
-```
 ## Usage Examples
 
 The search endpoint is
@@ -185,3 +171,23 @@ For a request with a valid token that resprents a member who belongs to the HuBM
 ```
 
 </details>
+
+## API development
+
+API development requires [Docker Engine](https://docs.docker.com/install/)
+and [Docker Compose](https://docs.docker.com/compose/install/).
+Docker Compose requires Docker to be installed and running first.
+
+To setup local development with Elasticsearch and Kibana with Docker Compose:
+```
+cd docker
+sudo docker-compose up -d
+```
+
+## Schema development
+
+TODO: We don't yet have a JSON Schema.
+
+Because the JSON Schema is redundant, we will generate it from TSV files
+which provide a more normalized structure. The schema generation tools
+have a [separate development process](schema/) from the API,
