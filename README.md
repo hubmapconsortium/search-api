@@ -18,9 +18,9 @@ sudo docker-compose up -d
 ## Usage Examples
 
 The search endpoint is
-````
+```
 https://search-api.dev.hubmapconsortium.org/search
-````
+```
 
 Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
 
@@ -43,9 +43,11 @@ hits = response.json()['hits']['hits']
 
 ### Longer JSON Examples
 
-Below is the sample JSON in the request. 
+Below is the sample JSON in the request.
 
-````
+<details>
+
+```
 {
   "version": true,
   "size": 5000,
@@ -77,11 +79,15 @@ Below is the sample JSON in the request.
     }
   }
 }
-````
+```
+
+</details>
 
 You can also narrow down the search by adding a match phrase like this:
 
-````
+<details>
+
+```
 {
   "version": true,
   "size": 5000,
@@ -121,11 +127,15 @@ You can also narrow down the search by adding a match phrase like this:
     }
   }
 }
-````
+```
+
+</details>
 
 For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the search with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
 
-````
+<details>
+
+```
 {
   "version": true,
   "size": 5000,
@@ -164,4 +174,6 @@ For a request with a valid token that resprents a member who belongs to the HuBM
     }
   }
 }
-````
+```
+
+</details>
