@@ -1,5 +1,13 @@
 # HuBMAP Search API
 
+The HuBMAP Search API is a thin wrapper around Elasticsearch,
+deployed as a Docker container. This repo provides:
+- [Source code for the API](src/)
+- [Dockerfile and Docker Compose YAML](docker/)
+- [Elasticsearch document schema](schema/)
+
+Development of the API can be somewhat independent of development of the schema.
+
 ## Overview of tools
 
 - [Docker Engine](https://docs.docker.com/install/)
