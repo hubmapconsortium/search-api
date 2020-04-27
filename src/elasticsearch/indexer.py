@@ -84,7 +84,7 @@ class Indexer:
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
-            # entity['access_group'] = self.access_group(entity)
+            entity['access_group'] = self.access_group(entity)
 
             if entity['entitytype'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
@@ -103,7 +103,6 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
-            import pdb; pdb.set_trace()
             print(e)
     
     def entity_keys_rename(self, entity):
@@ -129,7 +128,7 @@ class Indexer:
     def access_group(self, entity):
         try:
             if entity['entitytype'] == 'Dataset':
-                if entity['status'] == 'Published' and entity['phi'] == 'no':
+                if entity['metadata']['status'] == 'Published' and entity['metadata']['phi'].lower() == 'no':
                     return 'Open'
                 else:
                     return 'Readonly'
@@ -137,6 +136,7 @@ class Indexer:
                 return 'Readonly'
         
         except Exception as e:
+            import pdb; pdb.set_trace() 
             print(e)
 
 if __name__ == '__main__':
