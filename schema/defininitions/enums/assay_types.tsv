@@ -1,0 +1,23 @@
+Value	Description
+AF	Autofluorescence Microscopy
+ATACseq-bulk	ATACseq (Bulk)
+MxIF	Multiplexex Immunofluorescence Microscopy
+CODEX	CODEX
+IMC	Imaging Mass Cytometry
+MALDI-IMS-neg	MALDI IMS neg
+MALDI-IMS-pos	MALDI IMS pos
+PAS	PAS Stained Microscopy
+bulk-RNA	Bulk RNAseq
+SNAREseq	SNAREseq
+TMT-LC-MS	TMT LC-MS
+Targeted-Shotgun-LC-MS	Targeted Shotgun / Flow-injection LC-MS
+LC-MS-untargeted	Untargeted LC-MS
+WGS	Whole Genome Sequencing
+scRNA-Seq-10x	scRNA-Seq (10xGenomics)
+sciATACseq	sciATACseq
+sciRNAseq	sciRNAseq
+seqFish	seqFish
+snATACseq	snATACseq
+snRNAseq	snRNAseq
+codex_cytokit	derived data from CODEX through Cytokit
+salmon_rnaseq_10x	derived data from 10x data processed through Salmon

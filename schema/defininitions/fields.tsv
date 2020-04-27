@@ -1,0 +1,35 @@
+Neo4j Attribute	ES document attribute	Required Attribute	Entity types with attribute	Description
+Activity.activitytype	creation_action	No	Donor, Sample, Dataset	The action that created this this Entity
+Entity.display_doi	display_doi	No	Donor, Sample, Dataset	HuBMAP id generated at the same time as and associated directly with the UUID for the Entity.  This ID can be used when registering an object with the DOI System.
+Entity.entitytype	entity_type	Yes	Donor, Sample, Dataset	The entity type. Allowable values here: https://docs.google.com/spreadsheets/d/1L8mfs767Z5ZGnZ92UJySlHxprraSariH1dU45g6jphE/edit
+Entity.hubmap_identifier	hubmap_display_id	No	Donor, Sample	HuBMAP id used internal to the Consortium, generated at the same time as and associated directly with the UUID for the Entity.  The id is built on the the id from the parent object.  Format explained here: https://docs.google.com/document/d/1DjHgmqWF1VA5-3mfzLFNfabbzmc8KLSG9xWx1DDLlzo/
+Entity.provenance_create_timestamp	create_timestamp	Yes	Donor, Sample, Dataset	The data/time when the entity was created
+Metadata.rui_location	rui_location	No	Sample	Location information of where the tissue sample came from in the organ that the tissue was sourced from.  Specified in JSON, as outputed from the RUI tool.
+Metadata.lab_tissue_id	lab_tissue_sample_id	Depends on entity type	Sample	An id specific to the lab where the tissue was processed.
+Entity.uuid	uuid	Yes	Donor, Sample, Dataset	The HuBMAP auto-generated UUID for the Entity
+Metadata.data_types	data_types	No	Dataset	An array of data/assay types contained in the Dataset.  Allowable values here: https://docs.google.com/spreadsheets/d/1L8mfs767Z5ZGnZ92UJySlHxprraSariH1dU45g6jphE/edit
+Metadata.description	description	No	Donor, Sample, Dataset	A description of the Entity, hand entered into the UI
+Metadata.ingest_metadata	metadata	No	Donor, Sample, Dataset	Metadata associated with the Entity. Formated in JSON. Donor metadata is transformed from files uploaded into the Ingest UI.  Sample metadata will be transformed from files uploaded into the Ingest UI.  Dataset metadata will be transformed from the HIVE specified .tsv file provided with data uploads and/or extraction from data or metadata files provided in the data upload.
+Metadata.files	files	No	Dataset	An array of information about the files contained in the dataset.
+Metadata.image_file_metadata	portal_uploaded_image_files	No	Donor, Sample	An array of information about image files uploaded during donor or tissue registration via the Tissue Registration UI
+Metadata.lab_donor_id	lab_donor_id	Depends on entity type	Donor	An donor id specific to the lab where the tissue was procured.
+Metadata.label	lab_name	No	Donor	A lab specific label/name assigned to a donor by the lab during registration of the donor.
+Metadata.metadatas	portal_metadata_upload_files	No	Donor, Sample	An array of information about metadata files uploaded via the Tissue Registration UI
+Metadata.name	name	Depends on entity type	Dataset	The name of a dataset as entered into the Ingest UI
+Metadata.organ	organ	No	Sample	The organ type when specimen_type == organ.  Allowable values here: https://docs.google.com/spreadsheets/d/1L8mfs767Z5ZGnZ92UJySlHxprraSariH1dU45g6jphE/edit
+Metadata.organ_other	organ_other	No	Sample	If organ type == other, the organ name is specified in this field
+Metadata.phi	contains_human_genetic_sequences	Yes	Dataset	true if the data contains human gene sequence information, false otherwise
+Metadata.protocol	protocol_url	Just one of these two	Donor, Sample	The url to the protocols.io instance describing donor selection criteria, tissue procurement protocols and or data generation/derivation details.
+Metadata.protocols	portal_uploaded_protocol_files	Just one of these two	Donor, Sample	An array of information about files uploaded through the Donor/Tissue Registration UI donor selection criteria or tissue procurement protocols.
+Metadata.provenance_group_name	group_name	Yes	Donor, Sample, Dataset	The name of the lab/TMC/TTD/RTI where the Entity was registered.
+Metadata.provenance_group_uuid	group_uuid	Yes	Donor, Sample, Dataset	A UUID associated with the lab/TMC/TTD/RTI where the Entity was registered.
+Metadata.provenance_modified_timestamp	last_modified_timestamp	Yes	Donor, Sample, Dataset	The date/time when the entity was last updatedl
+Metadata.provenance_user_displayname	created_by_user_displayname	Yes	Donor, Sample, Dataset	The name of the person who registered/created the Entity.
+Metadata.provenance_user_email	created_by_user_email	Yes	Donor, Sample, Dataset	The email address of the person who registerd/created the Entity.
+Metadata.specimen_type	specimen_type	Yes	Sample	For Sample entities, the type of tissue specimen.  Allowable values here: https://docs.google.com/spreadsheets/d/1L8mfs767Z5ZGnZ92UJySlHxprraSariH1dU45g6jphE/edit
+Metadata.specimen_type_other	specimen_type_other	No	Sample	If specimen_type == other, the specimen type name is specified in this field
+Metadata.status	status	Depends on entity type	Dataset	The status of a Dataset. Allowable values listed here: https://docs.google.com/spreadsheets/d/1L8mfs767Z5ZGnZ92UJySlHxprraSariH1dU45g6jphE/edit
+Metadata.visit	visit	No	Sample	The clinical visit specifier of when a piece of tissue was procured.  This is hand entered via the Tissue Registration UI at the time of tissue registration.
+	donor	Depends on entity type	Sample, Dataset	The ancestor Donor at the top of the provenance chain for the Entity.  This contains, in JSON, the full Entity information for the Donor.
+	origin_sample	Depends on entity type	Sample, Dataset	The tissue sample directly below Donor (should usually be an organ) at the top of the provenance chain for the Entity. This conntains, in JSON, the full Entity information for the Sample.
+	source_sample [ ]	Depends on entity type	Dataset	The tissue sample or samples that the data was directly derived from.  This contains, in JSON, the full Entity information for the Sample.

@@ -1,0 +1,12 @@
+Value	Description
+NEW	new
+REOPENED	reopened
+INVALID	invalid
+QA	qa
+LOCKED	locked
+PROCESSING	processing
+PUBLISHED	published
+UNPUBLISHED	unpublished
+DEPRECATED	deprecated
+ERROR	error
+HOLD	hold
