@@ -50,7 +50,7 @@ def search():
 
     # The query being sent in the body must be nested in a query key
     if "query" not in json_data:
-    	bad_request('The query being sent in the json body must be nested in a "query" key')
+        bad_request('The query being sent in the json body must be nested in a "query" key')
 
     user_info = get_user_info_for_access_check(request, True)
 
@@ -151,7 +151,7 @@ def modify_query(query_dict):
         modify_bool_query(query_dict["bool"], leaf_query_dict_to_add)
     # Case of compound query - constant score query
     elif "constant_score" in query_dict:
-        modify_constant_score_query(query_dict["bool"], leaf_query_dict_to_add)
+        modify_constant_score_query(query_dict["constant_score"], leaf_query_dict_to_add)
     # Case of leaf query - match_all
     elif "match_all" in query_dict:
         convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
@@ -200,7 +200,7 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     # When "must" presents (regardless of "filter" presents), modify the "must" list
     # Otherwise, mmodify "filter" clause if it presents or create an empty "must" if no "filter"
     if "must" in bool_dict:
-        validate_query_clause_list(bool_dict["must"])
+        validate_bool_query_clause_list(bool_dict["must"])
 
         # When the checks pass("access_group" is not used in the request)
         # we'll modify the orginal query with this simple leaf query(dict object)
@@ -208,7 +208,7 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     else:
         # Modify the "filter" clause if presents
         if "filter" in bool_dict:
-            validate_query_clause_list(bool_dict["filter"])
+            validate_bool_query_clause_list(bool_dict["filter"])
             bool_dict["filter"].append(leaf_query_dict_to_add)
         else:
             # When neither "must" nor "filter" clause presents, add an empty "must" list
@@ -216,9 +216,41 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
             bool_dict["must"] = []
             bool_dict["must"].append(leaf_query_dict_to_add)
 
+# Constant Score Query
+def modify_constant_score_query(constant_score_dict, leaf_query_dict_to_add):
+    # "filter" is requried top-level parameter for constant_score
+    if "filter" in constant_score_dict:
+        validate_constant_score_query_clause_dict(constant_score_dict["filter"])
+
+        # When the checks pass("access_group" is not used in the request)
+        # we'll modify the orginal query with this simple leaf query(dict object)
+        key = "match"
+        # Add new attribute/key
+        constant_score_dict["filter"][key] = leaf_query_dict_to_add[key]
+
+def validate_constant_score_query_clause_dict(filter_dict):
+    for key in filter_dict:
+        # The `access_group` field contains a single word at this moment, 
+        # so we'll cover all possible cases below
+
+        # Case 1: "term"
+        # Matches if one term is exact percise match, including whitespace and capitalization
+        if 'term' in filter_dict[key]:
+            check_access_group_usage(filter_dict[key]['term'])
+
+        # Case 2: simple "match"
+        # Matches if one term is a match, doesn't care about the order of terms
+        if 'match' in filter_dict[key]:
+            check_access_group_usage(filter_dict[key]['match'])
+
+        # Case 3: "match_phrase"
+        # Matches only if the terms come in the same order
+        if 'match_phrase' in filter_dict[key]:
+            check_access_group_usage(filter_dict[key]['match_phrase'])
+
 # If by any chance the request json contains `access_group`,
 # we'll response 400 error for security concern
-def validate_query_clause_list(query_clause_list):
+def validate_bool_query_clause_list(query_clause_list):
     for item in query_clause_list:
         # The `access_group` field contains a single word at this moment, 
         # so we'll cover all possible cases below
