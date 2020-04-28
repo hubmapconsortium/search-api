@@ -1,6 +1,6 @@
 # HuBMAP Search API
 
-## Overview of tools
+## Overview of tools needed for deployment
 
 - [Docker Engine](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
@@ -13,18 +13,20 @@ To start up the Elasticsearch and Kibana containers:
 
 ```
 cd docker
-sudo docker-compose up -d
+docker-compose up -d
 ```
-## Usage Examples
+## Search endpoint
 
-The search endpoint is
-````
-https://search-api.dev.hubmapconsortium.org/search
-````
+The search endpoint for each deployment environment:
 
-Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned.
+- DEV: `https://search-api.dev.hubmapconsortium.org/search`
+- TEST: `https://search-api.test.hubmapconsortium.org/search`
 
-When you build the JSON query, every query must start with "query" clause:
+Both HTTP `GET` and `POST` are supported. It's optional to use the `Authorization` header with the Bearer token (globus nexus token). If the token represents a user who has group access to the indexed data, the search API will pass the query to the backend elasticsearch server and return the search hits that match the query defined in the request. If a token is not present or invalid, only data marked as public will be returned for the provided query DSL (Domain Specific Language).
+
+## Supported queries
+
+The request JSON body to this Search API must start with "query" element
 
 ````
 {
@@ -35,10 +37,69 @@ When you build the JSON query, every query must start with "query" clause:
 }
 ````
 
-### With Python Requests
+Not all queries defined by Elasticsearch are supported by this Search API, and following is a list of supported query clauses:
+
+- Leaf query clauses: `match_all`, `match`, `match_phrase`, `term`
+- Compound query clauses: `bool`
+
+## Usage examples
+
+### Leaf query - match
+
+````
+{
+    "query": {
+        "match": {
+            "uuid": "4cac248a51b6767e029663b273e7a8b2"
+        }
+    }
+}
+````
+
+Note: 
+
+### Compound query - bool
+
+````
+{
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "match_phrase": {
+                        "donor.group_name": "Vanderbilt TMC"
+                    }
+                }
+            ],
+            "filter": [
+                {
+                    "match": {
+                        "origin_sample.entity_type": "Sample"
+                    }
+                }
+            ]
+        }
+    }
+}
+````
+
+For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the hits with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
+
+````
+{
+    "query": {
+        "match": {
+            "access_group": "Readonly"
+        }
+    }
+}
+````
+
+
+### With Python requests
 
 ```
-query = {
+query_dict = {
     'query': {
         'match': {
             'uuid': uuid
@@ -47,132 +108,7 @@ query = {
 }
 response = requests.post(
     'https://search-api.dev.hubmapconsortium.org/search',
-    json=query,
-    headers={'Authorization': 'Bearer ' + nexus_token})
+    json = query_dict,
+    headers = {'Authorization': 'Bearer ' + nexus_token})
 hits = response.json()['hits']['hits']
 ```
-
-### Longer JSON Examples
-
-Below is the sample JSON in the request. 
-
-````
-{
-  "version": true,
-  "size": 5000,
-  "sort": [
-    {
-      "_score": {
-        "order": "desc"
-      }
-    }
-  ],
-  "_source": {
-    "excludes": []
-  },
-  "stored_fields": [
-    "*"
-  ],
-  "script_fields": {},
-  "docvalue_fields": [],
-  "query": {
-    "bool": {
-      "must": [],
-      "filter": [
-        {
-          "match_all": {}
-        }
-      ],
-      "should": [],
-      "must_not": []
-    }
-  }
-}
-````
-
-You can also narrow down the search by adding a match phrase like this:
-
-````
-{
-  "version": true,
-  "size": 5000,
-  "sort": [
-    {
-      "_score": {
-        "order": "desc"
-      }
-    }
-  ],
-  "_source": {
-    "excludes": []
-  },
-  "stored_fields": [
-    "*"
-  ],
-  "script_fields": {},
-  "docvalue_fields": [],
-  "query": {
-    "bool": {
-      "must": [
-        {
-          "match_phrase": {
-            "display_doi": {
-              "query": "HBM762.FHCT.952"
-            }
-          }
-        }
-      ],
-      "filter": [
-        {
-          "match_all": {}
-        }
-      ],
-      "should": [],
-      "must_not": []
-    }
-  }
-}
-````
-
-For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the search with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
-
-````
-{
-  "version": true,
-  "size": 5000,
-  "sort": [
-    {
-      "_score": {
-        "order": "desc"
-      }
-    }
-  ],
-  "_source": {
-    "excludes": []
-  },
-  "stored_fields": [
-    "*"
-  ],
-  "script_fields": {},
-  "docvalue_fields": [],
-  "query": {
-    "bool": {
-      "must": [
-      {
-            "match_phrase": {
-                "access_group": {
-                    "query": "Open"
-                }
-            }
-        }],
-      "filter": [
-        {
-          "match_all": {}
-        }
-      ],
-      "should": [],
-      "must_not": []
-    }
-  }
-}
-````
