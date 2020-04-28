@@ -149,6 +149,9 @@ def modify_query(query_dict):
     # Case of compound query - bool query
     if "bool" in query_dict:
         modify_bool_query(query_dict["bool"], leaf_query_dict_to_add)
+    # Case of compound query - constant score query
+    elif "constant_score" in query_dict:
+        modify_constant_score_query(query_dict["bool"], leaf_query_dict_to_add)
     # Case of leaf query - match_all
     elif "match_all" in query_dict:
         convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
