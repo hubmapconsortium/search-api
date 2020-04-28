@@ -136,7 +136,7 @@ def modify_query(query_dict):
     access_group_open = "Open"
 
     # Leaf query (python dict) to be added for access open data only
-    leaf_query_to_add = {
+    leaf_query_dict_to_add = {
         "match": {
             "access_group": access_group_open
         }
@@ -148,26 +148,26 @@ def modify_query(query_dict):
 
     # Case of compound query - bool query
     if "bool" in query_dict:
-        modify_bool_query(query_dict["bool"], leaf_query_to_add)
+        modify_bool_query(query_dict["bool"], leaf_query_dict_to_add)
     # Case of leaf query - match_all
     elif "match_all" in query_dict:
-        convert_leaf_to_compound(query_dict, "match_all", leaf_query_to_add)
+        convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
     # Case of leaf query - match
     elif "match" in query_dict:
-        convert_leaf_to_compound(query_dict, "match", leaf_query_to_add)
+        convert_leaf_to_compound(query_dict, "match", leaf_query_dict_to_add)
     # Case of leaf query - match_phrase
     elif "match_phrase" in query_dict:
-        convert_leaf_to_compound(query_dict, "match_phrase", leaf_query_to_add)
+        convert_leaf_to_compound(query_dict, "match_phrase", leaf_query_dict_to_add)
     # Another case of leaf query - term
     elif "term" in query_dict:
-        convert_leaf_to_compound(query_dict, "term", leaf_query_to_add)
+        convert_leaf_to_compound(query_dict, "term", leaf_query_dict_to_add)
     # Other unsupported queries regardless of leaf (e.g., range) or compound (e.g., dis_max)
     else:
         # Error message for unsupported query clauses
         bad_request("Sorry, the request JSON contains unsupported search query clause")
 
 # Key: match_all, match, match_phrase, term
-def convert_leaf_to_compound(query_dict, key, leaf_query_to_add):
+def convert_leaf_to_compound(query_dict, key, leaf_query_dict_to_add):
     # First make sure 'access_group' is not used
     check_access_group_usage(query_dict[key])
 
@@ -177,16 +177,21 @@ def convert_leaf_to_compound(query_dict, key, leaf_query_to_add):
     query_dict["bool"] = {}
     query_dict["bool"]["must"] = []
 
-    # Move the original leaf query to the must list
-    query_dict["bool"]["must"].append(query_dict[key])
-    # Also add the access_group match restriction
-    query_dict["bool"]["must"].append(leaf_query_to_add)
+    # Copy the original leaf query to the must list
+    orig_leaf_query = {
+        key: query_dict[key]
+    }
 
-    # And delete the leaf query from original query otherwise it's invalid format
+    query_dict["bool"]["must"].append(orig_leaf_query)
+
+    # Also add the access_group match restriction
+    query_dict["bool"]["must"].append(leaf_query_dict_to_add)
+
+    # And delete the original leaf query otherwise it's invalid format
     del query_dict[key]
 
 # Only modify the bool query object (python dict)
-def modify_bool_query(bool_dict, leaf_query_to_add):
+def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     # "must": The clause (query) must appear in matching documents and will contribute to the score
     # "filter": The clause (query) must appear in matching documents. However unlike "must" the score of the query will be ignored
     # When "must" presents (regardless of "filter" presents), modify the "must" list
@@ -196,17 +201,17 @@ def modify_bool_query(bool_dict, leaf_query_to_add):
 
         # When the checks pass("access_group" is not used in the request)
         # we'll modify the orginal query with this simple leaf query(dict object)
-        bool_dict["must"].append(leaf_query_to_add)
+        bool_dict["must"].append(leaf_query_dict_to_add)
     else:
         # Modify the "filter" clause if presents
         if "filter" in bool_dict:
             validate_query_clause_list(bool_dict["filter"])
-            bool_dict["filter"].append(leaf_query_to_add)
+            bool_dict["filter"].append(leaf_query_dict_to_add)
         else:
             # When neither "must" nor "filter" clause presents, add an empty "must" list
             # And no validatation needed
             bool_dict["must"] = []
-            bool_dict["must"].append(leaf_query_to_add)
+            bool_dict["must"].append(leaf_query_dict_to_add)
 
 # If by any chance the request json contains `access_group`,
 # we'll response 400 error for security concern
