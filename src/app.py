@@ -152,6 +152,9 @@ def modify_query(query_dict):
     # Case of compound query - constant score query
     elif "constant_score" in query_dict:
         modify_constant_score_query(query_dict["constant_score"], leaf_query_dict_to_add)
+    # Case of compound query - disjunction max query
+    elif "dis_max" in query_dict:
+        modify_dis_max_query(query_dict["dis_max"], leaf_query_dict_to_add)
     # Case of leaf query - match_all
     elif "match_all" in query_dict:
         convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
@@ -216,6 +219,39 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
             bool_dict["must"] = []
             bool_dict["must"].append(leaf_query_dict_to_add)
 
+# Disjunction max query
+def modify_dis_max_query(dis_max_dict, leaf_query_dict_to_add):
+    # "queries" key is required, it's a list
+    if "queries" in dis_max_dict:
+        validate_dis_max_query_clause_list(dis_max_dict["queries"])
+
+        # When the checks pass("access_group" is not used in the request)
+        # we'll modify the orginal query with this simple leaf query(dict object)
+        dis_max_dict["queries"].append(leaf_query_dict_to_add)
+    else:
+        bad_request("'queries' is required top-level parameter in 'dis_max' query in request JSON")
+
+def validate_dis_max_query_clause_list(query_clause_list):
+    for item in query_clause_list:
+        # The `access_group` field contains a single word at this moment, 
+        # so we'll cover all possible cases below
+
+        # Case 1: "term"
+        # Matches if one term is exact percise match, including whitespace and capitalization
+        if 'term' in item:
+            check_access_group_usage(item['term'])
+
+        # Case 2: simple "match"
+        # Matches if one term is a match, doesn't care about the order of terms
+        if 'match' in item:
+            check_access_group_usage(item['match'])
+
+        # Case 3: "match_phrase"
+        # Matches only if the terms come in the same order
+        if 'match_phrase' in item:
+            check_access_group_usage(item['match_phrase'])
+
+
 # Constant Score Query
 def modify_constant_score_query(constant_score_dict, leaf_query_dict_to_add):
     # "filter" is requried top-level parameter for constant_score
@@ -227,6 +263,8 @@ def modify_constant_score_query(constant_score_dict, leaf_query_dict_to_add):
         key = "match"
         # Add new attribute/key
         constant_score_dict["filter"][key] = leaf_query_dict_to_add[key]
+    else:
+        bad_request("'filter' is required top-level parameter in 'constant_score' query in request JSON")
 
 def validate_constant_score_query_clause_dict(filter_dict):
     for key in filter_dict:
