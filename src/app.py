@@ -52,6 +52,10 @@ def search():
     if "query" not in json_data:
         bad_request('The query being sent in the json body must be nested in a "query" key')
 
+    # Only one key is allowed in the query outer level - query
+    if len(json_data) > 1:
+        bad_request('The query being sent in the json body should only contain a "query" key')
+
     user_info = get_user_info_for_access_check(request, True)
 
     pprint("======user_info======")
