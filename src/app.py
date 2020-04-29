@@ -43,18 +43,18 @@ def index():
 def search():
     # Always expect a json body
     if not request.is_json:
-        bad_request('This search request requries a json body')
+        bad_request("This search request requries a json body")
 
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
     # The query being sent in the body must be nested in a query key
     if "query" not in json_data:
-        bad_request('The query being sent in the json body must be nested in a "query" key')
+        bad_request("The query being sent in the json body must be nested in a 'query' key")
 
     # Only one key is allowed in the query outer level - query
-    if len(json_data) > 1:
-        bad_request('The query being sent in the json body should only contain a "query" key')
+    if len(json_data['query']) > 1:
+        bad_request("The 'query' object in the json body should only contain one top-level key")
 
     user_info = get_user_info_for_access_check(request, True)
 
