@@ -43,18 +43,18 @@ def index():
 def search():
     # Always expect a json body
     if not request.is_json:
-        bad_request("This search request requries a json body")
+        bad_request("This search request requries a JSON body")
 
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
     # The query being sent in the body must be nested in a query key
     if "query" not in json_data:
-        bad_request("The query being sent in the json body must be nested in a 'query' key")
+        bad_request("The query being sent in the JSON body must be nested in a 'query' key")
 
     # Only one key is allowed in the query outer level - query
     if len(json_data['query']) > 1:
-        bad_request("The 'query' object in the json body should only contain one top-level key")
+        bad_request("The 'query' context in the JSON body should only contain one top-level key")
 
     user_info = get_user_info_for_access_check(request, True)
 
@@ -131,7 +131,7 @@ def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
 
-# Throws error for bad reqeust
+# Throws error for bad reqeust with message
 def bad_request(err_msg):
     abort(400, description = err_msg)
 
@@ -165,7 +165,7 @@ def modify_query(query_dict):
     # Other unsupported queries
     # Regardless of leaf (e.g., match_none) or compound (e.g., boosting query, function_score query)
     else:
-        bad_request("Sorry, this Search API doesn't support the given search query key: '" + query_key + "'")
+        bad_request("Sorry, this Search API doesn't support the provided search query: '" + query_key + "'")
 
 # Key: match_all, match, match_phrase, term
 def convert_leaf_to_compound(query_dict, key, leaf_query_dict_to_add):
@@ -233,7 +233,7 @@ def modify_dis_max_query(dis_max_dict, leaf_query_dict_to_add):
         # we'll modify the orginal query with this simple leaf query(dict object)
         dis_max_dict["queries"].append(leaf_query_dict_to_add)
     else:
-        bad_request("'queries' is required top-level parameter in 'dis_max' query in request JSON")
+        bad_request("'queries' is required top-level parameter in 'dis_max' query in request JSON body")
 
 def validate_compound_query_clause_list(query_clause_list):
     for item in query_clause_list:
@@ -250,4 +250,4 @@ def validate_compound_query_clause_list(query_clause_list):
 def validate_access_group_usage(dict):
     # Error message if 'access_group' used in the orginal query
     if 'access_group' in dict:
-        bad_request("You can not use 'access_group' in request JSON")
+        bad_request("You can not use 'access_group' in request JSON body")
