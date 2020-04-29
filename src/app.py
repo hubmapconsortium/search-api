@@ -251,7 +251,7 @@ def validate_access_group_usage(dict):
 # Leaf and compound query keys shared with other function calls
 def get_supported_query_keys(key):
     keys_dict = {
-        "leaf": ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists', 'ids', 'type', 'prefix'],
+        "leaf": ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'terms_set', 'range', 'exists', 'ids', 'type', 'prefix', 'match_phrase_prefix', 'match_bool_prefix', 'fuzzy', 'wildcard', 'regexp'],
         "compound": ['bool', 'dis_max']
     }
 
