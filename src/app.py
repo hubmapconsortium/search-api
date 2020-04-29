@@ -143,7 +143,7 @@ def modify_query(query_dict):
     }
 
     # We'll first need to decide if the original query is a leaf query or compound query
-    # Leaf query being checked: match_all, match, match_phrase, term, terms
+    # Leaf query being checked: match_all, match, match_phrase, term, terms, range
     # Compound query being checked: bool, dis_max
 
     # =======Compound query=======
@@ -169,8 +169,11 @@ def modify_query(query_dict):
     # terms (one or more exact terms in a provided field)
     elif "terms" in query_dict:
         convert_leaf_to_compound(query_dict, "terms", leaf_query_dict_to_add)
+    # range
+    elif "range" in query_dict:
+        convert_leaf_to_compound(query_dict, "range", leaf_query_dict_to_add)
     # =======Other unsupported queries=======
-    # Regardless of leaf (e.g., range) or compound (e.g., boosting query, function_score query)
+    # Regardless of leaf (e.g., match_none, multi_match) or compound (e.g., boosting query, function_score query)
     else:
         bad_request("Sorry, this Search API doesn't support the given search query clause")
 
