@@ -147,10 +147,8 @@ def modify_query(query_dict):
     }
 
     # We'll first need to decide if the original query is a leaf query or compound query
-    # Leaf query being checked: match_all, match, match_phrase, multi_match, term, terms, range, exists
-    # Compound query being checked: bool, dis_max
-    supported_leaf_query_keys = ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists']
-    supported_compound_query_keys = ['bool', 'dis_max']
+    supported_leaf_query_keys = get_supported_query_keys("leaf")
+    supported_compound_query_keys = get_supported_query_keys("compound")
 
     # The query context dict contains only one key
     query_key = list(query_dict)[0]
@@ -237,9 +235,7 @@ def modify_dis_max_query(dis_max_dict, leaf_query_dict_to_add):
 
 def validate_compound_query_clause_list(query_clause_list):
     for item in query_clause_list:
-        supported_leaf_query_keys = ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists']
-
-        for query in supported_leaf_query_keys:
+        for query in get_supported_query_keys("leaf"):
             if query in item:
                 validate_access_group_usage(item[query])
         
@@ -251,3 +247,16 @@ def validate_access_group_usage(dict):
     # Error message if 'access_group' used in the orginal query
     if 'access_group' in dict:
         bad_request("You can not use 'access_group' in request JSON body")
+
+# Leaf and compound query keys shared with other function calls
+def get_supported_query_keys(key):
+    keys_dict = {
+        "leaf": ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists', 'ids', 'type', 'prefix'],
+        "compound": ['bool', 'dis_max']
+    }
+
+    try:
+        return keys_dict[key]
+    except KeyError:
+        print("Unknown key: '" + key + "' was used when calling get_supported_query_keys()")
+

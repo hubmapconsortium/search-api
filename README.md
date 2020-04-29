@@ -39,7 +39,7 @@ The request JSON body to this Search API must start with "query" element
 
 Not all queries defined by Elasticsearch are supported by this Search API, and following is a list of supported query clauses:
 
-- Leaf query clauses: `match_all`, `match`, `match_phrase`, `term`, `terms`, `range`, `exists`
+- Leaf query clauses: `match_all`, `match`, `match_phrase`, `term`, `terms`, `range`, `exists`, `ids`, `type`, `prefix`
 - Compound query clauses: `bool`, `dis_max`
 
 ## Usage examples
