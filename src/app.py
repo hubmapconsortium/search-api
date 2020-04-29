@@ -143,7 +143,7 @@ def modify_query(query_dict):
     }
 
     # We'll first need to decide if the original query is a leaf query or compound query
-    # Leaf query being checked: match_all, match, match_phrase, term
+    # Leaf query being checked: match_all, match, match_phrase, term, terms
     # Compound query being checked: bool, dis_max
 
     # =======Compound query=======
@@ -157,19 +157,22 @@ def modify_query(query_dict):
     # match_all
     elif "match_all" in query_dict:
         convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
-    # match
+    # match (matches if one term is a match, doesn't care about the order of terms)
     elif "match" in query_dict:
         convert_leaf_to_compound(query_dict, "match", leaf_query_dict_to_add)
-    # match_phrase
+    # match_phrase (matches only if the terms come in the same order)
     elif "match_phrase" in query_dict:
         convert_leaf_to_compound(query_dict, "match_phrase", leaf_query_dict_to_add)
-    # term
+    # term (designed for exact comparison)
     elif "term" in query_dict:
         convert_leaf_to_compound(query_dict, "term", leaf_query_dict_to_add)
+    # terms (one or more exact terms in a provided field)
+    elif "terms" in query_dict:
+        convert_leaf_to_compound(query_dict, "terms", leaf_query_dict_to_add)
     # =======Other unsupported queries=======
     # Regardless of leaf (e.g., range) or compound (e.g., boosting query, function_score query)
     else:
-        bad_request("Sorry, the request JSON contains unsupported search query clause")
+        bad_request("Sorry, this Search API doesn't support the given search query clause")
 
 # Key: match_all, match, match_phrase, term
 def convert_leaf_to_compound(query_dict, key, leaf_query_dict_to_add):
