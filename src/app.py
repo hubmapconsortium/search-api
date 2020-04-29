@@ -149,7 +149,8 @@ def modify_query(query_dict):
     supported_compound_query_keys = ['bool', 'dis_max']
 
     # The query context dict contains only one key
-    query_key = query_dict.keys()[0]
+    query_key = list(query_dict)[0]
+    pprint("query key: " + query_key)
 
     # Leaf query
     if query_key in supported_leaf_query_keys:
