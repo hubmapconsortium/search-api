@@ -143,44 +143,29 @@ def modify_query(query_dict):
     }
 
     # We'll first need to decide if the original query is a leaf query or compound query
-    # Leaf query being checked: match_all, match, match_phrase, term, terms, range
+    # Leaf query being checked: match_all, match, match_phrase, multi_match, term, terms, range, exists
     # Compound query being checked: bool, dis_max
+    supported_leaf_query_keys = ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists']
+    supported_compound_query_keys = ['bool', 'dis_max']
 
-    # =======Compound query=======
-    # bool query
-    if "bool" in query_dict:
-        modify_bool_query(query_dict["bool"], leaf_query_dict_to_add)
-    # disjunction max query
-    elif "dis_max" in query_dict:
-        modify_dis_max_query(query_dict["dis_max"], leaf_query_dict_to_add)
-    # =======Leaf query=======
-    # match_all
-    elif "match_all" in query_dict:
-        convert_leaf_to_compound(query_dict, "match_all", leaf_query_dict_to_add)
-    # match (matches if one term is a match, doesn't care about the order of terms)
-    elif "match" in query_dict:
-        convert_leaf_to_compound(query_dict, "match", leaf_query_dict_to_add)
-    # match_phrase (matches only if the terms come in the same order)
-    elif "match_phrase" in query_dict:
-        convert_leaf_to_compound(query_dict, "match_phrase", leaf_query_dict_to_add)
-    # term (designed for exact comparison)
-    elif "term" in query_dict:
-        convert_leaf_to_compound(query_dict, "term", leaf_query_dict_to_add)
-    # terms (one or more exact terms in a provided field)
-    elif "terms" in query_dict:
-        convert_leaf_to_compound(query_dict, "terms", leaf_query_dict_to_add)
-    # range
-    elif "range" in query_dict:
-        convert_leaf_to_compound(query_dict, "range", leaf_query_dict_to_add)
-    # =======Other unsupported queries=======
-    # Regardless of leaf (e.g., match_none, multi_match) or compound (e.g., boosting query, function_score query)
+    # The query context dict contains only one key
+    query_key = query_dict.keys()[0]
+
+    # Leaf query
+    if query_key in supported_leaf_query_keys:
+        convert_leaf_to_compound(query_dict, query_key, leaf_query_dict_to_add)
+    # Compound query
+    elif query_key in supported_compound_query_keys:
+        modify_compound_query(query_dict, query_key, leaf_query_dict_to_add)
+    # Other unsupported queries
+    # Regardless of leaf (e.g., match_none) or compound (e.g., boosting query, function_score query)
     else:
-        bad_request("Sorry, this Search API doesn't support the given search query clause")
+        bad_request("Sorry, this Search API doesn't support the given search query key: '" + query_key + "'")
 
 # Key: match_all, match, match_phrase, term
 def convert_leaf_to_compound(query_dict, key, leaf_query_dict_to_add):
     # First make sure 'access_group' is not used
-    check_access_group_usage(query_dict[key])
+    validate_access_group_usage(query_dict[key])
 
     # When check passes, convert the leaf query into a compound query with modification
     # Convert the orginal leaf query into a compound query with modification
@@ -201,6 +186,14 @@ def convert_leaf_to_compound(query_dict, key, leaf_query_dict_to_add):
     # And delete the original leaf query otherwise it's invalid format
     del query_dict[key]
 
+# Modify the compund query based on specific query key
+def modify_compound_query(query_dict, key, leaf_query_dict_to_add):
+    if key == 'bool':
+        modify_bool_query(query_dict[key], leaf_query_dict_to_add)
+
+    if key == 'dis_max':
+        modify_dis_max_query(query_dict[key], leaf_query_dict_to_add)
+
 # Only modify the bool query object (python dict)
 def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     # "must": The clause (query) must appear in matching documents and will contribute to the score
@@ -209,7 +202,7 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     # Otherwise, mmodify "filter" clause if it presents or create an empty "must" if no "filter"
     # Both bool_dict["must"] and bool_dict["filter"] are list (they can be dict, we use list here)
     if "must" in bool_dict:
-        validate_bool_query_clause_list(bool_dict["must"])
+        validate_compound_query_clause_list(bool_dict["must"])
 
         # When the checks pass("access_group" is not used in the request)
         # we'll modify the orginal query with this simple leaf query(dict object)
@@ -217,7 +210,7 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
     else:
         # Modify the "filter" clause if presents
         if "filter" in bool_dict:
-            validate_bool_query_clause_list(bool_dict["filter"])
+            validate_compound_query_clause_list(bool_dict["filter"])
             bool_dict["filter"].append(leaf_query_dict_to_add)
         else:
             # When neither "must" nor "filter" clause presents, add an empty "must" list
@@ -225,28 +218,11 @@ def modify_bool_query(bool_dict, leaf_query_dict_to_add):
             bool_dict["must"] = []
             bool_dict["must"].append(leaf_query_dict_to_add)
 
-# If by any chance the request json contains `access_group`,
-# we'll response 400 error for security concern
-def validate_bool_query_clause_list(query_clause_list):
-    for item in query_clause_list:
-        # The `access_group` field contains a single word at this moment, 
-        # so we'll cover all possible cases below
-
-        # Case 1: simple "match"
-        # Matches if one term is a match, doesn't care about the order of terms
-        if 'match' in item:
-            check_access_group_usage(item['match'])
-
-        # Case 2: "match_phrase"
-        # Matches only if the terms come in the same order
-        if 'match_phrase' in item:
-            check_access_group_usage(item['match_phrase'])
-
 # Disjunction max query
 def modify_dis_max_query(dis_max_dict, leaf_query_dict_to_add):
     # "queries" key is required, it's a list that contains one or more query clauses
     if "queries" in dis_max_dict:
-        validate_dis_max_query_clause_list(dis_max_dict["queries"])
+        validate_compound_query_clause_list(dis_max_dict["queries"])
 
         # When the checks pass("access_group" is not used in the request)
         # we'll modify the orginal query with this simple leaf query(dict object)
@@ -254,29 +230,19 @@ def modify_dis_max_query(dis_max_dict, leaf_query_dict_to_add):
     else:
         bad_request("'queries' is required top-level parameter in 'dis_max' query in request JSON")
 
-def validate_dis_max_query_clause_list(query_clause_list):
+def validate_compound_query_clause_list(query_clause_list):
     for item in query_clause_list:
-        # The `access_group` field contains a single word at this moment, 
-        # so we'll cover all possible cases below
+        supported_leaf_query_keys = ['match_all', 'match', 'match_phrase', 'multi_match', 'term', 'terms', 'range', 'exists']
 
-        # Case 1: "term"
-        # Matches if one term is exact percise match, including whitespace and capitalization
-        if 'term' in item:
-            check_access_group_usage(item['term'])
-
-        # Case 2: simple "match"
-        # Matches if one term is a match, doesn't care about the order of terms
-        if 'match' in item:
-            check_access_group_usage(item['match'])
-
-        # Case 3: "match_phrase"
-        # Matches only if the terms come in the same order
-        if 'match_phrase' in item:
-            check_access_group_usage(item['match_phrase'])
-
-# If by any chance the request json contains `access_group`,
+        for query in supported_leaf_query_keys:
+            if query in item:
+                validate_access_group_usage(item[query])
+        
+# Possible TO-DO: check against all nested keys?
+# If by any chance the request json contains `access_group` key in the top level,
 # we'll response 400 error for security concern
-def check_access_group_usage(dict):
+# The `access_group` field contains a single word at this moment
+def validate_access_group_usage(dict):
     # Error message if 'access_group' used in the orginal query
     if 'access_group' in dict:
         bad_request("You can not use 'access_group' in request JSON")
