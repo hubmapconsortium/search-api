@@ -6,7 +6,7 @@ services:
   search-api:
     build: ./search-api
     # Build the image with name and tag
-    image: search-api:1.0
+    image: search-api:1.1
     hostname: search-api
     container_name: search-api
     volumes:
