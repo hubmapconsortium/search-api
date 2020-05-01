@@ -51,7 +51,7 @@ def index():
 def search():
     # Always expect a json body
     if not request.is_json:
-        bad_request("This search request requries a JSON body")
+        bad_request_error("A JSON body and appropriate Content-Type header are required")
 
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
@@ -64,13 +64,13 @@ def search():
     # If returns error response, invalid token header or missing token
     if isinstance(user_info, Response):
     	# Notify the client with 401 error message if invalid or missing token
-        unauthorized("Invalid globus token in the 'Authorization' header")
+        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
     # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
     # Key 'hmgroupids' presents only when group_required is True
     else:
         if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
         	# Return 403 error message if user doesn't belong to the HuBMAP-Read group
-            forbidden("The globus token used in the 'Authorization' header doesn't have permission to make a search to the Search API")
+            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
 
     # When the user belongs to the HuBMAP read group,
     # simply pass the search json to elasticsearch
@@ -101,15 +101,15 @@ def reindex(uuid):
 ####################################################################################################
 
 # Throws error for 400 Bad Reqeust with message
-def bad_request(err_msg):
+def bad_request_error(err_msg):
     abort(400, description = err_msg)
 
 # Throws error for 401 Unauthorized with message
-def unauthorized(err_msg):
+def unauthorized_error(err_msg):
     abort(401, description = err_msg)
 
 # Throws error for 403 Forbidden with message
-def forbidden(err_msg):
+def forbidden_error(err_msg):
     abort(403, description = err_msg)
 
 # Initialize AuthHelper (AuthHelper from HuBMAP commons package)
