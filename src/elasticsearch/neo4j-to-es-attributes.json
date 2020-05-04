@@ -74,6 +74,10 @@
         "es_name": "portal_metadata_upload_files",
         "is_json_stored_as_text": true
       },
+      "organ": {
+        "es_name": "organ",
+        "is_json_stored_as_text": false
+      },
       "organ_other": {
         "es_name": "organ_other",
         "is_json_stored_as_text": false

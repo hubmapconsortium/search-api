@@ -1,6 +1,6 @@
 from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
-import sys, json, time, concurrent.futures
+import sys, json, time, concurrent.futures, traceback, copy
 import requests
 import configparser
 import ast
@@ -37,7 +37,7 @@ class Indexer:
     def index_tree(self, donor):
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
-            print(node.get('hubmap_identifier', None))
+            print(node.get('hubmap_identifier', node.get('display_doi', None)))
             doc = self.generate_doc(node)
             self.eswriter.write_document(self.index_name, doc, node['uuid'])
 
@@ -57,7 +57,7 @@ class Indexer:
         nodes = [entity] + ancestors + descendants
 
         for node in nodes:
-            print(node.get('hubmap_identifier', None))
+            print(node.get('hubmap_identifier', node.get('display_doi', None)))
             doc = self.generate_doc(node)
             self.eswriter.delete_document(self.index_name, node['uuid'])
             self.eswriter.write_document(self.index_name, doc, node['uuid'])
@@ -72,7 +72,7 @@ class Indexer:
             donor = None
             for a in ancestors:
                 if a['entitytype'] == 'Donor':
-                    donor = a
+                    donor = copy.copy(a)
                     break
             #     if 'ingest_metadata' in a:
             #         a['ingest_metadata'] = str(a['ingest_metadata'])
@@ -100,10 +100,21 @@ class Indexer:
             if entity.get('source_sample', None):
                 for s in entity.get('source_sample', None):
                     self.entity_keys_rename(s)
+            if entity.get('ancestors', None):
+                for a in entity.get('ancestors', None):
+                    self.entity_keys_rename(a)
+            if entity.get('descendants', None):
+                for d in entity.get('descendants', None):
+                    self.entity_keys_rename(d)
             return json.dumps(entity)
 
         except Exception as e:
-            print(e)
+            print("Exception in user code:")
+            print('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            print('-'*60)
+            import pdb; pdb.set_trace()
+    
     
     def entity_keys_rename(self, entity):
         to_delete_keys = []
@@ -113,7 +124,7 @@ class Indexer:
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
         for key in to_delete_keys:
-            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample']:
+            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants']:
                 entity.pop(key)
         entity.update(temp)
         
@@ -136,7 +147,6 @@ class Indexer:
                 return 'Readonly'
         
         except Exception as e:
-            import pdb; pdb.set_trace() 
             print(e)
 
 if __name__ == '__main__':

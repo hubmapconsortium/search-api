@@ -38,7 +38,7 @@ class ESWriter:
     def create_index(self, index_name):
         rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
                             headers={'Content-Type': 'application/json'},
-                            data={"settings": {"index.mapping.total_fields.limit": 2000}})
+                            data=json.dumps({"settings": {"index.mapping.total_fields.limit": 3000}}))
 
 # if __name__ == '__main__':
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
