@@ -2,18 +2,10 @@
 
 ## How to run this script
 
-1. Make sure python 3.7 or above installed.
-2. Create a conf.py file in the same directory of this readme file, and add the following variable in the file.
+1. Make sure python 3.6 or above installed.
+2. Create a conf.ini file in the same directory of this readme file, use the conf.example.ini as example.
 
-```
-# Neo4j connection
-NEO4J_CONF = {'NEO4J_SERVER':'bolt://10.10.10.10:1234', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'P@ssw0rd'}
-
-# AWS ElasticSearch Endpoint
-ELASTICSEARCH_CONF = {'ELASTICSEARCH_DOMAIN_ENDPOINT': 'https://aws-elastic-search.us-east-1.es.amazonaws.com'}
-```
-
-Edit the content with you neo4j connection infomation and aws elasticsearch domain endpoint.
+Edit the content with you elasticsearch domain endpoint and entity-api URL.
 
 3. Install Pipenv (Optional but Recommanded)
 
