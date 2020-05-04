@@ -26,7 +26,8 @@ After install Pipenv
 
 pipenv shell
 
-pipenv install
+# install the src/requirements.txt and setup.py 
+pipenv install -e ./src
 
 # install hubmapconsortium/commons individually because it sits on github. #egg speficy the package name in your local development enviorment.
 pipenv install -e git+git://github.com/hubmapconsortium/commons.git#egg=hubmap-commons
@@ -37,5 +38,5 @@ pipenv install -e ../commons (relative path to your commons)
 4. Run the script
 
 ```
-python main.py <index_name>
+python indexer.py <index_name>
 ```
