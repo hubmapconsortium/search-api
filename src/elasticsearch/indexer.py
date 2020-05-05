@@ -106,6 +106,9 @@ class Indexer:
             if entity.get('descendants', None):
                 for d in entity.get('descendants', None):
                     self.entity_keys_rename(d)
+
+            self.remove_specific_key_entry(entity, "other_metadata")
+
             return json.dumps(entity)
 
         except Exception as e:
@@ -113,7 +116,6 @@ class Indexer:
             print('-'*60)
             traceback.print_exc(file=sys.stdout)
             print('-'*60)
-            import pdb; pdb.set_trace()
     
     
     def entity_keys_rename(self, entity):
@@ -134,7 +136,16 @@ class Indexer:
                 temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
         entity.pop('metadata')
         entity.update(temp)
-        
+    
+    def remove_specific_key_entry(self, obj, key_to_remove):
+        if type(obj) == dict:
+            if key_to_remove in obj.keys(): 
+                obj.pop(key_to_remove)
+            for key in obj.keys():
+                self.remove_specific_key_entry(obj[key], key_to_remove)
+        elif type(obj) == list:
+            for e in obj:
+                self.remove_specific_key_entry(e, key_to_remove)
 
     def access_group(self, entity):
         try:
