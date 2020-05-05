@@ -36,7 +36,7 @@
       },
       "data_types": {
         "es_name": "data_types",
-        "is_json_stored_as_text": false
+        "is_json_stored_as_text": true
       },
       "description": {
         "es_name": "description",
