@@ -57,7 +57,7 @@ class Indexer:
         nodes = [entity] + ancestors + descendants
 
         for node in nodes:
-            print(node.get('hubmap_identifier', node.get('display_doi', None)))
+            print(node.get('entitytype', 'Unknown Entitytype'), " ", node.get('hubmap_identifier', node.get('display_doi', None)))
             doc = self.generate_doc(node)
             self.eswriter.delete_document(self.index_name, node['uuid'])
             self.eswriter.write_document(self.index_name, doc, node['uuid'])
