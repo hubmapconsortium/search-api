@@ -46,10 +46,6 @@
         "es_name": "metadata",
         "is_json_stored_as_text": true
       },
-      "files": {
-        "es_name": "files",
-        "is_json_stored_as_text": "Special"
-      },
       "donor_metadata": {
         "es_name": "metadata",
         "is_json_stored_as_text": true

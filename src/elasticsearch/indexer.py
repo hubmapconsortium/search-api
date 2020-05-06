@@ -106,6 +106,11 @@ class Indexer:
 
             self.entity_keys_rename(entity)
 
+            try:
+                entity['metadata'].pop('files')
+            except KeyError:
+                print("There is no files in metadata to pop")
+
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
             if entity.get('origin_sample', None):
@@ -139,7 +144,7 @@ class Indexer:
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
         for key in to_delete_keys:
-            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants']:
+            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files']:
                 entity.pop(key)
         entity.update(temp)
         
