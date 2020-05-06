@@ -90,7 +90,20 @@ class Indexer:
                 entity['donor'] = donor
                 entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
                 if entity['entitytype'] == 'Dataset':
-                    entity['source_sample'] = requests.get(self.entity_webservice_url + "/entities/parents/" + entity.get('uuid', None)).json()
+                    entity['source_sample'] = None
+                    e = entity
+                    while entity['source_sample'] is None:
+                        parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
+                        if parents[0]['entitytype'] == 'Sample':
+                            entity['source_sample'] = parents
+                        e = parents[0]
+
+                    # move files to the root level
+                    try:
+                        entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
+                    except KeyError:
+                        print("There is either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+
             self.entity_keys_rename(entity)
 
             if entity.get('donor', None):
