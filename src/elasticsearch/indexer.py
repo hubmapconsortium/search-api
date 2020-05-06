@@ -88,7 +88,16 @@ class Indexer:
 
             if entity['entitytype'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
-                entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
+                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
+                if entity['origin_sample'] is None:
+                    entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                # e = entity
+                # while entity['origin_sample'] is None:
+                #     parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
+                #     if parents[0]['entitytype'] == 'Donor':
+                #         entity['origin_sample'] = e
+                #     e = parents[0]
+                # entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
                 if entity['entitytype'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
