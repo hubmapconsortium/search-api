@@ -9,9 +9,6 @@ import logging
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
-# For debugging
-from pprint import pprint
-
 # Specify the absolute path of the instance folder and use the config file relative to the instance path
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
