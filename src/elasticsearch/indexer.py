@@ -85,19 +85,13 @@ class Indexer:
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
             entity['access_group'] = self.access_group(entity)
+            
+            entity['immediate_descendants'] = requests.get(self.entity_webservice_url + "/entities/children/" + entity.get('uuid', None)).json()
+            entity['immediate_ancestors'] = requests.get(self.entity_webservice_url + "/entities/parents/" + entity.get('uuid', None)).json()
 
             if entity['entitytype'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
-                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
-                if entity['origin_sample'] is None:
-                    entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
-                # e = entity
-                # while entity['origin_sample'] is None:
-                #     parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
-                #     if parents[0]['entitytype'] == 'Donor':
-                #         entity['origin_sample'] = e
-                #     e = parents[0]
-                # entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
+                entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
                 if entity['entitytype'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
@@ -111,14 +105,14 @@ class Indexer:
                     try:
                         entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
                     except KeyError:
-                        print("There is either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        print("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
             try:
                 entity['metadata'].pop('files')
             except KeyError:
-                print("There is no files in metadata to pop")
+                print("There are no files in metadata to pop")
 
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
@@ -133,6 +127,12 @@ class Indexer:
             if entity.get('descendants', None):
                 for d in entity.get('descendants', None):
                     self.entity_keys_rename(d)
+            if entity.get('immediate_descendants', None):
+                for id in entity.get('immediate_descendants', None):
+                    self.entity_keys_rename(id)
+            if entity.get('immediate_ancestors', None):
+                for ia in entity.get('immediate_ancestors', None):
+                    self.entity_keys_rename(ia)
 
             self.remove_specific_key_entry(entity, "other_metadata")
 
@@ -153,7 +153,7 @@ class Indexer:
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
         for key in to_delete_keys:
-            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files']:
+            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants']:
                 entity.pop(key)
         entity.update(temp)
         
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     try:
         index_name = sys.argv[1]
     except IndexError as ie:
-        index_name = input("Please enter index name (Warning: All documents in this index will be clear out first): ")
+        index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
     
     start = time.time()
     indexer = Indexer(index_name, config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
