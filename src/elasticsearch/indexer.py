@@ -24,10 +24,13 @@ class Indexer:
             self.eswriter.remove_index(self.index_name)
             self.eswriter.create_index(self.index_name)
             donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
+            # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
                     print(f.result())
+            # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
+            # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
         
@@ -74,11 +77,7 @@ class Indexer:
                 if a['entitytype'] == 'Donor':
                     donor = copy.copy(a)
                     break
-            #     if 'ingest_metadata' in a:
-            #         a['ingest_metadata'] = str(a['ingest_metadata'])
-            # for d in descendants:
-            #     if 'ingest_metadata' in d:
-            #         d['ingest_metadata'] = str(d['ingest_metadata'])
+
             # build json
             entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
@@ -91,13 +90,7 @@ class Indexer:
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
                 if entity['origin_sample'] is None:
                     entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
-                # e = entity
-                # while entity['origin_sample'] is None:
-                #     parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
-                #     if parents[0]['entitytype'] == 'Donor':
-                #         entity['origin_sample'] = e
-                #     e = parents[0]
-                # entity['origin_sample'] = requests.get(self.entity_webservice_url + "/entities/children/" + donor.get('uuid', None)).json()[0]
+
                 if entity['entitytype'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
