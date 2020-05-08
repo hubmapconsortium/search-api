@@ -4,12 +4,10 @@ from elasticsearch.indexer import Indexer
 from flask import Flask, jsonify, abort, request, make_response, json, Response
 import threading
 import requests
+import logging
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
-
-# For debugging
-from pprint import pprint
 
 # Specify the absolute path of the instance folder and use the config file relative to the instance path
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
@@ -17,6 +15,9 @@ app.config.from_pyfile('app.cfg')
 
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
+
+# Set logging level (default is warning)
+logging.basicConfig(level=logging.DEBUG)
 
 # Error handler for 400 Bad Request with custom error message
 @app.errorhandler(400)
@@ -58,8 +59,8 @@ def search():
 
     user_info = get_user_info_for_access_check(request, True)
 
-    pprint("======user_info======")
-    pprint(user_info)
+    app.logger.info("======user_info======")
+    app.logger.info(user_info)
 
     # If returns error response, invalid token header or missing token
     if isinstance(user_info, Response):
