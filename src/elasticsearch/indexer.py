@@ -65,6 +65,7 @@ class Indexer:
             self.eswriter.delete_document(self.index_name, node['uuid'])
             self.eswriter.write_document(self.index_name, doc, node['uuid'])
         
+        print("################DONE######################")
         return f"Done."
 
     def generate_doc(self, entity):
@@ -108,12 +109,16 @@ class Indexer:
                         entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
                     except KeyError:
                         print("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                    except TypeError:
+                        print("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
             try:
                 entity['metadata'].pop('files')
             except KeyError:
+                print("There are no files in metadata to pop")
+            except AttributeError:
                 print("There are no files in metadata to pop")
 
             if entity.get('donor', None):
