@@ -46,7 +46,7 @@
         "es_name": "metadata",
         "is_json_stored_as_text": true
       },
-      "donor_metadata": {
+      "metadata": {
         "es_name": "metadata",
         "is_json_stored_as_text": true
       },
