@@ -1,16 +1,38 @@
+# https://github.com/SmartAPI/smartAPI-Specification/blob/OpenAPI.next/versions/3.0.0.md#specification
 openapi: 3.0.0
 info:
   description: The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
-  version: "0.1.0"
+  version: 0.1.0
   title: HuBMAP Search API
-  termsOfService: "https://hubmapconsortium.org"
+  termsOfService: 'https://hubmapconsortium.org'
   contact:
     email: apiteam@hubmap.org
-
 tags:
-  - name: Search API, Elasticsearch
+  - name: 'Search API, Elasticsearch'
     description: Operations pertaining to datasets indexed in Elasticsearch
+servers:
+- url: 'https://search-api.dev.hubmapconsortium.org/'
+  description: Development server
+- url: 'https://search-api.test.hubmapconsortium.org/'
+  description: Testing server
 
+# Define the security scheme type (HTTP bearer)
+components:
+  securitySchemes:
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: Globus nexus token 
+      
+  schemas:
+    requestJsonBody:
+      type: object
+
+      
+# Apply the security globally to all operations
+security:
+  - bearerAuth: [] 
+  
 paths:
   /search:
     post:
@@ -18,31 +40,45 @@ paths:
         - search
       summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query
       operationId: search-post
+      requestBody:
+        description: Request JSON of Elasticsearch query
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/requestJsonBody'
       responses:
-        "200":
+        '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
-        "400":
-          description: A JSON body and appropriate Content-Type header are required in request
-        "401":
-          description: A valid globus token in the `Authorization` header (Bearer scheme) is required in request
-        "403":
+        '400':
+          description: Bad request. A JSON body and appropriate Content-Type header are required in request
+        '401':
+          description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
+        '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
     get:
       tags:
         - search
       summary: Execute an Elasticsearch query JSON via HTTP GET and get back search hits that match the query
       operationId: search-get
+      requestBody:
+        description: Request JSON of Elasticsearch query
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/requestJsonBody'
       responses:
-        "200":
+        '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
-        "400":
-          description: A JSON body and appropriate Content-Type header are required in request
-        "401":
+        '400':
+          description: Bad request. A JSON body and appropriate Content-Type header are required in request
+        '401':
           description: A valid globus token in the `Authorization` header (Bearer scheme) is required in request
-        "403":
+        '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
-          
-  "/reindex/{identifier}": 
+            
+  '/reindex/{identifier}':
     put:
       tags:
         - reindex
@@ -56,5 +92,5 @@ paths:
           schema:
             type: string
       responses:
-        "202":
+        '202':
           description: The request has been accepted and reindex is in process
