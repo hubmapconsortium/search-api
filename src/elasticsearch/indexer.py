@@ -93,16 +93,22 @@ class Indexer:
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
                 if entity['origin_sample'] is None:
-                    entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                    try:
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                    except StopIteration:
+                        entity['origin_sample'] = {}
 
                 if entity['entitytype'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
                     while entity['source_sample'] is None:
                         parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
-                        if parents[0]['entitytype'] == 'Sample':
-                            entity['source_sample'] = parents
-                        e = parents[0]
+                        try:
+                            if parents[0]['entitytype'] == 'Sample':
+                                entity['source_sample'] = parents
+                            e = parents[0]
+                        except IndexError:
+                             entity['source_sample'] = {}
 
                     # move files to the root level
                     try:
@@ -146,6 +152,7 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
+            import pdb; pdb.set_trace()
             print("Exception in user code:")
             print('-'*60)
             traceback.print_exc(file=sys.stdout)
