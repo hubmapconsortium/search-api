@@ -64,13 +64,13 @@ def search():
 
     # If returns error response, invalid token header or missing token
     if isinstance(user_info, Response):
-    	# Notify the client with 401 error message if invalid or missing token
+        # Notify the client with 401 error message if invalid or missing token
         unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
     # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
     # Key 'hmgroupids' presents only when group_required is True
     else:
         if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
-        	# Return 403 error message if user doesn't belong to the HuBMAP-Read group
+            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
             forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
 
     # When the user belongs to the HuBMAP read group,
@@ -81,9 +81,75 @@ def search():
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)
 
-    # return the elasticsearch resulting json data as json string
+    # Return the elasticsearch resulting json data as json string
     return jsonify(resp.json())
 
+# Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+@app.route('/<index>/search', methods = ['GET', 'POST'])
+def search_by_index():
+    # Always expect a json body
+    if not request.is_json:
+        bad_request_error("A JSON body and appropriate Content-Type header are required")
+
+    # Parse incoming json string into json data(python dict object)
+    json_data = request.get_json()
+
+    user_info = get_user_info_for_access_check(request, True)
+
+    app.logger.info("======user_info======")
+    app.logger.info(user_info)
+
+    # If returns error response, invalid token header or missing token
+    if isinstance(user_info, Response):
+        # Notify the client with 401 error message if invalid or missing token
+        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
+    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
+    # Key 'hmgroupids' presents only when group_required is True
+    else:
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
+            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
+            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
+
+    # When the user belongs to the HuBMAP read group,
+    # simply pass the search json to elasticsearch
+    # The request json may contain "access_group" in this case
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + index + '/' + '_search'
+    # Make a request with json data
+    # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
+    resp = requests.post(url = target_url, json = json_data)
+
+    # Return the elasticsearch resulting json data as json string
+    return jsonify(resp.json())
+
+# Get a list of indices
+@app.route('/indices', methods = ['GET'])
+def indices():
+    # The final list of indices to return
+    indices = []
+
+    # Get a list of all indices and their aliases
+    target_url = app.config['ELASTICSEARCH_URL'] + '/_aliases'
+    resp = requests.get(url = target_url)
+    
+    # The JSON that contains all indices and aliases
+    indices_and_aliases = resp.json()
+
+    # Remove the ".kibana_" prefixed indices
+    skip_prefix = '.kibana'
+    # There may also be other indices that we want to hide
+    skip_indices = ['test']
+
+    # Filter the final list
+    for key in indices_and_aliases:
+        if (not key.startswith(skip_prefix)) and (key not in skip_indices):
+            indices.append(key)
+
+    # Return the resulting json data as json string
+    result = {
+        "indices": indices
+    }
+
+    return jsonify(result)
 
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
