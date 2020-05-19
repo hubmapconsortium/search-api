@@ -2,6 +2,8 @@
 
 The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
 
+The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf02b838022d564da776b03f357158
+
 ## Search endpoint and group access check
 
 The search endpoint for each deployment environment:
