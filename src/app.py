@@ -124,29 +124,9 @@ def search_by_index():
 # Get a list of indices
 @app.route('/indices', methods = ['GET'])
 def indices():
-    # The final list of indices to return
-    indices = []
-
-    # Get a list of all indices and their aliases
-    target_url = app.config['ELASTICSEARCH_URL'] + '/_aliases'
-    resp = requests.get(url = target_url)
-    
-    # The JSON that contains all indices and aliases
-    indices_and_aliases = resp.json()
-
-    # Remove the ".kibana_" prefixed indices
-    skip_prefix = '.kibana'
-    # There may also be other indices that we want to hide
-    skip_indices = ['test']
-
-    # Filter the final list
-    for key in indices_and_aliases:
-        if (not key.startswith(skip_prefix)) and (key not in skip_indices):
-            indices.append(key)
-
     # Return the resulting json data as json string
     result = {
-        "indices": indices
+        "indices": get_filtered_indices()
     }
 
     return jsonify(result)
@@ -195,3 +175,26 @@ def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
 
+# Get a list of filtered Elasticsearch indices
+def get_filtered_indices():
+    # The final list of indices to return
+    indices = []
+
+    # Get a list of all indices and their aliases
+    target_url = app.config['ELASTICSEARCH_URL'] + '/_aliases'
+    resp = requests.get(url = target_url)
+    
+    # The JSON that contains all indices and aliases
+    indices_and_aliases_dict = resp.json()
+
+    # Remove the ".kibana_" prefixed indices
+    skip_prefix = '.kibana'
+    # There may also be other indices that we want to hide
+    skip_indices = ['test']
+
+    # Filter the final list
+    for key in indices_and_aliases_dict:
+        if (not key.startswith(skip_prefix)) and (key not in skip_indices):
+            indices.append(key)
+
+    return indices
