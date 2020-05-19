@@ -187,14 +187,13 @@ def get_filtered_indices():
     # The JSON that contains all indices and aliases
     indices_and_aliases_dict = resp.json()
 
-    # Remove the ".kibana_" prefixed indices
-    skip_prefix = '.kibana'
-    # There may also be other indices that we want to hide
-    skip_indices = ['test']
+    # Only return the indices based on below naming convention
+    public_index_prefix = 'public_'
+    consortium_index_prefix = 'consortium_'
 
     # Filter the final list
     for key in indices_and_aliases_dict:
-        if (not key.startswith(skip_prefix)) and (key not in skip_indices):
+        if key.startswith(public_index_prefix) or key.startswith(consortium_index_prefix):
             indices.append(key)
 
     return indices
