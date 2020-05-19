@@ -57,24 +57,11 @@ def search():
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
-    user_info = get_user_info_for_access_check(request, True)
+    # Verify globus token
+    auth_check(request)
 
-    app.logger.info("======user_info======")
-    app.logger.info(user_info)
-
-    # If returns error response, invalid token header or missing token
-    if isinstance(user_info, Response):
-        # Notify the client with 401 error message if invalid or missing token
-        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
-    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
-    # Key 'hmgroupids' presents only when group_required is True
-    else:
-        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
-            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
-            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
-
-    # When the user belongs to the HuBMAP read group,
-    # simply pass the search json to elasticsearch
+    # By now, the token is valid
+    # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
     target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search'
     # Make a request with json data
@@ -91,27 +78,28 @@ def search_by_index():
     if not request.is_json:
         bad_request_error("A JSON body and appropriate Content-Type header are required")
 
+    # We'll first need to verify the requested index in URL is valid
+    indices = get_filtered_indices()
+    if index not in indices:
+        bad_request_error("Invalid target index name. Use one of the following: " + ', '.join(indices))
+    
+    app.logger.info("======requested index======")
+    app.logger.info(index)
+
+    # Naming convention
+    consortium_index_prefix = 'consortium_'
+    
+    # Public indices don't require token, only consortium indices require
+    if index.startswith(consortium_index_prefix):
+        auth_check(request)
+
+    # By now, either the requested index is public (no token required) 
+    # or it's a consortium index and the token is valid
+
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
-    user_info = get_user_info_for_access_check(request, True)
-
-    app.logger.info("======user_info======")
-    app.logger.info(user_info)
-
-    # If returns error response, invalid token header or missing token
-    if isinstance(user_info, Response):
-        # Notify the client with 401 error message if invalid or missing token
-        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
-    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
-    # Key 'hmgroupids' presents only when group_required is True
-    else:
-        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
-            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
-            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
-
-    # When the user belongs to the HuBMAP read group,
-    # simply pass the search json to elasticsearch
+    # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
     target_url = app.config['ELASTICSEARCH_URL'] + '/' + index + '/' + '_search'
     # Make a request with json data
@@ -174,6 +162,24 @@ def init_auth_helper():
 def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
+
+# Veify the globus token in HTTP header for access control
+def auth_check(request):
+    user_info = get_user_info_for_access_check(request, True)
+
+    app.logger.info("======user_info======")
+    app.logger.info(user_info)
+
+    # If returns error response, invalid token header or missing token
+    if isinstance(user_info, Response):
+        # Notify the client with 401 error message if invalid or missing token
+        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
+    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
+    # Key 'hmgroupids' presents only when group_required is True
+    else:
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
+            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
+            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
 
 # Get a list of filtered Elasticsearch indices
 def get_filtered_indices():
