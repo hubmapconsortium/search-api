@@ -4,6 +4,10 @@
 # ELASTICSEARCH_URL = "http://hubmap-elasticsearch:9200"
 ELASTICSEARCH_URL = ''
 
+# Naming convention of indices (always in pair) in Elasticsearch
+PUBLIC_INDEX_PREFIX = 'public_'
+PRIVATE_INDEX_PREFIX = 'consortium_'
+
 # Entity-API service
 # Default value works with docker deployment on localhost, dev, test, and prod
 # Don't use the trailing slash /

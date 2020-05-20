@@ -86,11 +86,8 @@ def search_by_index(index):
     app.logger.info("======requested index======")
     app.logger.info(index)
 
-    # Naming convention
-    consortium_index_prefix = 'consortium_'
-    
     # Public indices don't require token, only consortium indices require
-    if index.startswith(consortium_index_prefix):
+    if index.startswith(app.config['PRIVATE_INDEX_PREFIX']):
         auth_check(request)
 
     # By now, either the requested index is public (no token required) 
@@ -192,14 +189,11 @@ def get_filtered_indices():
     
     # The JSON that contains all indices and aliases
     indices_and_aliases_dict = resp.json()
-
-    # Only return the indices based on below naming convention
-    public_index_prefix = 'public_'
-    consortium_index_prefix = 'consortium_'
-
+    
     # Filter the final list
+    # Only return the indices based on below naming convention
     for key in indices_and_aliases_dict:
-        if key.startswith(public_index_prefix) or key.startswith(consortium_index_prefix):
+        if key.startswith(app.config['PUBLIC_INDEX_PREFIX']) or key.startswith(app.config['PRIVATE_INDEX_PREFIX']):
             indices.append(key)
 
     return indices
