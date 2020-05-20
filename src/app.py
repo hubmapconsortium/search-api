@@ -73,7 +73,7 @@ def search():
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 @app.route('/<index>/search', methods = ['GET', 'POST'])
-def search_by_index():
+def search_by_index(index):
     # Always expect a json body
     if not request.is_json:
         bad_request_error("A JSON body and appropriate Content-Type header are required")
