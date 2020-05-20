@@ -5,8 +5,8 @@
 ELASTICSEARCH_URL = ''
 
 # Naming convention of indices (always in pair) in Elasticsearch
-PUBLIC_INDEX_PREFIX = 'public_'
-PRIVATE_INDEX_PREFIX = 'consortium_'
+PUBLIC_INDEX_PREFIX = 'hm_public_'
+PRIVATE_INDEX_PREFIX = 'hm_consortium_'
 
 # Entity-API service
 # Default value works with docker deployment on localhost, dev, test, and prod
