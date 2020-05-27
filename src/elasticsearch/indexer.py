@@ -1,13 +1,17 @@
 from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
-import sys, json, time, concurrent.futures, traceback, copy
+import sys, json, time, concurrent.futures, traceback, copy, threading
 import requests
 import configparser
 import ast
 import os
+import logging
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
+
+# Set logging level (default is warning)
+logging.basicConfig(level=logging.INFO)
 
 class Indexer:
 
@@ -18,7 +22,6 @@ class Indexer:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
         
-
     def main(self):
         try:
             self.eswriter.remove_index(self.index_name)
@@ -28,44 +31,38 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    print(f.result())
+                    logging.info(f.result())
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
         
         except Exception as e:
-            print(e)
+            logging.error(e)
 
     def index_tree(self, donor):
+        # logging.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
-            print(node.get('hubmap_identifier', node.get('display_doi', None)))
+            logging.info(node.get('hubmap_identifier', node.get('display_doi', None)))
             doc = self.generate_doc(node)
             self.eswriter.write_document(self.index_name, doc, node['uuid'])
 
         return f"Done."
 
     def reindex(self, uuid):
-        print(f"Before /entities/uuid/{uuid} call")
-        print(self.entity_webservice_url + "/entities/uuid/" + uuid)
         entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
-        print(f"After /entities/uuid/{uuid} call")
-        print(f"Before /entities/ancestors/{uuid} call")
         ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
-        print(f"After /entities/ancestors/{uuid} call")
-        print(f"Before /entities/descendants/{uuid} call")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
-        print(f"After /entities/descendants/{uuid} call")
         nodes = [entity] + ancestors + descendants
 
         for node in nodes:
-            print(node.get('entitytype', 'Unknown Entitytype'), " ", node.get('hubmap_identifier', node.get('display_doi', None)))
+            logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
             doc = self.generate_doc(node)
-            self.eswriter.delete_document(self.index_name, node['uuid'])
-            self.eswriter.write_document(self.index_name, doc, node['uuid'])
+            # self.eswriter.delete_document(self.index_name, node['uuid'])
+            self.eswriter.write_or_update_document(self.index_name, doc, node['uuid'])
         
-        print("################DONE######################")
+        logging.info("################DONE######################")
         return f"Done."
 
     def generate_doc(self, entity):
@@ -93,33 +90,39 @@ class Indexer:
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
                 if entity['origin_sample'] is None:
-                    entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                    try:
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                    except StopIteration:
+                        entity['origin_sample'] = {}
 
                 if entity['entitytype'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
                     while entity['source_sample'] is None:
                         parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
-                        if parents[0]['entitytype'] == 'Sample':
-                            entity['source_sample'] = parents
-                        e = parents[0]
+                        try:
+                            if parents[0]['entitytype'] == 'Sample':
+                                entity['source_sample'] = parents
+                            e = parents[0]
+                        except IndexError:
+                             entity['source_sample'] = {}
 
                     # move files to the root level
                     try:
                         entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
                     except KeyError:
-                        print("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        logging.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
                     except TypeError:
-                        print("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        logging.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
             try:
                 entity['metadata'].pop('files')
             except KeyError:
-                print("There are no files in metadata to pop")
+                logging.info("There are no files in metadata to pop")
             except AttributeError:
-                print("There are no files in metadata to pop")
+                logging.info("There are no files in metadata to pop")
 
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
@@ -146,12 +149,11 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
-            print("Exception in user code:")
-            print('-'*60)
+            logging.error("Exception in user code:")
+            logging.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            print('-'*60)
-    
-    
+            logging.error('-'*60)
+   
     def entity_keys_rename(self, entity):
         to_delete_keys = []
         temp = {}
@@ -192,7 +194,30 @@ class Indexer:
                 return 'Readonly'
         
         except Exception as e:
-            print(e)
+            logging.error(e)
+
+    def test(self):
+        try:
+            donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
+            donors = [donor for donor in donors if donor['hubmap_identifier'] == 'TEST0086']
+            fk_donors = []
+            for _ in range(100):
+                fk_donors.append(copy.copy(donors[0]))
+            # Multi-thread
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                results = [executor.submit(self.index_tree, donor) for donor in fk_donors]
+                for f in concurrent.futures.as_completed(results):
+                    logging.info(f.result())
+            
+            # Single-thread
+            # for donor in fk_donors:
+            #     self.index_tree(donor)
+
+        except Exception as e:
+            logging.error("Exception in user code:")
+            logging.error('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            logging.error('-'*60)
 
 if __name__ == '__main__':
     try:
@@ -204,4 +229,10 @@ if __name__ == '__main__':
     indexer = Indexer(index_name, config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
-    print(end - start)
+    logging.info(f"Total index time: {end - start} seconds")
+
+    # start = time.time()
+    # indexer = Indexer('entities', config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    # indexer.test()
+    # end = time.time()
+    # logging.info(f"Total index time: {end - start} seconds")

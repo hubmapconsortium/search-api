@@ -114,7 +114,7 @@ class DBReader:
                     descendant = {}
                     descendant.update(record.get('d')._properties)
                     for key, value in record.get('dm')._properties.items():
-                        descendant.setdefault(key, value)s
+                        descendant.setdefault(key, value)
                         # if key == 'ingest_metadata':
                         #     ingest_metadata = ast.literal_eval(value)
                         #     for key, value in ingest_metadata.items():
