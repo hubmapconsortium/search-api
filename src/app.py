@@ -5,6 +5,7 @@ from flask import Flask, jsonify, abort, request, make_response, json, Response
 import threading
 import requests
 import logging
+from urllib.parse import urlparse
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -63,7 +64,8 @@ def search():
     # By now, the token is valid
     # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search'
+    # Will also pass through the query string in URL
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search' + get_query_string(request.url)
     # Make a request with json data
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)
@@ -98,7 +100,8 @@ def search_by_index(index):
 
     # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + index + '/' + '_search'
+    # Will also pass through the query string in URL
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + index + '/' + '_search' + get_query_string(request.url)
     # Make a request with json data
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)
@@ -197,3 +200,17 @@ def get_filtered_indices():
             indices.append(key)
 
     return indices
+
+# Get the query string from orignal request
+def get_query_string(url):
+    query_string = ''
+    parsed_url = urlparse(url)
+                
+    app.logger.debug("======parsed_url======")
+    app.logger.debug(parsed_url)
+
+    # Add the ? at beginning of the query string if not empty
+    if not parsed_url.query:
+        query_string = '?' + parsed_url.query
+
+    return query_string
