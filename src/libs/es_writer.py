@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+import logging
 
 class ESWriter:
     def __init__(self, elasticsearch_url):
@@ -12,12 +13,12 @@ class ESWriter:
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                print("write doc done")
+                logging.info("write doc done")
             else:
-                print(f"""error happened when writing {uuid} to elasticsearch\n
+                logging.error(f"""error happened when writing {uuid} to elasticsearch\n
                         Error Message: {rspn.text}""")
         except Exception as e:
-            print(str(e))
+            logging.error(str(e))
 
         # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
 
@@ -26,11 +27,24 @@ class ESWriter:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
                             headers={'Content-Type': 'application/json'})
             if rspn.ok:
-                print(f"doc: {uuid} deleted")
+                logging.info(f"doc: {uuid} deleted")
             else:
-                print(rspn.text)
+                logging.error(rspn.text)
         except Exception as e:
-            print(str(e))
+            logging.error(str(e))
+
+    def write_or_update_document(self, index_name, doc, uuid):
+        try:
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}",
+                            headers={'Content-Type': 'application/json'},
+                            data=doc)
+            if rspn.ok:
+                logging.info("write doc done")
+            else:
+                logging.error(f"""error happened when writing {uuid} to elasticsearch\n
+                        Error Message: {rspn.text}""")
+        except Exception as e:
+            logging.error(str(e))
 
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
