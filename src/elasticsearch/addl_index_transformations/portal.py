@@ -1,4 +1,6 @@
 from pathlib import Path
+from copy import deepcopy
+import re
 
 import jsonschema
 from yaml import safe_load as load_yaml
@@ -43,31 +45,44 @@ def transform(doc, batch_id='unspecified'):
      'uuid': 'xxx'}
 
     '''
-    clean_doc = _clean(doc)
-    _validate(clean_doc)  # Caller will log errors.
-    translated_doc = _translate(clean_doc)
-    return translated_doc
+    doc_copy = deepcopy(doc)
+    # We will modify in place below,
+    # so make a deep copy so we don't surprise the caller.
+    _clean(doc_copy)
+    _validate(doc_copy)  # Caller will log errors.
+    _translate(doc_copy)
+    return doc_copy
 
 
-_schema_dir = Path(__file__).parent / 'search-schema' / 'data' / 'schemas'
+_data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
     schema = _get_schema(doc)
     allowed_props = schema['properties'].keys()
-    cleaned = {
-        k: v for k, v in doc.items()
-        if k in allowed_props
-    }
-    return cleaned
+    keys = list(doc.keys())
+    for key in keys:
+        if key not in allowed_props:
+            del doc[key]
 
 
 _schemas = {
     entity_type:
         load_yaml((
-            _schema_dir / f'{entity_type}.schema.yaml'
+            _data_dir / 'schemas' / f'{entity_type}.schema.yaml'
         ).read_text())
     for entity_type in ['dataset', 'donor', 'sample']
+}
+
+
+_enums = load_yaml(
+        (_data_dir / 'definitions.yaml').read_text()
+    )['enums']
+
+
+_organ_map = {
+    k: re.sub(r'\s+\d+$', '', v['description'])
+    for k, v in _enums['organ_types'].items()
 }
 
 
@@ -81,4 +96,16 @@ def _validate(doc):
 
 
 def _translate(doc):
-    return doc
+    _translate_organ(doc)
+
+
+def _translate_organ(doc):
+    '''
+    >>> doc = {'organ': 'LY01'}
+    >>> _translate_organ(doc)
+    >>> doc
+    {'organ': 'Lymph Node'}
+
+    '''
+    if 'organ' in doc:
+        doc['organ'] = _organ_map[doc['organ']]
