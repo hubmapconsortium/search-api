@@ -4,6 +4,10 @@ import re
 from yaml import safe_load as load_yaml
 
 
+class TranslationException(Exception):
+    pass
+
+
 def translate(doc):
     _translate_status(doc)
     _translate_organ(doc)
@@ -46,6 +50,11 @@ def _translate_status(doc):
     >>> _translate_status(doc); doc
     {'status': 'QA'}
 
+    >>> doc = {'status': 'xyz'}
+    >>> _translate_status(doc)
+    Traceback (most recent call last):
+    ...
+    portal_translate.TranslationException: Unexpected status: xyz
     '''
     _map(doc, 'status', _status_map)
 
@@ -53,6 +62,8 @@ def _translate_status(doc):
 def _status_map(k):
     if k.upper() == 'QA':
         return 'QA'
+    if k not in _status_dict:
+        raise TranslationException(f'Unexpected status: {k}')
     description = _status_dict[k]
     return description.title()
 
@@ -75,11 +86,19 @@ def _translate_organ(doc):
     >>> _translate_organ(doc); doc
     {'origin_sample': {'organ': 'Kidney (Right)'}}
 
+    >>> doc = {'origin_sample': {'organ': 'ZZ'}}
+    >>> _translate_organ(doc)
+    Traceback (most recent call last):
+    ...
+    portal_translate.TranslationException: Unexpected organ: ZZ
+
     '''
     _map(doc, 'organ', _organ_map)
 
 
 def _organ_map(k):
+    if k not in _organ_dict:
+        raise TranslationException(f'Unexpected organ: {k}')
     return _organ_dict[k]
 
 
@@ -133,6 +152,19 @@ def _translate_donor_metadata(doc):
                   'gender': 'Masculine gender',
                   'race': 'African race'}}
 
+    >>> doc = {
+    ...     "metadata": {
+    ...         "organ_donor_data": [
+    ...             {"grouping_concept_preferred_term":
+    ...                     "BAD TERM"}
+    ...         ]
+    ...     }
+    ... }
+    >>> _translate_donor_metadata(doc)
+    Traceback (most recent call last):
+    ...
+    portal_translate.TranslationException: Unexpected term: BAD TERM
+
     '''
     _map(doc, 'metadata', _donor_metadata_map)
 
@@ -146,7 +178,10 @@ def _donor_metadata_map(metadata):
     }
     if 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            k = recognized_terms[kv['grouping_concept_preferred_term']]
+            term = kv['grouping_concept_preferred_term']
+            if term not in recognized_terms:
+                raise TranslationException(f'Unexpected term: {term}')
+            k = recognized_terms[term]
             v = (
                 kv['preferred_term']
                 if kv['data_type'] == 'Nominal'
