@@ -106,6 +106,13 @@ def _translate_organ(doc):
     >>> doc
     {'organ': 'Lymph Node'}
 
+    >>> doc = {'origin_sample': {'organ': 'RK'}}
+    >>> _translate_organ(doc)
+    >>> doc
+    {'origin_sample': {'organ': 'Kidney (Right)'}}
+
     '''
     if 'organ' in doc:
         doc['organ'] = _organ_map[doc['organ']]
+    if 'origin_sample' in doc:
+        _translate_organ(doc['origin_sample'])
