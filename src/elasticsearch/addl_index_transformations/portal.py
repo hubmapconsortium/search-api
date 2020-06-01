@@ -45,7 +45,8 @@ def transform(doc, batch_id='unspecified'):
     '''
     clean_doc = _clean(doc)
     _validate(clean_doc)  # Caller will log errors.
-    return clean_doc
+    translated_doc = _translate(clean_doc)
+    return translated_doc
 
 
 _schema_dir = Path(__file__).parent / 'search-schema' / 'data' / 'schemas'
@@ -77,3 +78,7 @@ def _get_schema(doc):
 
 def _validate(doc):
     jsonschema.validate(doc, _get_schema(doc))
+
+
+def _translate(doc):
+    return doc

@@ -4,6 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+flake8 = 3.8.2
 
 [packages]
 neo4j = "*"
@@ -11,6 +12,8 @@ request = "*"
 flask = "*"
 hubmap-commons = {editable = true,git = "git://github.com/hubmapconsortium/commons.git"}
 search-api = {editable = true,path = "."}
+jsonschema = 3.2.0
+pyyaml = 5.3.1
 
 [requires]
 python_version = "3.7"
