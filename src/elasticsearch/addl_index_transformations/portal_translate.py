@@ -12,6 +12,7 @@ def translate(doc):
     _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
+    _translate_specimen_type(doc)
 
 
 # Utils:
@@ -105,6 +106,36 @@ def _organ_map(k):
 _organ_dict = {
     k: re.sub(r'\s+\d+$', '', v['description'])
     for k, v in _enums['organ_types'].items()
+}
+
+
+# Specimen type:
+
+def _translate_specimen_type(doc):
+    '''
+    >>> doc = {'specimen_type': 'fresh_frozen_tissue'}
+    >>> _translate_specimen_type(doc); doc
+    {'specimen_type': 'Fresh frozen tissue'}
+
+    >>> doc = {'specimen_type': 'zz'}
+    >>> _translate_specimen_type(doc)
+    Traceback (most recent call last):
+    ...
+    portal_translate.TranslationException: Unexpected specimen type: zz
+
+    '''
+    _map(doc, 'specimen_type', _specimen_types_map)
+
+
+def _specimen_types_map(k):
+    if k not in _specimen_types_dict:
+        raise TranslationException(f'Unexpected specimen type: {k}')
+    return _specimen_types_dict[k]
+
+
+_specimen_types_dict = {
+    k: v['description']
+    for k, v in _enums['tissue_sample_types'].items()
 }
 
 
