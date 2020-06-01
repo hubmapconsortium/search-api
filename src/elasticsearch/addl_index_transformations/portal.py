@@ -5,7 +5,7 @@ from copy import deepcopy
 import logging
 import sys
 
-import jsonschema
+# import jsonschema
 from yaml import dump as dump_yaml, safe_load as load_yaml
 
 from portal_translate import translate, TranslationException
@@ -37,12 +37,9 @@ def transform(doc, batch_id='unspecified'):
     ... }))
     {'access_group': 'xxx',
      'ancestor_ids': 'xxx',
-     'ancestors': 'xxx',
      'create_timestamp': 0,
      'created_by_user_displayname': 'xxx',
      'created_by_user_email': 'xxx',
-     'descendant_ids': 'xxx',
-     'descendants': 'xxx',
      'entity_type': 'Donor',
      'group_name': 'xxx',
      'group_uuid': 'xxx',
@@ -54,11 +51,10 @@ def transform(doc, batch_id='unspecified'):
     # We will modify in place below,
     # so make a deep copy so we don't surprise the caller.
     _clean(doc_copy)
-    _validate(doc_copy)  # Caller will log errors.
     try:
         translate(doc_copy)
     except TranslationException as e:
-        logging.error(f'{doc[uuid]}: {e}')
+        logging.error(f'{doc["uuid"]}: {e}')
         return None
     return doc_copy
 
@@ -73,6 +69,16 @@ def _clean(doc):
     for key in keys:
         if key not in allowed_props:
             del doc[key]
+
+    # Not used in portal:
+    for unused_key in [
+        'ancestors',  # ancestor_ids *is* used in portal.
+        'descendants',
+        'descendant_ids',
+        'hubmap_display_id',  # Only used in ingest.
+    ]:
+        if unused_key in doc:
+            del doc[unused_key]
 
 
 _schemas = {
@@ -89,8 +95,9 @@ def _get_schema(doc):
     return _schemas[entity_type]
 
 
-def _validate(doc):
-    jsonschema.validate(doc, _get_schema(doc))
+# TODO:
+# def _validate(doc):
+#     jsonschema.validate(doc, _get_schema(doc))
 
 
 if __name__ == "__main__":
