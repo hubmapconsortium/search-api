@@ -21,12 +21,12 @@ def transform(doc, batch_id='unspecified'):
     >>> from pprint import pprint
     >>> pprint(transform({
     ...    'entity_type': 'Donor',
-    ...    'create_timestamp': 0,
+    ...    'create_timestamp': 1575489509656,
     ...    'created_by_user_displayname': 'xxx',
     ...    'created_by_user_email': 'xxx',
     ...    'group_name': 'xxx',
     ...    'group_uuid': 'xxx',
-    ...    'last_modified_timestamp': 'xxx',
+    ...    'last_modified_timestamp': '1575489509656',
     ...    'uuid': 'xxx',
     ...    'access_group': 'xxx',
     ...    'ancestor_ids': 'xxx',
@@ -37,13 +37,13 @@ def transform(doc, batch_id='unspecified'):
     ... }))
     {'access_group': 'xxx',
      'ancestor_ids': 'xxx',
-     'create_timestamp': 0,
+     'create_timestamp': '2019-12-04 19:58:29',
      'created_by_user_displayname': 'xxx',
      'created_by_user_email': 'xxx',
      'entity_type': 'Donor',
      'group_name': 'xxx',
      'group_uuid': 'xxx',
-     'last_modified_timestamp': 'xxx',
+     'last_modified_timestamp': '2019-12-04 19:58:29',
      'uuid': 'xxx'}
 
     '''
@@ -63,7 +63,7 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
-    _map(doc, _cleaner)
+    _map(doc, _simple_clean)
 
 
 def _map(doc, clean):
@@ -79,7 +79,7 @@ def _map(doc, clean):
             _map(sample, clean)
 
 
-def _cleaner(doc):
+def _simple_clean(doc):
     schema = _get_schema(doc)
     allowed_props = schema['properties'].keys()
     keys = list(doc.keys())

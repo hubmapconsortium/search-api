@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+from datetime import datetime
 
 from yaml import safe_load as load_yaml
 
@@ -13,6 +14,7 @@ def translate(doc):
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
+    _translate_timestamp(doc)
 
 
 # Utils:
@@ -73,6 +75,32 @@ _status_dict = {
     k: v['description']
     for k, v in _enums['dataset_status_types'].items()
 }
+
+
+# Timestamp:
+
+def _translate_timestamp(doc):
+    '''
+    >>> doc = {
+    ...    'create_timestamp': '1575489509656',
+    ...    'last_modified_timestamp': 1590017663118
+    ... }
+    >>> _translate_timestamp(doc);
+    >>> from pprint import pprint
+    >>> pprint(doc)
+    {'create_timestamp': '2019-12-04 19:58:29',
+     'last_modified_timestamp': '2020-05-20 23:34:23'}
+
+    '''
+    _map(doc, 'create_timestamp', _timestamp_map)
+    _map(doc, 'last_modified_timestamp', _timestamp_map)
+
+
+def _timestamp_map(timestamp):
+    return (
+        datetime.utcfromtimestamp(int(timestamp) / 1000)
+        .strftime('%Y-%m-%d %H:%M:%S')
+    )
 
 
 # Organ:
