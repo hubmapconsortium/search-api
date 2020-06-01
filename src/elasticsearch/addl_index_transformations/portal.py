@@ -87,7 +87,6 @@ def _simple_clean(doc):
         if key not in allowed_props:
             del doc[key]
 
-    # TODO: Clean up nested objects as well.
     # Not used in portal:
     for unused_key in [
         'ancestors',  # ancestor_ids *is* used in portal.
