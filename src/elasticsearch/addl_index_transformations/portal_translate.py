@@ -117,11 +117,11 @@ def _translate_specimen_type(doc):
     >>> _translate_specimen_type(doc); doc
     {'specimen_type': 'Fresh frozen tissue'}
 
-    >>> doc = {'specimen_type': 'zz'}
+    >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc)
     Traceback (most recent call last):
     ...
-    portal_translate.TranslationException: Unexpected specimen type: zz
+    portal_translate.TranslationException: Unexpected specimen type: xyz
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)

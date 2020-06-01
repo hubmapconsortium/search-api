@@ -54,7 +54,7 @@ def transform(doc, batch_id='unspecified'):
     try:
         translate(doc_copy)
     except TranslationException as e:
-        logging.error(f'{doc["uuid"]}: {e}')
+        logging.error(f'Batch {batch_id}; UUID {doc["uuid"]}: {e}')
         return None
     return doc_copy
 
@@ -63,6 +63,23 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
+    _map(doc, _cleaner)
+
+
+def _map(doc, clean):
+    # The recursion is usually not needed...
+    # but better to do it everywhere than to miss one case.
+    clean(doc)
+    if 'donor' in doc:
+        _map(doc['donor'], clean)
+    if 'origin_sample' in doc:
+        _map(doc['origin_sample'], clean)
+    if 'source_sample' in doc:
+        for sample in doc['source_sample']:
+            _map(sample, clean)
+
+
+def _cleaner(doc):
     schema = _get_schema(doc)
     allowed_props = schema['properties'].keys()
     keys = list(doc.keys())
