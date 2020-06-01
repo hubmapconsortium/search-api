@@ -80,10 +80,27 @@ _enums = load_yaml(
     )['enums']
 
 
-_organ_map = {
+_organ_dict = {
     k: re.sub(r'\s+\d+$', '', v['description'])
     for k, v in _enums['organ_types'].items()
 }
+
+
+def _organ_map(k):
+    return _organ_dict[k]
+
+
+_status_dict = {
+    k: v['description']
+    for k, v in _enums['dataset_status_types'].items()
+}
+
+
+def _status_map(k):
+    if k.upper() == 'QA':
+        return 'QA'
+    description = _status_dict[k]
+    return description.title()
 
 
 def _get_schema(doc):
@@ -96,7 +113,31 @@ def _validate(doc):
 
 
 def _translate(doc):
+    _translate_status(doc)
     _translate_organ(doc)
+
+
+def _map(doc, key, map):
+    if key in doc:
+        doc[key] = map(doc[key])
+    if 'donor' in doc:
+        _map(doc['donor'], key, map)
+    if 'origin_sample' in doc:
+        _map(doc['origin_sample'], key, map)
+    if 'source_sample' in doc:
+        for sample in doc['source_sample']:
+            _map(sample, key, map)
+
+
+def _translate_status(doc):
+    '''
+    >>> doc = {'status': 'NEW'}
+    >>> _translate_status(doc)
+    >>> doc
+    {'status': 'New'}
+
+    '''
+    _map(doc, 'status', _status_map)
 
 
 def _translate_organ(doc):
@@ -112,7 +153,4 @@ def _translate_organ(doc):
     {'origin_sample': {'organ': 'Kidney (Right)'}}
 
     '''
-    if 'organ' in doc:
-        doc['organ'] = _organ_map[doc['organ']]
-    if 'origin_sample' in doc:
-        _translate_organ(doc['origin_sample'])
+    _map(doc, 'organ', _organ_map)
