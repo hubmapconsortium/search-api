@@ -1,10 +1,14 @@
+#!/usr/bin/env python3
+
 from pathlib import Path
 from copy import deepcopy
+import logging
+import sys
 
 import jsonschema
-from yaml import safe_load as load_yaml
+from yaml import dump as dump_yaml, safe_load as load_yaml
 
-from portal_translate import translate
+from portal_translate import translate, TranslationException
 
 
 def transform(doc, batch_id='unspecified'):
@@ -51,7 +55,11 @@ def transform(doc, batch_id='unspecified'):
     # so make a deep copy so we don't surprise the caller.
     _clean(doc_copy)
     _validate(doc_copy)  # Caller will log errors.
-    translate(doc_copy)
+    try:
+        translate(doc_copy)
+    except TranslationException as e:
+        logging.error(f'{doc[uuid]}: {e}')
+        return None
     return doc_copy
 
 
@@ -83,3 +91,10 @@ def _get_schema(doc):
 
 def _validate(doc):
     jsonschema.validate(doc, _get_schema(doc))
+
+
+if __name__ == "__main__":
+    for name in sys.argv[1:]:
+        doc = load_yaml(Path(name).read_text())
+        transformed = transform(doc)
+        print(dump_yaml(transformed))
