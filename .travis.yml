@@ -1,0 +1,9 @@
+language: python
+python:
+  - '3.7'
+cache: pip
+install:
+  - pip install -r src/requirements.txt
+  - pip install -r src/requirements-dev.txt
+script:
+  - src/elasticsearch/addl_index_transformations/test.sh
