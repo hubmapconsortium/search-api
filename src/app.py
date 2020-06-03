@@ -48,6 +48,7 @@ def index():
 ## API
 ####################################################################################################
 
+# Search against the default index
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 @app.route('/search', methods = ['GET', 'POST'])
 def search():
@@ -65,7 +66,7 @@ def search():
     # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
     # Will also pass through the query string in URL
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search' + get_query_string(request.url)
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + app.config['DEFAULT_INDEX'] + '/' + '_search' + get_query_string(request.url)
     # Make a request with json data
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)

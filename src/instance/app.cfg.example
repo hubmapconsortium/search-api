@@ -4,6 +4,9 @@
 # ELASTICSEARCH_URL = "http://hubmap-elasticsearch:9200"
 ELASTICSEARCH_URL = ''
 
+# Default the index name to 'entities' for `/search`
+DEFAULT_INDEX = 'entities'
+
 # Naming convention of indices (always in pair) in Elasticsearch
 PUBLIC_INDEX_PREFIX = 'hm_public_'
 PRIVATE_INDEX_PREFIX = 'hm_consortium_'
