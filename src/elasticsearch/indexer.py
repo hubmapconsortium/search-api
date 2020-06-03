@@ -11,7 +11,7 @@ config = configparser.ConfigParser()
 config.read('conf.ini')
 
 # Set logging level (default is warning)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',handlers=[logging.FileHandler('log'), logging.StreamHandler()])
 
 class Indexer:
 
@@ -19,6 +19,8 @@ class Indexer:
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
         self.index_name = index_name
+        self.hm_public_index = 'hm_public_entities'
+        self.hm_consortium_index = 'hm_consortium_entities'
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
         
@@ -58,9 +60,10 @@ class Indexer:
 
         for node in nodes:
             logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
-            doc = self.generate_doc(node)
-            # self.eswriter.delete_document(self.index_name, node['uuid'])
-            self.eswriter.write_or_update_document(self.index_name, doc, node['uuid'])
+            self.update_entities_index(node)
+            # self.update_hm_public_entities(node)
+            # self.update_hm_consortium_entities(node)
+
         
         logging.info("################DONE######################")
         return f"Done."
@@ -169,7 +172,14 @@ class Indexer:
         temp = {}
         for key in entity['metadata']:
             if key in self.attr_map['METADATA']:
-                temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
+                try:
+                    temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
+                except SyntaxError:
+                    logging.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                    temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
+                except ValueError:
+                    logging.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                    temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
         entity.pop('metadata')
         entity.update(temp)
     
@@ -218,6 +228,19 @@ class Indexer:
             logging.error('-'*60)
             traceback.print_exc(file=sys.stdout)
             logging.error('-'*60)
+
+    def update_entities_index(self, node):
+        doc = self.generate_doc(node)
+        self.eswriter.write_or_update_document(self.index_name, doc, node['uuid'])
+    
+    def update_hm_public_entities(self, node):
+        if access_group(node) == 'Open':
+            doc = self.generate_doc(node)
+            self.eswriter.write_or_update_document(self.hm_public_index, doc, node['uuid'])
+    
+    def update_hm_consortium_entities(self, node):
+        doc = self.generate_doc(node)
+        self.eswriter.write_or_update_document(self.hm_consortium_index, doc, node['uuid'])
 
 if __name__ == '__main__':
     try:

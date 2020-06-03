@@ -50,11 +50,21 @@ class ESWriter:
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
     
     def create_index(self, index_name):
-        rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
-                            headers={'Content-Type': 'application/json'},
-                            data=json.dumps({"settings": {"index.mapping.total_fields.limit": 3000,
-                                                          "index.query.default_field": 2048}}))
-
+        try:
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
+                                headers={'Content-Type': 'application/json'},
+                                data=json.dumps({"settings": {"index" : {
+                                                            "mapping.total_fields.limit": 5000,
+                                                            "query.default_field": 2048,
+                                                            "number_of_shards": 1,
+                                                            "number_of_replicas": 1}}}))
+            if rspn.ok:
+                logging.info(f"index {index_name} created")
+            else:
+                logging.error(f"""error happened when creating {index_name} on elasticsearch\n
+                        Error Message: {rspn.text}""")
+        except Exception as e:
+            logging.error(str(e))
 # if __name__ == '__main__':
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
 #     node = db_reader.get_donor('TEST0010')
