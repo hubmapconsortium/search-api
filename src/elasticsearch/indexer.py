@@ -1,5 +1,6 @@
 from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
+from addl_index_transformations.portal import transform
 import sys, json, time, concurrent.futures, traceback, copy, threading
 import requests
 import configparser
@@ -15,19 +16,29 @@ logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelna
 
 class Indexer:
 
-    def __init__(self, index_name, elasticsearch_url, entity_webservice_url):
+    def __init__(self, elasticsearch_url, entity_webservice_url):
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
-        self.index_name = index_name
+        self.index_name = 'entities'
         self.hm_public_index = 'hm_public_entities'
         self.hm_consortium_index = 'hm_consortium_entities'
+        self.portal_public_index = 'portal_public_entities'
+        self.portal_consortium_index = 'portal_consortium_entities'
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
         
     def main(self):
         try:
-            self.eswriter.remove_index(self.index_name)
-            self.eswriter.create_index(self.index_name)
+            # self.eswriter.remove_index(self.index_name)
+            # self.eswriter.create_index(self.index_name)
+            self.eswriter.remove_index(self.hm_public_index)
+            self.eswriter.create_index(self.hm_public_index)
+            self.eswriter.remove_index(self.hm_consortium_index)
+            self.eswriter.create_index(self.hm_consortium_index)
+            self.eswriter.remove_index(self.portal_public_index)
+            self.eswriter.create_index(self.portal_public_index)
+            self.eswriter.remove_index(self.portal_consortium_index)
+            self.eswriter.create_index(self.portal_consortium_index)
             donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -40,15 +51,17 @@ class Indexer:
             #     self.index_tree(donor)
         
         except Exception as e:
-            logging.error(e)
+            logging.error("Exception in user code:")
+            logging.error('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            logging.error('-'*60)
 
     def index_tree(self, donor):
         # logging.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
             logging.info(node.get('hubmap_identifier', node.get('display_doi', None)))
-            doc = self.generate_doc(node)
-            self.eswriter.write_document(self.index_name, doc, node['uuid'])
+            self.update_index(node)
 
         return f"Done."
 
@@ -60,15 +73,15 @@ class Indexer:
 
         for node in nodes:
             logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
-            self.update_entities_index(node)
-            # self.update_hm_public_entities(node)
-            # self.update_hm_consortium_entities(node)
-
+            self.update_index(node)
         
         logging.info("################DONE######################")
         return f"Done."
 
     def generate_doc(self, entity):
+        '''
+            entity_keys_rename will change the entity inplace
+        '''
         try:
             ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + entity.get('uuid', None)).json()
             descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + entity.get('uuid', None)).json()
@@ -204,7 +217,10 @@ class Indexer:
                 return 'Readonly'
         
         except Exception as e:
-            logging.error(e)
+            logging.error("Exception in user code:")
+            logging.error('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            logging.error('-'*60)
 
     def test(self):
         try:
@@ -229,27 +245,27 @@ class Indexer:
             traceback.print_exc(file=sys.stdout)
             logging.error('-'*60)
 
-    def update_entities_index(self, node):
+    def update_index(self, node):
+        org_node = copy.deepcopy(node)
         doc = self.generate_doc(node)
+        transformed = json.dumps(transform(json.loads(doc)))
         self.eswriter.write_or_update_document(self.index_name, doc, node['uuid'])
-    
-    def update_hm_public_entities(self, node):
-        if access_group(node) == 'Open':
-            doc = self.generate_doc(node)
-            self.eswriter.write_or_update_document(self.hm_public_index, doc, node['uuid'])
-    
-    def update_hm_consortium_entities(self, node):
-        doc = self.generate_doc(node)
         self.eswriter.write_or_update_document(self.hm_consortium_index, doc, node['uuid'])
+        self.eswriter.write_or_update_document(self.portal_consortium_index, transformed, node['uuid'])
+
+        if self.access_group(org_node) == 'Open':
+            # import pdb; pdb.set_trace()
+            self.eswriter.write_or_update_document(self.hm_public_index, doc, node['uuid'])
+            self.eswriter.write_or_update_document(self.portal_public_index, transformed, node['uuid'])
 
 if __name__ == '__main__':
-    try:
-        index_name = sys.argv[1]
-    except IndexError as ie:
-        index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
+    # try:
+    #     index_name = sys.argv[1]
+    # except IndexError as ie:
+    #     index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
     
     start = time.time()
-    indexer = Indexer(index_name, config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    indexer = Indexer(config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
     logging.info(f"Total index time: {end - start} seconds")
