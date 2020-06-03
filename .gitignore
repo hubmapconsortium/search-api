@@ -13,3 +13,6 @@ src/elasticsearch/conf.ini
 src/search_api.egg-info
 
 __pycache__/
+
+Pipfile
+Pipfile.lock
