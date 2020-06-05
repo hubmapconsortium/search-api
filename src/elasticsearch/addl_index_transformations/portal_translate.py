@@ -23,8 +23,8 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 _enums = load_yaml(
-        (_data_dir / 'definitions.yaml').read_text()
-    )['enums']
+    (_data_dir / 'definitions.yaml').read_text()
+)['enums']
 
 
 def _map(doc, key, map):
