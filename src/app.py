@@ -5,6 +5,7 @@ from flask import Flask, jsonify, abort, request, make_response, json, Response
 import threading
 import requests
 import logging
+from urllib.parse import urlparse
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -47,6 +48,7 @@ def index():
 ## API
 ####################################################################################################
 
+# Search against the default index
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 @app.route('/search', methods = ['GET', 'POST'])
 def search():
@@ -57,33 +59,66 @@ def search():
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
 
-    user_info = get_user_info_for_access_check(request, True)
+    # Verify globus token
+    auth_check(request)
 
-    app.logger.info("======user_info======")
-    app.logger.info(user_info)
-
-    # If returns error response, invalid token header or missing token
-    if isinstance(user_info, Response):
-    	# Notify the client with 401 error message if invalid or missing token
-        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
-    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
-    # Key 'hmgroupids' presents only when group_required is True
-    else:
-        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
-        	# Return 403 error message if user doesn't belong to the HuBMAP-Read group
-            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
-
-    # When the user belongs to the HuBMAP read group,
-    # simply pass the search json to elasticsearch
+    # By now, the token is valid
+    # All we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + '_search'
+    # Will also pass through the query string in URL
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + app.config['DEFAULT_INDEX'] + '/' + '_search' + get_query_string(request.url)
     # Make a request with json data
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)
 
-    # return the elasticsearch resulting json data as json string
+    # Return the elasticsearch resulting json data as json string
     return jsonify(resp.json())
 
+# Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+@app.route('/<index>/search', methods = ['GET', 'POST'])
+def search_by_index(index):
+    # Always expect a json body
+    if not request.is_json:
+        bad_request_error("A JSON body and appropriate Content-Type header are required")
+
+    # We'll first need to verify the requested index in URL is valid
+    indices = get_filtered_indices()
+    if index not in indices:
+        bad_request_error("Invalid target index name. Use one of the following: " + ', '.join(indices))
+    
+    app.logger.info("======requested index======")
+    app.logger.info(index)
+
+    # Public indices don't require token, only consortium indices require
+    if index.startswith(app.config['PRIVATE_INDEX_PREFIX']):
+        auth_check(request)
+
+    # By now, either the requested index is public (no token required) 
+    # or it's a consortium index and the token is valid
+
+    # Parse incoming json string into json data(python dict object)
+    json_data = request.get_json()
+
+    # All we need to do is to simply pass the search json to elasticsearch
+    # The request json may contain "access_group" in this case
+    # Will also pass through the query string in URL
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + index + '/' + '_search' + get_query_string(request.url)
+    # Make a request with json data
+    # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
+    resp = requests.post(url = target_url, json = json_data)
+
+    # Return the elasticsearch resulting json data as json string
+    return jsonify(resp.json())
+
+# Get a list of indices
+@app.route('/indices', methods = ['GET'])
+def indices():
+    # Return the resulting json data as json string
+    result = {
+        "indices": get_filtered_indices()
+    }
+
+    return jsonify(result)
 
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
@@ -129,3 +164,54 @@ def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
 
+# Veify the globus token in HTTP header for access control
+def auth_check(request):
+    user_info = get_user_info_for_access_check(request, True)
+
+    app.logger.info("======user_info======")
+    app.logger.info(user_info)
+
+    # If returns error response, invalid token header or missing token
+    if isinstance(user_info, Response):
+        # Notify the client with 401 error message if invalid or missing token
+        unauthorized_error("A valid globus token in the HTTP 'Authorization: Bearer <globus-token>' header is required")
+    # Otherwise, user_info is a dict and we check user_info['hmgroupids'] list
+    # Key 'hmgroupids' presents only when group_required is True
+    else:
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] not in user_info['hmgroupids']:
+            # Return 403 error message if user doesn't belong to the HuBMAP-Read group
+            forbidden_error("The globus token used in the 'Authorization' header doesn't have the right group access permission")
+
+# Get a list of filtered Elasticsearch indices
+def get_filtered_indices():
+    # The final list of indices to return
+    indices = []
+
+    # Get a list of all indices and their aliases
+    target_url = app.config['ELASTICSEARCH_URL'] + '/_aliases'
+    resp = requests.get(url = target_url)
+    
+    # The JSON that contains all indices and aliases
+    indices_and_aliases_dict = resp.json()
+    
+    # Filter the final list
+    # Only return the indices based on below naming convention
+    for key in indices_and_aliases_dict:
+        if key.startswith(app.config['PUBLIC_INDEX_PREFIX']) or key.startswith(app.config['PRIVATE_INDEX_PREFIX']):
+            indices.append(key)
+
+    return indices
+
+# Get the query string from orignal request
+def get_query_string(url):
+    query_string = ''
+    parsed_url = urlparse(url)
+                
+    app.logger.debug("======parsed_url======")
+    app.logger.debug(parsed_url)
+
+    # Add the ? at beginning of the query string if not empty
+    if not parsed_url.query:
+        query_string = '?' + parsed_url.query
+
+    return query_string
