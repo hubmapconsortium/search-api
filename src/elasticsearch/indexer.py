@@ -1,6 +1,6 @@
 from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
-from addl_index_transformations.portal import transform
+from elasticsearch.addl_index_transformations.portal import transform
 import sys, json, time, concurrent.futures, traceback, copy, threading
 import requests
 import configparser
