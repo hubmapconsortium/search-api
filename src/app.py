@@ -56,32 +56,8 @@ def search():
         bad_request_error("A JSON body and appropriate Content-Type header are required")
 
     # The Authorization header with globus token is optional
-    # Case #1: Authorization header is missing, default to use the `hm_public_entities`. 
-    # Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_entities`. 
-    # Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
-    # Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_entities`. 
-    
-    # Case #1 and #2
-    default_index = app.config['DEFAULT_PUBLIC_INDEX']
-
-    # Keys in request.headers are case insensitive 
-    if 'Authorization' in request.headers:
-        # user_info is a dict
-        user_info = get_user_info_for_access_check(request, True)
-
-        app.logger.info("======user_info======")
-        app.logger.info(user_info)
-
-        # Case #3
-        if isinstance(user_info, Response):
-            # Notify the client with 401 error message
-            unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
-        # Otherwise, we check user_info['hmgroupids'] list
-        # Key 'hmgroupids' presents only when group_required is True
-        else:
-            # Case #4
-            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
-                default_index = app.config['DEFAULT_PRIVATE_INDEX']
+    # Get the default index based on the Authorization header token
+    default_index = get_default_index(request)
 
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
@@ -186,6 +162,36 @@ def init_auth_helper():
 def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
+
+# The Authorization header with globus token is optional
+# Case #1: Authorization header is missing, default to use the `hm_public_entities`. 
+# Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_entities`. 
+# Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
+# Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_entities`. 
+def get_default_index(request):
+    # Case #1 and #2
+    default_index = app.config['DEFAULT_PUBLIC_INDEX']
+
+    # Keys in request.headers are case insensitive 
+    if 'Authorization' in request.headers:
+        # user_info is a dict
+        user_info = get_user_info_for_access_check(request, True)
+
+        app.logger.info("======user_info======")
+        app.logger.info(user_info)
+
+        # Case #3
+        if isinstance(user_info, Response):
+            # Notify the client with 401 error message
+            unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
+        # Otherwise, we check user_info['hmgroupids'] list
+        # Key 'hmgroupids' presents only when group_required is True
+        else:
+            # Case #4
+            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+                default_index = app.config['DEFAULT_PRIVATE_INDEX']
+    
+    return default_index
 
 # Veify the globus token in HTTP header for access control
 def auth_check(request):

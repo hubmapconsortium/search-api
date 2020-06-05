@@ -4,6 +4,7 @@ docker/search-api/src
 
 src/instance/app.cfg
 
+src/log
 log/*.log
 
 src/elasticsearch/.vscode/
