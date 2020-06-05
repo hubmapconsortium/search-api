@@ -8,7 +8,9 @@ import sys
 # import jsonschema
 from yaml import dump as dump_yaml, safe_load as load_yaml
 
-from addl_index_transformations.portal_translate import translate, TranslationException
+from addl_index_transformations.portal_translate import (
+    translate, TranslationException
+)
 
 
 def transform(doc, batch_id='unspecified'):
