@@ -43,6 +43,7 @@ class ESWriter:
             else:
                 logging.error(f"""error happened when writing {uuid} to elasticsearch\n
                         Error Message: {rspn.text}""")
+                logging.error(f"Document: {doc}")
         except Exception as e:
             logging.error(str(e))
 
