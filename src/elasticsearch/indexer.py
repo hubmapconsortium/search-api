@@ -1,6 +1,6 @@
 from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
-from addl_index_transformations.portal import transform
+from elasticsearch.addl_index_transformations.portal import transform
 import sys, json, time, concurrent.futures, traceback, copy, threading
 import requests
 import configparser
@@ -19,26 +19,20 @@ class Indexer:
     def __init__(self, elasticsearch_url, entity_webservice_url):
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
-        self.index_name = 'entities'
-        self.hm_public_index = 'hm_public_entities'
-        self.hm_consortium_index = 'hm_consortium_entities'
-        self.portal_public_index = 'portal_public_entities'
-        self.portal_consortium_index = 'portal_consortium_entities'
+        self.indices = {
+            "hm_public_entities": ('Open','original'),
+            "hm_consortium_entities": ('All', 'original'),
+            "portal_public_entities": ('Open', 'transformed'),
+            "portal_consortium_entities": ('All', 'transformed')
+            }
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
         
     def main(self):
         try:
-            # self.eswriter.remove_index(self.index_name)
-            # self.eswriter.create_index(self.index_name)
-            self.eswriter.remove_index(self.hm_public_index)
-            self.eswriter.create_index(self.hm_public_index)
-            self.eswriter.remove_index(self.hm_consortium_index)
-            self.eswriter.create_index(self.hm_consortium_index)
-            self.eswriter.remove_index(self.portal_public_index)
-            self.eswriter.create_index(self.portal_public_index)
-            self.eswriter.remove_index(self.portal_consortium_index)
-            self.eswriter.create_index(self.portal_consortium_index)
+            for index, _ in self.indices.items():
+                self.eswriter.remove_index(index)
+                self.eswriter.create_index(index)
             donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -249,14 +243,13 @@ class Indexer:
         org_node = copy.deepcopy(node)
         doc = self.generate_doc(node)
         transformed = json.dumps(transform(json.loads(doc)))
-        self.eswriter.write_or_update_document(self.index_name, doc, node['uuid'])
-        self.eswriter.write_or_update_document(self.hm_consortium_index, doc, node['uuid'])
-        self.eswriter.write_or_update_document(self.portal_consortium_index, transformed, node['uuid'])
 
-        if self.access_group(org_node) == 'Open':
-            # import pdb; pdb.set_trace()
-            self.eswriter.write_or_update_document(self.hm_public_index, doc, node['uuid'])
-            self.eswriter.write_or_update_document(self.portal_public_index, transformed, node['uuid'])
+        for index, configs in self.indices.items():
+            
+            if configs[0] == 'Open' and self.access_group(org_node) == 'Open':
+                self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
+
+            self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
 
 if __name__ == '__main__':
     # try:

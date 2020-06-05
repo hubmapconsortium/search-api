@@ -48,7 +48,6 @@ def index():
 ## API
 ####################################################################################################
 
-# Search against the default index
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 @app.route('/search', methods = ['GET', 'POST'])
 def search():
@@ -56,17 +55,41 @@ def search():
     if not request.is_json:
         bad_request_error("A JSON body and appropriate Content-Type header are required")
 
+    # The Authorization header with globus token is optional
+    # Case #1: Authorization header is missing, default to use the `hm_public_entities`. 
+    # Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_entities`. 
+    # Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
+    # Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_entities`. 
+    
+    # Case #1 and #2
+    default_index = app.config['DEFAULT_PUBLIC_INDEX']
+
+    # Keys in request.headers are case insensitive 
+    if 'Authorization' in request.headers:
+        # user_info is a dict
+        user_info = get_user_info_for_access_check(request, True)
+
+        app.logger.info("======user_info======")
+        app.logger.info(user_info)
+
+        # Case #3
+        if isinstance(user_info, Response):
+            # Notify the client with 401 error message
+            unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
+        # Otherwise, we check user_info['hmgroupids'] list
+        # Key 'hmgroupids' presents only when group_required is True
+        else:
+            # Case #4
+            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+                default_index = app.config['DEFAULT_PRIVATE_INDEX']
+
     # Parse incoming json string into json data(python dict object)
     json_data = request.get_json()
-
-    # Verify globus token
-    auth_check(request)
-
-    # By now, the token is valid
-    # All we need to do is to simply pass the search json to elasticsearch
+    
+    # By now, all we need to do is to simply pass the search json to elasticsearch
     # The request json may contain "access_group" in this case
     # Will also pass through the query string in URL
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + app.config['DEFAULT_INDEX'] + '/' + '_search' + get_query_string(request.url)
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + default_index + '/' + '_search' + get_query_string(request.url)
     # Make a request with json data
     # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     resp = requests.post(url = target_url, json = json_data)
