@@ -23,3 +23,14 @@ APP_CLIENT_SECRET = ''
 
 # Globus Hubmap-Read group UUID
 GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
+
+INDICES = """{
+            'hm_public_entities': ('Open','original'),
+            'hm_consortium_entities': ('All', 'original'),
+            'portal_public_entities': ('Open', 'transformed'),
+            'portal_consortium_entities': ('All', 'transformed')
+            }"""
+# Open: Only entities can open to the public
+# All: All entities
+# original: directly from neo4j
+# transformed: transformed by portal transform method

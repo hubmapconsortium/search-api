@@ -16,15 +16,13 @@ logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelna
 
 class Indexer:
 
-    def __init__(self, elasticsearch_url, entity_webservice_url):
+    def __init__(self, indices, elasticsearch_url, entity_webservice_url):
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
-        self.indices = {
-            "hm_public_entities": ('Open','original'),
-            "hm_consortium_entities": ('All', 'original'),
-            "portal_public_entities": ('Open', 'transformed'),
-            "portal_consortium_entities": ('All', 'transformed')
-            }
+        try:
+            self.indices = ast.literal_eval(indices)
+        except:
+            raise ValueError("There is problem of indices config.")
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
         
@@ -258,7 +256,7 @@ if __name__ == '__main__':
     #     index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
     
     start = time.time()
-    indexer = Indexer(config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
     logging.info(f"Total index time: {end - start} seconds")
