@@ -57,7 +57,7 @@ def _translate_status(doc):
     >>> _translate_status(doc)
     Traceback (most recent call last):
     ...
-    portal_translate.TranslationException: Unexpected status: xyz
+    translate.TranslationException: Unexpected status: xyz
     '''
     _map(doc, 'status', _status_map)
 
@@ -119,7 +119,7 @@ def _translate_organ(doc):
     >>> _translate_organ(doc)
     Traceback (most recent call last):
     ...
-    portal_translate.TranslationException: Unexpected organ: ZZ
+    translate.TranslationException: Unexpected organ: ZZ
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -149,7 +149,7 @@ def _translate_specimen_type(doc):
     >>> _translate_specimen_type(doc)
     Traceback (most recent call last):
     ...
-    portal_translate.TranslationException: Unexpected specimen type: xyz
+    translate.TranslationException: Unexpected specimen type: xyz
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -222,7 +222,7 @@ def _translate_donor_metadata(doc):
     >>> _translate_donor_metadata(doc)
     Traceback (most recent call last):
     ...
-    portal_translate.TranslationException: Unexpected term: BAD TERM
+    translate.TranslationException: Unexpected term: BAD TERM
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
