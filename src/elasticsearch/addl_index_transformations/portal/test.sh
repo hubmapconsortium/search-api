@@ -13,8 +13,8 @@ flake8 \
 end flake8
 
 start doctests
-cd ../..
-ls elasticsearch/addl_index_transformations/*.py \
+cd ../../..
+ls elasticsearch/addl_index_transformations/portal/*.py \
   | xargs python -m doctest -v
 cd -
 end doctests
