@@ -122,12 +122,12 @@ def indices():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        indexer = Indexer('entities', app.config['ELASTICSEARCH_URL'], app.config['ENTITY_WEBSERVICE_URL'])
+        indexer = Indexer(app.config['INDICES'], app.config['ELASTICSEARCH_URL'], app.config['ENTITY_WEBSERVICE_URL'])
         t1 = threading.Thread(target=indexer.reindex, args=[uuid])
         t1.start()
         #indexer.reindex(uuid)
     except Exception as e:
-        print(e)
+        app.logger.error(e)
     return 'OK', 202
 
 

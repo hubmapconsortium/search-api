@@ -27,8 +27,8 @@ GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 INDICES = """{
             'hm_public_entities': ('Open','original'),
             'hm_consortium_entities': ('All', 'original'),
-            'portal_public_entities': ('Open', 'transformed'),
-            'portal_consortium_entities': ('All', 'transformed')
+            'hm_public_portal': ('Open', 'transformed'),
+            'hm_consortium_portal': ('All', 'transformed')
             }"""
 # Open: Only entities can open to the public
 # All: All entities
