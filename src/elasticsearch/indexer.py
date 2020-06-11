@@ -58,17 +58,23 @@ class Indexer:
         return f"Done."
 
     def reindex(self, uuid):
-        entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
-        ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
-        descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
-        nodes = [entity] + ancestors + descendants
+        try:
+            entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
+            ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
+            descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
+            nodes = [entity] + ancestors + descendants
 
-        for node in nodes:
-            logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
-            self.update_index(node)
-        
-        logging.info("################DONE######################")
-        return f"Done."
+            for node in nodes:
+                logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
+                self.update_index(node)
+            
+            logging.info("################DONE######################")
+            return f"Done."
+        except Exception as e:
+            logging.error("Exception in user code:")
+            logging.error('-'*60)
+            traceback.print_exc(file=sys.stdout)
+            logging.error('-'*60)
 
     def generate_doc(self, entity):
         '''
@@ -243,11 +249,10 @@ class Indexer:
         transformed = json.dumps(transform(json.loads(doc)))
 
         for index, configs in self.indices.items():
-            
             if configs[0] == 'Open' and self.access_group(org_node) == 'Open':
                 self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
-
-            self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
+            elif configs[0] == 'All':
+                self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
 
 if __name__ == '__main__':
     # try:
