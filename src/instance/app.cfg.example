@@ -8,9 +8,8 @@ ELASTICSEARCH_URL = ''
 PUBLIC_INDEX_PREFIX = 'hm_public_'
 PRIVATE_INDEX_PREFIX = 'hm_consortium_'
 
-# Default index name for `/search` compability, can NOT be empty
-DEFAULT_PUBLIC_INDEX = 'hm_public_entities'
-DEFAULT_PRIVATE_INDEX = 'hm_consortium_entities'
+# Default index (without prefix) name for `/search` compability, can NOT be empty
+DEFAULT_INDEX_WITHOUT_PREFIX = 'entities'
 
 # Entity-API service
 # Default value works with docker deployment on localhost, dev, test, and prod
@@ -24,13 +23,14 @@ APP_CLIENT_SECRET = ''
 # Globus Hubmap-Read group UUID
 GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 
+# Open: Only entities can open to the public
+# All: All entities
+# original: directly from neo4j
+# transformed: transformed by portal transform method
 INDICES = """{
             'hm_public_entities': ('Open','original'),
             'hm_consortium_entities': ('All', 'original'),
             'hm_public_portal': ('Open', 'transformed'),
             'hm_consortium_portal': ('All', 'transformed')
             }"""
-# Open: Only entities can open to the public
-# All: All entities
-# original: directly from neo4j
-# transformed: transformed by portal transform method
+
