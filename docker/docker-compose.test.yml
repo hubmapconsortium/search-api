@@ -8,7 +8,4 @@ services:
       - HOST_UID=${HOST_UID:-1000}
     init: true
     restart: always
-    volumes:
-      # Indexer logging
-      - "../src/log:/usr/src/app/src/log"
 
