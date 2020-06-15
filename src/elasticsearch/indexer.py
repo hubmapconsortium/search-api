@@ -7,6 +7,7 @@ import configparser
 import ast
 import os
 import logging
+from flask import current_app as app
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
@@ -15,8 +16,11 @@ config.read('conf.ini')
 logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',handlers=[logging.FileHandler('log'), logging.StreamHandler()])
 
 class Indexer:
-
     def __init__(self, indices, elasticsearch_url, entity_webservice_url):
+        try:
+            self.logger = app.logger
+        except:
+            self.logger = logging
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
         try:
@@ -32,32 +36,36 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
+            #### Entities ####
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    logging.info(f.result())
+                    self.logger.info(f.result())
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
+            #### Collections ####
+
         
         except Exception as e:
-            logging.error("Exception in user code:")
-            logging.error('-'*60)
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            logging.error('-'*60)
+            self.logger.error('-'*60)
 
     def index_tree(self, donor):
-        # logging.info(f"Total threads count: {threading.active_count()}")
+        # self.logger.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
-            logging.info(node.get('hubmap_identifier', node.get('display_doi', None)))
+            self.logger.info(node.get('hubmap_identifier', node.get('display_doi', None)))
             self.update_index(node)
 
         return f"Done."
 
     def reindex(self, uuid):
+
         try:
             entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
             ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
@@ -65,16 +73,16 @@ class Indexer:
             nodes = [entity] + ancestors + descendants
 
             for node in nodes:
-                logging.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
+                self.logger.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
                 self.update_index(node)
             
-            logging.info("################DONE######################")
+            self.logger.info("################DONE######################")
             return f"Done."
         except Exception as e:
-            logging.error("Exception in user code:")
-            logging.error('-'*60)
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            logging.error('-'*60)
+            self.logger.error('-'*60)
 
     def generate_doc(self, entity):
         '''
@@ -125,18 +133,18 @@ class Indexer:
                     try:
                         entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
                     except KeyError:
-                        logging.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        self.logger.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
                     except TypeError:
-                        logging.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        self.logger.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
             try:
                 entity['metadata'].pop('files')
             except KeyError:
-                logging.info("There are no files in metadata to pop")
+                self.logger.info("There are no files in metadata to pop")
             except AttributeError:
-                logging.info("There are no files in metadata to pop")
+                self.logger.info("There are no files in metadata to pop")
 
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
@@ -163,10 +171,10 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
-            logging.error("Exception in user code:")
-            logging.error('-'*60)
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            logging.error('-'*60)
+            self.logger.error('-'*60)
    
     def entity_keys_rename(self, entity):
         to_delete_keys = []
@@ -186,10 +194,10 @@ class Indexer:
                 try:
                     temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
                 except SyntaxError:
-                    logging.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                    self.logger.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
                     temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
                 except ValueError:
-                    logging.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                    self.logger.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
                     temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
         entity.pop('metadata')
         entity.update(temp)
@@ -215,10 +223,10 @@ class Indexer:
                 return 'Readonly'
         
         except Exception as e:
-            logging.error("Exception in user code:")
-            logging.error('-'*60)
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            logging.error('-'*60)
+            self.logger.error('-'*60)
 
     def test(self):
         try:
@@ -231,17 +239,17 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in fk_donors]
                 for f in concurrent.futures.as_completed(results):
-                    logging.info(f.result())
+                    self.logger.info(f.result())
             
             # Single-thread
             # for donor in fk_donors:
             #     self.index_tree(donor)
 
         except Exception as e:
-            logging.error("Exception in user code:")
-            logging.error('-'*60)
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
             traceback.print_exc(file=sys.stdout)
-            logging.error('-'*60)
+            self.logger.error('-'*60)
 
     def update_index(self, node):
         org_node = copy.deepcopy(node)

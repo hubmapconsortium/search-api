@@ -2,9 +2,14 @@ import requests
 import json
 import os
 import logging
+from flask import current_app as app
 
 class ESWriter:
     def __init__(self, elasticsearch_url):
+        try:
+            self.logger = app.logger
+        except:
+            self.logger = logging
         self.elasticsearch_url = elasticsearch_url
 
     def write_document(self, index_name, doc, uuid):
@@ -13,12 +18,12 @@ class ESWriter:
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                logging.info("write doc done")
+                self.logger.info("write doc done")
             else:
-                logging.error(f"""error happened when writing {uuid} to elasticsearch\n
+                self.logger.error(f"""error happened when writing {uuid} to elasticsearch\n
                         Error Message: {rspn.text}""")
         except Exception as e:
-            logging.error(str(e))
+            self.logger.error(str(e))
 
         # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
 
@@ -27,11 +32,11 @@ class ESWriter:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
                             headers={'Content-Type': 'application/json'})
             if rspn.ok:
-                logging.info(f"doc: {uuid} deleted")
+                self.logger.info(f"doc: {uuid} deleted")
             else:
-                logging.error(rspn.text)
+                self.logger.error(rspn.text)
         except Exception as e:
-            logging.error(str(e))
+            self.logger.error(str(e))
 
     def write_or_update_document(self, index_name, doc, uuid):
         try:
@@ -39,13 +44,13 @@ class ESWriter:
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                logging.info("write doc done")
+                self.logger.info("write doc done")
             else:
-                logging.error(f"""error happened when writing {uuid} to elasticsearch\n
+                self.logger.error(f"""error happened when writing {uuid} to elasticsearch\n
                         Error Message: {rspn.text}""")
-                logging.error(f"Document: {doc}")
+                self.logger.error(f"Document: {doc}")
         except Exception as e:
-            logging.error(str(e))
+            self.logger.error(str(e))
 
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
@@ -60,12 +65,12 @@ class ESWriter:
                                                             "number_of_shards": 1,
                                                             "number_of_replicas": 1}}}))
             if rspn.ok:
-                logging.info(f"index {index_name} created")
+                self.logger.info(f"index {index_name} created")
             else:
-                logging.error(f"""error happened when creating {index_name} on elasticsearch\n
+                self.logger.error(f"""error happened when creating {index_name} on elasticsearch\n
                         Error Message: {rspn.text}""")
         except Exception as e:
-            logging.error(str(e))
+            self.logger.error(str(e))
 # if __name__ == '__main__':
 #     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
 #     node = db_reader.get_donor('TEST0010')
