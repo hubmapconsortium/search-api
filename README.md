@@ -6,24 +6,43 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 
 ## Search endpoint and group access check
 
-The search endpoint for each deployment environment:
+The search-api base URL for each deployment environment:
 
-- DEV: `https://search-api.dev.hubmapconsortium.org/search`
-- TEST: `https://search-api.test.hubmapconsortium.org/search`
+- DEV: `https://search-api.dev.hubmapconsortium.org`
+- TEST: `https://search-api.test.hubmapconsortium.org`
+- PROD: `https://search.api.hubmapconsortium.org`
 
-Both HTTP `GET` and `POST` methods are supported. Due to data access restriction, indexed entries are protected and calls to the above endpoint require the `Authorization` header with the Bearer token (globus nexus token) along with the search query JSON body. There are three cases when making a search call:
+## Request endpoints
 
-### Case 1: Missing/invalid/expired token
+### Get all supported indices
 
-If a token is missing, invalid or expired, an error message with 401 status code will be returned. 
+This endpoint returns a list of supported indices, no globus token is required to make the request.
 
-### Case 2: Valid token without the right group access
+````
+GET /indices
+````
 
-In the case that the token is valid **BUT** the owner of this token doesn't have the right group access, a 403 error message will be returned.
+### Search without specifiing an index
 
-### Case 3: Valid token with right group access
+The Authorization header with globus token is optional
 
-With a valid token (that represents a user who has the correct group access to the indexed data), **ALL** the user specified search query DSL (Domain Specific Language) detail will be passed to the Elasticsearch just like making queries against the Elasticsearch directly, and the search hits results will be returned. Elasticsearch will also return any error messges if the JSON query is misformatted.
+````
+GET/POST /search
+````
+
+### Search against a specified index
+
+The Authorization header with globus token is optional
+
+````
+GET/POST /<index>/search
+````
+Due to data access restriction, indexed entries are protected and calls to the above endpoints require the `Authorization` header with the Bearer token (globus nexus token) along with the search query JSON body. There are three cases when making a search call:
+
+- Case #1: Authorization header is missing, default to use the `entities` index with only public data entries. 
+- Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to use the `entities` index with only public data entries. 
+- Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
+- Case #4: Authorization header presents with a valid token that has the group access, **ALL** the user specified search query DSL (Domain Specific Language) detail will be passed to the Elasticsearch just like making queries against the Elasticsearch directly.
 
 NOTE: currently, the Search API doesn't support comma-separated list or wildcard expression of index names in the URL path used to limit the request.
 
