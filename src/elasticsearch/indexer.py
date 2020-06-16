@@ -13,14 +13,20 @@ config = configparser.ConfigParser()
 config.read('conf.ini')
 
 # Set logging level (default is warning)
-logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',handlers=[logging.FileHandler('log'), logging.StreamHandler()])
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
 class Indexer:
     def __init__(self, indices, elasticsearch_url, entity_webservice_url):
         try:
             self.logger = app.logger
         except:
-            self.logger = logging
+            self.logger = logging.getLogger("Indexer")
+            self.logger.setLevel(logging.INFO)
+            fh = logging.FileHandler('log')
+            fh.setLevel(logging.INFO)
+            fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
+            self.logger.addHandler(fh)
+            # self.logger.addHandler(logging.StreamHandler())
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
         try:

@@ -9,7 +9,7 @@ class ESWriter:
         try:
             self.logger = app.logger
         except:
-            self.logger = logging
+            self.logger = logging.getLogger("Indexer")
         self.elasticsearch_url = elasticsearch_url
 
     def write_document(self, index_name, doc, uuid):
