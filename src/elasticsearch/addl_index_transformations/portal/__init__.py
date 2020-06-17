@@ -11,6 +11,9 @@ from yaml import dump as dump_yaml, safe_load as load_yaml
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
+from elasticsearch.addl_index_transformations.portal.add_everything import (
+    add_everything
+)
 
 
 def transform(doc, batch_id='unspecified'):
@@ -59,6 +62,7 @@ def transform(doc, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Batch {batch_id}; UUID {doc["uuid"]}: {e}')
         return None
+    add_everything(doc_copy)
     return doc_copy
 
 
