@@ -198,8 +198,11 @@ def _translate_donor_metadata(doc):
     ...             },
     ...             {
     ...                 "data_type": "Nominal",
+    ...                 "grouping_code": "415229000",
+    ...                 "grouping_concept":
+    ...                     "not recognized: will fall-back to code",
     ...                 "grouping_concept_preferred_term":
-    ...                     "Racial group",
+    ...                     "not recognized: will fall-back to code",
     ...                 "preferred_term": "African race",
     ...             }
     ...         ]
@@ -214,36 +217,62 @@ def _translate_donor_metadata(doc):
 
     >>> doc = {
     ...     "metadata": {
-    ...         "organ_donor_data": [
-    ...             {"grouping_concept_preferred_term":
-    ...                     "BAD TERM"}
-    ...         ]
+    ...         "organ_donor_data": [{
+    ...             "grouping_code": "BAD",
+    ...             "grouping_concept": "BAD",
+    ...             "grouping_concept_preferred_term": "BAD"
+    ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
     Traceback (most recent call last):
     ...
-    translate.TranslationException: Unexpected term: BAD TERM
+    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD', 'grouping_concept': 'BAD', 'grouping_concept_preferred_term': 'BAD'}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
 
 
 def _donor_metadata_map(metadata):
-    recognized_terms = {
-        'Body mass index': 'bmi',
-        'Current chronological age': 'age',
-        'Gender finding': 'gender',
-        'Racial group': 'race'
+    AGE = 'age'
+    BMI = 'bmi'
+    GENDER = 'gender'
+    RACE = 'race'
+    # I'm just not sure which one of these will be stable
+    # if the preferred vocabulary changes.
+    # If the vocabulary is stable, this can be simplified!
+    grouping_terms = {
+        'Body mass index': BMI,
+        'Current chronological age': AGE,
+        'Gender finding': GENDER,
+        'Racial group': RACE
+    }
+    grouping_concepts = {
+        'C1305855': BMI,
+        'C0001779': AGE,
+        'C1287419': GENDER,
+        'C0027567': RACE
+    }
+    grouping_codes = {
+        '60621009': BMI,
+        '424144002': AGE,
+        '365873007': GENDER,
+        '415229000': RACE
     }
     mapped_metadata = {}
     if 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            term = kv['grouping_concept_preferred_term']
-            if term not in recognized_terms:
-                raise TranslationException(f'Unexpected term: {term}')
-            k = recognized_terms[term]
-            if k == 'age' and kv['units'] == 'months':
+            k = (
+                (kv['grouping_concept_preferred_term'] in grouping_terms
+                    and grouping_terms[kv['grouping_concept_preferred_term']])
+                or (kv['grouping_concept'] in grouping_concepts
+                    and grouping_concepts[kv['grouping_concept']])
+                or (kv['grouping_code'] in grouping_codes
+                    and grouping_codes[kv['grouping_code']])
+            )
+            if not k:
+                raise TranslationException(f'Unexpected grouping: {kv}')
+            if k == AGE and kv['units'] == 'months':
                 v = round(float(kv['data_value']) / 12, 1)
             else:
                 v = (
