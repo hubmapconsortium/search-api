@@ -15,11 +15,6 @@ from elasticsearch.addl_index_transformations.portal.translate import (
 
 def transform(doc, batch_id='unspecified'):
     '''
-    >>> transform({})
-    Traceback (most recent call last):
-    ...
-    KeyError: 'entity_type'
-
     >>> from pprint import pprint
     >>> pprint(transform({
     ...    'entity_type': 'Donor',
@@ -37,11 +32,15 @@ def transform(doc, batch_id='unspecified'):
     ...    'descendants': 'xxx',
     ...    'THE_SPANISH_INQUISITION': 'No one expects'
     ... }))
-    {'access_group': 'xxx',
+    {'THE_SPANISH_INQUISITION': 'No one expects',
+     'access_group': 'xxx',
      'ancestor_ids': 'xxx',
+     'ancestors': 'xxx',
      'create_timestamp': 1575489509656,
      'created_by_user_displayname': 'xxx',
      'created_by_user_email': 'xxx',
+     'descendant_ids': 'xxx',
+     'descendants': 'xxx',
      'entity_type': 'Donor',
      'group_name': 'xxx',
      'group_uuid': 'xxx',
@@ -67,7 +66,9 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
-    _map(doc, _simple_clean)
+    return doc
+    # TODO: Reenable.
+    # _map(doc, _simple_clean)
 
 
 def _map(doc, clean):
@@ -82,25 +83,26 @@ def _map(doc, clean):
         for sample in doc['source_sample']:
             _map(sample, clean)
 
+# TODO: Reenable this when we have time, and can make sure we don't need these fields.
+#
+# def _simple_clean(doc):
+#     schema = _get_schema(doc)
+#     allowed_props = schema['properties'].keys()
+#     keys = list(doc.keys())
+#     for key in keys:
+#         if key not in allowed_props:
+#             del doc[key]
 
-def _simple_clean(doc):
-    schema = _get_schema(doc)
-    allowed_props = schema['properties'].keys()
-    keys = list(doc.keys())
-    for key in keys:
-        if key not in allowed_props:
-            del doc[key]
-
-    # Not used in portal:
-    for unused_key in [
-        'ancestors',  # ancestor_ids *is* used in portal.
-        'descendants',
-        'descendant_ids',
-        'hubmap_display_id',  # Only used in ingest.
-        'rui_location'
-    ]:
-        if unused_key in doc:
-            del doc[unused_key]
+#     # Not used in portal:
+#     for unused_key in [
+#         'ancestors',  # ancestor_ids *is* used in portal.
+#         'descendants',
+#         'descendant_ids',
+#         'hubmap_display_id',  # Only used in ingest.
+#         'rui_location'
+#     ]:
+#         if unused_key in doc:
+#             del doc[unused_key]
 
 
 _schemas = {
