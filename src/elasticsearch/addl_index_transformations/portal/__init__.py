@@ -39,13 +39,15 @@ def transform(doc, batch_id='unspecified'):
     ... }))
     {'access_group': 'xxx',
      'ancestor_ids': 'xxx',
-     'create_timestamp': '2019-12-04 19:58:29',
+     'create_timestamp': 1575489509656,
      'created_by_user_displayname': 'xxx',
      'created_by_user_email': 'xxx',
      'entity_type': 'Donor',
      'group_name': 'xxx',
      'group_uuid': 'xxx',
-     'last_modified_timestamp': '2019-12-04 19:58:29',
+     'last_modified_timestamp': '1575489509656',
+     'mapped_create_timestamp': '2019-12-04 19:58:29',
+     'mapped_last_modified_timestamp': '2019-12-04 19:58:29',
      'uuid': 'xxx'}
 
     '''

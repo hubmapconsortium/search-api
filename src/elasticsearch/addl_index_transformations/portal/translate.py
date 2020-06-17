@@ -31,7 +31,7 @@ def _map(doc, key, map):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     if key in doc:
-        doc[key] = map(doc[key])
+        doc[f'mapped_{key}'] = map(doc[key])
     if 'donor' in doc:
         _map(doc['donor'], key, map)
     if 'origin_sample' in doc:
@@ -47,11 +47,11 @@ def _translate_status(doc):
     '''
     >>> doc = {'status': 'NEW'}
     >>> _translate_status(doc); doc
-    {'status': 'New'}
+    {'status': 'NEW', 'mapped_status': 'New'}
 
     >>> doc = {'status': 'qa'}
     >>> _translate_status(doc); doc
-    {'status': 'QA'}
+    {'status': 'qa', 'mapped_status': 'QA'}
 
     >>> doc = {'status': 'xyz'}
     >>> _translate_status(doc)
@@ -88,8 +88,10 @@ def _translate_timestamp(doc):
     >>> _translate_timestamp(doc);
     >>> from pprint import pprint
     >>> pprint(doc)
-    {'create_timestamp': '2019-12-04 19:58:29',
-     'last_modified_timestamp': '2020-05-20 23:34:23'}
+    {'create_timestamp': '1575489509656',
+     'last_modified_timestamp': 1590017663118,
+     'mapped_create_timestamp': '2019-12-04 19:58:29',
+     'mapped_last_modified_timestamp': '2020-05-20 23:34:23'}
 
     '''
     _map(doc, 'create_timestamp', _timestamp_map)
@@ -109,11 +111,11 @@ def _translate_organ(doc):
     '''
     >>> doc = {'organ': 'LY01'}
     >>> _translate_organ(doc); doc
-    {'organ': 'Lymph Node'}
+    {'organ': 'LY01', 'mapped_organ': 'Lymph Node'}
 
     >>> doc = {'origin_sample': {'organ': 'RK'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'Kidney (Right)'}}
+    {'origin_sample': {'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}}
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc)
@@ -143,7 +145,7 @@ def _translate_specimen_type(doc):
     '''
     >>> doc = {'specimen_type': 'fresh_frozen_tissue'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'Fresh frozen tissue'}
+    {'specimen_type': 'fresh_frozen_tissue', 'mapped_specimen_type': 'Fresh frozen tissue'}
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc)
@@ -204,12 +206,11 @@ def _translate_donor_metadata(doc):
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
+    >>> len(doc['metadata']['organ_donor_data'])
+    4
     >>> from pprint import pprint
-    >>> pprint(doc)
-    {'metadata': {'age': 58.0,
-                  'bmi': 22.0,
-                  'gender': 'Masculine gender',
-                  'race': 'African race'}}
+    >>> pprint(doc['mapped_metadata'])
+    {'age': 58.0, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
 
     >>> doc = {
     ...     "metadata": {
@@ -235,6 +236,7 @@ def _donor_metadata_map(metadata):
         'Gender finding': 'gender',
         'Racial group': 'race'
     }
+    mapped_metadata = {}
     if 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
             term = kv['grouping_concept_preferred_term']
@@ -246,6 +248,5 @@ def _donor_metadata_map(metadata):
                 if kv['data_type'] == 'Nominal'
                 else float(kv['data_value'])
             )
-            metadata[k] = v
-        del metadata['organ_donor_data']
-    return metadata
+            mapped_metadata[k] = v
+    return mapped_metadata
