@@ -20,37 +20,46 @@ def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
     >>> pprint(transform({
-    ...    'entity_type': 'Donor',
+    ...    'entity_type': 'dataset',
+    ...    'origin_sample': {
+    ...        'organ': 'LY01'
+    ...    },
     ...    'create_timestamp': 1575489509656,
-    ...    'created_by_user_displayname': 'xxx',
-    ...    'created_by_user_email': 'xxx',
-    ...    'group_name': 'xxx',
-    ...    'group_uuid': 'xxx',
-    ...    'last_modified_timestamp': '1575489509656',
-    ...    'uuid': 'xxx',
-    ...    'access_group': 'xxx',
-    ...    'ancestor_ids': 'xxx',
-    ...    'ancestors': 'xxx',
-    ...    'descendant_ids': 'xxx',
-    ...    'descendants': 'xxx',
-    ...    'THE_SPANISH_INQUISITION': 'No one expects'
+    ...    'ancestor_ids': ['1234', '5678'],
+    ...    'donor': {
+    ...        "metadata": {
+    ...             "organ_donor_data": [
+    ...                 {
+    ...                     "data_type": "Nominal",
+    ...                     "grouping_concept_preferred_term":
+    ...                         "Gender finding",
+    ...                     "preferred_term": "Masculine gender"
+    ...                 }
+    ...             ]
+    ...         }
+    ...    }
     ... }))
-    {'THE_SPANISH_INQUISITION': 'No one expects',
-     'access_group': 'xxx',
-     'ancestor_ids': 'xxx',
-     'ancestors': 'xxx',
+    {'ancestor_ids': ['1234', '5678'],
      'create_timestamp': 1575489509656,
-     'created_by_user_displayname': 'xxx',
-     'created_by_user_email': 'xxx',
-     'descendant_ids': 'xxx',
-     'descendants': 'xxx',
-     'entity_type': 'Donor',
-     'group_name': 'xxx',
-     'group_uuid': 'xxx',
-     'last_modified_timestamp': '1575489509656',
+     'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
+               'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
+                                                  'grouping_concept_preferred_term': 'Gender '
+                                                                                     'finding',
+                                                  'preferred_term': 'Masculine '
+                                                                    'gender'}]}},
+     'entity_type': 'dataset',
+     'everything': ['1234',
+                    '1575489509656',
+                    '2019-12-04 19:58:29',
+                    '5678',
+                    'Gender finding',
+                    'LY01',
+                    'Lymph Node',
+                    'Masculine gender',
+                    'Nominal',
+                    'dataset'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_last_modified_timestamp': '2019-12-04 19:58:29',
-     'uuid': 'xxx'}
+     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
     doc_copy = deepcopy(doc)
