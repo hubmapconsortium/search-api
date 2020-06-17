@@ -187,7 +187,7 @@ def _translate_donor_metadata(doc):
     ...                 "data_value": "58",
     ...                 "grouping_concept_preferred_term":
     ...                     "Current chronological age",
-    ...                 "units": "years"
+    ...                 "units": "months"
     ...             },
     ...             {
     ...                 "data_type": "Numeric",
@@ -210,7 +210,7 @@ def _translate_donor_metadata(doc):
     4
     >>> from pprint import pprint
     >>> pprint(doc['mapped_metadata'])
-    {'age': 58.0, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
+    {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
 
     >>> doc = {
     ...     "metadata": {
@@ -243,10 +243,13 @@ def _donor_metadata_map(metadata):
             if term not in recognized_terms:
                 raise TranslationException(f'Unexpected term: {term}')
             k = recognized_terms[term]
-            v = (
-                kv['preferred_term']
-                if kv['data_type'] == 'Nominal'
-                else float(kv['data_value'])
-            )
+            if k == 'age' and kv['units'] == 'months':
+                v = round(float(kv['data_value']) / 12, 1)
+            else:
+                v = (
+                    kv['preferred_term']
+                    if kv['data_type'] == 'Nominal'
+                    else float(kv['data_value'])
+                )
             mapped_metadata[k] = v
     return mapped_metadata
