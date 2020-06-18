@@ -57,7 +57,7 @@ def _translate_status(doc):
     >>> _translate_status(doc)
     Traceback (most recent call last):
     ...
-    translate.TranslationException: Unexpected status: xyz
+    translate.TranslationException: Unexpected status: XYZ
     '''
     _map(doc, 'status', _status_map)
 
