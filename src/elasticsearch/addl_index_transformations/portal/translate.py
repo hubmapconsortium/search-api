@@ -57,17 +57,19 @@ def _translate_status(doc):
     >>> _translate_status(doc)
     Traceback (most recent call last):
     ...
-    translate.TranslationException: Unexpected status: xyz
+    translate.TranslationException: Unexpected status: XYZ
     '''
     _map(doc, 'status', _status_map)
 
 
 def _status_map(k):
-    if k.upper() == 'QA':
+    k_upper = k.upper()
+    # Most of the real data doesn't satisfy the spec.
+    if k_upper == 'QA':
         return 'QA'
-    if k not in _status_dict:
-        raise TranslationException(f'Unexpected status: {k}')
-    description = _status_dict[k]
+    if k_upper not in _status_dict:
+        raise TranslationException(f'Unexpected status: {k_upper}')
+    description = _status_dict[k_upper]
     return description.title()
 
 
