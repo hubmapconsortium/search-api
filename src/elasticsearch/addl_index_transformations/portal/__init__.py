@@ -11,42 +11,55 @@ from yaml import dump as dump_yaml, safe_load as load_yaml
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
+from elasticsearch.addl_index_transformations.portal.add_everything import (
+    add_everything
+)
 
 
 def transform(doc, batch_id='unspecified'):
     '''
-    >>> transform({})
-    Traceback (most recent call last):
-    ...
-    KeyError: 'entity_type'
-
     >>> from pprint import pprint
     >>> pprint(transform({
-    ...    'entity_type': 'Donor',
+    ...    'entity_type': 'dataset',
+    ...    'origin_sample': {
+    ...        'organ': 'LY01'
+    ...    },
     ...    'create_timestamp': 1575489509656,
-    ...    'created_by_user_displayname': 'xxx',
-    ...    'created_by_user_email': 'xxx',
-    ...    'group_name': 'xxx',
-    ...    'group_uuid': 'xxx',
-    ...    'last_modified_timestamp': '1575489509656',
-    ...    'uuid': 'xxx',
-    ...    'access_group': 'xxx',
-    ...    'ancestor_ids': 'xxx',
-    ...    'ancestors': 'xxx',
-    ...    'descendant_ids': 'xxx',
-    ...    'descendants': 'xxx',
-    ...    'THE_SPANISH_INQUISITION': 'No one expects'
+    ...    'ancestor_ids': ['1234', '5678'],
+    ...    'donor': {
+    ...        "metadata": {
+    ...             "organ_donor_data": [
+    ...                 {
+    ...                     "data_type": "Nominal",
+    ...                     "grouping_concept_preferred_term":
+    ...                         "Gender finding",
+    ...                     "preferred_term": "Masculine gender"
+    ...                 }
+    ...             ]
+    ...         }
+    ...    }
     ... }))
-    {'access_group': 'xxx',
-     'ancestor_ids': 'xxx',
-     'create_timestamp': '2019-12-04 19:58:29',
-     'created_by_user_displayname': 'xxx',
-     'created_by_user_email': 'xxx',
-     'entity_type': 'Donor',
-     'group_name': 'xxx',
-     'group_uuid': 'xxx',
-     'last_modified_timestamp': '2019-12-04 19:58:29',
-     'uuid': 'xxx'}
+    {'ancestor_ids': ['1234', '5678'],
+     'create_timestamp': 1575489509656,
+     'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
+               'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
+                                                  'grouping_concept_preferred_term': 'Gender '
+                                                                                     'finding',
+                                                  'preferred_term': 'Masculine '
+                                                                    'gender'}]}},
+     'entity_type': 'dataset',
+     'everything': ['1234',
+                    '1575489509656',
+                    '2019-12-04 19:58:29',
+                    '5678',
+                    'Gender finding',
+                    'LY01',
+                    'Lymph Node',
+                    'Masculine gender',
+                    'Nominal',
+                    'dataset'],
+     'mapped_create_timestamp': '2019-12-04 19:58:29',
+     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
     doc_copy = deepcopy(doc)
@@ -58,6 +71,7 @@ def transform(doc, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Batch {batch_id}; UUID {doc["uuid"]}: {e}')
         return None
+    add_everything(doc_copy)
     return doc_copy
 
 
@@ -65,7 +79,9 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
-    _map(doc, _simple_clean)
+    return doc
+    # TODO: Reenable.
+    # _map(doc, _simple_clean)
 
 
 def _map(doc, clean):
@@ -80,25 +96,26 @@ def _map(doc, clean):
         for sample in doc['source_sample']:
             _map(sample, clean)
 
+# TODO: Reenable this when we have time, and can make sure we don't need these fields.
+#
+# def _simple_clean(doc):
+#     schema = _get_schema(doc)
+#     allowed_props = schema['properties'].keys()
+#     keys = list(doc.keys())
+#     for key in keys:
+#         if key not in allowed_props:
+#             del doc[key]
 
-def _simple_clean(doc):
-    schema = _get_schema(doc)
-    allowed_props = schema['properties'].keys()
-    keys = list(doc.keys())
-    for key in keys:
-        if key not in allowed_props:
-            del doc[key]
-
-    # Not used in portal:
-    for unused_key in [
-        'ancestors',  # ancestor_ids *is* used in portal.
-        'descendants',
-        'descendant_ids',
-        'hubmap_display_id',  # Only used in ingest.
-        'rui_location'
-    ]:
-        if unused_key in doc:
-            del doc[unused_key]
+#     # Not used in portal:
+#     for unused_key in [
+#         'ancestors',  # ancestor_ids *is* used in portal.
+#         'descendants',
+#         'descendant_ids',
+#         'hubmap_display_id',  # Only used in ingest.
+#         'rui_location'
+#     ]:
+#         if unused_key in doc:
+#             del doc[unused_key]
 
 
 _schemas = {

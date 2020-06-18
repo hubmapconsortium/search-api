@@ -31,7 +31,7 @@ def _map(doc, key, map):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     if key in doc:
-        doc[key] = map(doc[key])
+        doc[f'mapped_{key}'] = map(doc[key])
     if 'donor' in doc:
         _map(doc['donor'], key, map)
     if 'origin_sample' in doc:
@@ -47,11 +47,11 @@ def _translate_status(doc):
     '''
     >>> doc = {'status': 'NEW'}
     >>> _translate_status(doc); doc
-    {'status': 'New'}
+    {'status': 'NEW', 'mapped_status': 'New'}
 
     >>> doc = {'status': 'qa'}
     >>> _translate_status(doc); doc
-    {'status': 'QA'}
+    {'status': 'qa', 'mapped_status': 'QA'}
 
     >>> doc = {'status': 'xyz'}
     >>> _translate_status(doc)
@@ -88,8 +88,10 @@ def _translate_timestamp(doc):
     >>> _translate_timestamp(doc);
     >>> from pprint import pprint
     >>> pprint(doc)
-    {'create_timestamp': '2019-12-04 19:58:29',
-     'last_modified_timestamp': '2020-05-20 23:34:23'}
+    {'create_timestamp': '1575489509656',
+     'last_modified_timestamp': 1590017663118,
+     'mapped_create_timestamp': '2019-12-04 19:58:29',
+     'mapped_last_modified_timestamp': '2020-05-20 23:34:23'}
 
     '''
     _map(doc, 'create_timestamp', _timestamp_map)
@@ -109,11 +111,11 @@ def _translate_organ(doc):
     '''
     >>> doc = {'organ': 'LY01'}
     >>> _translate_organ(doc); doc
-    {'organ': 'Lymph Node'}
+    {'organ': 'LY01', 'mapped_organ': 'Lymph Node'}
 
     >>> doc = {'origin_sample': {'organ': 'RK'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'Kidney (Right)'}}
+    {'origin_sample': {'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}}
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc)
@@ -143,7 +145,7 @@ def _translate_specimen_type(doc):
     '''
     >>> doc = {'specimen_type': 'fresh_frozen_tissue'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'Fresh frozen tissue'}
+    {'specimen_type': 'fresh_frozen_tissue', 'mapped_specimen_type': 'Fresh frozen tissue'}
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc)
@@ -185,7 +187,7 @@ def _translate_donor_metadata(doc):
     ...                 "data_value": "58",
     ...                 "grouping_concept_preferred_term":
     ...                     "Current chronological age",
-    ...                 "units": "years"
+    ...                 "units": "months"
     ...             },
     ...             {
     ...                 "data_type": "Numeric",
@@ -196,56 +198,87 @@ def _translate_donor_metadata(doc):
     ...             },
     ...             {
     ...                 "data_type": "Nominal",
+    ...                 "grouping_code": "415229000",
+    ...                 "grouping_concept":
+    ...                     "not recognized: will fall-back to code",
     ...                 "grouping_concept_preferred_term":
-    ...                     "Racial group",
+    ...                     "not recognized: will fall-back to code",
     ...                 "preferred_term": "African race",
     ...             }
     ...         ]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
+    >>> len(doc['metadata']['organ_donor_data'])
+    4
     >>> from pprint import pprint
-    >>> pprint(doc)
-    {'metadata': {'age': 58.0,
-                  'bmi': 22.0,
-                  'gender': 'Masculine gender',
-                  'race': 'African race'}}
+    >>> pprint(doc['mapped_metadata'])
+    {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
 
     >>> doc = {
     ...     "metadata": {
-    ...         "organ_donor_data": [
-    ...             {"grouping_concept_preferred_term":
-    ...                     "BAD TERM"}
-    ...         ]
+    ...         "organ_donor_data": [{
+    ...             "grouping_code": "BAD",
+    ...             "grouping_concept": "BAD",
+    ...             "grouping_concept_preferred_term": "BAD"
+    ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
     Traceback (most recent call last):
     ...
-    translate.TranslationException: Unexpected term: BAD TERM
+    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD', 'grouping_concept': 'BAD', 'grouping_concept_preferred_term': 'BAD'}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
 
 
 def _donor_metadata_map(metadata):
-    recognized_terms = {
-        'Body mass index': 'bmi',
-        'Current chronological age': 'age',
-        'Gender finding': 'gender',
-        'Racial group': 'race'
+    AGE = 'age'
+    BMI = 'bmi'
+    GENDER = 'gender'
+    RACE = 'race'
+    # I'm just not sure which one of these will be stable
+    # if the preferred vocabulary changes.
+    # If the vocabulary is stable, this can be simplified!
+    grouping_terms = {
+        'Body mass index': BMI,
+        'Current chronological age': AGE,
+        'Gender finding': GENDER,
+        'Racial group': RACE
     }
+    grouping_concepts = {
+        'C1305855': BMI,
+        'C0001779': AGE,
+        'C1287419': GENDER,
+        'C0027567': RACE
+    }
+    grouping_codes = {
+        '60621009': BMI,
+        '424144002': AGE,
+        '365873007': GENDER,
+        '415229000': RACE
+    }
+    mapped_metadata = {}
     if 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            term = kv['grouping_concept_preferred_term']
-            if term not in recognized_terms:
-                raise TranslationException(f'Unexpected term: {term}')
-            k = recognized_terms[term]
-            v = (
-                kv['preferred_term']
-                if kv['data_type'] == 'Nominal'
-                else float(kv['data_value'])
+            k = (
+                (kv['grouping_concept_preferred_term'] in grouping_terms
+                    and grouping_terms[kv['grouping_concept_preferred_term']])
+                or (kv['grouping_concept'] in grouping_concepts
+                    and grouping_concepts[kv['grouping_concept']])
+                or (kv['grouping_code'] in grouping_codes
+                    and grouping_codes[kv['grouping_code']])
             )
-            metadata[k] = v
-        del metadata['organ_donor_data']
-    return metadata
+            if not k:
+                raise TranslationException(f'Unexpected grouping: {kv}')
+            if k == AGE and kv['units'] == 'months':
+                v = round(float(kv['data_value']) / 12, 1)
+            else:
+                v = (
+                    kv['preferred_term']
+                    if kv['data_type'] == 'Nominal'
+                    else float(kv['data_value'])
+                )
+            mapped_metadata[k] = v
+    return mapped_metadata
