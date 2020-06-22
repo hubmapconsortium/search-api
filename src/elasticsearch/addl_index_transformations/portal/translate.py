@@ -54,10 +54,9 @@ def _translate_status(doc):
     {'status': 'qa', 'mapped_status': 'QA'}
 
     >>> doc = {'status': 'xyz'}
-    >>> _translate_status(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected status: XYZ
+    >>> _translate_status(doc); doc
+    {'status': 'xyz', 'mapped_status': 'Unexpected code'}
+
     '''
     _map(doc, 'status', _status_map)
 
@@ -68,7 +67,7 @@ def _status_map(k):
     if k_upper == 'QA':
         return 'QA'
     if k_upper not in _status_dict:
-        raise TranslationException(f'Unexpected status: {k_upper}')
+        return 'Unexpected code'
     description = _status_dict[k_upper]
     return description.title()
 
@@ -120,10 +119,8 @@ def _translate_organ(doc):
     {'origin_sample': {'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}}
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
-    >>> _translate_organ(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected organ: ZZ
+    >>> _translate_organ(doc); doc
+    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': 'Unexpected code'}}
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -131,7 +128,7 @@ def _translate_organ(doc):
 
 def _organ_map(k):
     if k not in _organ_dict:
-        raise TranslationException(f'Unexpected organ: {k}')
+        return 'Unexpected code'
     return _organ_dict[k]
 
 
@@ -150,10 +147,8 @@ def _translate_specimen_type(doc):
     {'specimen_type': 'fresh_frozen_tissue', 'mapped_specimen_type': 'Fresh frozen tissue'}
 
     >>> doc = {'specimen_type': 'xyz'}
-    >>> _translate_specimen_type(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected specimen type: xyz
+    >>> _translate_specimen_type(doc); doc
+    {'specimen_type': 'xyz', 'mapped_specimen_type': 'Unexpected code'}
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -161,7 +156,7 @@ def _translate_specimen_type(doc):
 
 def _specimen_types_map(k):
     if k not in _specimen_types_dict:
-        raise TranslationException(f'Unexpected specimen type: {k}')
+        return 'Unexpected code'
     return _specimen_types_dict[k]
 
 
