@@ -1,3 +1,5 @@
+**/.vscode/
+
 # Docker stuff
 docker/data
 docker/search-api/src
@@ -7,7 +9,6 @@ src/instance/app.cfg
 src/log
 log/*.log
 
-src/elasticsearch/.vscode/
 src/elasticsearch/instance
 src/elasticsearch/conf.py
 src/elasticsearch/conf.ini
