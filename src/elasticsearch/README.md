@@ -26,9 +26,12 @@ pipenv install -e git+git://github.com/hubmapconsortium/commons.git#egg=hubmap-c
 # if you are developing commons lib also, install it from  your local directory.
 pipenv install -e ../commons (relative path to your commons)
 ```
+4. Configure the conf.ini file.
+- Configure [ELASTICSEARCH] section.
+- COnfigure [INDEX] section.
 
-4. Run the script
+5. Run the script
 
 ```
-python indexer.py <index_name>
+python indexer.py
 ```

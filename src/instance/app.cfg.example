@@ -34,3 +34,6 @@ INDICES = """{
             'hm_consortium_portal': ('All', 'transformed')
             }"""
 
+ORIGINAL_DOC_TYPE = 'original'
+PORTAL_DOC_TYPE = 'portal'
+

@@ -28,7 +28,7 @@
     "METADATA": {
       "rui_location": {
         "es_name": "rui_location",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "lab_tissue_id": {
         "es_name": "lab_tissue_sample_id",

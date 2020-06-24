@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import logging
+import sys
 from flask import current_app as app
 
 class ESWriter:
@@ -9,7 +10,16 @@ class ESWriter:
         try:
             self.logger = app.logger
         except:
-            self.logger = logging.getLogger("Indexer")
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
+            fh = logging.FileHandler('log')
+            fh.setLevel(logging.INFO)
+            fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
+            sh = logging.StreamHandler(stream=sys.stdout)
+            sh.setLevel(logging.INFO)
+            sh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
+            self.logger.addHandler(fh)
+            self.logger.addHandler(sh)
         self.elasticsearch_url = elasticsearch_url
 
     def write_document(self, index_name, doc, uuid):
@@ -18,9 +28,9 @@ class ESWriter:
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                self.logger.info("write doc done")
+                self.logger.debug("write doc done")
             else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch\n
+                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
                         Error Message: {rspn.text}""")
         except Exception as e:
             self.logger.error(str(e))
@@ -38,17 +48,19 @@ class ESWriter:
         except Exception as e:
             self.logger.error(str(e))
 
-    def write_or_update_document(self, index_name, doc, uuid):
+    def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}",
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}",
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                self.logger.info("write doc done")
+                self.logger.debug("write doc done")
+                return True
             else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch\n
+                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
                         Error Message: {rspn.text}""")
                 self.logger.error(f"Document: {doc}")
+                return False
         except Exception as e:
             self.logger.error(str(e))
 

@@ -2,31 +2,49 @@ from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
 import sys, json, time, concurrent.futures, traceback, copy, threading
+import collections
 import requests
 import configparser
 import ast
 import os
 import logging
 from flask import current_app as app
+from hubmap_commons.hubmap_const import HubmapConst 
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
 
+# ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
+# PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
 # Set logging level (default is warning)
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+
 
 class Indexer:
     def __init__(self, indices, elasticsearch_url, entity_webservice_url):
         try:
             self.logger = app.logger
+            ORIGINAL_DOC_TYPE = app.config['ORIGINAL_DOC_TYPE']
+            PORTAL_DOC_TYPE = app.config['PORTAL_DOC_TYPE']
         except:
-            self.logger = logging.getLogger("Indexer")
-            self.logger.setLevel(logging.INFO)
+            ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
+            PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
+            self.logger = logging.getLogger(__name__)
             fh = logging.FileHandler('log')
             fh.setLevel(logging.INFO)
             fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
+            sh = logging.StreamHandler(stream=sys.stdout)
+            sh.setLevel(logging.INFO)
+            sh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
             self.logger.addHandler(fh)
+            self.logger.addHandler(sh)
+            self.logger.setLevel(logging.INFO)
             # self.logger.addHandler(logging.StreamHandler())
+        self.report = {
+            'success_cnt': 0,
+            'fail_cnt': 0,
+            'fail_uuids': set()
+        }
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
         try:
@@ -38,56 +56,83 @@ class Indexer:
         
     def main(self):
         try:
+            #### Create Indices ####
             for index, _ in self.indices.items():
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
-            donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
             #### Entities ####
+            donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    self.logger.info(f.result())
+                    self.logger.debug(f.result())
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
             #### Collections ####
-
+            # collections = requests.get(self.entity_webservice_url + "/collections").json()
+            # for collection in collections:
+            #     self.index_collection(collections)
         
         except Exception as e:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
-            traceback.print_exc(file=sys.stdout)
+            self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
 
     def index_tree(self, donor):
         # self.logger.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
-            self.logger.info(node.get('hubmap_identifier', node.get('display_doi', None)))
+            self.logger.debug(node.get('hubmap_identifier', node.get('display_doi', None)))
             self.update_index(node)
 
         return f"Done."
 
-    def reindex(self, uuid):
+    def index_collection(self, collection):
+        access_level = get_access_level(collection)
+        if access_level == HubmapConst.ACCESS_LEVEL_PUBLIC:
+            index = 'hm_public_entities'
+            doc = json.dumps(collection)
+            result = self.eswriter.write_or_update_document(index_name=index, type_='collection', doc=doc, uuid=collection['uuid'])
+        elif access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
+            index = 'hm_consortium_entities'
+            doc = json.dumps(collection)
+            result = self.eswriter.write_or_update_document(index_name=index, type_='collection', doc=doc, uuid=collection['uuid'])
 
+    def reindex(self, uuid):
         try:
             entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
-            ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
-            descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
-            nodes = [entity] + ancestors + descendants
+            # This uuid is a entity
+            if entity != {}:
+                ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
+                descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
+                nodes = [entity] + ancestors + descendants
 
-            for node in nodes:
-                self.logger.info(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
-                self.update_index(node)
-            
-            self.logger.info("################DONE######################")
-            return f"Done."
+                for node in nodes:
+                    self.logger.debug(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
+                    self.update_index(node)
+                
+                self.logger.info("################DONE######################")
+                return f"Done."
+            else:
+                # collection = requests.get(self.entity_webservice_url + "/collections/" + uuid).json()
+                collection = {}
+                #This uuid is a collection
+                if collection != {}:
+                    self.index_collection(collection)
+
+                    self.logger.info("################DONE######################")
+                    return f"Done."
+                else:
+                    self.logger.error(f"Cannot find uuid: {uuid}")
+                    return f"Done."
         except Exception as e:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
-            traceback.print_exc(file=sys.stdout)
+            self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
 
     def generate_doc(self, entity):
@@ -139,18 +184,18 @@ class Indexer:
                     try:
                         entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
                     except KeyError:
-                        self.logger.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        self.logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
                     except TypeError:
-                        self.logger.info("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        self.logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
             try:
                 entity['metadata'].pop('files')
             except KeyError:
-                self.logger.info("There are no files in metadata to pop")
+                self.logger.debug("There are no files in metadata to pop")
             except AttributeError:
-                self.logger.info("There are no files in metadata to pop")
+                self.logger.debug("There are no files in metadata to pop")
 
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
@@ -179,7 +224,7 @@ class Indexer:
         except Exception as e:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
-            traceback.print_exc(file=sys.stdout)
+            self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
    
     def entity_keys_rename(self, entity):
@@ -222,17 +267,39 @@ class Indexer:
         try:
             if entity['entitytype'] == 'Dataset':
                 if entity['metadata']['status'] == 'Published' and entity['metadata']['phi'].lower() == 'no':
-                    return 'Open'
+                    return HubmapConst.ACCESS_LEVEL_PUBLIC
                 else:
-                    return 'Readonly'
+                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
             else:
-                return 'Readonly'
+                return HubmapConst.ACCESS_LEVEL_CONSORTIUM
         
         except Exception as e:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
-            traceback.print_exc(file=sys.stdout)
+            self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
+    
+    def get_access_level(self, entity):
+        try:
+            if entity['entitytype'] == HubmapConst.COLLECTION_TYPE_CODE:
+                if entity['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                    return entity['data_access_level']
+                else:
+                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+            elif entity['entitytype'] in [HubmapConst.DONOR_TYPE_CODE,\
+                                        HubmapConst.SAMPLE_TYPE_CODE,\
+                                        HubmapConst.DATASET_TYPE_CODE]:
+                if entity['metadata']['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                    return entity['metadata']['data_access_level']
+                else:
+                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+            else:
+                raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
+        except KeyError as ke:
+            self.logger.debug(f"entity uuid: {entity['uuid']} does not have data_access_level attribute")
+            return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+        except Exception:
+            pass
 
     def test(self):
         try:
@@ -245,7 +312,7 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in fk_donors]
                 for f in concurrent.futures.as_completed(results):
-                    self.logger.info(f.result())
+                    self.logger.debug(f.result())
             
             # Single-thread
             # for donor in fk_donors:
@@ -254,19 +321,41 @@ class Indexer:
         except Exception as e:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
-            traceback.print_exc(file=sys.stdout)
+            self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
 
     def update_index(self, node):
-        org_node = copy.deepcopy(node)
-        doc = self.generate_doc(node)
-        transformed = json.dumps(transform(json.loads(doc)))
+        try:
+            org_node = copy.deepcopy(node)
+            doc = self.generate_doc(node)
+            transformed = json.dumps(transform(json.loads(doc)))
+            if transformed is None or transformed == 'null' or transformed == "":
+                self.logger.error(f"{node['uuid']} Document is empty")
+                self.logger.error(f"Node: {node}")
+                return
 
-        for index, configs in self.indices.items():
-            if configs[0] == 'Open' and self.access_group(org_node) == 'Open':
-                self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
-            elif configs[0] == 'All':
-                self.eswriter.write_or_update_document(index, transformed if configs[1] == 'transformed' else doc, node['uuid'])
+            result = None
+            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+            for index, configs in self.indices.items():
+                configs = IndexConfig(*configs)
+                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                    result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
+                elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
+                    result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
+                if result == True:
+                    self.report['success_cnt'] += 1
+                elif result == False:
+                    self.report['fail_cnt'] +=1
+                    self.report['fail_uuids'].add(node['uuid'])
+        except KeyError:
+            self.logger.error(f"uuid: {org_node['uuid']}, entity_type: {org_node['entitytype']}, es_node_entity_type: {node['entity_type']}")
+            self.logger.exception("unexpceted exception")
+        except Exception as e:
+            self.logger.error(f"Exception in user code, uuid: {org_node['uuid']}")
+            self.logger.error('-'*60)
+            self.logger.exception("unexpected exception")
+            self.logger.error('-'*60)
+
 
 if __name__ == '__main__':
     # try:
@@ -278,7 +367,10 @@ if __name__ == '__main__':
     indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
-    logging.info(f"Total index time: {end - start} seconds")
+    indexer.logger.info(f"Total index time: {end - start} seconds")
+    indexer.logger.info(f"Success node count: {indexer.report['success_cnt']}")
+    indexer.logger.info(f"Fail node count: {indexer.report['fail_cnt']}")
+    indexer.logger.info(f"Fail uuids: {indexer.report['fail_uuids']}")
 
     # start = time.time()
     # indexer = Indexer('entities', config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
