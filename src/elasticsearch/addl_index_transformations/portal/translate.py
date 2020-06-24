@@ -170,6 +170,11 @@ _specimen_types_dict = {
 
 def _translate_donor_metadata(doc):
     '''
+    >>> doc = {"metadata": "Not a dict!"}
+    >>> _translate_donor_metadata(doc)
+    >>> doc
+    {'metadata': 'Not a dict!', 'mapped_metadata': {}}
+
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [
@@ -257,7 +262,7 @@ def _donor_metadata_map(metadata):
         '415229000': RACE
     }
     mapped_metadata = {}
-    if 'organ_donor_data' in metadata:
+    if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
             k = (
                 (kv['grouping_concept_preferred_term'] in grouping_terms
