@@ -14,14 +14,16 @@ from hubmap_commons.hubmap_const import HubmapConst
 config = configparser.ConfigParser()
 config.read('conf.ini')
 
-# ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
-# PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
+ORIGINAL_DOC_TYPE = ""
+PORTAL_DOC_TYPE = ""
 # Set logging level (default is warning)
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
 
 class Indexer:
     def __init__(self, indices, elasticsearch_url, entity_webservice_url):
+        global ORIGINAL_DOC_TYPE
+        global PORTAL_DOC_TYPE
         try:
             self.logger = app.logger
             ORIGINAL_DOC_TYPE = app.config['ORIGINAL_DOC_TYPE']
@@ -222,7 +224,7 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
-            self.logger.error("Exception in user code:")
+            self.logger.error(f"Exception in user code, uuid: {entity.get('uuid', None)}")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
@@ -351,6 +353,8 @@ class Indexer:
             self.logger.error(f"uuid: {org_node['uuid']}, entity_type: {org_node['entitytype']}, es_node_entity_type: {node['entity_type']}")
             self.logger.exception("unexpceted exception")
         except Exception as e:
+            self.report['fail_cnt'] +=1
+            self.report['fail_uuids'].add(node['uuid'])
             self.logger.error(f"Exception in user code, uuid: {org_node['uuid']}")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
