@@ -28,10 +28,10 @@ GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 # original: directly from neo4j
 # transformed: transformed by portal transform method
 INDICES = """{
-            'hm_public_entities': ('Open','original'),
-            'hm_consortium_entities': ('All', 'original'),
-            'hm_public_portal': ('Open', 'transformed'),
-            'hm_consortium_portal': ('All', 'transformed')
+            'hm_public_entities': ('public','original'),
+            'hm_consortium_entities': ('consortium', 'original'),
+            'hm_public_portal': ('public', 'transformed'),
+            'hm_consortium_portal': ('consortium', 'transformed')
             }"""
 
 ORIGINAL_DOC_TYPE = 'original'
