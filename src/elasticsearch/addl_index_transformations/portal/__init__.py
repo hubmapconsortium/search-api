@@ -27,6 +27,7 @@ def transform(doc, batch_id='unspecified'):
     ...    },
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
+    ...    'data_types': ['AF', 'seqFish'],
     ...    'donor': {
     ...        "metadata": {
     ...             "organ_donor_data": [
