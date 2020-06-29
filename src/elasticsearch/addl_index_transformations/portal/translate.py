@@ -9,6 +9,9 @@ class TranslationException(Exception):
     pass
 
 
+UNEXPECTED = 'Unexpected code'
+
+
 def translate(doc):
     _translate_status(doc)
     _translate_organ(doc)
@@ -68,7 +71,7 @@ def _status_map(k):
     if k_upper == 'QA':
         return 'QA'
     if k_upper not in _status_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     description = _status_dict[k_upper]
     return description.title()
 
@@ -129,7 +132,7 @@ def _translate_organ(doc):
 
 def _organ_map(k):
     if k not in _organ_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     return _organ_dict[k]
 
 
@@ -157,7 +160,7 @@ def _translate_specimen_type(doc):
 
 def _specimen_types_map(k):
     if k not in _specimen_types_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     return _specimen_types_dict[k]
 
 
@@ -185,7 +188,7 @@ def _translate_assay_type(doc):
 
 def _assay_types_map(k):
     if k not in _assay_types_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     return _assay_types_dict[k]
 
 
