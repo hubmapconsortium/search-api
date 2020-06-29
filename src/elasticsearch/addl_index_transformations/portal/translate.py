@@ -17,7 +17,7 @@ def translate(doc):
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
-    _translate_assay_type(doc)
+    _translate_data_type(doc)
     _translate_timestamp(doc)
 
 
@@ -172,29 +172,31 @@ _specimen_types_dict = {
 
 # Assay type:
 
-def _translate_assay_type(doc):
+def _translate_data_type(doc):
     '''
-    >>> doc = {'assay_type': 'AF'}
-    >>> _translate_assay_type(doc); doc
-    {'assay_type': 'AF', 'mapped_assay_type': 'Autofluorescence Microscopy'}
+    >>> doc = {'data_types': ['AF']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
 
-    >>> doc = {'assay_type': 'xyz'}
-    >>> _translate_assay_type(doc); doc
-    {'assay_type': 'xyz', 'mapped_assay_type': 'Unexpected code'}
+    >>> doc = {'data_types': ['xyz']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['xyz'], 'mapped_data_types': ['Unexpected code']}
 
     '''
-    _map(doc, 'assay_type', _assay_types_map)
+    _map(doc, 'data_types', _data_types_map)
 
 
-def _assay_types_map(k):
-    if k not in _assay_types_dict:
-        return UNEXPECTED
-    return _assay_types_dict[k]
+def _data_types_map(ks):
+    return [
+        _data_types_dict[k] if k in _data_types_dict else UNEXPECTED
+        for k in ks
+    ]
 
 
-_assay_types_dict = {
+_data_types_dict = {
     k: v['description']
     for k, v in _enums['assay_types'].items()
+    # NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
 }
 
 
