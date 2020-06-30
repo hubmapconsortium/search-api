@@ -64,6 +64,8 @@ def transform(doc, batch_id='unspecified'):
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
+    id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
+    logging.info(f'Begin: {id_for_log}')
     doc_copy = deepcopy(doc)
     # We will modify in place below,
     # so make a deep copy so we don't surprise the caller.
@@ -71,10 +73,11 @@ def transform(doc, batch_id='unspecified'):
     try:
         translate(doc_copy)
     except TranslationException as e:
-        logging.error(f'Batch {batch_id}; UUID {doc["uuid"]}: {e}')
+        logging.error(f'Error: {id_for_log}: {e}')
         return None
     add_everything(doc_copy)
     _add_doc_size(doc_copy)
+    logging.info(f'End: {id_for_log}')
     return doc_copy
 
 
