@@ -64,7 +64,7 @@ def transform(doc, batch_id='unspecified'):
                     'Nominal',
                     'dataset'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapper_metadata': {'version': 0},
+     'mapper_metadata': {'version': '0.0.1'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -80,7 +80,7 @@ def transform(doc, batch_id='unspecified'):
     add_everything(doc_copy)
     _add_doc_size(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': 0,
+        'version': '0.0.1',
         'datetime': str(datetime.datetime.now())
     }
     return doc_copy
