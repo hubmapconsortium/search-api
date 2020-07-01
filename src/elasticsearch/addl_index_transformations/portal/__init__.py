@@ -68,8 +68,8 @@ def transform(doc, batch_id='unspecified'):
                     'dataset',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapper_metadata': {'size': 580, 'version': '0.0.1'},
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
+     'mapper_metadata': {'size': 726, 'version': '0.0.1'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
