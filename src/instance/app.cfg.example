@@ -30,8 +30,8 @@ GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 INDICES = """{
             'hm_public_entities': ('public','original'),
             'hm_consortium_entities': ('consortium', 'original'),
-            'hm_public_portal': ('public', 'transformed'),
-            'hm_consortium_portal': ('consortium', 'transformed')
+            'hm_public_portal': ('public', 'portal'),
+            'hm_consortium_portal': ('consortium', 'portal')
             }"""
 
 ORIGINAL_DOC_TYPE = 'original'
