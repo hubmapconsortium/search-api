@@ -15,7 +15,7 @@ end flake8
 start doctests
 cd ../../..
 for F in elasticsearch/addl_index_transformations/portal/*.py; do
-  python -m doctest $F
+  python -m doctest -o REPORT_NDIFF $F
 done
 cd -
 end doctests

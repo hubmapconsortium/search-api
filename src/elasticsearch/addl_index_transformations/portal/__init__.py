@@ -28,6 +28,7 @@ def transform(doc, batch_id='unspecified'):
     ...    },
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
+    ...    'data_types': ['AF', 'seqFish'],
     ...    'donor': {
     ...        "metadata": {
     ...             "organ_donor_data": [
@@ -45,6 +46,7 @@ def transform(doc, batch_id='unspecified'):
     >>> pprint(transformed)
     {'ancestor_ids': ['1234', '5678'],
      'create_timestamp': 1575489509656,
+     'data_types': ['AF', 'seqFish'],
      'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                   'grouping_concept_preferred_term': 'Gender '
@@ -56,14 +58,18 @@ def transform(doc, batch_id='unspecified'):
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
+                    'AF',
+                    'Autofluorescence Microscopy',
                     'Gender finding',
                     'LY01',
                     'Lymph Node',
                     'Masculine gender',
                     'Nominal',
-                    'dataset'],
+                    'dataset',
+                    'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapper_metadata': {'size': 580, 'version': '0.0.1'},
+     'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''

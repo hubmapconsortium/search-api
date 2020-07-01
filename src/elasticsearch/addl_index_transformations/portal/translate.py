@@ -9,11 +9,15 @@ class TranslationException(Exception):
     pass
 
 
+UNEXPECTED = 'Unexpected code'
+
+
 def translate(doc):
     _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
+    _translate_data_type(doc)
     _translate_timestamp(doc)
 
 
@@ -67,7 +71,7 @@ def _status_map(k):
     if k_upper == 'QA':
         return 'QA'
     if k_upper not in _status_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     description = _status_dict[k_upper]
     return description.title()
 
@@ -128,7 +132,7 @@ def _translate_organ(doc):
 
 def _organ_map(k):
     if k not in _organ_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     return _organ_dict[k]
 
 
@@ -156,13 +160,43 @@ def _translate_specimen_type(doc):
 
 def _specimen_types_map(k):
     if k not in _specimen_types_dict:
-        return 'Unexpected code'
+        return UNEXPECTED
     return _specimen_types_dict[k]
 
 
 _specimen_types_dict = {
     k: v['description']
     for k, v in _enums['tissue_sample_types'].items()
+}
+
+
+# Assay type:
+
+def _translate_data_type(doc):
+    '''
+    >>> doc = {'data_types': ['AF']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
+
+    >>> doc = {'data_types': ['xyz']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['xyz'], 'mapped_data_types': ['Unexpected code']}
+
+    '''
+    _map(doc, 'data_types', _data_types_map)
+
+
+def _data_types_map(ks):
+    return [
+        _data_types_dict[k] if k in _data_types_dict else UNEXPECTED
+        for k in ks
+    ]
+
+
+_data_types_dict = {
+    k: v['description']
+    for k, v in _enums['assay_types'].items()
+    # NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
 }
 
 
