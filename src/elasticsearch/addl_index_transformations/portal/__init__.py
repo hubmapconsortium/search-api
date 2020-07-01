@@ -5,6 +5,7 @@ from copy import deepcopy
 import logging
 import sys
 from json import dumps
+import datetime
 
 # import jsonschema
 from yaml import dump as dump_yaml, safe_load as load_yaml
@@ -20,7 +21,7 @@ from elasticsearch.addl_index_transformations.portal.add_everything import (
 def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
-    >>> pprint(transform({
+    >>> transformed = transform({
     ...    'entity_type': 'dataset',
     ...    'origin_sample': {
     ...        'organ': 'LY01'
@@ -40,11 +41,12 @@ def transform(doc, batch_id='unspecified'):
     ...             ]
     ...         }
     ...    }
-    ... }))
+    ... })
+    >>> del transformed['mapper_metadata']['datetime']
+    >>> pprint(transformed)
     {'ancestor_ids': ['1234', '5678'],
      'create_timestamp': 1575489509656,
      'data_types': ['AF', 'seqFish'],
-     'doc_size': 726,
      'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                   'grouping_concept_preferred_term': 'Gender '
@@ -67,6 +69,7 @@ def transform(doc, batch_id='unspecified'):
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
+     'mapper_metadata': {'size': 726, 'version': '0.0.1'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -80,20 +83,12 @@ def transform(doc, batch_id='unspecified'):
         logging.error(f'Batch {batch_id}; UUID {doc["uuid"]}: {e}')
         return None
     add_everything(doc_copy)
-    _add_doc_size(doc_copy)
+    doc_copy['mapper_metadata'] = {
+        'version': '0.0.1',
+        'datetime': str(datetime.datetime.now()),
+        'size': len(dumps(doc_copy))
+    }
     return doc_copy
-
-
-def _add_doc_size(doc):
-    '''
-    >>> doc = {'a': 'fake'}
-    >>> _add_doc_size(doc)
-    >>> doc
-    {'a': 'fake', 'doc_size': 13}
-
-    '''
-    doc_size = len(dumps(doc))
-    doc['doc_size'] = doc_size
 
 
 _data_dir = Path(__file__).parent / 'search-schema' / 'data'
