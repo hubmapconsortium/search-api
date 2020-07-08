@@ -51,11 +51,13 @@ def transform(doc, batch_id='unspecified'):
     ... })
     >>> del transformed['mapper_metadata']['datetime']
     >>> pprint(transformed)
-    {'ancestor_ids': ['1234', '5678'],
+    {'ancestor_counts': {'entity_type': {}},
+     'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'mapped_specimen_type': 'Fresh Frozen Tissue Section',
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
      'data_types': ['AF', 'seqFish'],
+     'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
      'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
@@ -64,7 +66,8 @@ def transform(doc, batch_id='unspecified'):
                                                   'preferred_term': 'Masculine '
                                                                     'gender'}]}},
      'entity_type': 'dataset',
-     'everything': ['1234',
+     'everything': ['1',
+                    '1234',
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
@@ -76,13 +79,13 @@ def transform(doc, batch_id='unspecified'):
                     'Lymph Node',
                     'Masculine gender',
                     'Nominal',
+                    'Sample or Dataset',
                     'dataset',
                     'fresh_frozen_tissue_section',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 908, 'version': '0.0.1'},
-     'descendants': [{'entity_type': 'Sample or Dataset'}],
+     'mapper_metadata': {'size': 1093, 'version': '0.0.2'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -100,7 +103,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': '0.0.1',
+        'version': '0.0.2',
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }
