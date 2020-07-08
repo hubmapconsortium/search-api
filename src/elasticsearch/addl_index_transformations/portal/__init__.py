@@ -16,6 +16,9 @@ from elasticsearch.addl_index_transformations.portal.translate import (
 from elasticsearch.addl_index_transformations.portal.add_everything import (
     add_everything
 )
+from elasticsearch.addl_index_transformations.portal.add_counts import (
+    add_counts
+)
 
 
 def transform(doc, batch_id='unspecified'):
@@ -28,7 +31,11 @@ def transform(doc, batch_id='unspecified'):
     ...    },
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
+    ...    'ancestors': [{
+    ...        'specimen_type': 'fresh_frozen_tissue_section'
+    ...    }],
     ...    'data_types': ['AF', 'seqFish'],
+    ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
     ...             "organ_donor_data": [
@@ -45,8 +52,11 @@ def transform(doc, batch_id='unspecified'):
     >>> del transformed['mapper_metadata']['datetime']
     >>> pprint(transformed)
     {'ancestor_ids': ['1234', '5678'],
+     'ancestors': [{'mapped_specimen_type': 'Fresh Frozen Tissue Section',
+                    'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
      'data_types': ['AF', 'seqFish'],
+     'descendants': [{'entity_type': 'Sample or Dataset'}],
      'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                   'grouping_concept_preferred_term': 'Gender '
@@ -60,16 +70,19 @@ def transform(doc, batch_id='unspecified'):
                     '5678',
                     'AF',
                     'Autofluorescence Microscopy',
+                    'Fresh Frozen Tissue Section',
                     'Gender finding',
                     'LY01',
                     'Lymph Node',
                     'Masculine gender',
                     'Nominal',
                     'dataset',
+                    'fresh_frozen_tissue_section',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 726, 'version': '0.0.1'},
+     'mapper_metadata': {'size': 908, 'version': '0.0.1'},
+     'descendants': [{'entity_type': 'Sample or Dataset'}],
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -84,6 +97,7 @@ def transform(doc, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
         return None
+    add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
         'version': '0.0.1',
