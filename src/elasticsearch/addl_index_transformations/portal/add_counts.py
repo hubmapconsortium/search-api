@@ -24,8 +24,12 @@ def add_counts(doc):
 
     '''
     doc['ancestor_counts'] = {
-        'entity_type': dict(Counter([entity['entity_type'] for entity in doc['ancestors'] if 'entity_type' in entity]))
+        'entity_type': _count_field(doc['ancestors'], 'entity_type')
     }
     doc['descendant_counts'] = {
-        'entity_type': dict(Counter([entity['entity_type'] for entity in doc['descendants'] if 'entity_type' in entity]))
+        'entity_type': _count_field(doc['descendants'], 'entity_type')
     }
+
+
+def _count_field(doc_list, field):
+    return dict(Counter([entity[field] for entity in doc_list if field in entity]))
