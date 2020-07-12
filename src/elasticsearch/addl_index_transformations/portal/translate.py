@@ -43,6 +43,9 @@ def _map(doc, key, map):
     if 'source_sample' in doc:
         for sample in doc['source_sample']:
             _map(sample, key, map)
+    if 'ancestors' in doc:
+        for ancestor in doc['ancestors']:
+            _map(ancestor, key, map)
 
 
 # Status:
