@@ -33,16 +33,36 @@ def add_counts(doc):
     ... }
     >>> add_counts(doc)
     >>> pprint(doc['descendant_counts'])
-    {'entity_type': {'Sample': 1}}
+    {'entity_type': {'Sample': 1},
+     'mapped_data_types': {'Autofluorescence Microscopy': 1},
+     'mapped_organ': {'Lymph Node': 1},
+     'mapped_specimen_type': {'Fresh Frozen Tissue Section': 1}}
 
     '''
     doc['ancestor_counts'] = {
         'entity_type': _count_field(doc['ancestors'], 'entity_type')
     }
-    doc['descendant_counts'] = {
-        'entity_type': _count_field(doc['descendants'], 'entity_type')
-    }
+    doc['descendant_counts'] = {k: v for k, v in {
+        'entity_type': _count_field(doc['descendants'], 'entity_type'),
+        'mapped_specimen_type': _count_field(doc['descendants'], 'mapped_specimen_type'),
+        'mapped_organ': _count_field(doc['descendants'], 'mapped_organ'),
+        'mapped_data_types': _count_array_field(doc['descendants'], 'mapped_data_types'),
+    }.items() if v}
 
 
 def _count_field(doc_list, field):
-    return dict(Counter([entity[field] for entity in doc_list if field in entity]))
+    return dict(Counter([
+        entity[field] for entity in doc_list
+        if field in entity
+    ]))
+
+
+def _count_array_field(doc_list, field):
+    return dict(Counter(_flatten([
+        entity[field] for entity in doc_list
+        if field in entity
+    ])))
+
+
+def _flatten(a_list):
+    return sum(a_list, [])
