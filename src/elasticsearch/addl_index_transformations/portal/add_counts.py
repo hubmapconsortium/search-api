@@ -22,6 +22,19 @@ def add_counts(doc):
     >>> pprint(doc['descendant_counts'])
     {'entity_type': {'Dataset': 1, 'Sample': 2}}
 
+    >>> doc = {
+    ...    'ancestors': [],
+    ...    'descendants': [{
+    ...        'entity_type': 'Sample',
+    ...        'mapped_specimen_type': 'Fresh Frozen Tissue Section',
+    ...        'mapped_organ': 'Lymph Node',
+    ...        'mapped_data_types': ['Autofluorescence Microscopy']
+    ...    }]
+    ... }
+    >>> add_counts(doc)
+    >>> pprint(doc['descendant_counts'])
+    {'entity_type': {'Sample': 1}}
+
     '''
     doc['ancestor_counts'] = {
         'entity_type': _count_field(doc['ancestors'], 'entity_type')
