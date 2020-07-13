@@ -66,7 +66,8 @@ def transform(doc, batch_id='unspecified'):
                                                   'preferred_term': 'Masculine '
                                                                     'gender'}]}},
      'entity_type': 'dataset',
-     'everything': ['1',
+     'everything': ['ensure_dynamic_mapping_is_string',
+                    '1',
                     '1234',
                     '1575489509656',
                     '2019-12-04 19:58:29',
@@ -85,7 +86,7 @@ def transform(doc, batch_id='unspecified'):
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 1093, 'version': '0.0.2'},
+     'mapper_metadata': {'size': 1129, 'version': '0.0.3'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -103,7 +104,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': '0.0.2',
+        'version': '0.0.3',
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }
