@@ -86,10 +86,6 @@
         "es_name": "protocol_url",
         "is_json_stored_as_text": false
       },
-      "protocols": {
-        "es_name": "portal_uploaded_protocol_files",
-        "is_json_stored_as_text": true
-      },
       "provenance_group_name": {
         "es_name": "group_name",
         "is_json_stored_as_text": false
