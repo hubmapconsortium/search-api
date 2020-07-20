@@ -32,7 +32,8 @@ def transform(doc, batch_id='unspecified'):
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
     ...    'ancestors': [{
-    ...        'specimen_type': 'fresh_frozen_tissue_section'
+    ...        'specimen_type': 'fresh_frozen_tissue_section',
+    ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
     ...    'data_types': ['AF', 'seqFish'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
@@ -53,7 +54,8 @@ def transform(doc, batch_id='unspecified'):
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
-     'ancestors': [{'mapped_specimen_type': 'Fresh Frozen Tissue Section',
+     'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
+                    'mapped_specimen_type': 'Fresh Frozen Tissue Section',
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
      'data_types': ['AF', 'seqFish'],
@@ -77,7 +79,7 @@ def transform(doc, batch_id='unspecified'):
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 939, 'version': '0.0.4'},
+     'mapper_metadata': {'size': 987, 'version': '0.0.4'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -107,26 +109,29 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
-    return doc
-    # TODO: Reenable.
-    # _map(doc, _simple_clean)
+    _map(doc, _simple_clean)
 
 
 def _map(doc, clean):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     clean(doc)
-    if 'donor' in doc:
-        _map(doc['donor'], clean)
-    if 'origin_sample' in doc:
-        _map(doc['origin_sample'], clean)
-    if 'source_sample' in doc:
-        for sample in doc['source_sample']:
-            _map(sample, clean)
+    for single_doc_field in ['donor', 'origin_sample', 'source_sample']:
+        if single_doc_field in doc:
+            _map(doc[single_doc_field], clean)
+    for multi_doc_field in ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']:
+        if multi_doc_field in doc:
+            for doc in doc[multi_doc_field]:
+                _map(doc, clean)
+
+
+def _simple_clean(doc):
+    field = 'created_by_user_displayname'
+    if field in doc and doc[field] == 'daniel Cotter':
+        doc[field] = 'Daniel Cotter'
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
-# def _simple_clean(doc):
 #     schema = _get_schema(doc)
 #     allowed_props = schema['properties'].keys()
 #     keys = list(doc.keys())
