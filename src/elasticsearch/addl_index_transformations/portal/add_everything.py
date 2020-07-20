@@ -26,6 +26,7 @@ def add_everything(doc):
 def _get_nested_values(input):
     '''
     >>> doc = {
+    ...   'ancestors': [{'a': 'hidden!'}],
     ...   'a': {
     ...     'b0': {
     ...       'c': ['', 'deep', 'deep!']
@@ -39,9 +40,15 @@ def _get_nested_values(input):
     ['deep', 'deep!', 'deep', 'shallow', '123']
 
     '''
+    dont_recurse_on = [
+        'ancestors', 'descendants', 'donor',
+        'immediate_ancestors', 'immediate_descendants',
+        'origin_sample', 'source_sample'
+    ]
     if isinstance(input, dict):
-        for value in input.values():
-            yield from _get_nested_values(value)
+        for k, v in input.items():
+            if k not in dont_recurse_on:
+                yield from _get_nested_values(v)
     elif isinstance(input, list):
         for value in input:
             yield from _get_nested_values(value)
