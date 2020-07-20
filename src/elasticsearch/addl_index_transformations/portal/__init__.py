@@ -112,14 +112,18 @@ def _clean(doc):
     _map(doc, _simple_clean)
 
 
+single_valued_fields = ['donor', 'origin_sample', 'source_sample']
+multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
+
+
 def _map(doc, clean):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     clean(doc)
-    for single_doc_field in ['donor', 'origin_sample', 'source_sample']:
+    for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
             _map(doc[single_doc_field], clean)
-    for multi_doc_field in ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']:
+    for multi_doc_field in multi_valued_fields:
         if multi_doc_field in doc:
             for doc in doc[multi_doc_field]:
                 _map(doc, clean)
