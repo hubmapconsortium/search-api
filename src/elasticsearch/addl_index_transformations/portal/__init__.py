@@ -86,7 +86,7 @@ def transform(doc, batch_id='unspecified'):
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 1129, 'version': '0.0.3'},
+     'mapper_metadata': {'size': 1129, 'version': '0.0.4'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -104,7 +104,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': '0.0.3',
+        'version': '0.0.4',
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }
