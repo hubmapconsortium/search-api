@@ -23,6 +23,10 @@ def add_everything(doc):
     doc['everything'] = sorted(everything)
 
 
+single_valued_fields = ['donor', 'origin_sample', 'source_sample']
+multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
+
+
 def _get_nested_values(input):
     '''
     >>> doc = {
@@ -40,11 +44,7 @@ def _get_nested_values(input):
     ['deep', 'deep!', 'deep', 'shallow', '123']
 
     '''
-    dont_recurse_on = [
-        'ancestors', 'descendants', 'donor',
-        'immediate_ancestors', 'immediate_descendants',
-        'origin_sample', 'source_sample'
-    ]
+    dont_recurse_on = single_valued_fields + multi_valued_fields
     if isinstance(input, dict):
         for k, v in input.items():
             if k not in dont_recurse_on:

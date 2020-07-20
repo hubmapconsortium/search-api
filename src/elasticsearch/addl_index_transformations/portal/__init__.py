@@ -14,7 +14,7 @@ from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
 from elasticsearch.addl_index_transformations.portal.add_everything import (
-    add_everything
+    add_everything, single_valued_fields, multi_valued_fields
 )
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
@@ -110,10 +110,6 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 def _clean(doc):
     _map(doc, _simple_clean)
-
-
-single_valued_fields = ['donor', 'origin_sample', 'source_sample']
-multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
 
 
 def _map(doc, clean):
