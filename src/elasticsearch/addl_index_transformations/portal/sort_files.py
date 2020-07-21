@@ -15,4 +15,5 @@ def sort_files(doc):
                {'rel_path': './c.txt'}]}
 
     '''
-    pass
+    if 'files' in doc:
+        doc['files'].sort(key=lambda file: file['rel_path'].lower())
