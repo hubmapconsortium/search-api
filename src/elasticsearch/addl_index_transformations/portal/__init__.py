@@ -19,6 +19,9 @@ from elasticsearch.addl_index_transformations.portal.add_everything import (
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from elasticsearch.addl_index_transformations.portal.sort_files import (
+    sort_files
+)
 
 
 def transform(doc, batch_id='unspecified'):
@@ -94,6 +97,7 @@ def transform(doc, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
         return None
+    sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
