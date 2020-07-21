@@ -9,7 +9,8 @@ class TranslationException(Exception):
     pass
 
 
-UNEXPECTED = 'Unexpected code'
+def _unexpected(s):
+    return f'[{s}]'
 
 
 def translate(doc):
@@ -62,7 +63,7 @@ def _translate_status(doc):
 
     >>> doc = {'status': 'xyz'}
     >>> _translate_status(doc); doc
-    {'status': 'xyz', 'mapped_status': 'Unexpected code'}
+    {'status': 'xyz', 'mapped_status': '[xyz]'}
 
     '''
     _map(doc, 'status', _status_map)
@@ -74,7 +75,7 @@ def _status_map(k):
     if k_upper == 'QA':
         return 'QA'
     if k_upper not in _status_dict:
-        return UNEXPECTED
+        return _unexpected(k)
     description = _status_dict[k_upper]
     return description.title()
 
@@ -127,7 +128,7 @@ def _translate_organ(doc):
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': 'Unexpected code'}}
+    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '[ZZ]'}}
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -135,7 +136,7 @@ def _translate_organ(doc):
 
 def _organ_map(k):
     if k not in _organ_dict:
-        return UNEXPECTED
+        return _unexpected(k)
     return _organ_dict[k]
 
 
@@ -155,7 +156,7 @@ def _translate_specimen_type(doc):
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'xyz', 'mapped_specimen_type': 'Unexpected code'}
+    {'specimen_type': 'xyz', 'mapped_specimen_type': '[xyz]'}
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -163,7 +164,7 @@ def _translate_specimen_type(doc):
 
 def _specimen_types_map(k):
     if k not in _specimen_types_dict:
-        return UNEXPECTED
+        return _unexpected(k)
     return _specimen_types_dict[k]
 
 
@@ -183,7 +184,7 @@ def _translate_data_type(doc):
 
     >>> doc = {'data_types': ['xyz']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz'], 'mapped_data_types': ['Unexpected code']}
+    {'data_types': ['xyz'], 'mapped_data_types': ['[xyz]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
@@ -191,7 +192,7 @@ def _translate_data_type(doc):
 
 def _data_types_map(ks):
     return [
-        _data_types_dict[k] if k in _data_types_dict else UNEXPECTED
+        _data_types_dict[k] if k in _data_types_dict else _unexpected(k)
         for k in ks
     ]
 

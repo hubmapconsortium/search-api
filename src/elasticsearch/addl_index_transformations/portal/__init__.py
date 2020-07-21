@@ -14,10 +14,13 @@ from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
 from elasticsearch.addl_index_transformations.portal.add_everything import (
-    add_everything
+    add_everything, single_valued_fields, multi_valued_fields
 )
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
+)
+from elasticsearch.addl_index_transformations.portal.sort_files import (
+    sort_files
 )
 
 
@@ -32,7 +35,8 @@ def transform(doc, batch_id='unspecified'):
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
     ...    'ancestors': [{
-    ...        'specimen_type': 'fresh_frozen_tissue_section'
+    ...        'specimen_type': 'fresh_frozen_tissue_section',
+    ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
     ...    'data_types': ['AF', 'seqFish'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
@@ -53,7 +57,8 @@ def transform(doc, batch_id='unspecified'):
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
-     'ancestors': [{'mapped_specimen_type': 'Fresh Frozen Tissue Section',
+     'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
+                    'mapped_specimen_type': 'Fresh Frozen Tissue Section',
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
      'data_types': ['AF', 'seqFish'],
@@ -66,27 +71,18 @@ def transform(doc, batch_id='unspecified'):
                                                   'preferred_term': 'Masculine '
                                                                     'gender'}]}},
      'entity_type': 'dataset',
-     'everything': ['ensure_dynamic_mapping_is_string',
-                    '1',
+     'everything': ['1',
                     '1234',
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
                     'AF',
                     'Autofluorescence Microscopy',
-                    'Fresh Frozen Tissue Section',
-                    'Gender finding',
-                    'LY01',
-                    'Lymph Node',
-                    'Masculine gender',
-                    'Nominal',
-                    'Sample or Dataset',
                     'dataset',
-                    'fresh_frozen_tissue_section',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 1129, 'version': '0.0.3'},
+     'mapper_metadata': {'size': 987, 'version': '0.0.4'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -101,10 +97,11 @@ def transform(doc, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
         return None
+    sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': '0.0.3',
+        'version': '0.0.4',
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }
@@ -116,26 +113,29 @@ _data_dir = Path(__file__).parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
-    return doc
-    # TODO: Reenable.
-    # _map(doc, _simple_clean)
+    _map(doc, _simple_clean)
 
 
 def _map(doc, clean):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     clean(doc)
-    if 'donor' in doc:
-        _map(doc['donor'], clean)
-    if 'origin_sample' in doc:
-        _map(doc['origin_sample'], clean)
-    if 'source_sample' in doc:
-        for sample in doc['source_sample']:
-            _map(sample, clean)
+    for single_doc_field in single_valued_fields:
+        if single_doc_field in doc:
+            _map(doc[single_doc_field], clean)
+    for multi_doc_field in multi_valued_fields:
+        if multi_doc_field in doc:
+            for doc in doc[multi_doc_field]:
+                _map(doc, clean)
+
+
+def _simple_clean(doc):
+    field = 'created_by_user_displayname'
+    if field in doc and doc[field] == 'daniel Cotter':
+        doc[field] = 'Daniel Cotter'
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
-# def _simple_clean(doc):
 #     schema = _get_schema(doc)
 #     allowed_props = schema['properties'].keys()
 #     keys = list(doc.keys())
