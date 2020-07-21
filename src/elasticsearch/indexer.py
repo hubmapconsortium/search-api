@@ -16,6 +16,8 @@ config.read('conf.ini')
 
 ORIGINAL_DOC_TYPE = ""
 PORTAL_DOC_TYPE = ""
+
+REPLICATION = 1
 # Set logging level (default is warning)
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
@@ -89,6 +91,7 @@ class Indexer:
         descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
             self.logger.debug(node.get('hubmap_identifier', node.get('display_doi', None)))
+            self.report[node['entitytype']] = self.report.get(node['entitytype'], 0) + 1
             self.update_index(node)
 
         return f"Done."
@@ -166,7 +169,7 @@ class Indexer:
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
                 if entity['origin_sample'] is None:
                     try:
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata'] and a['metadata']['organ'].strip() != ""))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
@@ -224,10 +227,7 @@ class Indexer:
             return json.dumps(entity)
 
         except Exception as e:
-            self.logger.error(f"Exception in user code, uuid: {entity.get('uuid', None)}")
-            self.logger.error('-'*60)
-            self.logger.exception("unexpected exception")
-            self.logger.error('-'*60)
+            self.logger.error(f"Exception in generate_doc()")
    
     def entity_keys_rename(self, entity):
         to_delete_keys = []
@@ -349,6 +349,7 @@ class Indexer:
                 elif result == False:
                     self.report['fail_cnt'] +=1
                     self.report['fail_uuids'].add(node['uuid'])
+                result = None
         except KeyError:
             self.logger.error(f"uuid: {org_node['uuid']}, entity_type: {org_node['entitytype']}, es_node_entity_type: {node['entity_type']}")
             self.logger.exception("unexpceted exception")
@@ -362,19 +363,31 @@ class Indexer:
 
 
 if __name__ == '__main__':
-    # try:
-    #     index_name = sys.argv[1]
-    # except IndexError as ie:
-    #     index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
+    try:
+        env = sys.argv[1]
+    except IndexError as ie:
+        # index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
+        print("using default DEV enviorment")
+        print("replications: 1")
     
+    if env == 'STAGE' or env == 'PROD':
+        REPLICATION = 3
+    else:
+        REPLICATION = 1
+        
     start = time.time()
     indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()
     end = time.time()
     indexer.logger.info(f"Total index time: {end - start} seconds")
     indexer.logger.info(f"Success node count: {indexer.report['success_cnt']}")
+    indexer.report.pop('success_cnt')
     indexer.logger.info(f"Fail node count: {indexer.report['fail_cnt']}")
+    indexer.report.pop('fail_cnt')
     indexer.logger.info(f"Fail uuids: {indexer.report['fail_uuids']}")
+    indexer.report.pop('fail_uuids')
+    for key, value in indexer.report.items():
+        indexer.logger.info(f"key: {key}, value: {value}")
 
     # start = time.time()
     # indexer = Indexer('entities', config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
