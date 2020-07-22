@@ -133,6 +133,8 @@ def _simple_clean(doc):
     field = 'created_by_user_displayname'
     if field in doc and doc[field] == 'daniel Cotter':
         doc[field] = 'Daniel Cotter'
+    if field in doc and doc[field] == 'amir Bahmani':
+        doc[field] = 'Amir Bahmani'
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
