@@ -21,6 +21,9 @@ from elasticsearch.addl_index_transformations.portal.add_counts import (
 )
 
 
+version = (Path(__file__).parent / 'VERSION').read_text()
+
+
 def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
@@ -34,7 +37,7 @@ def transform(doc, batch_id='unspecified'):
     ...    'ancestors': [{
     ...        'specimen_type': 'fresh_frozen_tissue_section'
     ...    }],
-    ...    'data_types': ['AF', 'seqFish'],
+    ...    'data_types': ['codex_cytokit', 'seqFish'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
@@ -56,7 +59,7 @@ def transform(doc, batch_id='unspecified'):
      'ancestors': [{'mapped_specimen_type': 'Fresh Frozen Tissue Section',
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
-     'data_types': ['AF', 'seqFish'],
+     'data_types': ['codex_cytokit', 'seqFish'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
      'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
@@ -72,8 +75,7 @@ def transform(doc, batch_id='unspecified'):
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
-                    'AF',
-                    'Autofluorescence Microscopy',
+                    'CODEX [Cytokit + SPRM]',
                     'Fresh Frozen Tissue Section',
                     'Gender finding',
                     'LY01',
@@ -81,12 +83,13 @@ def transform(doc, batch_id='unspecified'):
                     'Masculine gender',
                     'Nominal',
                     'Sample or Dataset',
+                    'codex_cytokit',
                     'dataset',
                     'fresh_frozen_tissue_section',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_data_types': ['Autofluorescence Microscopy', 'seqFish'],
-     'mapper_metadata': {'size': 1129, 'version': '0.0.3'},
+     'mapped_data_types': ['CODEX [Cytokit + SPRM]', 'seqFish'],
+     'mapper_metadata': {'size': 1141, 'version': '0.0.4'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
@@ -104,7 +107,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': '0.0.3',
+        'version': version,
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }

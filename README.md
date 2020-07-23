@@ -10,6 +10,7 @@ The search-api base URL for each deployment environment:
 
 - DEV: `https://search-api.dev.hubmapconsortium.org`
 - TEST: `https://search-api.test.hubmapconsortium.org`
+- STAGE: `https://search-api.stage.hubmapconsortium.org`
 - PROD: `https://search.api.hubmapconsortium.org`
 
 ## Request endpoints
