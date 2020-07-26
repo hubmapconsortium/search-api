@@ -16,6 +16,8 @@ config.read('conf.ini')
 
 ORIGINAL_DOC_TYPE = ""
 PORTAL_DOC_TYPE = ""
+
+REPLICATION = 1
 # Set logging level (default is warning)
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
@@ -167,7 +169,7 @@ class Indexer:
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] else None
                 if entity['origin_sample'] is None:
                     try:
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata']))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata'] and a['metadata']['organ'].strip() != ""))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
@@ -361,11 +363,18 @@ class Indexer:
 
 
 if __name__ == '__main__':
-    # try:
-    #     index_name = sys.argv[1]
-    # except IndexError as ie:
-    #     index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
+    try:
+        env = sys.argv[1]
+    except IndexError as ie:
+        # index_name = input("Please enter index name (Warning: All documents in this index will be cleared out first): ")
+        print("using default DEV enviorment")
+        print("replications: 1")
     
+    if env == 'STAGE' or env == 'PROD':
+        REPLICATION = 3
+    else:
+        REPLICATION = 1
+        
     start = time.time()
     indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
     indexer.main()

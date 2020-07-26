@@ -26,6 +26,30 @@
       }
     },
     "METADATA": {
+      "donor_metadata_status": {
+        "es_name": "donor_metadata_status",
+        "is_json_stored_as_text": false
+      },
+      "sample_metadata_status": {
+        "es_name": "sample_metadata_status",
+        "is_json_stored_as_text": false
+      },
+      "assay_metadata_status": {
+        "es_name": "assay_metadata_status",
+        "is_json_stored_as_text": false
+      },
+      "data_metric_availability": {
+        "es_name": "data_metric_availability",
+        "is_json_stored_as_text": false
+      },
+      "data_processing_level": {
+        "es_name": "data_processing_level",
+        "is_json_stored_as_text": false
+      },
+      "dataset_sign_off_status": {
+        "es_name": "dataset_sign_off_status",
+        "is_json_stored_as_text": false
+      },
       "rui_location": {
         "es_name": "rui_location",
         "is_json_stored_as_text": false
@@ -34,6 +58,10 @@
         "es_name": "lab_tissue_sample_id",
         "is_json_stored_as_text": false
       },
+      "data_access_level": {
+        "es_name": "data_access_level",
+        "is_json_stored_as_text": false
+      },	
       "data_types": {
         "es_name": "data_types",
         "is_json_stored_as_text": true
@@ -85,10 +113,6 @@
       "protocol": {
         "es_name": "protocol_url",
         "is_json_stored_as_text": false
-      },
-      "protocols": {
-        "es_name": "portal_uploaded_protocol_files",
-        "is_json_stored_as_text": true
       },
       "provenance_group_name": {
         "es_name": "group_name",

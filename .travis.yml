@@ -2,6 +2,8 @@ language: python
 python:
   - '3.7'
 cache: pip
+env:
+  - COMMONS_BRANCH=master
 install:
   - pip install -r src/requirements.txt
   - pip install -r src/requirements-dev.txt
