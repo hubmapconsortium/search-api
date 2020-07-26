@@ -54,7 +54,7 @@ class ESWriter:
                             headers={'Content-Type': 'application/json'},
                             data=doc)
             if rspn.ok:
-                self.logger.debug("write doc done")
+                self.logger.debug(f"write doc done. uudi: {uuid}")
                 return True
             else:
                 self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
@@ -68,6 +68,7 @@ class ESWriter:
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
     
     def create_index(self, index_name):
+        from elasticsearch.indexer import REPLICATION
         try:
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
                                 headers={'Content-Type': 'application/json'},
@@ -75,7 +76,10 @@ class ESWriter:
                                                             "mapping.total_fields.limit": 5000,
                                                             "query.default_field": 2048,
                                                             "number_of_shards": 1,
-                                                            "number_of_replicas": 1}}}))
+                                                            "number_of_replicas": REPLICATION}},
+                                                "mappings": {
+                                                    "date_detection": False
+                                                }}))
             if rspn.ok:
                 self.logger.info(f"index {index_name} created")
             else:
