@@ -166,7 +166,7 @@ class Indexer:
 
             if entity['entitytype'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
-                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] and a['metadata']['organ'].strip() != "" else None
+                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] and entity['metadata']['organ'].strip() != "" else None
                 if entity['origin_sample'] is None:
                     try:
                         entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata'] and a['metadata']['organ'].strip() != ""))
