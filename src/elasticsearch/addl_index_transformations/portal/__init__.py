@@ -57,6 +57,7 @@ def transform(doc, batch_id='unspecified'):
     ...    }
     ... })
     >>> del transformed['mapper_metadata']['datetime']
+    >>> del transformed['mapper_metadata']['version']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -85,7 +86,7 @@ def transform(doc, batch_id='unspecified'):
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFish'],
-     'mapper_metadata': {'size': 1008, 'version': '0.0.5'},
+     'mapper_metadata': {'size': 1008},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
