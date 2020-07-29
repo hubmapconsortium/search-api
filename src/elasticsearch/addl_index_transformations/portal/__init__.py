@@ -24,7 +24,7 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
 )
 
 
-version = (Path(__file__).parent / 'VERSION').read_text()
+version = (Path(__file__).parent.parent.parent.parent / 'VERSION').read_text()
 
 
 def transform(doc, batch_id='unspecified'):
