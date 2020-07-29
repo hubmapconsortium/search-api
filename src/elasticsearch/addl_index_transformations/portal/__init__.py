@@ -79,13 +79,13 @@ def transform(doc, batch_id='unspecified'):
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
-                    'CODEX [Cytokit + SPRM]',
+                    'CODEX [Cytokit + SPRM] / seqFish',
                     'codex_cytokit',
                     'dataset',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_data_types': ['CODEX [Cytokit + SPRM]', 'seqFish'],
-     'mapper_metadata': {'size': 999, 'version': '0.0.4'},
+     'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFish'],
+     'mapper_metadata': {'size': 1008, 'version': '0.0.5'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
