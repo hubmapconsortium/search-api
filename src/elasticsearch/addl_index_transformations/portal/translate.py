@@ -142,15 +142,15 @@ def _translate_data_type(doc):
     '''
     >>> doc = {'data_types': ['AF']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['AF'], 'mapped_data_types': 'Autofluorescence Microscopy'}
+    {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
 
     >>> doc = {'data_types': ['image_pyramid', 'AF']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': 'Autofluorescence Microscopy [Image Pyramid]'}
+    {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
 
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': '[abc] / [xyz] [Image Pyramid]'}
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['[abc] / [xyz] [Image Pyramid]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
@@ -163,8 +163,8 @@ def _data_types_map(ks):
         for k in ks if k != pyramid_key
     ]))
     if pyramid_key in ks:
-        return f'{types} [{_data_types_dict[pyramid_key]}]'
-    return types
+        types = f'{types} [{_data_types_dict[pyramid_key]}]'
+    return [types]  # Downstream code expects to see an array.
 
 
 _data_types_dict = {

@@ -84,8 +84,8 @@ def transform(doc, batch_id='unspecified'):
                     'dataset',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_data_types': 'CODEX [Cytokit + SPRM] / seqFish',
-     'mapper_metadata': {'size': 1006, 'version': '0.0.5'},
+     'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFish'],
+     'mapper_metadata': {'size': 1008, 'version': '0.0.5'},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
 
     '''
