@@ -14,7 +14,6 @@ def _unexpected(s):
 
 
 def translate(doc):
-    _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
@@ -47,43 +46,6 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
-
-
-# Status:
-
-def _translate_status(doc):
-    '''
-    >>> doc = {'status': 'NEW'}
-    >>> _translate_status(doc); doc
-    {'status': 'NEW', 'mapped_status': 'New'}
-
-    >>> doc = {'status': 'qa'}
-    >>> _translate_status(doc); doc
-    {'status': 'qa', 'mapped_status': 'QA'}
-
-    >>> doc = {'status': 'xyz'}
-    >>> _translate_status(doc); doc
-    {'status': 'xyz', 'mapped_status': '[xyz]'}
-
-    '''
-    _map(doc, 'status', _status_map)
-
-
-def _status_map(k):
-    k_upper = k.upper()
-    # Most of the real data doesn't satisfy the spec.
-    if k_upper == 'QA':
-        return 'QA'
-    if k_upper not in _status_dict:
-        return _unexpected(k)
-    description = _status_dict[k_upper]
-    return description.title()
-
-
-_status_dict = {
-    k: v['description']
-    for k, v in _enums['dataset_status_types'].items()
-}
 
 
 # Timestamp:
@@ -182,19 +144,27 @@ def _translate_data_type(doc):
     >>> _translate_data_type(doc); doc
     {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
 
-    >>> doc = {'data_types': ['xyz']}
+    >>> doc = {'data_types': ['image_pyramid', 'AF']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz'], 'mapped_data_types': ['[xyz]']}
+    {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
+
+    >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['[abc] / [xyz] [Image Pyramid]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
 
 
 def _data_types_map(ks):
-    return [
+    pyramid_key = 'image_pyramid'
+    types = ' / '.join(sorted([
         _data_types_dict[k] if k in _data_types_dict else _unexpected(k)
-        for k in ks
-    ]
+        for k in ks if k != pyramid_key
+    ]))
+    if pyramid_key in ks:
+        types = f'{types} [{_data_types_dict[pyramid_key]}]'
+    return [types]  # Downstream code expects to see an array.
 
 
 _data_types_dict = {
