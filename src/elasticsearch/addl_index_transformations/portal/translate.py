@@ -14,6 +14,7 @@ def _unexpected(s):
 
 
 def translate(doc):
+    _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
@@ -74,6 +75,27 @@ def _timestamp_map(timestamp):
         datetime.utcfromtimestamp(int(timestamp) / 1000)
         .strftime('%Y-%m-%d %H:%M:%S')
     )
+
+
+# Status:
+
+def _translate_status(doc):
+    '''
+    >>> doc = {'status': 'New'}
+    >>> _translate_status(doc); doc
+    {'status': 'New', 'mapped_status': 'New'}
+
+    >>> doc = {'status': 'Foobar'}
+    >>> _translate_status(doc); doc
+    {'status': 'Foobar', 'mapped_status': '[Foobar]'}
+    '''
+    _map(doc, 'status', _status_map)
+
+
+def _status_map(status):
+    if status not in _enums['dataset_status_types'].keys():
+        return _unexpected(status)
+    return status
 
 
 # Organ:
