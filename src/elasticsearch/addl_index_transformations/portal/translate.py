@@ -20,6 +20,7 @@ def translate(doc):
     _translate_specimen_type(doc)
     _translate_data_type(doc)
     _translate_timestamp(doc)
+    _translate_access_level(doc)
 
 
 # Utils:
@@ -49,6 +50,27 @@ def _map(doc, key, map):
             _map(ancestor, key, map)
 
 
+# Data access level:
+
+def _translate_access_level(doc):
+    '''
+    >>> doc = {'data_access_level': 'consortium'}
+    >>> _translate_access_level(doc); doc
+    {'data_access_level': 'consortium', 'mapped_data_access_level': 'Consortium'}
+    >>> doc = {'data_access_level': 'top-secret'}
+    >>> _translate_access_level(doc); doc
+    {'data_access_level': 'top-secret', 'mapped_data_access_level': '[top-secret]'}
+
+    '''
+    _map(doc, 'data_access_level', _access_level_map)
+
+
+def _access_level_map(access_level):
+    if access_level not in _enums['data_access_levels'].keys():
+        return _unexpected(access_level)
+    return access_level.title()
+
+
 # Timestamp:
 
 def _translate_timestamp(doc):
@@ -57,7 +79,7 @@ def _translate_timestamp(doc):
     ...    'create_timestamp': '1575489509656',
     ...    'last_modified_timestamp': 1590017663118
     ... }
-    >>> _translate_timestamp(doc);
+    >>> _translate_timestamp(doc)
     >>> from pprint import pprint
     >>> pprint(doc)
     {'create_timestamp': '1575489509656',
