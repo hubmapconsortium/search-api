@@ -25,12 +25,8 @@ def translate(doc):
 
 # Utils:
 
-_data_dir = Path(__file__).parent / 'search-schema' / 'data'
-
-
-_enums = load_yaml(
-    (_data_dir / 'definitions.yaml').read_text()
-)['enums']
+_enums_dir = Path(__file__).parent / 'search-schema' / 'data' / 'definitions' / 'enums'
+_enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
 
 
 def _map(doc, key, map):
