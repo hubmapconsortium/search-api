@@ -24,7 +24,7 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
 )
 
 
-version = (Path(__file__).parent / 'VERSION').read_text().strip()
+version = (Path(__file__).parent.parent.parent.parent / 'VERSION').read_text()
 
 
 def transform(doc, batch_id='unspecified'):
@@ -59,6 +59,7 @@ def transform(doc, batch_id='unspecified'):
     ...    }
     ... })
     >>> del transformed['mapper_metadata']['datetime']
+    >>> del transformed['mapper_metadata']['version']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -93,7 +94,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1161, 'version': '0.0.6'},
+     'mapper_metadata': {'size': 1161},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
