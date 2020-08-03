@@ -10,7 +10,7 @@ class TranslationException(Exception):
 
 
 def _unexpected(s):
-    return f'[{s}]'
+    return f'{{{s}}}'
 
 
 def translate(doc):
@@ -55,7 +55,7 @@ def _translate_access_level(doc):
     {'data_access_level': 'consortium', 'mapped_data_access_level': 'Consortium'}
     >>> doc = {'data_access_level': 'top-secret'}
     >>> _translate_access_level(doc); doc
-    {'data_access_level': 'top-secret', 'mapped_data_access_level': '[top-secret]'}
+    {'data_access_level': 'top-secret', 'mapped_data_access_level': '{top-secret}'}
 
     '''
     _map(doc, 'data_access_level', _access_level_map)
@@ -105,7 +105,7 @@ def _translate_status(doc):
 
     >>> doc = {'status': 'Foobar'}
     >>> _translate_status(doc); doc
-    {'status': 'Foobar', 'mapped_status': '[Foobar]'}
+    {'status': 'Foobar', 'mapped_status': '{Foobar}'}
     '''
     _map(doc, 'status', _status_map)
 
@@ -130,7 +130,7 @@ def _translate_organ(doc):
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '[ZZ]'}}
+    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '{ZZ}'}}
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -158,7 +158,7 @@ def _translate_specimen_type(doc):
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'xyz', 'mapped_specimen_type': '[xyz]'}
+    {'specimen_type': 'xyz', 'mapped_specimen_type': '{xyz}'}
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -190,7 +190,7 @@ def _translate_data_type(doc):
 
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['[abc] / [xyz] [Image Pyramid]']}
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['{abc} / {xyz} [Image Pyramid]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
