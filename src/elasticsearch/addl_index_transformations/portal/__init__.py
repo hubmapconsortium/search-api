@@ -32,6 +32,7 @@ def transform(doc, batch_id='unspecified'):
     >>> from pprint import pprint
     >>> transformed = transform({
     ...    'entity_type': 'dataset',
+    ...    'status': 'New',
     ...    'origin_sample': {
     ...        'organ': 'LY01'
     ...    },
@@ -41,6 +42,7 @@ def transform(doc, batch_id='unspecified'):
     ...        'specimen_type': 'fresh_frozen_tissue_section',
     ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
+    ...    'data_access_level': 'consortium',
     ...    'data_types': ['codex_cytokit', 'seqFish'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
@@ -65,6 +67,7 @@ def transform(doc, batch_id='unspecified'):
                     'mapped_specimen_type': 'Fresh Frozen Tissue Section',
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
+     'data_access_level': 'consortium',
      'data_types': ['codex_cytokit', 'seqFish'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
@@ -80,14 +83,20 @@ def transform(doc, batch_id='unspecified'):
                     '1575489509656',
                     '2019-12-04 19:58:29',
                     '5678',
-                    'CODEX [Cytokit + SPRM] / seqFish',
+                    'CODEX [Cytokit + SPRM] / seqFISH',
+                    'Consortium',
+                    'New',
                     'codex_cytokit',
+                    'consortium',
                     'dataset',
                     'seqFish'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFish'],
-     'mapper_metadata': {'size': 1008},
-     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'}}
+     'mapped_data_access_level': 'Consortium',
+     'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
+     'mapped_status': 'New',
+     'mapper_metadata': {'size': 1161},
+     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
+     'status': 'New'}
 
     '''
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'

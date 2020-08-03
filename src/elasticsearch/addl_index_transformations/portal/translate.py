@@ -10,25 +10,23 @@ class TranslationException(Exception):
 
 
 def _unexpected(s):
-    return f'[{s}]'
+    return f'{{{s}}}'
 
 
 def translate(doc):
+    _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
     _translate_data_type(doc)
     _translate_timestamp(doc)
+    _translate_access_level(doc)
 
 
 # Utils:
 
-_data_dir = Path(__file__).parent / 'search-schema' / 'data'
-
-
-_enums = load_yaml(
-    (_data_dir / 'definitions.yaml').read_text()
-)['enums']
+_enums_dir = Path(__file__).parent / 'search-schema' / 'data' / 'definitions' / 'enums'
+_enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
 
 
 def _map(doc, key, map):
@@ -48,6 +46,27 @@ def _map(doc, key, map):
             _map(ancestor, key, map)
 
 
+# Data access level:
+
+def _translate_access_level(doc):
+    '''
+    >>> doc = {'data_access_level': 'consortium'}
+    >>> _translate_access_level(doc); doc
+    {'data_access_level': 'consortium', 'mapped_data_access_level': 'Consortium'}
+    >>> doc = {'data_access_level': 'top-secret'}
+    >>> _translate_access_level(doc); doc
+    {'data_access_level': 'top-secret', 'mapped_data_access_level': '{top-secret}'}
+
+    '''
+    _map(doc, 'data_access_level', _access_level_map)
+
+
+def _access_level_map(access_level):
+    if access_level not in _enums['data_access_levels'].keys():
+        return _unexpected(access_level)
+    return access_level.title()
+
+
 # Timestamp:
 
 def _translate_timestamp(doc):
@@ -56,7 +75,7 @@ def _translate_timestamp(doc):
     ...    'create_timestamp': '1575489509656',
     ...    'last_modified_timestamp': 1590017663118
     ... }
-    >>> _translate_timestamp(doc);
+    >>> _translate_timestamp(doc)
     >>> from pprint import pprint
     >>> pprint(doc)
     {'create_timestamp': '1575489509656',
@@ -76,6 +95,27 @@ def _timestamp_map(timestamp):
     )
 
 
+# Status:
+
+def _translate_status(doc):
+    '''
+    >>> doc = {'status': 'New'}
+    >>> _translate_status(doc); doc
+    {'status': 'New', 'mapped_status': 'New'}
+
+    >>> doc = {'status': 'Foobar'}
+    >>> _translate_status(doc); doc
+    {'status': 'Foobar', 'mapped_status': '{Foobar}'}
+    '''
+    _map(doc, 'status', _status_map)
+
+
+def _status_map(status):
+    if status not in _enums['dataset_status_types'].keys():
+        return _unexpected(status)
+    return status
+
+
 # Organ:
 
 def _translate_organ(doc):
@@ -90,7 +130,7 @@ def _translate_organ(doc):
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '[ZZ]'}}
+    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '{ZZ}'}}
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -118,7 +158,7 @@ def _translate_specimen_type(doc):
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'xyz', 'mapped_specimen_type': '[xyz]'}
+    {'specimen_type': 'xyz', 'mapped_specimen_type': '{xyz}'}
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -150,7 +190,7 @@ def _translate_data_type(doc):
 
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['[abc] / [xyz] [Image Pyramid]']}
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['{abc} / {xyz} [Image Pyramid]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
