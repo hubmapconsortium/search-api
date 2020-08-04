@@ -100,7 +100,7 @@ def indices():
 
 # Get the status of Elasticsearch cluster by calling the health API
 # This shows the connection status and the cluster health status (if connected)
-@app.route('/elasticsearch_status', methods = ['GET'])
+@app.route('/status', methods = ['GET'])
 def elasticsearch_status():
     response_data = {
         'elasticsearch_connection': False
