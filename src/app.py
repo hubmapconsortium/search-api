@@ -98,6 +98,17 @@ def indices():
 
     return jsonify(result)
 
+# Get the status of Elasticsearch cluster by calling the health API
+@app.route('/elasticsearch_status', methods = ['GET'])
+def elasticsearch_status():
+    target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
+    resp = requests.get(url = target_url)
+    
+    # The JSON that contains all indices and aliases
+    status_dict = resp.json()
+
+    return jsonify(status_dict)
+
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
