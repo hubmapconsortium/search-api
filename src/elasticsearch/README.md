@@ -31,7 +31,8 @@ pipenv install -e ../commons (relative path to your commons)
 - COnfigure [INDEX] section.
 
 5. Run the script
+Different env will create different number of replica shard.
 
 ```
-python indexer.py
+python indexer.py [DEV|TEST|STAGE|PROD]
 ```
