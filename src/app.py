@@ -1,7 +1,7 @@
-import sys
 import os
 from elasticsearch.indexer import Indexer
-from flask import Flask, jsonify, abort, request, make_response, json, Response
+from flask import Flask, jsonify, abort, request, Response
+import concurrent.futures
 import threading
 import requests
 import logging
@@ -98,21 +98,49 @@ def indices():
 
     return jsonify(result)
 
+
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        indexer = Indexer(app.config['INDICES'], app.config['ELASTICSEARCH_URL'], app.config['ENTITY_WEBSERVICE_URL'])
-        t1 = threading.Thread(target=indexer.reindex, args=[uuid])
+        t1 = threading.Thread(target=reindex_uuid, args=[uuid])
         t1.start()
-        #indexer.reindex(uuid)
+        # indexer.reindex(uuid)
     except Exception as e:
         app.logger.error(e)
     return 'OK', 202
 
 
+@app.route('/reindex-all/', methods=['PUT'])
+def reindex_all(uuid):
+    try:
+        # Get all uuid from neo4j
+        uuids = get_entity_uuids_from_neo4j()
+        neo4j_uuids = set()
+        # # Get all uuid from ES
+        # es_uuids = set()
+
+        # indexer = Indexer(app.config['INDICES'],
+        #                   app.config['ELASTICSEARCH_URL'],
+        #                   app.config['ENTITY_WEBSERVICE_URL'])
+        # # Loop through ES list if uuid not in Neo4j List, Remove it!
+        # for uuid in es_uuids:
+        #     if uuid not in neo4j_uuids:
+        #         indexer.delete(uuid)
+        # # reindex neo4j list 1 by 1
+        # # Multi-thread
+        # with concurrent.futures.ThreadPoolExecutor() as executor:
+        #     results = [executor.submit(reindex_uuid, uuid) for uuid
+        #                in neo4j_uuids]
+        #     for f in concurrent.futures.as_completed(results):
+        #         app.logger.debug(f.result())
+    except Exception as e:
+        app.logger.error(e)
+    return 'OK', 202
+
 ####################################################################################################
-## Internal Functions Used By API
+## Internal Functions Used By API 
 ####################################################################################################
+
 
 # Throws error for 400 Bad Reqeust with message
 def bad_request_error(err_msg):
@@ -245,3 +273,23 @@ def get_query_string(url):
         query_string = '?' + parsed_url.query
 
     return query_string
+
+
+def reindex_uuid(uuid):
+    indexer = Indexer(app.config['INDICES'],
+                      app.config['ELASTICSEARCH_URL'],
+                      app.config['ENTITY_WEBSERVICE_URL'])
+    indexer.reindex(uuid)
+
+
+def get_entity_uuids_from_neo4j():
+    donor_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                               "/entities/types/Donor").json()
+    sampe_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                               "/entities/types/Sample").json()
+    dataset_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                               "/entities/types/Dataset").json()
+    
+    import pdb; pdb.set_trace()
+
+    return []
