@@ -159,7 +159,7 @@ class Indexer:
             entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
-            entity['access_group'] = self.access_group(entity)
+            # entity['access_group'] = self.access_group(entity)
             
             entity['immediate_descendants'] = requests.get(self.entity_webservice_url + "/entities/children/" + entity.get('uuid', None)).json()
             entity['immediate_ancestors'] = requests.get(self.entity_webservice_url + "/entities/parents/" + entity.get('uuid', None)).json()
