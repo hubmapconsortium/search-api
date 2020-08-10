@@ -5,15 +5,15 @@ set -o errexit
 
 cd `dirname $0`
 
-start flake8
+start portal/flake8
 flake8 \
   || die "Try: autopep8 --in-place --aggressive -r $PWD"
-end flake8
+end portal/flake8
 
-start doctests
+start portal/doctests
 cd ../../..
 for F in elasticsearch/addl_index_transformations/portal/*.py; do
   python -m doctest -o REPORT_NDIFF $F
 done
 cd -
-end doctests
+end portal/doctests

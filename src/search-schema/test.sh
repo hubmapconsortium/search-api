@@ -5,15 +5,15 @@ set -o errexit
 
 cd `dirname $0`
 
-start flake8
+start search-schema/flake8
   flake8 || die 'Try: autopep8 --in-place --aggressive -r .'
-end flake8
+end search-schema/flake8
 
-start doctests
+start search-schema/doctests
   find src | grep '\.py$' | xargs python -m doctest
-end doctests
+end search-schema/doctests
 
-start yaml-to-schema
+start search-schema/yaml-to-schema
   YAML=data/.definitions.yaml
   src/consolidate-yaml.py --definitions data/definitions > $YAML
 
@@ -28,11 +28,11 @@ start yaml-to-schema
   diff --ignore-blank-lines $REAL_SCHEMAS $TEST_SCHEMAS \
     || die "To refresh: $CMD $REAL_SCHEMAS"
   rm -rf $TEST_SCHEMAS
-end yaml-to-schema
+end search-schema/yaml-to-schema
 
-start examples
+start search-schema/examples
   for EXAMPLE in examples/*; do
     TYPE=`basename $EXAMPLE .json`
     src/validate.py --document $EXAMPLE --schema data/schemas/$TYPE.schema.yaml
   done
-end examples
+end search-schema/examples
