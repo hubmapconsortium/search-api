@@ -33,5 +33,5 @@ pipenv install -e ../commons (relative path to your commons)
 5. Run the script
 
 ```
-python indexer.py
+python indexer.py [DEV|TEST|STAGE|PROD]
 ```
