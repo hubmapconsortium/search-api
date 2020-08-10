@@ -1,0 +1,6 @@
+protected:
+    description: This data may contain human genetic sequence information and requires special permission to access.
+consortium:
+    description: This data or metadata is available only to consortium members who are in the HuBMAP-Read access group.
+public:
+    description: This data or metadata is available to the public.

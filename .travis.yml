@@ -8,4 +8,4 @@ install:
   - pip install -r src/requirements.txt
   - pip install -r src/requirements-dev.txt
 script:
-  - src/elasticsearch/addl_index_transformations/portal/test.sh
+  - test.sh

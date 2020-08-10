@@ -122,7 +122,7 @@ def transform(doc, batch_id='unspecified'):
     return doc_copy
 
 
-_data_dir = Path(__file__).parent / 'search-schema' / 'data'
+_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
