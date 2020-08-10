@@ -1,6 +1,6 @@
 import os
 from elasticsearch.indexer import Indexer
-from flask import Flask, jsonify, abort, request, Response
+from flask import Flask, jsonify, abort, request, Response, Request
 import concurrent.futures
 import threading
 import requests
@@ -110,14 +110,15 @@ def reindex(uuid):
     return 'OK', 202
 
 
-@app.route('/reindex-all/', methods=['PUT'])
-def reindex_all(uuid):
+@app.route('/reindex-all', methods=['PUT'])
+def reindex_all():
     try:
-        # Get all uuid from neo4j
-        uuids = get_entity_uuids_from_neo4j()
-        neo4j_uuids = set()
-        # # Get all uuid from ES
-        # es_uuids = set()
+        neo4j_uuids = get_entity_uuids_from_neo4j()
+        neo4j_uuids = set(neo4j_uuids)
+        es_uuids = get_entity_uuids_from_es()
+
+        print(len(neo4j_uuids))
+        print(len(es_uuids))
 
         # indexer = Indexer(app.config['INDICES'],
         #                   app.config['ELASTICSEARCH_URL'],
@@ -213,17 +214,24 @@ def get_target_index(request, index_without_prefix):
     return target_index
 
 # Make a call to Elasticsearch
-def execute_search(request, target_index):
-    # Parse incoming json string into json data(python dict object)
-    json_data = request.get_json()
+def execute_search(request, target_index, query=None):
+    if query is None:
+        # Parse incoming json string into json data(python dict object)
+        json_data = request.get_json()
 
-    # All we need to do is to simply pass the search json to elasticsearch
-    # The request json may contain "access_group" in this case
-    # Will also pass through the query string in URL
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + '_search' + get_query_string(request.url)
-    # Make a request with json data
-    # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
-    resp = requests.post(url = target_url, json = json_data)
+        # All we need to do is to simply pass the search json to elasticsearch
+        # The request json may contain "access_group" in this case
+        # Will also pass through the query string in URL
+        target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + '_search' + get_query_string(request.url)
+        # Make a request with json data
+        # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
+    else:
+        json_data = query
+        target_url = (app.config['ELASTICSEARCH_URL'] +
+                      '/' + target_index +
+                      '/' + '_search')
+
+    resp = requests.post(url=target_url, json=json_data)
 
     # Return the elasticsearch resulting json data as json string
     return jsonify(resp.json())
@@ -283,13 +291,51 @@ def reindex_uuid(uuid):
 
 
 def get_entity_uuids_from_neo4j():
-    donor_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
-                               "/entities/types/Donor").json()
-    sampe_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
-                               "/entities/types/Sample").json()
-    dataset_uuids = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
-                               "/entities/types/Dataset").json()
-    
-    import pdb; pdb.set_trace()
+    donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                          "/entities/types/Donor").json()
+    samples = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                           "/entities/types/Sample").json()
+    datasets = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                            "/entities/types/Dataset").json()
 
-    return []
+    return donors['uuids'] + samples['uuids'] + datasets['uuids']
+
+
+def get_entity_uuids_from_es():
+    uuids = []
+    size = 10_000
+    query = {
+                "size": size,
+                "from": len(uuids),
+                "_source": ["_id"],
+                "query": {
+                    "bool": {
+                        "must": [],
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "should": [],
+                        "must_not": []
+                    }
+                }
+            }
+
+    end_of_list = False
+    while not end_of_list:
+        resp = execute_search(None,
+                              (app.config['PRIVATE_INDEX_PREFIX'] +
+                               'entities'),
+                              query)
+
+        ret_obj = resp.get_json()
+        uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
+
+        total = ret_obj.get('hits').get('total').get('value')
+        if total <= len(uuids):
+            end_of_list = True
+        else:
+            query['from'] = len(uuids)
+
+    return uuids
