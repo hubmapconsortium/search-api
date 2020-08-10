@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -o errexit
 
-. ../../test-utils.sh
+. test-utils.sh
+
+cd `dirname $0`
 
 start flake8
   flake8 || die 'Try: autopep8 --in-place --aggressive -r .'
