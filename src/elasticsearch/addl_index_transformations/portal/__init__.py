@@ -173,7 +173,7 @@ def _simple_clean(doc):
 _schemas = {
     entity_type:
         load_yaml((
-            _data_dir / 'schemas' / f'{entity_type}.schema.yaml'
+            _data_dir / 'generated' / f'{entity_type}.schema.yaml'
         ).read_text())
     for entity_type in ['dataset', 'donor', 'sample']
 }

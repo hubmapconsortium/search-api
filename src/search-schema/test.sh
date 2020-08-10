@@ -17,8 +17,8 @@ start search-schema/yaml-to-schema
   YAML=data/.definitions.yaml
   src/consolidate-yaml.py --definitions data/definitions > $YAML
 
-  REAL_SCHEMAS=data/schemas/
-  TEST_SCHEMAS=data/schemas.test/
+  REAL_SCHEMAS=data/generated/
+  TEST_SCHEMAS=data/generated.test/
   CMD="src/definitions-yaml-to-schema.py --definitions $YAML --schemas"
 
   WHOLE_CMD="$CMD $TEST_SCHEMAS"
@@ -33,6 +33,6 @@ end search-schema/yaml-to-schema
 start search-schema/examples
   for EXAMPLE in examples/*; do
     TYPE=`basename $EXAMPLE .json`
-    src/validate.py --document $EXAMPLE --schema data/schemas/$TYPE.schema.yaml
+    src/validate.py --document $EXAMPLE --schema data/generated/$TYPE.schema.yaml
   done
 end search-schema/examples
