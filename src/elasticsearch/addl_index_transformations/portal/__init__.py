@@ -122,7 +122,7 @@ def transform(doc, batch_id='unspecified'):
     return doc_copy
 
 
-_data_dir = Path(__file__).parent / 'search-schema' / 'data'
+_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
@@ -170,18 +170,18 @@ def _simple_clean(doc):
 #             del doc[unused_key]
 
 
-_schemas = {
-    entity_type:
-        load_yaml((
-            _data_dir / 'schemas' / f'{entity_type}.schema.yaml'
-        ).read_text())
-    for entity_type in ['dataset', 'donor', 'sample']
-}
+# _schemas = {
+#     entity_type:
+#         load_yaml((
+#             _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+#         ).read_text())
+#     for entity_type in ['dataset', 'donor', 'sample']
+# }
 
 
-def _get_schema(doc):
-    entity_type = doc['entity_type'].lower()
-    return _schemas[entity_type]
+# def _get_schema(doc):
+#     entity_type = doc['entity_type'].lower()
+#     return _schemas[entity_type]
 
 
 # TODO:

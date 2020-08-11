@@ -1,0 +1,60 @@
+AF:
+    description: Autofluorescence Microscopy
+ATACseq-bulk:
+    description: Bulk ATAC-seq
+CODEX:
+    description: CODEX
+IMC:
+    description: Imaging Mass Cytometry
+LC-MS-untargeted:
+    description: Untargeted LC-MS
+Lightsheet:
+    description: Lightsheet Microscopy
+MALDI-IMS-neg:
+    description: MALDI IMS negative
+MALDI-IMS-pos:
+    description: MALDI IMS positive
+MxIF:
+    description: Multiplexed IF Microscopy
+PAS:
+    description: PAS Stained Microscopy
+SNAREseq:
+    description: SNARE-seq
+TMT-LC-MS:
+    description: TMT LC-MS
+Targeted-Shotgun-LC-MS:
+    description: Targeted Shotgun / Flow-injection LC-MS
+WGS:
+    description: Whole Genome Sequencing
+bulk-RNA:
+    description: Bulk RNA-seq
+codex_cytokit:
+    description: CODEX [Cytokit + SPRM]
+image_pyramid:
+    description: Image Pyramid
+salmon_rnaseq_10x:
+    description: scRNA-seq (10x Genomics) [Salmon]
+salmon_rnaseq_bulk:
+    description: Bulk RNA-seq [Salmon]
+salmon_rnaseq_sciseq:
+    description: sciRNA-seq [Salmon]
+salmon_rnaseq_snareseq:
+    description: scRNA-seq (SNARE-seq) [Salmon]
+sc_atac_seq_snare:
+    description: scATAC-seq (SNARE-seq) [SnapATAC]
+scRNA-Seq-10x:
+    description: scRNA-seq (10x Genomics)
+sciATACseq:
+    description: sciATAC-seq
+sc_atac_seq_sci:
+    description: sciATAC-seq [SnapATAC]
+sciRNAseq:
+    description: sciRNA-seq
+seqFish:
+    description: seqFISH
+seqFish_lab_processed:
+    description: seqFISH [Lab Processed]
+snATACseq:
+    description: snATAC-seq
+snRNAseq:
+    description: snRNA-seq
