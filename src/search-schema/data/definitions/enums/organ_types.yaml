@@ -1,0 +1,74 @@
+BL:
+  description: Bladder
+BR:
+  description: Brain
+HT:
+  description: Heart
+LB:
+  description: Bronchus (Left)
+LI:
+  description: Large Intestine
+LK:
+  description: Kidney (Left)
+LL:
+  description: Lung (Left)
+LV:
+  description: Liver
+LY01:
+  description: Lymph Node 01
+LY02:
+  description: Lymph Node 02
+LY03:
+  description: Lymph Node 03
+LY04:
+  description: Lymph Node 04
+LY05:
+  description: Lymph Node 05
+LY06:
+  description: Lymph Node 06
+LY07:
+  description: Lymph Node 07
+LY08:
+  description: Lymph Node 08
+LY09:
+  description: Lymph Node 09
+LY10:
+  description: Lymph Node 10
+LY11:
+  description: Lymph Node 11
+LY12:
+  description: Lymph Node 12
+LY13:
+  description: Lymph Node 13
+LY14:
+  description: Lymph Node 14
+LY15:
+  description: Lymph Node 15
+LY16:
+  description: Lymph Node 16
+LY17:
+  description: Lymph Node 17
+LY18:
+  description: Lymph Node 18
+LY19:
+  description: Lymph Node 19
+LY20:
+  description: Lymph Node 20
+OT:
+  description: Other
+RB:
+  description: Bronchus (Right)
+RK:
+  description: Kidney (Right)
+RL:
+  description: Lung (Right)
+SI:
+  description: Small Intestine
+SP:
+  description: Spleen
+TH:
+  description: Thymus
+TR:
+  description: Trachea
+UR:
+  description: Ureter
