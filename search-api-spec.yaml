@@ -1,8 +1,8 @@
 # https://github.com/SmartAPI/smartAPI-Specification/blob/OpenAPI.next/versions/3.0.0.md#specification
 openapi: 3.0.0
 info:
-  description: The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
-  version: 0.1.0
+  description: The HuBMAP Search API is a thin wrapper of the Elasticsearch API. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
+  version: 1.5.4
   title: HuBMAP Search API
   termsOfService: 'https://hubmapconsortium.org'
   contact:
@@ -10,35 +10,49 @@ info:
 tags:
   - name: 'Search API, Elasticsearch'
     description: Operations pertaining to datasets indexed in Elasticsearch
-servers:
-- url: 'https://search-api.dev.hubmapconsortium.org/'
-  description: Development server
-- url: 'https://search-api.test.hubmapconsortium.org/'
-  description: Testing server
 
-# Define the security scheme type (HTTP bearer)
-components:
-  securitySchemes:
-    bearerAuth: # arbitrary name for the security scheme
-      type: http
-      scheme: bearer
-      bearerFormat: Globus nexus token 
-      
-  schemas:
-    requestJsonBody:
-      type: object
-
+externalDocs:
+  description: Elasticsearch API Documentation
+  url: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html
       
 # Apply the security globally to all operations
 security:
-  - bearerAuth: [] 
+  - JWTBearerAuth: [] 
   
 paths:
+
+  '/indices':
+    get:
+      tags:
+        - indices
+      summary: Reindex for a given UUID of dataset.  Use this method to obtain a list of valid indices within the search-api endpoint.  These index names are used in some of the subseqeunt calls made to the endpoint.
+      operationId: get-indices
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indices:
+                    example: ["entities", "portal"] 
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Bad request. A JSON body and appropriate Content-Type header are required in request
+        '401':
+          description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
+        '403':
+          description: The globus token used in the `Authorization` header doesn't have the right group access permission
+
   /search:
     post:
       tags:
         - search
-      summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query
+      summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.   
+      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search) rules.
       operationId: search-post
       requestBody:
         description: Request JSON of Elasticsearch query
@@ -47,6 +61,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/requestJsonBody'
+            example: {
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "donor.group_name": "Vanderbilt TMC"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "match": {
+            "origin_sample.entity_type": "Sample"
+          }
+        }
+      ]
+    }
+  }
+}
       responses:
         '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
@@ -56,11 +90,21 @@ paths:
           description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
-    get:
+
+  /{index_name}/search:
+    post:
       tags:
-        - search
-      summary: Execute an Elasticsearch query JSON via HTTP GET and get back search hits that match the query
-      operationId: search-get
+        - search_by_index
+      summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.  This call contraints the results to the specified index_name parameter.  Other than that, this call is identical to the /search method.    
+      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search) rules.
+      operationId: search-post-by-index
+      parameters:
+        - name: index_name
+          in: path
+          description: the name of an existing Elasticsearch index (see the /indices web service call)
+          required: true
+          schema:
+            type: string
       requestBody:
         description: Request JSON of Elasticsearch query
         required: true
@@ -68,13 +112,33 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/requestJsonBody'
+            example: {
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "donor.group_name": "Vanderbilt TMC"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "match": {
+            "origin_sample.entity_type": "Sample"
+          }
+        }
+      ]
+    }
+  }
+}
       responses:
         '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
         '400':
           description: Bad request. A JSON body and appropriate Content-Type header are required in request
         '401':
-          description: A valid globus token in the `Authorization` header (Bearer scheme) is required in request
+          description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
             
@@ -94,3 +158,23 @@ paths:
       responses:
         '202':
           description: The request has been accepted and reindex is in process
+
+servers:
+  - url: "https://search.api.hubmapconsortium.org"
+components:
+  securitySchemes:
+    globus_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: "https://auth.globus.org/v2/oauth2/authorize"
+          scopes:
+            "write:entities": modify entities
+            "read:entities": read entities
+    JWTBearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+  schemas:
+    requestJsonBody:
+      type: object

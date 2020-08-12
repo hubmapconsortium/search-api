@@ -1,7 +1,6 @@
-from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
-import sys, json, time, concurrent.futures, traceback, copy, threading
+import sys, json, time, concurrent.futures, copy
 import collections
 import requests
 import configparser
@@ -9,7 +8,7 @@ import ast
 import os
 import logging
 from flask import current_app as app
-from hubmap_commons.hubmap_const import HubmapConst 
+from hubmap_commons.hubmap_const import HubmapConst
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
@@ -57,7 +56,7 @@ class Indexer:
             raise ValueError("There is problem of indices config.")
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
-        
+
     def main(self):
         try:
             #### Create Indices ####
@@ -135,6 +134,16 @@ class Indexer:
                     self.logger.error(f"Cannot find uuid: {uuid}")
                     return f"Done."
         except Exception as e:
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
+            self.logger.exception("unexpected exception")
+            self.logger.error('-'*60)
+
+    def delete(self, uuid):
+        try:
+            for index, _ in self.indices.items():
+                self.eswriter.delete_document(index, uuid)
+        except Exception:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
@@ -228,7 +237,7 @@ class Indexer:
 
         except Exception as e:
             self.logger.error(f"Exception in generate_doc()")
-   
+
     def entity_keys_rename(self, entity):
         to_delete_keys = []
         temp = {}
