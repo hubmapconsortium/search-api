@@ -142,7 +142,8 @@ def reindex_all():
                           app.config['ENTITY_WEBSERVICE_URL'])
         for uuid in es_uuids:
             if uuid not in neo4j_uuids:
-                app.logger.debug(f"uuid: {uuid} not in neo4j. Delete it from Elasticserach.")
+                app.logger.debug(f"""uuid: {uuid} not in neo4j.
+                                     Delete it from Elasticserach.""")
                 indexer.delete(uuid)
         # Multi-thread
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -297,7 +298,6 @@ def get_query_string(url):
         query_string = '?' + parsed_url.query
 
     return query_string
-<<<<<<< HEAD
 
 
 def reindex_uuid(uuid):
@@ -356,5 +356,3 @@ def get_entity_uuids_from_es():
             query['from'] = len(uuids)
 
     return uuids
-=======
->>>>>>> 71e168a54cc78fa3033565df4d73681f04e59cb7
