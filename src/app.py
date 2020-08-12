@@ -117,23 +117,18 @@ def reindex_all():
         neo4j_uuids = set(neo4j_uuids)
         es_uuids = get_entity_uuids_from_es()
 
-        print(len(neo4j_uuids))
-        print(len(es_uuids))
-
-        # indexer = Indexer(app.config['INDICES'],
-        #                   app.config['ELASTICSEARCH_URL'],
-        #                   app.config['ENTITY_WEBSERVICE_URL'])
-        # # Loop through ES list if uuid not in Neo4j List, Remove it!
-        # for uuid in es_uuids:
-        #     if uuid not in neo4j_uuids:
-        #         indexer.delete(uuid)
-        # # reindex neo4j list 1 by 1
-        # # Multi-thread
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     results = [executor.submit(reindex_uuid, uuid) for uuid
-        #                in neo4j_uuids]
-        #     for f in concurrent.futures.as_completed(results):
-        #         app.logger.debug(f.result())
+        indexer = Indexer(app.config['INDICES'],
+                          app.config['ELASTICSEARCH_URL'],
+                          app.config['ENTITY_WEBSERVICE_URL'])
+        for uuid in es_uuids:
+            if uuid not in neo4j_uuids:
+                indexer.delete(uuid)
+        # Multi-thread
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            results = [executor.submit(reindex_uuid, uuid) for uuid
+                       in neo4j_uuids]
+            for f in concurrent.futures.as_completed(results):
+                app.logger.debug(f.result())
     except Exception as e:
         app.logger.error(e)
     return 'OK', 202
