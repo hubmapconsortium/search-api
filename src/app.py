@@ -122,6 +122,7 @@ def reindex_all():
                           app.config['ENTITY_WEBSERVICE_URL'])
         for uuid in es_uuids:
             if uuid not in neo4j_uuids:
+                app.logger.debug(f"uuid: {uuid} not in neo4j. Delete it from Elasticserach.")
                 indexer.delete(uuid)
         # Multi-thread
         with concurrent.futures.ThreadPoolExecutor() as executor:
