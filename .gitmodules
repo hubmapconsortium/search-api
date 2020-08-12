@@ -1,3 +1,0 @@
-[submodule "src/elasticsearch/addl_index_transformations/portal/search-schema"]
-	path = src/elasticsearch/addl_index_transformations/portal/search-schema
-	url = https://github.com/hubmapconsortium/search-schema.git

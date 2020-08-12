@@ -54,7 +54,7 @@ def search():
     # Always expect a json body
     request_json_required(request)
 
-    app.logger.info("======/search without no index provided======")
+    app.logger.info("======search with no index provided======")
     
     # Determine the target real index in Elasticsearch to be searched against
     # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
@@ -98,6 +98,26 @@ def indices():
 
     return jsonify(result)
 
+# Get the status of Elasticsearch cluster by calling the health API
+# This shows the connection status and the cluster health status (if connected)
+@app.route('/status', methods = ['GET'])
+def status():
+    response_data = {
+        'elasticsearch_connection': False
+    }
+    
+    target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
+    resp = requests.get(url = target_url)
+    
+    if resp.status_code == 200:
+        response_data['elasticsearch_connection'] = True
+        
+        # If connected, we also get the cluster health status
+        status_dict = resp.json()
+        # Add new key
+        response_data['elasticsearch_status'] = status_dict['status']
+
+    return jsonify(response_data)
 
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
@@ -277,6 +297,7 @@ def get_query_string(url):
         query_string = '?' + parsed_url.query
 
     return query_string
+<<<<<<< HEAD
 
 
 def reindex_uuid(uuid):
@@ -335,3 +356,5 @@ def get_entity_uuids_from_es():
             query['from'] = len(uuids)
 
     return uuids
+=======
+>>>>>>> 71e168a54cc78fa3033565df4d73681f04e59cb7

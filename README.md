@@ -4,6 +4,13 @@ The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data in
 
 The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf02b838022d564da776b03f357158
 
+## Updating the enumerations
+
+All codes used by the system need to be represented in
+[src/search-schema/data/definitions/](src/search-schema/data/definitions/).
+The most frequently updated is `assay_types.yaml`:
+Nils likes to review the descriptions here, so he is listed as a "[code owner](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners)".
+
 ## Search endpoint and group access check
 
 The search-api base URL for each deployment environment:
