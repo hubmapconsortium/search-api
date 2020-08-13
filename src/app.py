@@ -6,6 +6,7 @@ import threading
 import requests
 import logging
 from urllib.parse import urlparse
+from flask import current_app as app
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -102,8 +103,10 @@ def indices():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        t1 = threading.Thread(target=reindex_uuid, args=[uuid])
-        t1.start()
+        indexer = Indexer(app.config['INDICES'],
+                          app.config['ELASTICSEARCH_URL'],
+                          app.config['ENTITY_WEBSERVICE_URL'])
+        threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
     except Exception as e:
         app.logger.error(e)
@@ -113,23 +116,10 @@ def reindex(uuid):
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
     try:
-        neo4j_uuids = get_entity_uuids_from_neo4j()
-        neo4j_uuids = set(neo4j_uuids)
-        es_uuids = get_entity_uuids_from_es()
-
         indexer = Indexer(app.config['INDICES'],
                           app.config['ELASTICSEARCH_URL'],
                           app.config['ENTITY_WEBSERVICE_URL'])
-        for uuid in es_uuids:
-            if uuid not in neo4j_uuids:
-                app.logger.debug(f"uuid: {uuid} not in neo4j. Delete it from Elasticserach.")
-                indexer.delete(uuid)
-        # Multi-thread
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            results = [executor.submit(reindex_uuid, uuid) for uuid
-                       in neo4j_uuids]
-            for f in concurrent.futures.as_completed(results):
-                app.logger.debug(f.result())
+        threading.Thread(target=reindex_all_uuids, args=[indexer]).start()
     except Exception as e:
         app.logger.error(e)
     return 'OK', 202
@@ -279,13 +269,6 @@ def get_query_string(url):
     return query_string
 
 
-def reindex_uuid(uuid):
-    indexer = Indexer(app.config['INDICES'],
-                      app.config['ELASTICSEARCH_URL'],
-                      app.config['ENTITY_WEBSERVICE_URL'])
-    indexer.reindex(uuid)
-
-
 def get_entity_uuids_from_neo4j():
     donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
                           "/entities/types/Donor").json()
@@ -295,6 +278,13 @@ def get_entity_uuids_from_neo4j():
                             "/entities/types/Dataset").json()
 
     return donors['uuids'] + samples['uuids'] + datasets['uuids']
+
+
+def get_donor_uuids_from_neo4j():
+    donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                          "/entities/types/Donor").json()
+
+    return donors['uuids']
 
 
 def get_entity_uuids_from_es():
@@ -317,11 +307,10 @@ def get_entity_uuids_from_es():
                     }
                 }
             }
-
     end_of_list = False
     while not end_of_list:
         resp = execute_search(None,
-                              (app.config['PRIVATE_INDEX_PREFIX'] +
+                              ('hm_consortium_' +
                                'entities'),
                               query)
 
@@ -335,3 +324,26 @@ def get_entity_uuids_from_es():
             query['from'] = len(uuids)
 
     return uuids
+
+
+def reindex_all_uuids(indexer):
+    with app.app_context():
+        try:
+            neo4j_uuids = get_entity_uuids_from_neo4j()
+            neo4j_uuids = set(neo4j_uuids)
+            es_uuids = get_entity_uuids_from_es()
+            donor_uuids = get_donor_uuids_from_neo4j()
+
+            for uuid in es_uuids:
+                if uuid not in neo4j_uuids:
+                    app.logger.debug(f"""uuid: {uuid} not in neo4j.
+                                        Delete it from Elasticserach.""")
+                    indexer.delete(uuid)
+            # Multi-thread
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                results = [executor.submit(indexer.reindex, uuid) for uuid
+                           in donor_uuids]
+                for f in concurrent.futures.as_completed(results):
+                    app.logger.debug(f.result())
+        except Exception as e:
+            app.logger.error(e)
