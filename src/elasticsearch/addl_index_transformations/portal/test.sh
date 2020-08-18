@@ -3,6 +3,13 @@ set -o errexit
 
 . test-utils.sh
 
+start version
+if [ "$TRAVIS_BRANCH" != 'master' ] && [ "$TRAVIS_BRANCH" != 'devel' ] ; then
+diff src/VERSION <(curl -s https://raw.githubusercontent.com/hubmapconsortium/search-api/devel/src/VERSION) \
+  && die 'Bump VERSION'
+fi
+end version
+
 cd `dirname $0`
 
 start portal/flake8
