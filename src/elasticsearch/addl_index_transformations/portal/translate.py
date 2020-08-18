@@ -288,14 +288,15 @@ def _translate_donor_metadata(doc):
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [{
-    ...             "grouping_code": "BAD"
+    ...             "preferred_term": "Diabetes",
+    ...             "grouping_code": "UNKNOWN",
+    ...             "grouping_concept_preferred_term": "Medical history ... or anything else"
     ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD'}
+    >>> pprint(doc['mapped_metadata'])
+    {'medical_history_or_anything_else': ['Diabetes']}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
@@ -320,7 +321,17 @@ def _donor_metadata_map(metadata):
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
             if not kv['grouping_code'] in grouping_codes:
-                raise TranslationException(f'Unexpected grouping: {kv}')
+                # NOTE: This branch shouldn't be used on a regular basis:
+                # Using a grouping_code makes it more robust if the
+                # grouping_concept_preferred_term changes.
+                # TODO: I see that some of the new fields are multi-valued.
+                # Perhaps make all donor metadata arrays for consistency?
+                normed = re.sub(r'\W+', '_', kv['grouping_concept_preferred_term']).lower()
+                if normed in mapped_metadata:
+                    mapped_metadata[normed].append(kv['preferred_term'])
+                else:
+                    mapped_metadata[normed] = [kv['preferred_term']]
+                continue
             k = grouping_codes[kv['grouping_code']]
             if k == AGE and kv['units'] == 'months':
                 v = round(float(kv['data_value']) / 12, 1)
