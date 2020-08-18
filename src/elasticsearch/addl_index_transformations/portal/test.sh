@@ -4,6 +4,7 @@ set -o errexit
 . test-utils.sh
 
 start version
+# Double brackets needed for partial matching.
 if [ "$TRAVIS_BRANCH" != 'master' ] && [ "$TRAVIS_BRANCH" != 'devel' ] && [[ "$TRAVIS_BRANCH" != 'release/'* ]]; then
   diff src/VERSION <(curl -s https://raw.githubusercontent.com/hubmapconsortium/search-api/devel/src/VERSION) \
     && die 'Bump VERSION'
