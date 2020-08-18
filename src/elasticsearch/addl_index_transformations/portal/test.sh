@@ -4,9 +4,9 @@ set -o errexit
 . test-utils.sh
 
 start version
-if [ "$TRAVIS_BRANCH" != 'master' ] && [ "$TRAVIS_BRANCH" != 'devel' ] ; then
-diff src/VERSION <(curl -s https://raw.githubusercontent.com/hubmapconsortium/search-api/devel/src/VERSION) \
-  && die 'Bump VERSION'
+if [ "$TRAVIS_BRANCH" != 'master' ] && [ "$TRAVIS_BRANCH" != 'devel' ] && [[ "$TRAVIS_BRANCH" != 'release/'* ]]; then
+  diff src/VERSION <(curl -s https://raw.githubusercontent.com/hubmapconsortium/search-api/devel/src/VERSION) \
+    && die 'Bump VERSION'
 fi
 end version
 
