@@ -262,7 +262,11 @@ def _translate_donor_metadata(doc):
     4
     >>> from pprint import pprint
     >>> pprint(doc['mapped_metadata'])
-    {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
+    {'age': 4.8,
+     'bmi': 22.0,
+     'gender': 'Masculine gender',
+     'race': 'African race',
+     'sex': 'Masculine gender'}
 
     >>> doc = {
     ...     "metadata": {
@@ -279,7 +283,7 @@ def _translate_donor_metadata(doc):
     ... }
     >>> _translate_donor_metadata(doc)
     >>> pprint(doc['mapped_metadata'])
-    {'gender': 'Male'}
+    {'gender': 'Male', 'sex': 'Male'}
 
     >>> doc = {
     ...     "metadata": {
@@ -327,7 +331,10 @@ def _donor_metadata_map(metadata):
                     else float(kv['data_value'])
                 )
             if k == SEX:
+                # TODO: When the UI is caught up, only use sex.
                 mapped_metadata[GENDER] = v
-            else:
-                mapped_metadata[k] = v
+            elif k == GENDER and SEX not in mapped_metadata:
+                # If we still have old donor metadata, we can move the UI forward
+                mapped_metadata[SEX] = v
+            mapped_metadata[k] = v
     return mapped_metadata

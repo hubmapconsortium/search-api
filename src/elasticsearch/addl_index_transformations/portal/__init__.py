@@ -72,7 +72,8 @@ def transform(doc, batch_id='unspecified'):
      'data_types': ['codex_cytokit', 'seqFish'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
-     'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
+     'donor': {'mapped_metadata': {'gender': 'Masculine gender',
+                                   'sex': 'Masculine gender'},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                   'grouping_code': '365873007',
                                                   'grouping_concept_preferred_term': 'Gender '
@@ -96,7 +97,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1191},
+     'mapper_metadata': {'size': 1218},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
