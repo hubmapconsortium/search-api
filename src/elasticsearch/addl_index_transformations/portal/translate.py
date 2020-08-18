@@ -228,6 +228,7 @@ def _translate_donor_metadata(doc):
     ...         "organ_donor_data": [
     ...             {
     ...                 "data_type": "Nominal",
+    ...                 "grouping_code": "365873007",
     ...                 "grouping_concept_preferred_term":
     ...                     "Gender finding",
     ...                 "preferred_term": "Masculine gender",
@@ -235,6 +236,7 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "58",
+    ...                 "grouping_code": "424144002",
     ...                 "grouping_concept_preferred_term":
     ...                     "Current chronological age",
     ...                 "units": "months"
@@ -242,6 +244,7 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "22",
+    ...                 "grouping_code": "60621009",
     ...                 "grouping_concept_preferred_term":
     ...                     "Body mass index",
     ...                 "units": "kg/m^17"
@@ -268,16 +271,14 @@ def _translate_donor_metadata(doc):
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [{
-    ...             "grouping_code": "BAD",
-    ...             "grouping_concept": "BAD",
-    ...             "grouping_concept_preferred_term": "BAD"
+    ...             "grouping_code": "BAD"
     ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
     Traceback (most recent call last):
     ...
-    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD', 'grouping_concept': 'BAD', 'grouping_concept_preferred_term': 'BAD'}
+    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD'}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
@@ -288,21 +289,8 @@ def _donor_metadata_map(metadata):
     BMI = 'bmi'
     GENDER = 'gender'
     RACE = 'race'
-    # I'm just not sure which one of these will be stable
-    # if the preferred vocabulary changes.
-    # If the vocabulary is stable, this can be simplified!
-    grouping_terms = {
-        'Body mass index': BMI,
-        'Current chronological age': AGE,
-        'Gender finding': GENDER,
-        'Racial group': RACE
-    }
-    grouping_concepts = {
-        'C1305855': BMI,
-        'C0001779': AGE,
-        'C1287419': GENDER,
-        'C0027567': RACE
-    }
+    # The "grouping_codes" seem to be the most stable,
+    # by "grouping_concepts" or "grouping_terms" could also be used.
     grouping_codes = {
         '60621009': BMI,
         '424144002': AGE,
@@ -312,16 +300,9 @@ def _donor_metadata_map(metadata):
     mapped_metadata = {}
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            k = (
-                (kv['grouping_concept_preferred_term'] in grouping_terms
-                    and grouping_terms[kv['grouping_concept_preferred_term']])
-                or (kv['grouping_concept'] in grouping_concepts
-                    and grouping_concepts[kv['grouping_concept']])
-                or (kv['grouping_code'] in grouping_codes
-                    and grouping_codes[kv['grouping_code']])
-            )
-            if not k:
+            if not kv['grouping_code'] in grouping_codes:
                 raise TranslationException(f'Unexpected grouping: {kv}')
+            k = grouping_codes[kv['grouping_code']]
             if k == AGE and kv['units'] == 'months':
                 v = round(float(kv['data_value']) / 12, 1)
             else:
