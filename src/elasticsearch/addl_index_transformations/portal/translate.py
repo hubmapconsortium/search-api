@@ -228,6 +228,7 @@ def _translate_donor_metadata(doc):
     ...         "organ_donor_data": [
     ...             {
     ...                 "data_type": "Nominal",
+    ...                 "grouping_code": "365873007",
     ...                 "grouping_concept_preferred_term":
     ...                     "Gender finding",
     ...                 "preferred_term": "Masculine gender",
@@ -235,6 +236,7 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "58",
+    ...                 "grouping_code": "424144002",
     ...                 "grouping_concept_preferred_term":
     ...                     "Current chronological age",
     ...                 "units": "months"
@@ -242,6 +244,7 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "22",
+    ...                 "grouping_code": "60621009",
     ...                 "grouping_concept_preferred_term":
     ...                     "Body mass index",
     ...                 "units": "kg/m^17"
@@ -249,10 +252,6 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Nominal",
     ...                 "grouping_code": "415229000",
-    ...                 "grouping_concept":
-    ...                     "not recognized: will fall-back to code",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "not recognized: will fall-back to code",
     ...                 "preferred_term": "African race",
     ...             }
     ...         ]
@@ -263,21 +262,41 @@ def _translate_donor_metadata(doc):
     4
     >>> from pprint import pprint
     >>> pprint(doc['mapped_metadata'])
-    {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
+    {'age': 4.8,
+     'bmi': 22.0,
+     'gender': 'Masculine gender',
+     'race': 'African race',
+     'sex': 'Masculine gender'}
+
+    >>> doc = {
+    ...     "metadata": {
+    ...         "organ_donor_data": [
+    ...             {
+    ...                 "data_type": "Nominal",
+    ...                 "preferred_term": "Male",
+    ...                 "grouping_concept": "C1522384",
+    ...                 "grouping_concept_preferred_term": "Sex",
+    ...                 "grouping_code": "57312000",
+    ...             }
+    ...         ]
+    ...     }
+    ... }
+    >>> _translate_donor_metadata(doc)
+    >>> pprint(doc['mapped_metadata'])
+    {'gender': 'Male', 'sex': 'Male'}
 
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [{
-    ...             "grouping_code": "BAD",
-    ...             "grouping_concept": "BAD",
-    ...             "grouping_concept_preferred_term": "BAD"
+    ...             "preferred_term": "Diabetes",
+    ...             "grouping_code": "UNKNOWN",
+    ...             "grouping_concept_preferred_term": "Medical history ... or anything else"
     ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD', 'grouping_concept': 'BAD', 'grouping_concept_preferred_term': 'BAD'}
+    >>> pprint(doc['mapped_metadata'])
+    {'medical_history_or_anything_else': ['Diabetes']}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
@@ -287,41 +306,33 @@ def _donor_metadata_map(metadata):
     AGE = 'age'
     BMI = 'bmi'
     GENDER = 'gender'
+    SEX = 'sex'
     RACE = 'race'
-    # I'm just not sure which one of these will be stable
-    # if the preferred vocabulary changes.
-    # If the vocabulary is stable, this can be simplified!
-    grouping_terms = {
-        'Body mass index': BMI,
-        'Current chronological age': AGE,
-        'Gender finding': GENDER,
-        'Racial group': RACE
-    }
-    grouping_concepts = {
-        'C1305855': BMI,
-        'C0001779': AGE,
-        'C1287419': GENDER,
-        'C0027567': RACE
-    }
+    # The "grouping_codes" seem to be the most stable,
+    # by "grouping_concepts" or "grouping_terms" could also be used.
     grouping_codes = {
         '60621009': BMI,
         '424144002': AGE,
         '365873007': GENDER,
+        '57312000': SEX,
         '415229000': RACE
     }
     mapped_metadata = {}
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            k = (
-                (kv['grouping_concept_preferred_term'] in grouping_terms
-                    and grouping_terms[kv['grouping_concept_preferred_term']])
-                or (kv['grouping_concept'] in grouping_concepts
-                    and grouping_concepts[kv['grouping_concept']])
-                or (kv['grouping_code'] in grouping_codes
-                    and grouping_codes[kv['grouping_code']])
-            )
-            if not k:
-                raise TranslationException(f'Unexpected grouping: {kv}')
+            if not kv['grouping_code'] in grouping_codes:
+                # NOTE: This branch shouldn't be used on a regular basis:
+                # Using a grouping_code makes it more robust if the
+                # grouping_concept_preferred_term changes.
+                # TODO: I see that some of the new fields are multi-valued.
+                # Perhaps make all donor metadata arrays for consistency?
+                normed = re.sub(r'\W+', '_', kv['grouping_concept_preferred_term']).lower()
+                if normed in mapped_metadata:
+                    mapped_metadata[normed].append(kv['preferred_term'])
+                else:
+                    mapped_metadata[normed] = [kv['preferred_term']]
+                continue
+            k = grouping_codes[kv['grouping_code']]
             if k == AGE and kv['units'] == 'months':
                 v = round(float(kv['data_value']) / 12, 1)
             else:
@@ -330,5 +341,11 @@ def _donor_metadata_map(metadata):
                     if kv['data_type'] == 'Nominal'
                     else float(kv['data_value'])
                 )
+            if k == SEX:
+                # TODO: When the UI is caught up, only use sex.
+                mapped_metadata[GENDER] = v
+            elif k == GENDER and SEX not in mapped_metadata:
+                # If we still have old donor metadata, we can move the UI forward
+                mapped_metadata[SEX] = v
             mapped_metadata[k] = v
     return mapped_metadata
