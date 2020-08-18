@@ -8,6 +8,8 @@ import configparser
 import ast
 import os
 import logging
+from datetime import datetime
+from pathlib import Path
 from flask import current_app as app
 from hubmap_commons.hubmap_const import HubmapConst 
 
@@ -195,6 +197,14 @@ class Indexer:
 
             self.entity_keys_rename(entity)
 
+            # timestamp and version
+            entity['update_timestamp'] = int(round(time.time() * 1000))
+            entity['update_timestamp_fmted'] = (datetime
+                                                .now()
+                                                .strftime("%Y-%m-%d %H:%M:%S"))
+            entity['index_version'] = ((Path(__file__).parent.parent / 'VERSION')
+                                       .read_text()).strip()
+
             try:
                 entity['metadata'].pop('files')
             except KeyError:
@@ -228,6 +238,9 @@ class Indexer:
 
         except Exception as e:
             self.logger.error(f"Exception in generate_doc()")
+            self.logger.error('-'*60)
+            self.logger.exception("unexpected exception")
+            self.logger.error('-'*60)
    
     def entity_keys_rename(self, entity):
         to_delete_keys = []
@@ -338,6 +351,7 @@ class Indexer:
 
             result = None
             IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+            import pdb; pdb.set_trace()
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
                 if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC:
