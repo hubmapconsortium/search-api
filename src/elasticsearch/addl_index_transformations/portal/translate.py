@@ -252,10 +252,6 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Nominal",
     ...                 "grouping_code": "415229000",
-    ...                 "grouping_concept":
-    ...                     "not recognized: will fall-back to code",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "not recognized: will fall-back to code",
     ...                 "preferred_term": "African race",
     ...             }
     ...         ]
@@ -267,6 +263,23 @@ def _translate_donor_metadata(doc):
     >>> from pprint import pprint
     >>> pprint(doc['mapped_metadata'])
     {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
+
+    >>> doc = {
+    ...     "metadata": {
+    ...         "organ_donor_data": [
+    ...             {
+    ...                 "data_type": "Nominal",
+    ...                 "preferred_term": "Male",
+    ...                 "grouping_concept": "C1522384",
+    ...                 "grouping_concept_preferred_term": "Sex",
+    ...                 "grouping_code": "57312000",
+    ...             }
+    ...         ]
+    ...     }
+    ... }
+    >>> _translate_donor_metadata(doc)
+    >>> pprint(doc['mapped_metadata'])
+    {'gender': 'Male'}
 
     >>> doc = {
     ...     "metadata": {
@@ -288,6 +301,7 @@ def _donor_metadata_map(metadata):
     AGE = 'age'
     BMI = 'bmi'
     GENDER = 'gender'
+    SEX = 'sex'
     RACE = 'race'
     # The "grouping_codes" seem to be the most stable,
     # by "grouping_concepts" or "grouping_terms" could also be used.
@@ -295,6 +309,7 @@ def _donor_metadata_map(metadata):
         '60621009': BMI,
         '424144002': AGE,
         '365873007': GENDER,
+        '57312000': SEX,
         '415229000': RACE
     }
     mapped_metadata = {}
@@ -311,5 +326,8 @@ def _donor_metadata_map(metadata):
                     if kv['data_type'] == 'Nominal'
                     else float(kv['data_value'])
                 )
-            mapped_metadata[k] = v
+            if k == SEX:
+                mapped_metadata[GENDER] = v
+            else:
+                mapped_metadata[k] = v
     return mapped_metadata
