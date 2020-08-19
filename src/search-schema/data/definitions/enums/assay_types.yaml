@@ -58,3 +58,9 @@ snATACseq:
     description: snATAC-seq
 snRNAseq:
     description: snRNA-seq
+bulk_atacseq:
+    description: Bulk ATAC-seq [BWA + MACS2]
+sn_atac_seq:
+    description: snATAC-seq [SnapATAC]
+salmon_sn_rnaseq_10x:
+    description: snRNA-seq [Salmon]
