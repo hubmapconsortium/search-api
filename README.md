@@ -198,7 +198,7 @@ To build the docker image of search-api:
 source ./search-api-docker.sh dev build
 ````
 
-To start up the search-api container (including nginx on the same container):
+To start up the search-api container:
 
 ````
 source ./search-api-docker.sh dev start
