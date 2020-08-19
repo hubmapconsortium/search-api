@@ -228,31 +228,24 @@ def _translate_donor_metadata(doc):
     ...         "organ_donor_data": [
     ...             {
     ...                 "data_type": "Nominal",
-    ...                 "grouping_code": "365873007",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Gender finding",
-    ...                 "preferred_term": "Masculine gender",
+    ...                 "grouping_code": "57312000",
+    ...                 "preferred_term": "Male",
     ...             },
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "58",
     ...                 "grouping_code": "424144002",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Current chronological age",
     ...                 "units": "months"
     ...             },
     ...             {
     ...                 "data_type": "Numeric",
     ...                 "data_value": "22",
     ...                 "grouping_code": "60621009",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Body mass index",
-    ...                 "units": "kg/m^17"
     ...             },
     ...             {
     ...                 "data_type": "Nominal",
     ...                 "grouping_code": "415229000",
-    ...                 "preferred_term": "African race",
+    ...                 "preferred_term": "White",
     ...             }
     ...         ]
     ...     }
@@ -262,11 +255,7 @@ def _translate_donor_metadata(doc):
     4
     >>> from pprint import pprint
     >>> pprint(doc['mapped_metadata'])
-    {'age': 4.8,
-     'bmi': 22.0,
-     'gender': 'Masculine gender',
-     'race': 'African race',
-     'sex': 'Masculine gender'}
+    {'age': 4.8, 'bmi': 22.0, 'race': 'White', 'sex': 'Male'}
 
     >>> doc = {
     ...     "metadata": {
@@ -274,8 +263,6 @@ def _translate_donor_metadata(doc):
     ...             {
     ...                 "data_type": "Nominal",
     ...                 "preferred_term": "Male",
-    ...                 "grouping_concept": "C1522384",
-    ...                 "grouping_concept_preferred_term": "Sex",
     ...                 "grouping_code": "57312000",
     ...             }
     ...         ]
@@ -283,7 +270,7 @@ def _translate_donor_metadata(doc):
     ... }
     >>> _translate_donor_metadata(doc)
     >>> pprint(doc['mapped_metadata'])
-    {'gender': 'Male', 'sex': 'Male'}
+    {'sex': 'Male'}
 
     >>> doc = {
     ...     "metadata": {
@@ -305,7 +292,6 @@ def _translate_donor_metadata(doc):
 def _donor_metadata_map(metadata):
     AGE = 'age'
     BMI = 'bmi'
-    GENDER = 'gender'
     SEX = 'sex'
     RACE = 'race'
     # The "grouping_codes" seem to be the most stable,
@@ -313,7 +299,6 @@ def _donor_metadata_map(metadata):
     grouping_codes = {
         '60621009': BMI,
         '424144002': AGE,
-        '365873007': GENDER,
         '57312000': SEX,
         '415229000': RACE
     }
@@ -341,11 +326,5 @@ def _donor_metadata_map(metadata):
                     if kv['data_type'] == 'Nominal'
                     else float(kv['data_value'])
                 )
-            if k == SEX:
-                # TODO: When the UI is caught up, only use sex.
-                mapped_metadata[GENDER] = v
-            elif k == GENDER and SEX not in mapped_metadata:
-                # If we still have old donor metadata, we can move the UI forward
-                mapped_metadata[SEX] = v
             mapped_metadata[k] = v
     return mapped_metadata
