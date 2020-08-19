@@ -171,6 +171,10 @@ echo $COMMONS_BRANCH
 
 Note: Environment variables set like this are only stored temporally. When you exit the running instance of bash by exiting the terminal, they get discarded. So for rebuilding the docker image, we'll need to make sure to set the environment variables again if necessary.
 
+````
+Usage: ./search-api-docker.sh [localhost|dev|test|stage|prod] [setup|check|config|build|start|stop|down]
+````
+
 Before we go ahead to start building the docker image, we can do a check to see if the required configuration file is in place:
 
 ````
@@ -195,25 +199,25 @@ Then log out and log back in so that your group membership is re-evaluated. If t
 To build the docker image of search-api:
 
 ````
-source ./search-api-docker.sh dev build
+./search-api-docker.sh dev build
 ````
 
 To start up the search-api container:
 
 ````
-source ./search-api-docker.sh dev start
+./search-api-docker.sh dev start
 ````
 
 And stop the running container by:
 
 ````
-source ./search-api-docker.sh dev stop
+./search-api-docker.sh dev stop
 ````
 
 You can also stop the running container and remove it by:
 
 ````
-source ./search-api-docker.sh dev down
+./search-api-docker.sh dev down
 ````
 
 ### Updating API Documentation
