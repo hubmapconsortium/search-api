@@ -1,13 +1,13 @@
 #!/bin/bash
 
-function absent_or_newer () {
+function absent_or_newer() {
     if  [ \( -e $1 \) -a \( $2 -nt $1 \) ]; then
         echo "$1 is out of date"
         exit -1
     fi
 }
 
-function get_dir_of_this_script () {
+function get_dir_of_this_script() {
     # This function sets DIR to the directory in which this script itself is found.
     # Thank you https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
     SCRIPT_SOURCE="${BASH_SOURCE[0]}"
@@ -17,6 +17,15 @@ function get_dir_of_this_script () {
         [[ $SCRIPT_SOURCE != /* ]] && SCRIPT_SOURCE="$DIR/$SCRIPT_SOURCE" # if $SCRIPT_SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
     done
     DIR="$( cd -P "$( dirname "$SCRIPT_SOURCE" )" >/dev/null 2>&1 && pwd )"
+}
+
+# Generate the build version based on git commit Id and store into BUILD file
+function generate_build_version() {
+    GIT_COMMIT_ID=$(git rev-parse --verify HEAD)
+    echo "BUILD version for Elasticsearch mapper_metadata.version: $GIT_COMMIT_ID"
+    # Clear the old BUILD version and write the new one
+    truncate -s 0 ../BUILD
+    echo $GIT_COMMIT_ID >> ../BUILD
 }
 
 # Set the version environment variable for the docker build
@@ -64,11 +73,7 @@ else
             cp -r ../src search-api/
 
             # Generate the build version
-            GIT_COMMIT_ID=$(git rev-parse --verify HEAD)
-            echo "BUILD version for Elasticsearch mapper_metadata.version: $GIT_COMMIT_ID"
-            # Clear the old BUILD version and write the new one
-            truncate -s 0 ../BUILD
-            echo $GIT_COMMIT_ID >> ../BUILD
+            generate_build_version
             
             export_version
             docker-compose -f docker-compose.yml -f docker-compose.$1.yml build
