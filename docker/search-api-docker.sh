@@ -62,6 +62,13 @@ else
         elif [ "$2" = "build" ]; then
             # Copy over the src folder
             cp -r ../src search-api/
+
+            # Generate the build version
+            GIT_COMMIT_ID=$(git rev-parse --verify HEAD)
+            echo "BUILD version for Elasticsearch mapper_metadata.version: $GIT_COMMIT_ID"
+            # Clear the old BUILD version and write the new one
+            truncate -s 0 ../BUILD
+            echo $GIT_COMMIT_ID >> ../BUILD
             
             export_version
             docker-compose -f docker-compose.yml -f docker-compose.$1.yml build

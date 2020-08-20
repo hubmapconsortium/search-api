@@ -23,8 +23,8 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
 
-
-version = (Path(__file__).parent.parent.parent / 'mapper_metadata.VERSION').read_text()
+# Use the BUILD version as Elasticsearch mapper_metadata.version
+version = (Path(__file__).parent.parent.parent.parent.parent / 'BUILD').read_text()
 
 
 def transform(doc, batch_id='unspecified'):
