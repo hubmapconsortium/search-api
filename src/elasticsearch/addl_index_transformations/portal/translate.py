@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 from datetime import datetime
+from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
@@ -223,108 +224,55 @@ def _translate_donor_metadata(doc):
     >>> doc
     {'metadata': 'Not a dict!', 'mapped_metadata': {}}
 
-    >>> doc = {
-    ...     "metadata": {
-    ...         "organ_donor_data": [
-    ...             {
-    ...                 "data_type": "Nominal",
-    ...                 "grouping_code": "57312000",
-    ...                 "preferred_term": "Male",
-    ...             },
-    ...             {
-    ...                 "data_type": "Numeric",
-    ...                 "data_value": "58",
-    ...                 "grouping_code": "424144002",
-    ...                 "units": "months"
-    ...             },
-    ...             {
-    ...                 "data_type": "Numeric",
-    ...                 "data_value": "22",
-    ...                 "grouping_code": "60621009",
-    ...             },
-    ...             {
-    ...                 "data_type": "Nominal",
-    ...                 "grouping_code": "415229000",
-    ...                 "preferred_term": "White",
-    ...             }
-    ...         ]
-    ...     }
-    ... }
-    >>> _translate_donor_metadata(doc)
-    >>> len(doc['metadata']['organ_donor_data'])
-    4
-    >>> from pprint import pprint
-    >>> pprint(doc['mapped_metadata'])
-    {'age': 4.8, 'bmi': 22.0, 'race': 'White', 'sex': 'Male'}
-
-    >>> doc = {
-    ...     "metadata": {
-    ...         "organ_donor_data": [
-    ...             {
-    ...                 "data_type": "Nominal",
-    ...                 "preferred_term": "Male",
-    ...                 "grouping_code": "57312000",
-    ...             }
-    ...         ]
-    ...     }
-    ... }
-    >>> _translate_donor_metadata(doc)
-    >>> pprint(doc['mapped_metadata'])
-    {'sex': 'Male'}
+    Multi-valued fields are supported:
 
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [{
     ...             "preferred_term": "Diabetes",
-    ...             "grouping_code": "UNKNOWN",
-    ...             "grouping_concept_preferred_term": "Medical history ... or anything else"
+    ...             "grouping_concept_preferred_term": "Medical history"
+    ...         },
+    ...         {
+    ...             "preferred_term": "Cancer",
+    ...             "grouping_concept_preferred_term": "Medical history"
     ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
-    >>> pprint(doc['mapped_metadata'])
-    {'medical_history_or_anything_else': ['Diabetes']}
+    >>> doc['mapped_metadata']
+    {'medical_history': ['Diabetes', 'Cancer']}
+
+    Numeric fields are turned into floats, and units are concatenated into field name:
+
+    >>> doc = {
+    ...     "metadata": {
+    ...         "organ_donor_data": [{
+    ...             "data_type": "Numeric",
+    ...             "data_value": "87.6",
+    ...             "grouping_concept_preferred_term": "Weight",
+    ...             "units": "kg"
+    ...         }]
+    ...     }
+    ... }
+    >>> _translate_donor_metadata(doc)
+    >>> doc['mapped_metadata']
+    {'weight_in_kg': [87.6]}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
 
 
 def _donor_metadata_map(metadata):
-    AGE = 'age'
-    BMI = 'bmi'
-    SEX = 'sex'
-    RACE = 'race'
-    # The "grouping_codes" seem to be the most stable,
-    # by "grouping_concepts" or "grouping_terms" could also be used.
-    grouping_codes = {
-        '60621009': BMI,
-        '424144002': AGE,
-        '57312000': SEX,
-        '415229000': RACE
-    }
-    mapped_metadata = {}
+    mapped_metadata = defaultdict(list)
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            if not kv['grouping_code'] in grouping_codes:
-                # NOTE: This branch shouldn't be used on a regular basis:
-                # Using a grouping_code makes it more robust if the
-                # grouping_concept_preferred_term changes.
-                # TODO: I see that some of the new fields are multi-valued.
-                # Perhaps make all donor metadata arrays for consistency?
-                normed = re.sub(r'\W+', '_', kv['grouping_concept_preferred_term']).lower()
-                if normed in mapped_metadata:
-                    mapped_metadata[normed].append(kv['preferred_term'])
-                else:
-                    mapped_metadata[normed] = [kv['preferred_term']]
-                continue
-            k = grouping_codes[kv['grouping_code']]
-            if k == AGE and kv['units'] == 'months':
-                v = round(float(kv['data_value']) / 12, 1)
-            else:
-                v = (
-                    kv['preferred_term']
-                    if kv['data_type'] == 'Nominal'
-                    else float(kv['data_value'])
-                )
-            mapped_metadata[k] = v
-    return mapped_metadata
+            term = kv['grouping_concept_preferred_term'] \
+                + (f' in {kv["units"]}' if 'units' in kv and len(kv['units']) else '')
+            key = re.sub(r'\W+', '_', term).lower()
+            value = (
+                float(kv['data_value'])
+                if 'data_type' in kv and kv['data_type'] == 'Numeric'
+                else kv['preferred_term']
+            )
+            mapped_metadata[key].append(value)
+    return dict(mapped_metadata)
