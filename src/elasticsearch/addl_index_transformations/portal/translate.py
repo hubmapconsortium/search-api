@@ -242,7 +242,7 @@ def _translate_donor_metadata(doc):
     >>> doc['mapped_metadata']
     {'medical_history': ['Diabetes', 'Cancer']}
 
-    Numeric fields are turned into floats, and units are concatenated into field name:
+    Numeric fields are turned into floats, and units are their own field:
 
     >>> doc = {
     ...     "metadata": {
@@ -256,7 +256,7 @@ def _translate_donor_metadata(doc):
     ... }
     >>> _translate_donor_metadata(doc)
     >>> doc['mapped_metadata']
-    {'weight_in_kg': [87.6]}
+    {'weight_value': [87.6], 'weight_unit': ['kg']}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
@@ -266,13 +266,18 @@ def _donor_metadata_map(metadata):
     mapped_metadata = defaultdict(list)
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            term = kv['grouping_concept_preferred_term'] \
-                + (f' in {kv["units"]}' if 'units' in kv and len(kv['units']) else '')
+            term = kv['grouping_concept_preferred_term']
             key = re.sub(r'\W+', '_', term).lower()
             value = (
                 float(kv['data_value'])
                 if 'data_type' in kv and kv['data_type'] == 'Numeric'
                 else kv['preferred_term']
             )
-            mapped_metadata[key].append(value)
+
+            if 'units' not in kv or not len(kv['units']):
+                mapped_metadata[key].append(value)
+                continue
+            mapped_metadata[f'{key}_value'].append(value)
+            mapped_metadata[f'{key}_unit'].append(kv['units'])
+
     return dict(mapped_metadata)
