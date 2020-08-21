@@ -42,7 +42,7 @@ salmon_rnaseq_snareseq:
     description: scRNA-seq (SNARE-seq) [Salmon]
 sc_atac_seq_snare:
     description: scATAC-seq (SNARE-seq) [SnapATAC]
-rnaseq_snareseq_lab:
+sc_rna_seq_snare_lab:
     description: scRNA-seq (SNARE-seq) [Lab Processed]
 sc_atac_seq_snare_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
