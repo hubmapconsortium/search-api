@@ -104,6 +104,8 @@ def indices():
 @app.route('/status', methods = ['GET'])
 def status():
     response_data = {
+        'version': (Path(__file__).parent / 'VERSION').read_text(),
+        'build': (Path(__file__).parent / 'BUILD').read_text(),
         'elasticsearch_connection': False
     }
     
