@@ -105,8 +105,9 @@ def indices():
 @app.route('/status', methods = ['GET'])
 def status():
     response_data = {
-        'version': (Path(__file__).parent / 'VERSION').read_text(),
-        'build': (Path(__file__).parent / 'BUILD').read_text(),
+        # Use strip() to remove leading and trailing spaces, newlines, and tabs
+        'version': (Path(__file__).parent / 'VERSION').read_text().strip(),
+        'build': (Path(__file__).parent / 'BUILD').read_text().strip(),
         'elasticsearch_connection': False
     }
     

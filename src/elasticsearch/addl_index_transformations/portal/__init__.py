@@ -24,7 +24,8 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
 )
 
 # Use the BUILD version as Elasticsearch mapper_metadata.version
-version = (Path(__file__).parent.parent.parent.parent.parent / 'BUILD').read_text()
+# Use strip() to remove leading and trailing spaces, newlines, and tabs
+version = (Path(__file__).parent.parent.parent.parent.parent / 'BUILD').read_text().strip()
 
 
 def transform(doc, batch_id='unspecified'):
