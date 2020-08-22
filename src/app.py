@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from elasticsearch.indexer import Indexer
 from flask import Flask, jsonify, abort, request, Response, Request
 import concurrent.futures
