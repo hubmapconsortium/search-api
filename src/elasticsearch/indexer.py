@@ -340,7 +340,11 @@ class Indexer:
             IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
-                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
+                   ((org_node.get('entitytype', '') == 'Dataset' and
+                     org_node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (org_node.get('entitytype', '') != 'Dataset' and
+                     self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC))):
                     result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
                 elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
                     result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
