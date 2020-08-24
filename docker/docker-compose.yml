@@ -14,6 +14,12 @@ services:
     image: search-api:${SEARCH_API_VERSION:?err}
     hostname: search-api
     container_name: search-api
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://hubmap-auth:6666"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       # Mount the app config to container in order to keep it outside of the image
       - "../src/instance:/usr/src/app/src/instance"
