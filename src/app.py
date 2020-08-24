@@ -345,5 +345,6 @@ def reindex_all_uuids(indexer):
                            in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
                     app.logger.debug(f.result())
+                app.logger.info("###Reindex Live is Done###")
         except Exception as e:
             app.logger.error(e)
