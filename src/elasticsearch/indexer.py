@@ -1,7 +1,6 @@
-from neo4j import TransactionError, CypherError
 from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
-import sys, json, time, concurrent.futures, traceback, copy, threading
+import sys, json, time, concurrent.futures, copy
 import collections
 import requests
 import configparser
@@ -11,7 +10,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from flask import current_app as app
-from hubmap_commons.hubmap_const import HubmapConst 
+from hubmap_commons.hubmap_const import HubmapConst
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
@@ -59,7 +58,7 @@ class Indexer:
             raise ValueError("There is problem of indices config.")
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
-        
+
     def main(self):
         try:
             #### Create Indices ####
@@ -137,6 +136,16 @@ class Indexer:
                     self.logger.error(f"Cannot find uuid: {uuid}")
                     return f"Done."
         except Exception as e:
+            self.logger.error("Exception in user code:")
+            self.logger.error('-'*60)
+            self.logger.exception("unexpected exception")
+            self.logger.error('-'*60)
+
+    def delete(self, uuid):
+        try:
+            for index, _ in self.indices.items():
+                self.eswriter.delete_document(index, uuid)
+        except Exception:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
@@ -241,7 +250,7 @@ class Indexer:
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
-   
+
     def entity_keys_rename(self, entity):
         to_delete_keys = []
         temp = {}
@@ -353,7 +362,11 @@ class Indexer:
             IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
-                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
+                   ((org_node.get('entitytype', '') == 'Dataset' and
+                     org_node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (org_node.get('entitytype', '') != 'Dataset' and
+                     self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC))):
                     result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
                 elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
                     result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
@@ -373,7 +386,6 @@ class Indexer:
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
-
 
 if __name__ == '__main__':
     try:
