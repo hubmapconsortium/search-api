@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 from datetime import datetime
+from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
@@ -25,7 +26,7 @@ def translate(doc):
 
 # Utils:
 
-_enums_dir = Path(__file__).parent / 'search-schema' / 'data' / 'definitions' / 'enums'
+_enums_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
 _enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
 
 
@@ -223,112 +224,60 @@ def _translate_donor_metadata(doc):
     >>> doc
     {'metadata': 'Not a dict!', 'mapped_metadata': {}}
 
-    >>> doc = {
-    ...     "metadata": {
-    ...         "organ_donor_data": [
-    ...             {
-    ...                 "data_type": "Nominal",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Gender finding",
-    ...                 "preferred_term": "Masculine gender",
-    ...             },
-    ...             {
-    ...                 "data_type": "Numeric",
-    ...                 "data_value": "58",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Current chronological age",
-    ...                 "units": "months"
-    ...             },
-    ...             {
-    ...                 "data_type": "Numeric",
-    ...                 "data_value": "22",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "Body mass index",
-    ...                 "units": "kg/m^17"
-    ...             },
-    ...             {
-    ...                 "data_type": "Nominal",
-    ...                 "grouping_code": "415229000",
-    ...                 "grouping_concept":
-    ...                     "not recognized: will fall-back to code",
-    ...                 "grouping_concept_preferred_term":
-    ...                     "not recognized: will fall-back to code",
-    ...                 "preferred_term": "African race",
-    ...             }
-    ...         ]
-    ...     }
-    ... }
-    >>> _translate_donor_metadata(doc)
-    >>> len(doc['metadata']['organ_donor_data'])
-    4
-    >>> from pprint import pprint
-    >>> pprint(doc['mapped_metadata'])
-    {'age': 4.8, 'bmi': 22.0, 'gender': 'Masculine gender', 'race': 'African race'}
+    Multi-valued fields are supported:
 
     >>> doc = {
     ...     "metadata": {
     ...         "organ_donor_data": [{
-    ...             "grouping_code": "BAD",
-    ...             "grouping_concept": "BAD",
-    ...             "grouping_concept_preferred_term": "BAD"
+    ...             "preferred_term": "Diabetes",
+    ...             "grouping_concept_preferred_term": "Medical history"
+    ...         },
+    ...         {
+    ...             "preferred_term": "Cancer",
+    ...             "grouping_concept_preferred_term": "Medical history"
     ...         }]
     ...     }
     ... }
     >>> _translate_donor_metadata(doc)
-    Traceback (most recent call last):
-    ...
-    translate.TranslationException: Unexpected grouping: {'grouping_code': 'BAD', 'grouping_concept': 'BAD', 'grouping_concept_preferred_term': 'BAD'}
+    >>> doc['mapped_metadata']
+    {'medical_history': ['Diabetes', 'Cancer']}
+
+    Numeric fields are turned into floats, and units are their own field:
+
+    >>> doc = {
+    ...     "metadata": {
+    ...         "organ_donor_data": [{
+    ...             "data_type": "Numeric",
+    ...             "data_value": "87.6",
+    ...             "grouping_concept_preferred_term": "Weight",
+    ...             "units": "kg"
+    ...         }]
+    ...     }
+    ... }
+    >>> _translate_donor_metadata(doc)
+    >>> doc['mapped_metadata']
+    {'weight_value': [87.6], 'weight_unit': ['kg']}
 
     '''
     _map(doc, 'metadata', _donor_metadata_map)
 
 
 def _donor_metadata_map(metadata):
-    AGE = 'age'
-    BMI = 'bmi'
-    GENDER = 'gender'
-    RACE = 'race'
-    # I'm just not sure which one of these will be stable
-    # if the preferred vocabulary changes.
-    # If the vocabulary is stable, this can be simplified!
-    grouping_terms = {
-        'Body mass index': BMI,
-        'Current chronological age': AGE,
-        'Gender finding': GENDER,
-        'Racial group': RACE
-    }
-    grouping_concepts = {
-        'C1305855': BMI,
-        'C0001779': AGE,
-        'C1287419': GENDER,
-        'C0027567': RACE
-    }
-    grouping_codes = {
-        '60621009': BMI,
-        '424144002': AGE,
-        '365873007': GENDER,
-        '415229000': RACE
-    }
-    mapped_metadata = {}
+    mapped_metadata = defaultdict(list)
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
         for kv in metadata['organ_donor_data']:
-            k = (
-                (kv['grouping_concept_preferred_term'] in grouping_terms
-                    and grouping_terms[kv['grouping_concept_preferred_term']])
-                or (kv['grouping_concept'] in grouping_concepts
-                    and grouping_concepts[kv['grouping_concept']])
-                or (kv['grouping_code'] in grouping_codes
-                    and grouping_codes[kv['grouping_code']])
+            term = kv['grouping_concept_preferred_term']
+            key = re.sub(r'\W+', '_', term).lower()
+            value = (
+                float(kv['data_value'])
+                if 'data_type' in kv and kv['data_type'] == 'Numeric'
+                else kv['preferred_term']
             )
-            if not k:
-                raise TranslationException(f'Unexpected grouping: {kv}')
-            if k == AGE and kv['units'] == 'months':
-                v = round(float(kv['data_value']) / 12, 1)
-            else:
-                v = (
-                    kv['preferred_term']
-                    if kv['data_type'] == 'Nominal'
-                    else float(kv['data_value'])
-                )
-            mapped_metadata[k] = v
-    return mapped_metadata
+
+            if 'units' not in kv or not len(kv['units']):
+                mapped_metadata[key].append(value)
+                continue
+            mapped_metadata[f'{key}_value'].append(value)
+            mapped_metadata[f'{key}_unit'].append(kv['units'])
+
+    return dict(mapped_metadata)

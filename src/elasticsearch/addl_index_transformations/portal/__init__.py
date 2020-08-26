@@ -50,9 +50,8 @@ def transform(doc, batch_id='unspecified'):
     ...             "organ_donor_data": [
     ...                 {
     ...                     "data_type": "Nominal",
-    ...                     "grouping_concept_preferred_term":
-    ...                         "Gender finding",
-    ...                     "preferred_term": "Masculine gender"
+    ...                     "grouping_concept_preferred_term": "Sex",
+    ...                     "preferred_term": "Male"
     ...                 }
     ...             ]
     ...         }
@@ -71,12 +70,10 @@ def transform(doc, batch_id='unspecified'):
      'data_types': ['codex_cytokit', 'seqFish'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
-     'donor': {'mapped_metadata': {'gender': 'Masculine gender'},
+     'donor': {'mapped_metadata': {'sex': ['Male']},
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
-                                                  'grouping_concept_preferred_term': 'Gender '
-                                                                                     'finding',
-                                                  'preferred_term': 'Masculine '
-                                                                    'gender'}]}},
+                                                  'grouping_concept_preferred_term': 'Sex',
+                                                  'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
      'everything': ['1',
                     '1234',
@@ -94,7 +91,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1161},
+     'mapper_metadata': {'size': 1125},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
@@ -122,7 +119,7 @@ def transform(doc, batch_id='unspecified'):
     return doc_copy
 
 
-_data_dir = Path(__file__).parent / 'search-schema' / 'data'
+_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
@@ -170,18 +167,18 @@ def _simple_clean(doc):
 #             del doc[unused_key]
 
 
-_schemas = {
-    entity_type:
-        load_yaml((
-            _data_dir / 'schemas' / f'{entity_type}.schema.yaml'
-        ).read_text())
-    for entity_type in ['dataset', 'donor', 'sample']
-}
+# _schemas = {
+#     entity_type:
+#         load_yaml((
+#             _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+#         ).read_text())
+#     for entity_type in ['dataset', 'donor', 'sample']
+# }
 
 
-def _get_schema(doc):
-    entity_type = doc['entity_type'].lower()
-    return _schemas[entity_type]
+# def _get_schema(doc):
+#     entity_type = doc['entity_type'].lower()
+#     return _schemas[entity_type]
 
 
 # TODO:
