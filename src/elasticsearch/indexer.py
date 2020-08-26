@@ -351,7 +351,6 @@ class Indexer:
 
             result = None
             IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-            import pdb; pdb.set_trace()
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
                 if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC:
