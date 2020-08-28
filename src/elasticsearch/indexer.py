@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from flask import current_app as app
 from hubmap_commons.hubmap_const import HubmapConst
+from hubmap_commons.provenance import Provenance
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
@@ -31,6 +32,9 @@ class Indexer:
             self.logger = app.logger
             ORIGINAL_DOC_TYPE = app.config['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = app.config['PORTAL_DOC_TYPE']
+            app_client_id = app.config['APP_CLIENT_ID']
+            app_client_secret = app.config['APP_CLIENT_SECRET']
+            uuid_webservice_url = app.config['UUID_WEBSERVICE_URL']
         except:
             ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
@@ -45,6 +49,10 @@ class Indexer:
             self.logger.addHandler(sh)
             self.logger.setLevel(logging.INFO)
             # self.logger.addHandler(logging.StreamHandler())
+            app_client_id = config['GLOBUS']['APP_CLIENT_ID']
+            app_client_secret = config['GLOBUS']['APP_CLIENT_SECRET']
+            uuid_webservice_url = (config['ELASTICSEARCH']
+                                         ['UUID_WEBSERVICE_URL'])
         self.report = {
             'success_cnt': 0,
             'fail_cnt': 0,
@@ -52,6 +60,9 @@ class Indexer:
         }
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
+        self.provenance = Provenance(app_client_id,
+                                     app_client_secret,
+                                     uuid_webservice_url)
         try:
             self.indices = ast.literal_eval(indices)
         except:
@@ -205,6 +216,11 @@ class Indexer:
                         self.logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
+
+
+            group = (self.provenance
+                         .get_group_by_identifier(entity['group_uuid']))
+            entity['group_name'] = group['displayname']
 
             # timestamp and version
             entity['update_timestamp'] = int(round(time.time() * 1000))
