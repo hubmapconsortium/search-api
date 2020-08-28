@@ -114,10 +114,6 @@
         "es_name": "protocol_url",
         "is_json_stored_as_text": false
       },
-      "provenance_group_name": {
-        "es_name": "group_name",
-        "is_json_stored_as_text": false
-      },
       "provenance_group_uuid": {
         "es_name": "group_uuid",
         "is_json_stored_as_text": false
