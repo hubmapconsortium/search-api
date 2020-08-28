@@ -346,7 +346,15 @@ class Indexer:
                 return
 
             result = None
-            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+            IndexConfig = collections.namedtuple('IndexConfig',
+                                                 ['access_level', 'doc_type'])
+            # delete entity from published indices
+            for index, configs in self.indices.items():
+                configs = IndexConfig(*configs)
+                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                    self.eswriter.delete_document(index, node['uuid'])
+
+            # write enitty into indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
                 if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
