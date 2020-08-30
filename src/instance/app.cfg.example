@@ -16,6 +16,8 @@ DEFAULT_INDEX_WITHOUT_PREFIX = 'entities'
 # Don't use the trailing slash /
 ENTITY_WEBSERVICE_URL = 'http://hubmap-auth:3333'
 
+UUID_WEBSERVICE_URL = 'http://hubmap-auth:9999/hmuuid'
+
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
 APP_CLIENT_SECRET = ''
