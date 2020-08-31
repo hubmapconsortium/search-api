@@ -7,8 +7,11 @@ import configparser
 import ast
 import os
 import logging
+from datetime import datetime
+from pathlib import Path
 from flask import current_app as app
 from hubmap_commons.hubmap_const import HubmapConst
+from hubmap_commons.provenance import Provenance
 
 config = configparser.ConfigParser()
 config.read('conf.ini')
@@ -29,6 +32,9 @@ class Indexer:
             self.logger = app.logger
             ORIGINAL_DOC_TYPE = app.config['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = app.config['PORTAL_DOC_TYPE']
+            app_client_id = app.config['APP_CLIENT_ID']
+            app_client_secret = app.config['APP_CLIENT_SECRET']
+            uuid_webservice_url = app.config['UUID_WEBSERVICE_URL']
         except:
             ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
@@ -43,6 +49,10 @@ class Indexer:
             self.logger.addHandler(sh)
             self.logger.setLevel(logging.INFO)
             # self.logger.addHandler(logging.StreamHandler())
+            app_client_id = config['GLOBUS']['APP_CLIENT_ID']
+            app_client_secret = config['GLOBUS']['APP_CLIENT_SECRET']
+            uuid_webservice_url = (config['ELASTICSEARCH']
+                                         ['UUID_WEBSERVICE_URL'])
         self.report = {
             'success_cnt': 0,
             'fail_cnt': 0,
@@ -50,6 +60,9 @@ class Indexer:
         }
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_webservice_url = entity_webservice_url
+        self.provenance = Provenance(app_client_id,
+                                     app_client_secret,
+                                     uuid_webservice_url)
         try:
             self.indices = ast.literal_eval(indices)
         except:
@@ -204,6 +217,19 @@ class Indexer:
 
             self.entity_keys_rename(entity)
 
+
+            group = (self.provenance
+                         .get_group_by_identifier(entity['group_uuid']))
+            entity['group_name'] = group['displayname']
+
+            # timestamp and version
+            entity['update_timestamp'] = int(round(time.time() * 1000))
+            entity['update_timestamp_fmted'] = (datetime
+                                                .now()
+                                                .strftime("%Y-%m-%d %H:%M:%S"))
+            entity['index_version'] = ((Path(__file__).parent.parent / 'VERSION')
+                                       .read_text()).strip()
+
             try:
                 entity['metadata'].pop('files')
             except KeyError:
@@ -237,6 +263,16 @@ class Indexer:
 
         except Exception as e:
             self.logger.error(f"Exception in generate_doc()")
+            self.logger.error('-'*60)
+            self.logger.exception("unexpected exception")
+            self.logger.error('-'*60)
+
+    def generate_public_doc(self, entity):
+        entity['descendants'] = list(filter(self.entity_is_public,
+                                            entity['descendants']))
+        entity['immediate_descendants'] = list(filter(self.entity_is_public,
+                                                      entity['immediate_descendants']))
+        return json.dumps(entity)
 
     def entity_keys_rename(self, entity):
         to_delete_keys = []
@@ -263,7 +299,7 @@ class Indexer:
                     temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
         entity.pop('metadata')
         entity.update(temp)
-    
+
     def remove_specific_key_entry(self, obj, key_to_remove):
         if type(obj) == dict:
             if key_to_remove in obj.keys(): 
@@ -289,23 +325,29 @@ class Indexer:
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
-    
+
     def get_access_level(self, entity):
         try:
-            if entity['entitytype'] == HubmapConst.COLLECTION_TYPE_CODE:
-                if entity['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
-                    return entity['data_access_level']
+            entity_type = entity['entitytype'] if 'entitytype' in entity else entity['entity_type']
+
+            if entity_type:
+                if entity_type == HubmapConst.COLLECTION_TYPE_CODE:
+                    if entity['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                        return entity['data_access_level']
+                    else:
+                        return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                elif entity_type in [HubmapConst.DONOR_TYPE_CODE,
+                                     HubmapConst.SAMPLE_TYPE_CODE,
+                                     HubmapConst.DATASET_TYPE_CODE]:
+                    dal = (entity['metadata']['data_access_level']
+                           if 'metadata' in entity
+                           else entity['data_access_level'])
+                    if dal in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                        return dal
+                    else:
+                        return HubmapConst.ACCESS_LEVEL_CONSORTIUM
                 else:
-                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
-            elif entity['entitytype'] in [HubmapConst.DONOR_TYPE_CODE,\
-                                        HubmapConst.SAMPLE_TYPE_CODE,\
-                                        HubmapConst.DATASET_TYPE_CODE]:
-                if entity['metadata']['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
-                    return entity['metadata']['data_access_level']
-                else:
-                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
-            else:
-                raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
+                    raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
             self.logger.debug(f"entity uuid: {entity['uuid']} does not have data_access_level attribute")
             return HubmapConst.ACCESS_LEVEL_CONSORTIUM
@@ -340,27 +382,51 @@ class Indexer:
             org_node = copy.deepcopy(node)
             doc = self.generate_doc(node)
             transformed = json.dumps(transform(json.loads(doc)))
-            if transformed is None or transformed == 'null' or transformed == "":
+            if (transformed is None or
+               transformed == 'null' or
+               transformed == ""):
                 self.logger.error(f"{node['uuid']} Document is empty")
                 self.logger.error(f"Node: {node}")
                 return
 
             result = None
-            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+            IndexConfig = collections.namedtuple('IndexConfig',
+                                                 ['access_level', 'doc_type'])
+            # delete entity from published indices
+            for index, configs in self.indices.items():
+                configs = IndexConfig(*configs)
+                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                    self.eswriter.delete_document(index, node['uuid'])
+
+            # write enitty into indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
                 if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
-                   ((org_node.get('entitytype', '') == 'Dataset' and
-                     org_node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                    (org_node.get('entitytype', '') != 'Dataset' and
-                     self.get_access_level(org_node) == HubmapConst.ACCESS_LEVEL_PUBLIC))):
-                    result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
+                   self.entity_is_public(org_node)):
+                    public_doc = self.generate_public_doc(node)
+                    public_transformed = transform(json.loads(public_doc))
+                    public_transformed_doc = json.dumps(public_transformed)
+                    result = (self
+                              .eswriter
+                              .write_or_update_document(
+                                index_name=index,
+                                doc=(public_transformed_doc
+                                     if configs.doc_type == PORTAL_DOC_TYPE
+                                     else public_doc),
+                                uuid=node['uuid']))
                 elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
-                    result = self.eswriter.write_or_update_document(index_name=index, doc=transformed if configs.doc_type == PORTAL_DOC_TYPE else doc, uuid=node['uuid'])
-                if result == True:
+                    result = (self
+                              .eswriter
+                              .write_or_update_document(
+                                index_name=index,
+                                doc=(transformed
+                                     if configs.doc_type == PORTAL_DOC_TYPE
+                                     else doc),
+                                uuid=node['uuid']))
+                if result:
                     self.report['success_cnt'] += 1
-                elif result == False:
-                    self.report['fail_cnt'] +=1
+                else:
+                    self.report['fail_cnt'] += 1
                     self.report['fail_uuids'].add(node['uuid'])
                 result = None
         except KeyError:
@@ -374,6 +440,19 @@ class Indexer:
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
 
+    def entity_is_public(self, node):
+        if 'entity_type' in node:  # Tranformed Node
+            return ((node.get('entity_type', '') == 'Dataset' and
+                    node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (node.get('entity_type', '') != 'Dataset' and
+                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+        else:  # Original Node
+            return ((node.get('entitytype', '') == 'Dataset' and
+                    node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (node.get('entitytype', '') != 'Dataset' and
+                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+
+
 if __name__ == '__main__':
     try:
         env = sys.argv[1]
@@ -383,9 +462,9 @@ if __name__ == '__main__':
         print("replications: 1")
     
     if env == 'STAGE' or env == 'PROD':
-        REPLICATION = 3
-    else:
         REPLICATION = 1
+    else:
+        REPLICATION = 0
         
     start = time.time()
     indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
