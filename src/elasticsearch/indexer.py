@@ -441,10 +441,16 @@ class Indexer:
             self.logger.error('-'*60)
 
     def entity_is_public(self, node):
-        return ((node.get('entitytype', '') == 'Dataset' and
-                 node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                (node.get('entitytype', '') != 'Dataset' and
-                 self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+        if 'entity_type' in node:  # Tranformed Node
+            return ((node.get('entity_type', '') == 'Dataset' and
+                    node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (node.get('entity_type', '') != 'Dataset' and
+                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+        else:  # Original Node
+            return ((node.get('entitytype', '') == 'Dataset' and
+                    node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    (node.get('entitytype', '') != 'Dataset' and
+                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
 
 
 if __name__ == '__main__':
