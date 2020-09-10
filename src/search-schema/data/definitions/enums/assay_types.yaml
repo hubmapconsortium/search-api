@@ -58,8 +58,6 @@ seqFish:
     description: seqFISH
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
-sequence_library:
-    description: Sequence Library 
 snATACseq:
     description: snATAC-seq
 snRNAseq:
