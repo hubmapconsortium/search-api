@@ -76,6 +76,8 @@ segment:
   description: Segment
 seqfish:
   description: seqFISH
+sequence_library:
+  description: Sequence Library
 serum:
   description: Serum
 single_cell_cryopreserved:
