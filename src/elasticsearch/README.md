@@ -36,3 +36,10 @@ Different env will create different number of replica shard.
 ```
 python indexer.py [DEV|TEST|STAGE|PROD]
 ```
+
+## To debug
+
+Capture one or more documents which fail during indexing. Then, from `src/` run:
+```
+PYTHONPATH=. elasticsearch/debug.py ~/failing-doc-1.yaml ~/failing-doc-2.json ...
+```

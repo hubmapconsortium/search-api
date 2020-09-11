@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-
 from pathlib import Path
 from copy import deepcopy
 import logging
-import sys
 from json import dumps
 import datetime
 
@@ -132,11 +129,16 @@ def _map(doc, clean):
     clean(doc)
     for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
-            _map(doc[single_doc_field], clean)
+            fragment = doc[single_doc_field]
+            logging.warning(f'Mapping "{single_doc_field}" fragment: {dumps(fragment)[:50]}...')
+            _map(fragment, clean)
+            logging.warning(f'... done mapping "{single_doc_field}"')
     for multi_doc_field in multi_valued_fields:
         if multi_doc_field in doc:
-            for doc in doc[multi_doc_field]:
-                _map(doc, clean)
+            for fragment in doc[multi_doc_field]:
+                logging.warning(f'Mapping "{multi_doc_field}" fragment: {dumps(fragment)[:50]}...')
+                _map(fragment, clean)
+                logging.warning(f'... done mapping "{multi_doc_field}"')
 
 
 def _simple_clean(doc):
@@ -184,13 +186,3 @@ def _simple_clean(doc):
 # TODO:
 # def _validate(doc):
 #     jsonschema.validate(doc, _get_schema(doc))
-
-
-if __name__ == "__main__":
-    paths = sys.argv[1:]
-    if len(paths) == 0:
-        raise Exception('Provide paths to JSON or YAML files as arguments')
-    for path in paths:
-        doc = load_yaml(Path(path).read_text())
-        transformed = transform(doc)
-        print(dump_yaml(transformed))
