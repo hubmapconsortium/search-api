@@ -130,15 +130,15 @@ def _map(doc, clean):
     for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
             fragment = doc[single_doc_field]
-            logging.warning(f'Mapping "{single_doc_field}" fragment: {dumps(fragment)[:50]}...')
+            logging.debug(f'Mapping single "{single_doc_field}": {dumps(fragment)[:50]}...')
             _map(fragment, clean)
-            logging.warning(f'... done mapping "{single_doc_field}"')
+            logging.debug(f'... done mapping "{single_doc_field}"')
     for multi_doc_field in multi_valued_fields:
         if multi_doc_field in doc:
             for fragment in doc[multi_doc_field]:
-                logging.warning(f'Mapping "{multi_doc_field}" fragment: {dumps(fragment)[:50]}...')
+                logging.debug(f'Mapping multi "{multi_doc_field}": {dumps(fragment)[:50]}...')
                 _map(fragment, clean)
-                logging.warning(f'... done mapping "{multi_doc_field}"')
+                logging.debug(f'... done mapping "{multi_doc_field}"')
 
 
 def _simple_clean(doc):
