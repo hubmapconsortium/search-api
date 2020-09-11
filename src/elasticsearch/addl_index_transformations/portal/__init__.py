@@ -187,7 +187,10 @@ def _simple_clean(doc):
 
 
 if __name__ == "__main__":
-    for name in sys.argv[1:]:
-        doc = load_yaml(Path(name).read_text())
+    paths = sys.argv[1:]
+    if len(paths) == 0:
+        raise Exception('Provide paths to JSON or YAML files as arguments')
+    for path in paths:
+        doc = load_yaml(Path(path).read_text())
         transformed = transform(doc)
         print(dump_yaml(transformed))
