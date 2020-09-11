@@ -1,5 +1,9 @@
 # Index Neo4j to ElasticSearch
 
+## About `mapper_metadata.VERSION`
+
+The file named `mapper_metadata.VERSION` in this current directory is used to keep tracking the the version of the indexed data entries in Elasticsearch. The portal-ui also queries this version number from Elasticsearch and shows it at `https://portal.hubmapconsortium.org/dev-search`. Ensuring the version number consitency between the deployed search-api code and the one shows up in portal-ui is critical for data integrity purposes. Before the indexer code reindexes the data from Neo4j, we should increment this version number to indicte this reindexing. 
+
 ## How to run this script
 
 1. Make sure python 3.6 or above installed.
