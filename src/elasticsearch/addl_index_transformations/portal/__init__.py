@@ -5,7 +5,6 @@ from json import dumps
 import datetime
 
 # import jsonschema
-from yaml import dump as dump_yaml, safe_load as load_yaml
 
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
