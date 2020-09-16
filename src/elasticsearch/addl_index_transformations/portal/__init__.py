@@ -19,15 +19,18 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
 
-# Use the generated BUILD (under root directory) version (git branch name:short commit hash)
-# as Elasticsearch mapper_metadata.version
-version = ""
-build_file_path = Path(__file__).parent.parent.parent.parent.parent
-build_file = Path(build_file_path / 'BUILD')
-if build_file.is_file():
-    # Use strip() to remove leading and trailing spaces, newlines, and tabs
-    version = build_file.read_text().strip()
-print("Mapper Version extracted from the BUILD file: " + version)
+
+def _get_version():
+    # Use the generated BUILD (under root directory) version (git branch name:short commit hash)
+    # as Elasticsearch mapper_metadata.version
+    build_path = Path(__file__).parent.parent.parent.parent.parent / 'BUILD'
+    if build_path.is_file():
+        # Use strip() to remove leading and trailing spaces, newlines, and tabs
+        version = build_path.read_text().strip()
+        logging.debug(f'Read "{version}" from {build_path}')
+        return version
+    logging.debug(f'Using place-holder version; No such file: {build_path}')
+    return 'no-build-file'
 
 
 def transform(doc, batch_id='unspecified'):
@@ -114,7 +117,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'] = {
-        'version': version,
+        'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
     }
