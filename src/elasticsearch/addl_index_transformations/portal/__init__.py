@@ -23,9 +23,15 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
 
-# Use the BUILD version as Elasticsearch mapper_metadata.version
-# Use strip() to remove leading and trailing spaces, newlines, and tabs
-version = (Path(__file__).parent.parent.parent.parent.parent / 'BUILD').read_text().strip()
+# Use the generated BUILD (under root directory) version (git branch name:short commit hash) 
+# as Elasticsearch mapper_metadata.version
+version = ""
+build_file_path = Path(__file__).parent.parent.parent.parent.parent
+build_file = Path(build_file_path / 'BUILD')
+if build_file.is_file():
+    # Use strip() to remove leading and trailing spaces, newlines, and tabs
+    version = build_file.read_text().strip()
+print("Mapper Version extracted from the BUILD file: " + version)
 
 
 def transform(doc, batch_id='unspecified'):
