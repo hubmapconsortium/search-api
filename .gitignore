@@ -2,6 +2,8 @@ BUILD
 
 **/.vscode/
 
+BUILD
+
 # Docker stuff
 docker/data
 docker/search-api/src

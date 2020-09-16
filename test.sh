@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-touch BUILD
+./generate-build-version.sh
 src/elasticsearch/addl_index_transformations/portal/test.sh
 src/search-schema/test.sh
