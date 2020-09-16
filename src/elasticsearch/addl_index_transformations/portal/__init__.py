@@ -23,7 +23,7 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
 
-# Use the generated BUILD (under root directory) version (git branch name:short commit hash) 
+# Use the generated BUILD (under root directory) version (git branch name:short commit hash)
 # as Elasticsearch mapper_metadata.version
 version = ""
 build_file_path = Path(__file__).parent.parent.parent.parent.parent
