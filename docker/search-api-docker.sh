@@ -108,8 +108,8 @@ else
                 fi
                 
                 # Copy over the one files
-                cp VERSION search-api/src
-                cp BUILD search-api/src
+                cp ../VERSION search-api/src
+                cp ../BUILD search-api/src
             fi
 
             docker-compose -f docker-compose.yml -f docker-compose.$1.yml -p search-api build
