@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o errexit
 
 # Pass the HOST_UID and HOST_UID from environment variables specified in the child image docker-compose
 HOST_GID=${HOST_GID}

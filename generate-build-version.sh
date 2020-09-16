@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o errexit
 
 # Print a new line and the banner
 echo
