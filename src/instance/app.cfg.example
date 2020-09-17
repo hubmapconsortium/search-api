@@ -1,7 +1,5 @@
 # AWS ElasticSearch Endpoint
 # Works regardless of the trailing slash /
-# On localhost docker deployment use: 
-# ELASTICSEARCH_URL = "http://hubmap-elasticsearch:9200"
 ELASTICSEARCH_URL = ''
 
 # Naming convention of indices (always in pair) in Elasticsearch, can NOT be empty

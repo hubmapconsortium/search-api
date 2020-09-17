@@ -7,31 +7,8 @@ services:
       - HOST_GID=${HOST_GID:-1000}
       - HOST_UID=${HOST_UID:-1000}
     volumes:
+      # Mount the VERSION file and BUILD file
+      - "../VERSION:/usr/src/app/src/VERSION"
+      - "../BUILD:/usr/src/app/src/BUILD"
       # Mount the app config to container in order to keep it outside of the image
       - "../src:/usr/src/app/src"
-
-  # Only used for local development
-  hubmap-elasticsearch:
-    image: elasticsearch:7.5.2
-    hostname: hubmap-elasticsearch
-    container_name: hubmap-elasticsearch
-    environment:
-      # Start a single-node Elasticsearch cluster for development to bypass the bootstrap checks
-      - discovery.type=single-node
-    networks:
-      - gateway_hubmap
-    ports:
-      - "9200:9200"
-
-  hubmap-kibana:
-    image: docker.elastic.co/kibana/kibana:7.5.2
-    hostname: hubmap-kibana
-    container_name: hubmap-kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://hubmap-elasticsearch:9200
-    networks:
-      - gateway_hubmap
-    ports:
-      - "5601:5601"
-    depends_on:
-      - hubmap-elasticsearch

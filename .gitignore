@@ -1,4 +1,8 @@
+BUILD
+
 **/.vscode/
+
+BUILD
 
 # Docker stuff
 docker/data
