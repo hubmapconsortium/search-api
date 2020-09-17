@@ -6,6 +6,7 @@ import concurrent.futures
 import threading
 import requests
 import logging
+import ast
 from urllib.parse import urlparse
 from flask import current_app as app
 
@@ -311,7 +312,7 @@ def get_donor_uuids_from_neo4j():
     return donors['uuids']
 
 
-def get_entity_uuids_from_es():
+def get_entity_uuids_from_es(index):
     uuids = []
     size = 10_000
     query = {
@@ -334,8 +335,7 @@ def get_entity_uuids_from_es():
     end_of_list = False
     while not end_of_list:
         resp = execute_search(None,
-                              ('hm_consortium_' +
-                               'entities'),
+                              index,
                               query)
 
         ret_obj = resp.get_json()
@@ -355,7 +355,10 @@ def reindex_all_uuids(indexer):
         try:
             neo4j_uuids = get_entity_uuids_from_neo4j()
             neo4j_uuids = set(neo4j_uuids)
-            es_uuids = get_entity_uuids_from_es()
+            es_uuids = []
+            for index in ast.literal_eval(app.config['INDICES']).keys():
+                es_uuids.extend(get_entity_uuids_from_es(index))
+            es_uuids = set(es_uuids)
             donor_uuids = get_donor_uuids_from_neo4j()
 
             for uuid in es_uuids:
