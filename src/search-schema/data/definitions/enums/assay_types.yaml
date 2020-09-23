@@ -39,11 +39,11 @@ salmon_rnaseq_bulk:
 salmon_rnaseq_sciseq:
     description: sciRNA-seq [Salmon]
 salmon_rnaseq_snareseq:
-    description: scRNA-seq (SNARE-seq) [Salmon]
+    description: snRNA-seq (SNARE-seq) [Salmon]
 sc_atac_seq_snare:
     description: scATAC-seq (SNARE-seq) [SnapATAC]
 sc_rna_seq_snare_lab:
-    description: scRNA-seq (SNARE-seq) [Lab Processed]
+    description: snRNA-seq (SNARE-seq) [Lab Processed]
 sc_atac_seq_snare_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
 scRNA-Seq-10x:
