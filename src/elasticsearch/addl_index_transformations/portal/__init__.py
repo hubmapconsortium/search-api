@@ -181,18 +181,12 @@ def _simple_clean(doc):
 #             del doc[unused_key]
 
 
-_schemas = {
-    entity_type:
-        load_yaml((
-            _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-        ).read_text())
-    for entity_type in ['dataset', 'donor', 'sample']
-}
-
-
 def _get_schema(doc):
     entity_type = doc['entity_type'].lower()
-    return _schemas[entity_type]
+    schema = load_yaml((
+        _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+    ).read_text())
+    return schema
 
 
 def _add_validation_errors(doc):
