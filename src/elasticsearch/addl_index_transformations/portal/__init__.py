@@ -66,6 +66,7 @@ def transform(doc, batch_id='unspecified'):
     ... })
     >>> del transformed['mapper_metadata']['datetime']
     >>> del transformed['mapper_metadata']['version']
+    >>> del transformed['mapper_metadata']['validation_errors']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -98,7 +99,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1125},
+     'mapper_metadata': {'size': 5893},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
@@ -118,11 +119,11 @@ def transform(doc, batch_id='unspecified'):
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
-    doc_copy['mapper_metadata'] = {
+    doc_copy['mapper_metadata'].update({
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
-    }
+    })
     logging.info(f'End: {id_for_log}')
     return doc_copy
 
@@ -196,6 +197,11 @@ def _get_schema(doc):
 
 def _add_validation_errors(doc):
     validator = jsonschema.Draft7Validator(_get_schema(doc))
-    errors = [e.message for e in validator.iter_errors(doc)]
-    if errors:
-        doc['mapper_validation_errors'] = errors
+    errors = [
+        {
+            'message': e.message,
+            'absolute_schema_path': '/' + '/'.join(e.absolute_schema_path),
+            'absolute_path': '/' + '/'.join(e.absolute_path)
+        } for e in validator.iter_errors(doc)
+    ]
+    doc['mapper_metadata'] = {'validation_errors': errors} if errors else {}
