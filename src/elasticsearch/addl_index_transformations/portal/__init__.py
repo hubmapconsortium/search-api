@@ -53,14 +53,14 @@ def transform(doc, batch_id='unspecified'):
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
-    ...             "organ_donor_data": [
-    ...                 {
-    ...                     "data_type": "Nominal",
-    ...                     "grouping_concept_preferred_term": "Sex",
-    ...                     "preferred_term": "Male"
-    ...                 }
-    ...             ]
-    ...         }
+    ...            "organ_donor_data": [
+    ...                {
+    ...                    "data_type": "Nominal",
+    ...                    "grouping_concept_preferred_term": "Sex",
+    ...                    "preferred_term": "Male"
+    ...                }
+    ...            ]
+    ...        }
     ...    }
     ... })
     >>> del transformed['mapper_metadata']['datetime']
