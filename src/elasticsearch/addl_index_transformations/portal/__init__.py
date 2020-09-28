@@ -4,7 +4,8 @@ import logging
 from json import dumps
 import datetime
 
-# import jsonschema
+from yaml import safe_load as load_yaml
+import jsonschema
 
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
@@ -116,6 +117,7 @@ def transform(doc, batch_id='unspecified'):
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
+    _get_validation_errors(doc_copy)  # TODO: Insert result into doc
     doc_copy['mapper_metadata'] = {
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
@@ -178,20 +180,21 @@ def _simple_clean(doc):
 #             del doc[unused_key]
 
 
-# _schemas = {
-#     entity_type:
-#         load_yaml((
-#             _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-#         ).read_text())
-#     for entity_type in ['dataset', 'donor', 'sample']
-# }
+_schemas = {
+    entity_type:
+        load_yaml((
+            _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+        ).read_text())
+    for entity_type in ['dataset', 'donor', 'sample']
+}
 
 
-# def _get_schema(doc):
-#     entity_type = doc['entity_type'].lower()
-#     return _schemas[entity_type]
+def _get_schema(doc):
+    entity_type = doc['entity_type'].lower()
+    return _schemas[entity_type]
 
 
-# TODO:
-# def _validate(doc):
-#     jsonschema.validate(doc, _get_schema(doc))
+def _get_validation_errors(doc):
+    validator = jsonschema.Draft7Validator(_get_schema(doc))
+    errors = validator.iter_errors(doc)
+    return errors
