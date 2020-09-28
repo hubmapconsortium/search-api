@@ -108,6 +108,7 @@ def transform(doc, batch_id='unspecified'):
     doc_copy = deepcopy(doc)
     # We will modify in place below,
     # so make a deep copy so we don't surprise the caller.
+    _add_validation_errors(doc_copy)
     _clean(doc_copy)
     try:
         translate(doc_copy)
@@ -117,7 +118,6 @@ def transform(doc, batch_id='unspecified'):
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
-    _get_validation_errors(doc_copy)  # TODO: Insert result into doc
     doc_copy['mapper_metadata'] = {
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
@@ -194,7 +194,8 @@ def _get_schema(doc):
     return _schemas[entity_type]
 
 
-def _get_validation_errors(doc):
+def _add_validation_errors(doc):
     validator = jsonschema.Draft7Validator(_get_schema(doc))
-    errors = validator.iter_errors(doc)
-    return errors
+    errors = [e.message for e in validator.iter_errors(doc)]
+    if errors:
+        doc['mapper_validation_errors'] = errors

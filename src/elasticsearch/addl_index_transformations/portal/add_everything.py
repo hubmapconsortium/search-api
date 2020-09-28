@@ -44,7 +44,7 @@ def _get_nested_values(input):
     ['deep', 'deep!', 'deep', 'shallow', '123']
 
     '''
-    dont_recurse_on = single_valued_fields + multi_valued_fields
+    dont_recurse_on = single_valued_fields + multi_valued_fields + ['mapper_validation_errors']
     if isinstance(input, dict):
         for k, v in input.items():
             if k not in dont_recurse_on:
