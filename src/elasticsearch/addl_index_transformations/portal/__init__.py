@@ -3,6 +3,7 @@ from copy import deepcopy
 import logging
 from json import dumps
 import datetime
+import subprocess
 
 from yaml import safe_load as load_yaml
 import jsonschema
@@ -183,6 +184,11 @@ def _simple_clean(doc):
 
 def _get_schema(doc):
     entity_type = doc['entity_type'].lower()
+    schema_path = _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+    if not schema_path.exists():
+        # TODO: Doing this in python is preferable to subprocess!
+        script_path = _data_dir.parent / 'generate-schemas.sh'
+        subprocess.run([script_path], check=True)
     schema = load_yaml((
         _data_dir / 'generated' / f'{entity_type}.schema.yaml'
     ).read_text())
@@ -206,6 +212,26 @@ def _add_validation_errors(doc):
      'absolute_schema_path': '/properties/entity_type/enum',
      'message': "'dataset' is not one of ['Dataset', 'Donor', 'Sample']"}
 
+    >>> doc = {
+    ...    'entity_type': 'Donor',
+    ...    'create_timestamp': 'FAKE',
+    ...    'created_by_user_displayname': 'FAKE',
+    ...    'created_by_user_email': 'FAKE',
+    ...    'data_access_level': 'public',
+    ...    'group_name': 'FAKE',
+    ...    'group_uuid': 'FAKE',
+    ...    'last_modified_timestamp': 'FAKE',
+    ...    'uuid': 'FAKE',
+    ...    'access_group': 'FAKE',
+    ...    'ancestor_ids': 'FAKE',
+    ...    'ancestors': 'FAKE',
+    ...    'descendant_ids': 'FAKE',
+    ...    'descendants': 'FAKE'
+    ... }
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    []
+
     '''
     schema = _get_schema(doc)
     if not schema.keys():
@@ -219,4 +245,4 @@ def _add_validation_errors(doc):
             'absolute_path': '/' + '/'.join(e.absolute_path)
         } for e in validator.iter_errors(doc)
     ]
-    doc['mapper_metadata'] = {'validation_errors': errors} if errors else {}
+    doc['mapper_metadata'] = {'validation_errors': errors}
