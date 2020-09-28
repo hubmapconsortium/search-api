@@ -61,6 +61,12 @@ def transform(doc, batch_id='unspecified'):
     ...                }
     ...            ]
     ...        }
+    ...    },
+    ...    'metadata': {
+    ...        'metadata': {
+    ...            '_random_stuff_that_should_not_be_ui': True,
+    ...            'unrealistic': 'Donors do not have metadata/metadata.'
+    ...        }
     ...    }
     ... })
     >>> del transformed['mapper_metadata']['datetime']
@@ -88,6 +94,7 @@ def transform(doc, batch_id='unspecified'):
                     '5678',
                     'CODEX [Cytokit + SPRM] / seqFISH',
                     'Consortium',
+                    'Donors do not have metadata/metadata.',
                     'New',
                     'codex_cytokit',
                     'consortium',
@@ -96,8 +103,11 @@ def transform(doc, batch_id='unspecified'):
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
+     'mapped_metadata': {},
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1125},
+     'mapper_metadata': {'size': 1273},
+     'metadata': {'metadata': {'unrealistic': 'Donors do not have '
+                                              'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
@@ -156,6 +166,14 @@ def _simple_clean(doc):
         doc[field] = 'Daniel Cotter'
     if field in doc and doc[field] == 'amir Bahmani':
         doc[field] = 'Amir Bahmani'
+
+    if 'metadata' in doc and 'metadata' in doc['metadata']:
+        underscores = [
+            k for k in doc['metadata']['metadata'].keys()
+            if k.startswith('_')
+        ]
+        for k in underscores:
+            del doc['metadata']['metadata'][k]
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
