@@ -190,7 +190,28 @@ def _get_schema(doc):
 
 
 def _add_validation_errors(doc):
-    validator = jsonschema.Draft7Validator(_get_schema(doc))
+    '''
+    >>> from pprint import pprint
+
+    >>> doc = {'entity_type': 'JUST WRONG'}
+    >>> _add_validation_errors(doc)
+    Traceback (most recent call last):
+    ...
+    FileNotFoundError: [Errno 2] No such file or directory: 'search-schema/data/generated/just wrong.schema.yaml'
+
+    >>> doc = {'entity_type': 'dataset'}
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'][0])
+    {'absolute_path': '/entity_type',
+     'absolute_schema_path': '/properties/entity_type/enum',
+     'message': "'dataset' is not one of ['Dataset', 'Donor', 'Sample']"}
+
+    '''
+    schema = _get_schema(doc)
+    if not schema.keys():
+        doc['mapper_metadata'] = {'validation_errors': ["Can't load schema"]}
+        return
+    validator = jsonschema.Draft7Validator(schema)
     errors = [
         {
             'message': e.message,
