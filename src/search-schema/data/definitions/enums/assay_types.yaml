@@ -52,9 +52,9 @@ salmon_rnaseq_10x:
     description: scRNA-seq (10x Genomics) [Salmon]
 
 sc_rna_seq_snare_lab:
-    description: scRNA-seq (SNARE-seq) [Lab Processed]
+    description: snRNA-seq (SNARE-seq) [Lab Processed]
 salmon_rnaseq_snareseq:
-    description: scRNA-seq (SNARE-seq) [Salmon]
+    description: snRNA-seq (SNARE-seq) [Salmon]
 
 sciATACseq:
     description: sciATAC-seq
