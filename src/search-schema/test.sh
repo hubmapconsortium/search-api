@@ -14,14 +14,7 @@ start search-schema/doctests
 end search-schema/doctests
 
 start search-schema/examples
-  YAML=data/generated/combined-definitions.yaml
-  src/consolidate-yaml.py --definitions data/definitions > $YAML
-
-  CMD="src/definitions-yaml-to-schema.py --definitions $YAML --schemas data/generated/"
-
-  echo "Running '$CMD'"
-  eval $CMD
-
+  ./generate-schemas.sh
   for EXAMPLE in examples/*; do
     TYPE=`basename $EXAMPLE .json`
     src/validate.py --document $EXAMPLE --schema data/generated/$TYPE.schema.yaml
