@@ -108,7 +108,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 5893},
+     'mapper_metadata': {'size': 6041},
      'metadata': {'metadata': {'unrealistic': 'Donors do not have '
                                               'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
