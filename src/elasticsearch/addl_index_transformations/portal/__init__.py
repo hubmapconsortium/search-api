@@ -203,10 +203,11 @@ def _simple_clean(doc):
 def _get_schema(doc):
     entity_type = doc['entity_type'].lower()
     schema_path = _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-    if not schema_path.exists():
-        # TODO: Doing this in python is preferable to subprocess!
-        script_path = _data_dir.parent / 'generate-schemas.sh'
-        subprocess.run([script_path], check=True)
+    # NOTE: The schema could be reused between runs. ie
+    # > if not schema_path.exists():
+    # TODO: Doing this in python is preferable to subprocess!
+    script_path = _data_dir.parent / 'generate-schemas.sh'
+    subprocess.run([script_path], check=True)
     schema = load_yaml((
         _data_dir / 'generated' / f'{entity_type}.schema.yaml'
     ).read_text())
