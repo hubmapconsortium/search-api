@@ -208,9 +208,7 @@ def _get_schema(doc):
     # TODO: Doing this in python is preferable to subprocess!
     script_path = _data_dir.parent / 'generate-schemas.sh'
     subprocess.run([script_path], check=True)
-    schema = load_yaml((
-        _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-    ).read_text())
+    schema = load_yaml(schema_path.read_text())
     return schema
 
 
