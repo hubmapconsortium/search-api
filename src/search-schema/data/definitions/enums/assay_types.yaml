@@ -20,6 +20,16 @@ image_pyramid:
     description: Image Pyramid
 IMC:
     description: Imaging Mass Cytometry
+
+label-free_lc-ms:
+    description: Label-free LC-MS
+labeled_lc-ms:
+    description: Labeled LC-MS
+label-free_lc-ms-ms:
+    description: Label-free LC-MS/MS
+labeled_lc-ms:
+    description: Labeled LC-MS/MS
+
 Lightsheet:
     description: Lightsheet Microscopy
 MALDI-IMS-neg:
