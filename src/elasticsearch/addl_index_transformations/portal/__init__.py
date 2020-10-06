@@ -207,9 +207,7 @@ def _get_schema(doc):
         # TODO: Doing this in python is preferable to subprocess!
         script_path = _data_dir.parent / 'generate-schemas.sh'
         subprocess.run([script_path], check=True)
-    schema = load_yaml((
-        _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-    ).read_text())
+    schema = load_yaml(schema_path.read_text())
     return schema
 
 
@@ -259,8 +257,18 @@ def _add_validation_errors(doc):
     errors = [
         {
             'message': e.message,
-            'absolute_schema_path': '/' + '/'.join(e.absolute_schema_path),
-            'absolute_path': '/' + '/'.join(e.absolute_path)
+            'absolute_schema_path': _as_path_string(e.absolute_schema_path),
+            'absolute_path': _as_path_string(e.absolute_path)
         } for e in validator.iter_errors(doc)
     ]
     doc['mapper_metadata'] = {'validation_errors': errors}
+
+
+def _as_path_string(mixed):
+    '''
+    >>> _as_path_string(['a', 2, 'z'])
+    '/a/2/z'
+
+    '''
+    sep = '/'
+    return sep + sep.join(str(s) for s in mixed)
