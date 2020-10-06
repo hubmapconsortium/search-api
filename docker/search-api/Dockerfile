@@ -18,6 +18,8 @@ COPY . .
 RUN pip install -r src/requirements.txt && \
     pip install src/
 
+RUN src/search-schema/generate-schemas.sh
+
 # The EXPOSE instruction informs Docker that the container listens on the specified network ports at runtime. 
 # EXPOSE does not make the ports of the container accessible to the host.
 EXPOSE 5000
