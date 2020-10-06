@@ -95,9 +95,9 @@ else
             # Copy over the src folder
             cp -r ../src search-api/
 
-            # Only mount the VERSION file and BUILD file for localhost and dev
-            # On test/stage/prod, copy the VERSION file and BUILD file to image
-            if [[ "$1" != "localhost" && "$1" != "dev" ]]; then
+            # Only mount the VERSION file and BUILD file for localhost
+            # On dev/test/stage/prod, copy the VERSION file and BUILD file to image
+            if [ "$1" != "localhost" ]; then
                 # Delete old VERSION and BUILD files if found
                 if [ -f "search-api/src/VERSION" ]; then
                     rm -rf search-api/src/VERSION
