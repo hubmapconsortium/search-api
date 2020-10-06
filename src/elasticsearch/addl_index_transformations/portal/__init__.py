@@ -205,6 +205,7 @@ def _get_schema(doc):
     schema_path = _data_dir / 'generated' / f'{entity_type}.schema.yaml'
     if not schema_path.exists():
         # TODO: Doing this in python is preferable to subprocess!
+        logging.debug(f'Schema not available; will be built: {schema_path.resolve()}')
         script_path = _data_dir.parent / 'generate-schemas.sh'
         subprocess.run([script_path], check=True)
     schema = load_yaml(schema_path.read_text())
