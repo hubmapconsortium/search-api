@@ -17,9 +17,6 @@ if [ $? -ne 0 ]; then
     useradd -r -u $HOST_UID -g $HOST_GID -m hubmap
 fi
 
-# Make the source code directory writable
-chown -R hubmap:hubmap /usr/src/app/src
-
 # Lastly we use gosu to execute our process "$@" as that user
 # Remember CMD from a Dockerfile of child image gets passed to the entrypoint.sh as command line arguments
 # "$@" is a shell variable that means "all the arguments"
