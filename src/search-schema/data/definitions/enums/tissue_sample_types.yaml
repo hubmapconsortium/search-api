@@ -13,7 +13,7 @@ codex:
 cryosections_curls_from_fresh_frozen_oct:
   description: Cryosections/curls from fresh frozen OCT
 cryosections_curls_rnalater:
-  description: Cryosectinos/curls RNAlater
+  description: Cryosections/curls RNAlater
 ffpe_block:
   description: FFPE block
 ffpe_slide:
