@@ -19,7 +19,7 @@ ffpe_block:
 ffpe_slide:
   description: FFPE slide
 fixed_frozen_section_slide:
-  description: Fixed Frozen section slide
+  description: Fixed frozen section slide
 fixed_tissue_piece:
   description: Fixed tissue piece
 flash_frozen_liquid_nitrogen:
@@ -27,13 +27,13 @@ flash_frozen_liquid_nitrogen:
 formalin_fixed_oct_block:
   description: Formalin fixed OCT block
 fresh_frozen_oct_block:
-  description: Fresh frozen oct block
+  description: Fresh frozen OCT block
 fresh_frozen_section_slide:
-  description: Fresh Frozen section slide
+  description: Fresh frozen section slide
 fresh_frozen_tissue:
   description: Fresh frozen tissue
 fresh_frozen_tissue_section:
-  description: Fresh Frozen Tissue Section
+  description: Fresh frozen tissue section
 fresh_tissue:
   description: Fresh tissue
 frozen_cell_pellet_buffy_coat:
@@ -49,13 +49,13 @@ nuclei_rnalater:
 organ:
   description: Organ
 organ_piece:
-  description: Organ Piece
+  description: Organ piece
 other:
   description: Other
 pbmc:
   description: PBMC
 pfa_fixed_frozen_oct_block:
-  description: PFA Fixed frozen OCT block
+  description: PFA fixed frozen OCT block
 plasma:
   description: Plasma
 protein:
@@ -77,7 +77,7 @@ segment:
 seqfish:
   description: seqFISH
 sequence_library:
-  description: Sequence Library
+  description: Sequence library
 serum:
   description: Serum
 single_cell_cryopreserved:
@@ -89,4 +89,4 @@ snrnaseq:
 tissue_lysate:
   description: Tissue lysate
 wgs:
-  description: Whole Genome Sequencing
+  description: Whole genome sequencing
