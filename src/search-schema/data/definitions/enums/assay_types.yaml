@@ -21,10 +21,8 @@ image_pyramid:
 IMC:
     description: Imaging Mass Cytometry
 
-lc-ms_label-free:
-    description: Label-free LC-MS
-lc-ms_labeled:
-    description: Labeled LC-MS
+ms-ms_label-free:
+    description: Label-free MS/MS
 lc-ms-ms_label-free:
     description: Label-free LC-MS/MS
 lc-ms-ms_labeled:
