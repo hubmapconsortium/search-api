@@ -4,6 +4,12 @@ The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data in
 
 The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf02b838022d564da776b03f357158
 
+## Development process
+
+- Make new feature branches from `master`.
+- Make PRs to `devel`. (This is the default branch.)
+- As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to devel, and redeploy and reindex the DEV instance.
+
 ## Updating the enumerations
 
 All codes used by the system need to be represented in

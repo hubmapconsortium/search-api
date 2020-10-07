@@ -1,13 +1,35 @@
 AF:
     description: Autofluorescence Microscopy
+
 ATACseq-bulk:
     description: Bulk ATAC-seq
+bulk_atacseq:
+    description: Bulk ATAC-seq [BWA + MACS2]
+
+bulk-RNA:
+    description: Bulk RNA-seq
+salmon_rnaseq_bulk:
+    description: Bulk RNA-seq [Salmon]
+
 CODEX:
     description: CODEX
+codex_cytokit:
+    description: CODEX [Cytokit + SPRM]
+
+image_pyramid:
+    description: Image Pyramid
 IMC:
     description: Imaging Mass Cytometry
-LC-MS-untargeted:
-    description: Untargeted LC-MS
+
+lc-ms_label-free:
+    description: Label-free LC-MS
+lc-ms_labeled:
+    description: Labeled LC-MS
+lc-ms-ms_label-free:
+    description: Label-free LC-MS/MS
+lc-ms-ms_labeled:
+    description: Labeled LC-MS/MS
+
 Lightsheet:
     description: Lightsheet Microscopy
 MALDI-IMS-neg:
@@ -24,47 +46,47 @@ TMT-LC-MS:
     description: TMT LC-MS
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
+LC-MS-untargeted:
+    description: Untargeted LC-MS
 WGS:
     description: Whole Genome Sequencing
-bulk-RNA:
-    description: Bulk RNA-seq
-codex_cytokit:
-    description: CODEX [Cytokit + SPRM]
-image_pyramid:
-    description: Image Pyramid
-salmon_rnaseq_10x:
-    description: scRNA-seq (10x Genomics) [Salmon]
-salmon_rnaseq_bulk:
-    description: Bulk RNA-seq [Salmon]
-salmon_rnaseq_sciseq:
-    description: sciRNA-seq [Salmon]
-salmon_rnaseq_snareseq:
-    description: scRNA-seq (SNARE-seq) [Salmon]
-sc_atac_seq_snare:
-    description: scATAC-seq (SNARE-seq) [SnapATAC]
-sc_rna_seq_snare_lab:
-    description: scRNA-seq (SNARE-seq) [Lab Processed]
+
 sc_atac_seq_snare_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
+sc_atac_seq_snare:
+    description: scATAC-seq (SNARE-seq) [SnapATAC]
+
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
+salmon_rnaseq_10x:
+    description: scRNA-seq (10x Genomics) [Salmon]
+
+sc_rna_seq_snare_lab:
+    description: snRNA-seq (SNARE-seq) [Lab Processed]
+salmon_rnaseq_snareseq:
+    description: snRNA-seq (SNARE-seq) [Salmon]
+
 sciATACseq:
     description: sciATAC-seq
 sc_atac_seq_sci:
     description: sciATAC-seq [SnapATAC]
+
 sciRNAseq:
     description: sciRNA-seq
+salmon_rnaseq_sciseq:
+    description: sciRNA-seq [Salmon]
+
 seqFish:
     description: seqFISH
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
+
 snATACseq:
     description: snATAC-seq
-snRNAseq:
-    description: snRNA-seq
-bulk_atacseq:
-    description: Bulk ATAC-seq [BWA + MACS2]
 sn_atac_seq:
     description: snATAC-seq [SnapATAC]
+
+snRNAseq:
+    description: snRNA-seq
 salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]

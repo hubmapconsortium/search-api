@@ -3,8 +3,10 @@ from copy import deepcopy
 import logging
 from json import dumps
 import datetime
+import subprocess
 
-# import jsonschema
+from yaml import safe_load as load_yaml
+import jsonschema
 
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
@@ -53,18 +55,23 @@ def transform(doc, batch_id='unspecified'):
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
-    ...             "organ_donor_data": [
-    ...                 {
-    ...                     "data_type": "Nominal",
-    ...                     "grouping_concept_preferred_term": "Sex",
-    ...                     "preferred_term": "Male"
-    ...                 }
-    ...             ]
-    ...         }
+    ...            "organ_donor_data": [
+    ...                {
+    ...                    "data_type": "Nominal",
+    ...                    "grouping_concept_preferred_term": "Sex",
+    ...                    "preferred_term": "Male"
+    ...                }
+    ...            ]
+    ...        }
+    ...    },
+    ...    'metadata': {
+    ...        'metadata': {
+    ...            '_random_stuff_that_should_not_be_ui': True,
+    ...            'unrealistic': 'Donors do not have metadata/metadata.'
+    ...        }
     ...    }
     ... })
-    >>> del transformed['mapper_metadata']['datetime']
-    >>> del transformed['mapper_metadata']['version']
+    >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -88,6 +95,7 @@ def transform(doc, batch_id='unspecified'):
                     '5678',
                     'CODEX [Cytokit + SPRM] / seqFISH',
                     'Consortium',
+                    'Donors do not have metadata/metadata.',
                     'New',
                     'codex_cytokit',
                     'consortium',
@@ -96,8 +104,10 @@ def transform(doc, batch_id='unspecified'):
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
+     'mapped_metadata': {},
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 1125},
+     'metadata': {'metadata': {'unrealistic': 'Donors do not have '
+                                              'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'status': 'New'}
 
@@ -107,6 +117,7 @@ def transform(doc, batch_id='unspecified'):
     doc_copy = deepcopy(doc)
     # We will modify in place below,
     # so make a deep copy so we don't surprise the caller.
+    _add_validation_errors(doc_copy)
     _clean(doc_copy)
     try:
         translate(doc_copy)
@@ -116,11 +127,11 @@ def transform(doc, batch_id='unspecified'):
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_everything(doc_copy)
-    doc_copy['mapper_metadata'] = {
+    doc_copy['mapper_metadata'].update({
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
         'size': len(dumps(doc_copy))
-    }
+    })
     logging.info(f'End: {id_for_log}')
     return doc_copy
 
@@ -157,6 +168,14 @@ def _simple_clean(doc):
     if field in doc and doc[field] == 'amir Bahmani':
         doc[field] = 'Amir Bahmani'
 
+    if 'metadata' in doc and 'metadata' in doc['metadata']:
+        underscores = [
+            k for k in doc['metadata']['metadata'].keys()
+            if k.startswith('_')
+        ]
+        for k in underscores:
+            del doc['metadata']['metadata'][k]
+
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
 #     schema = _get_schema(doc)
@@ -178,20 +197,76 @@ def _simple_clean(doc):
 #             del doc[unused_key]
 
 
-# _schemas = {
-#     entity_type:
-#         load_yaml((
-#             _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-#         ).read_text())
-#     for entity_type in ['dataset', 'donor', 'sample']
-# }
+def _get_schema(doc):
+    entity_type = doc['entity_type'].lower()
+    schema_path = _data_dir / 'generated' / f'{entity_type}.schema.yaml'
+    if not schema_path.exists():
+        # TODO: Doing this in python is preferable to subprocess!
+        logging.debug(f'Schema not available; will be built: {schema_path.resolve()}')
+        script_path = _data_dir.parent / 'generate-schemas.sh'
+        subprocess.run([script_path], check=True)
+    schema = load_yaml(schema_path.read_text())
+    return schema
 
 
-# def _get_schema(doc):
-#     entity_type = doc['entity_type'].lower()
-#     return _schemas[entity_type]
+def _add_validation_errors(doc):
+    '''
+    >>> from pprint import pprint
+
+    >>> doc = {'entity_type': 'JUST WRONG'}
+    >>> _add_validation_errors(doc)
+    Traceback (most recent call last):
+    ...
+    FileNotFoundError: [Errno 2] No such file or directory: 'search-schema/data/generated/just wrong.schema.yaml'
+
+    >>> doc = {'entity_type': 'dataset'}
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'][0])
+    {'absolute_path': '/entity_type',
+     'absolute_schema_path': '/properties/entity_type/enum',
+     'message': "'dataset' is not one of ['Dataset', 'Donor', 'Sample']"}
+
+    >>> doc = {
+    ...    'entity_type': 'Donor',
+    ...    'create_timestamp': 'FAKE',
+    ...    'created_by_user_displayname': 'FAKE',
+    ...    'created_by_user_email': 'FAKE',
+    ...    'data_access_level': 'public',
+    ...    'group_name': 'FAKE',
+    ...    'group_uuid': 'FAKE',
+    ...    'last_modified_timestamp': 'FAKE',
+    ...    'uuid': 'FAKE',
+    ...    'access_group': 'FAKE',
+    ...    'ancestor_ids': 'FAKE',
+    ...    'ancestors': 'FAKE',
+    ...    'descendant_ids': 'FAKE',
+    ...    'descendants': 'FAKE'
+    ... }
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    []
+
+    '''
+    schema = _get_schema(doc)
+    if not schema.keys():
+        doc['mapper_metadata'] = {'validation_errors': ["Can't load schema"]}
+        return
+    validator = jsonschema.Draft7Validator(schema)
+    errors = [
+        {
+            'message': e.message,
+            'absolute_schema_path': _as_path_string(e.absolute_schema_path),
+            'absolute_path': _as_path_string(e.absolute_path)
+        } for e in validator.iter_errors(doc)
+    ]
+    doc['mapper_metadata'] = {'validation_errors': errors}
 
 
-# TODO:
-# def _validate(doc):
-#     jsonschema.validate(doc, _get_schema(doc))
+def _as_path_string(mixed):
+    '''
+    >>> _as_path_string(['a', 2, 'z'])
+    '/a/2/z'
+
+    '''
+    sep = '/'
+    return sep + sep.join(str(s) for s in mixed)
