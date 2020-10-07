@@ -71,9 +71,7 @@ def transform(doc, batch_id='unspecified'):
     ...        }
     ...    }
     ... })
-    >>> del transformed['mapper_metadata']['datetime']
-    >>> del transformed['mapper_metadata']['version']
-    >>> del transformed['mapper_metadata']['validation_errors']
+    >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -108,7 +106,6 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'mapper_metadata': {'size': 6041},
      'metadata': {'metadata': {'unrealistic': 'Donors do not have '
                                               'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
