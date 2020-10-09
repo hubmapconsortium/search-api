@@ -14,9 +14,11 @@ start search-schema/doctests
 end search-schema/doctests
 
 start search-schema/examples
-  ./generate-schemas.sh
+  TARGET=/tmp/search-api
+  mkdir -p $TARGET
+  ./generate-schemas.sh $TARGET
   for EXAMPLE in examples/*; do
     TYPE=`basename $EXAMPLE .json`
-    src/validate.py --document $EXAMPLE --schema data/generated/$TYPE.schema.yaml
+    src/validate.py --document $EXAMPLE --schema $TARGET/$TYPE.schema.yaml
   done
 end search-schema/examples
