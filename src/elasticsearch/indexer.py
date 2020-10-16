@@ -87,12 +87,9 @@ class Indexer:
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
-            #### Collections ####
-            # collections = requests.get(self.entity_webservice_url + "/collections").json()
-            # for collection in collections:
-            #     self.index_collection(collections)
-        
-        except Exception as e:
+            self.index_collections("token")
+
+        except Exception:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
@@ -108,16 +105,31 @@ class Indexer:
 
         return f"Done."
 
-    def index_collection(self, collection):
-        access_level = get_access_level(collection)
-        if access_level == HubmapConst.ACCESS_LEVEL_PUBLIC:
-            index = 'hm_public_entities'
-            doc = json.dumps(collection)
-            result = self.eswriter.write_or_update_document(index_name=index, type_='collection', doc=doc, uuid=collection['uuid'])
-        elif access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
-            index = 'hm_consortium_entities'
-            doc = json.dumps(collection)
-            result = self.eswriter.write_or_update_document(index_name=index, type_='collection', doc=doc, uuid=collection['uuid'])
+    def index_collections(self, token):
+        # Consortium Collections #
+        index = 'hm_consortium_entities'
+        collections = requests.get(
+                        self.entity_webservice_url + "/collections",
+                        headers={"Authorization": f"Bearer {token}"}).json()
+        for collection in collections:
+            self.add_datasets_to_collection(collection)
+            self.entity_keys_rename(collection)
+            collection.setdefault('type', 'collection')
+            self.eswriter.write_or_update_document(index_name=index,
+                                                   doc=json.dumps(collection),
+                                                   uuid=collection['uuid'])
+        # Public Collections #
+        index = 'hm_public_entities'
+        collections = requests.get(self.entity_webservice_url +
+                                   "/collections").json()
+        for collection in collections:
+            self.add_datasets_to_collection(collection)
+            self.entity_keys_rename(collection)
+            collection.setdefault('type', 'collection')
+            (self.eswriter
+                 .write_or_update_document(index_name=index,
+                                           doc=json.dumps(collection),
+                                           uuid=collection['uuid']))
 
     def reindex(self, uuid):
         try:
@@ -162,7 +174,7 @@ class Indexer:
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
 
-    def generate_doc(self, entity):
+    def generate_doc(self, entity, return_type):
         '''
             entity_keys_rename will change the entity inplace
         '''
@@ -259,7 +271,7 @@ class Indexer:
 
             self.remove_specific_key_entry(entity, "other_metadata")
 
-            return json.dumps(entity)
+            return json.dumps(entity) if return_type == 'json' else entity
 
         except Exception as e:
             self.logger.error(f"Exception in generate_doc()")
@@ -282,22 +294,23 @@ class Indexer:
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
         for key in to_delete_keys:
-            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants']:
+            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants', 'datasets']:
                 entity.pop(key)
         entity.update(temp)
         
         temp = {}
-        for key in entity['metadata']:
-            if key in self.attr_map['METADATA']:
-                try:
-                    temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
-                except SyntaxError:
-                    self.logger.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
-                    temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
-                except ValueError:
-                    self.logger.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
-                    temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
-        entity.pop('metadata')
+        if 'metadata' in entity:
+            for key in entity['metadata']:
+                if key in self.attr_map['METADATA']:
+                    try:
+                        temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
+                    except SyntaxError:
+                        self.logger.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                        temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
+                    except ValueError:
+                        self.logger.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
+                        temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
+            entity.pop('metadata')
         entity.update(temp)
 
     def remove_specific_key_entry(self, obj, key_to_remove):
@@ -376,11 +389,12 @@ class Indexer:
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
-
+    
     def update_index(self, node):
         try:
             org_node = copy.deepcopy(node)
-            doc = self.generate_doc(node)
+            node.setdefault('type', 'entity')
+            doc = self.generate_doc(node, 'json')
             transformed = json.dumps(transform(json.loads(doc)))
             if (transformed is None or
                transformed == 'null' or
@@ -430,12 +444,15 @@ class Indexer:
                     self.report['fail_uuids'].add(node['uuid'])
                 result = None
         except KeyError:
-            self.logger.error(f"uuid: {org_node['uuid']}, entity_type: {org_node['entitytype']}, es_node_entity_type: {node['entity_type']}")
+            self.logger.error(f"""uuid: {org_node['uuid']}, 
+                            entity_type: {org_node['entitytype']}, 
+                            es_node_entity_type: {node['entity_type']}""")
             self.logger.exception("unexpceted exception")
         except Exception as e:
             self.report['fail_cnt'] +=1
             self.report['fail_uuids'].add(node['uuid'])
-            self.logger.error(f"Exception in user code, uuid: {org_node['uuid']}")
+            self.logger.error(f"""Exception in user code, 
+                        uuid: {org_node['uuid']}""")
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
@@ -451,6 +468,18 @@ class Indexer:
                     node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
                     (node.get('entitytype', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+
+    def add_datasets_to_collection(self, collection):
+        datasets = []
+        for uuid in collection.get('dataset_uuids', []):
+            dataset = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()
+            dataset = self.generate_doc(dataset['entity'], 'dict')
+            dataset.pop('ancestors')
+            dataset.pop('ancestor_ids')
+            dataset.pop('descendants')
+            dataset.pop('descendant_ids')
+            datasets.append(dataset)
+        collection['datasets'] = datasets
 
 
 if __name__ == '__main__':
