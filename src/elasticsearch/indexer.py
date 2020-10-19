@@ -108,13 +108,21 @@ class Indexer:
     def index_collections(self, token):
         # Consortium Collections #
         index = 'hm_consortium_entities'
-        collections = requests.get(
+        rspn = requests.get(
                         self.entity_webservice_url + "/collections",
-                        headers={"Authorization": f"Bearer {token}"}).json()
+                        headers={"Authorization": f"Bearer {token}"})
+        if not rspn.ok:
+            if rspn.status_code == 401:
+                raise ValueError("Token is not valid.")
+            else:
+                raise Exception("Something wrong with entity-api.")
+
+        collections = rspn.json()
+
         for collection in collections:
             self.add_datasets_to_collection(collection)
             self.entity_keys_rename(collection)
-            collection.setdefault('type', 'collection')
+            collection.setdefault('entity_type', 'collection')
             self.eswriter.write_or_update_document(index_name=index,
                                                    doc=json.dumps(collection),
                                                    uuid=collection['uuid'])
@@ -125,7 +133,7 @@ class Indexer:
         for collection in collections:
             self.add_datasets_to_collection(collection)
             self.entity_keys_rename(collection)
-            collection.setdefault('type', 'collection')
+            collection.setdefault('entity_type', 'collection')
             (self.eswriter
                  .write_or_update_document(index_name=index,
                                            doc=json.dumps(collection),
@@ -389,7 +397,7 @@ class Indexer:
             self.logger.error('-'*60)
             self.logger.exception("unexpected exception")
             self.logger.error('-'*60)
-    
+
     def update_index(self, node):
         try:
             org_node = copy.deepcopy(node)
@@ -472,13 +480,21 @@ class Indexer:
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()
+            dataset = requests.get(self.entity_webservice_url +
+                                   "/entities/uuid/" +
+                                   uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
             dataset.pop('descendants')
             dataset.pop('descendant_ids')
+            dataset.pop('immediate_descendants')
+            dataset.pop('immediate_ancestors')
+            dataset.pop('donor')
+            dataset.pop('origin_sample')
+            dataset.pop('source_sample')
             datasets.append(dataset)
+
         collection['datasets'] = datasets
 
 
