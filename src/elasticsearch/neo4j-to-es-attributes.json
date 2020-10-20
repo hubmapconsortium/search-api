@@ -53,7 +53,7 @@
         "is_json_stored_as_text": false
       },
       "provenance_modified_timestamp": {
-        "es_name": "provenance_modified_timestamp",
+        "es_name": "last_modified_timestamp",
         "is_json_stored_as_text": false
       }
     },
