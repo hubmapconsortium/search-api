@@ -1,6 +1,10 @@
 from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
-import sys, json, time, concurrent.futures, copy
+import sys
+import json
+import time
+import concurrent.futures
+import copy
 import collections
 import requests
 import configparser
@@ -72,11 +76,11 @@ class Indexer:
 
     def main(self):
         try:
-            #### Create Indices ####
+            # Create Indices #
             for index, _ in self.indices.items():
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
-            #### Entities ####
+            # Entities #
             donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -103,41 +107,63 @@ class Indexer:
             self.report[node['entitytype']] = self.report.get(node['entitytype'], 0) + 1
             self.update_index(node)
 
-        return f"Done."
+        return "Done."
 
     def index_collections(self, token):
-        # Consortium Collections #
-        index = 'hm_consortium_entities'
-        rspn = requests.get(
-                        self.entity_webservice_url + "/collections",
-                        headers={"Authorization": f"Bearer {token}"})
-        if not rspn.ok:
-            if rspn.status_code == 401:
-                raise ValueError("Token is not valid.")
-            else:
-                raise Exception("Something wrong with entity-api.")
+        IndexConfig = collections.namedtuple('IndexConfig',
+                                             ['access_level', 'doc_type'])
+        # write enitty into indices
+        for index, configs in self.indices.items():
+            configs = IndexConfig(*configs)
+            if (
+                configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                and configs.doc_type == 'original'
+            ):
+                # Consortium Collections #
+                index = 'hm_consortium_entities'
+                rspn = requests.get(
+                                self.entity_webservice_url + "/collections",
+                                headers={"Authorization": f"Bearer {token}"})
+                if not rspn.ok:
+                    if rspn.status_code == 401:
+                        raise ValueError("Token is not valid.")
+                    else:
+                        raise Exception("Something wrong with entity-api.")
 
-        collections = rspn.json()
+                hm_collections = rspn.json()
 
-        for collection in collections:
-            self.add_datasets_to_collection(collection)
-            self.entity_keys_rename(collection)
-            collection.setdefault('entity_type', 'collection')
-            self.eswriter.write_or_update_document(index_name=index,
+                for collection in hm_collections:
+                    self.add_datasets_to_collection(collection)
+                    self.entity_keys_rename(collection)
+                    collection.setdefault('entity_type', 'collection')
+                    (self.eswriter
+                         .write_or_update_document(index_name=index,
                                                    doc=json.dumps(collection),
-                                                   uuid=collection['uuid'])
-        # Public Collections #
-        index = 'hm_public_entities'
-        collections = requests.get(self.entity_webservice_url +
-                                   "/collections").json()
-        for collection in collections:
-            self.add_datasets_to_collection(collection)
-            self.entity_keys_rename(collection)
-            collection.setdefault('entity_type', 'collection')
-            (self.eswriter
-                 .write_or_update_document(index_name=index,
-                                           doc=json.dumps(collection),
-                                           uuid=collection['uuid']))
+                                                   uuid=collection['uuid']))
+            if (
+                configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC
+                and configs.doc_type == 'original'
+            ):
+                # Public Collections #
+                index = 'hm_public_entities'
+                rspn = requests.get(self.entity_webservice_url +
+                                    "/collections")
+                if not rspn.ok:
+                    if rspn.status_code == 401:
+                        raise ValueError("Token is not valid.")
+                    else:
+                        raise Exception("Something wrong with entity-api.")
+                
+                hm_collections = rspn.json()
+
+                for collection in hm_collections:
+                    self.add_datasets_to_collection(collection)
+                    self.entity_keys_rename(collection)
+                    collection.setdefault('entity_type', 'collection')
+                    (self.eswriter
+                        .write_or_update_document(index_name=index,
+                                                  doc=json.dumps(collection),
+                                                  uuid=collection['uuid']))
 
     def reindex(self, uuid):
         try:
