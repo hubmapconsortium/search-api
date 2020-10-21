@@ -4,6 +4,7 @@ import logging
 from json import dumps
 import datetime
 import subprocess
+from tempfile import TemporaryDirectory
 
 from yaml import safe_load as load_yaml
 import jsonschema
@@ -198,14 +199,14 @@ def _simple_clean(doc):
 
 
 def _get_schema(doc):
-    entity_type = doc['entity_type'].lower()
-    schema_path = _data_dir / 'generated' / f'{entity_type}.schema.yaml'
-    if not schema_path.exists():
-        # TODO: Doing this in python is preferable to subprocess!
-        logging.debug(f'Schema not available; will be built: {schema_path.resolve()}')
+    with TemporaryDirectory() as td:
+        # Regenerating schemas with every validation is wasteful.
+        # Chuck would strongly prefer that this be cached.
         script_path = _data_dir.parent / 'generate-schemas.sh'
-        subprocess.run([script_path], check=True)
-    schema = load_yaml(schema_path.read_text())
+        subprocess.run([script_path, td], check=True)
+        entity_type = doc['entity_type'].lower()
+        schema_path = Path(td) / f'{entity_type}.schema.yaml'
+        schema = load_yaml(schema_path.read_text())
     return schema
 
 
@@ -214,10 +215,10 @@ def _add_validation_errors(doc):
     >>> from pprint import pprint
 
     >>> doc = {'entity_type': 'JUST WRONG'}
-    >>> _add_validation_errors(doc)
-    Traceback (most recent call last):
-    ...
-    FileNotFoundError: [Errno 2] No such file or directory: 'search-schema/data/generated/just wrong.schema.yaml'
+    >>> try:
+    ...     _add_validation_errors(doc)
+    ... except FileNotFoundError as e:
+    ...     assert 'just wrong.schema.yaml' in str(e)
 
     >>> doc = {'entity_type': 'dataset'}
     >>> _add_validation_errors(doc)
