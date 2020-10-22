@@ -1,3 +1,6 @@
+# This list should be in sync with the Assays List from Elizabeth Neumann & Peter Kant:
+# https://docs.google.com/document/d/1X4wpotexDmvPtUjIN8P5kOgqDGwk0aBLxJSXgSuNqnU/edit
+
 AF:
     description: Autofluorescence Microscopy
 
