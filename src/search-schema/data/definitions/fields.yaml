@@ -11,6 +11,7 @@ create_timestamp:
   - donor
   - sample
   - dataset
+  - collection
   enum: null
   required: true
 created_by_user_displayname:
@@ -83,6 +84,7 @@ entity_type:
   - donor
   - sample
   - dataset
+  - collection
   enum: entity_types
   required: true
 files:
@@ -141,6 +143,7 @@ last_modified_timestamp:
   - donor
   - sample
   - dataset
+  - collection
   enum: null
   required: true
 metadata:
@@ -246,6 +249,7 @@ uuid:
   - donor
   - sample
   - dataset
+  - collection
   enum: null
   required: true
 visit:
@@ -255,4 +259,51 @@ visit:
   - sample
   enum: null
   required: false
-
+contacts:
+  description: People to contact for this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+creators:
+  description: People Who created this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+datasets:
+  description: datasets belong to this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+# description:
+#   description: TODO
+#   entity_types:
+#   - collection
+#   enum: null
+#   required: false
+doi_url:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+has_doi:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+registered_doi:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+title:
+  description: The title of collection
+  entity_types:
+  - collection
+  enum: null
+  required: false

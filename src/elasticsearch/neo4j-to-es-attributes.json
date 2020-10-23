@@ -23,6 +23,38 @@
       "uuid": {
         "es_name": "uuid",
         "is_json_stored_as_text": false
+      },
+      "registered_doi": {
+        "es_name": "registered_doi",
+        "is_json_stored_as_text": false
+      },
+      "contacts": {
+        "es_name": "contacts",
+        "is_json_stored_as_text": false
+      },
+      "creators": {
+        "es_name": "creators",
+        "is_json_stored_as_text": false
+      },
+      "description": {
+        "es_name": "description",
+        "is_json_stored_as_text": false
+      },
+      "doi_url": {
+        "es_name": "doi_url",
+        "is_json_stored_as_text": false
+      },
+      "has_doi": {
+        "es_name": "has_doi",
+        "is_json_stored_as_text": false
+      },
+      "name": {
+        "es_name": "title",
+        "is_json_stored_as_text": false
+      },
+      "provenance_modified_timestamp": {
+        "es_name": "last_modified_timestamp",
+        "is_json_stored_as_text": false
       }
     },
     "METADATA": {
