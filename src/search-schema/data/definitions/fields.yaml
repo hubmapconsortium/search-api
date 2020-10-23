@@ -259,3 +259,10 @@ visit:
   - sample
   enum: null
   required: false
+contacts:
+  description: People to contact for this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+
