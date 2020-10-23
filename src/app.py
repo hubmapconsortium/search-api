@@ -140,11 +140,12 @@ def reindex(uuid):
 
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
+    token = get_nexus_token(request.headers)
     try:
         indexer = Indexer(app.config['INDICES'],
                           app.config['ELASTICSEARCH_URL'],
                           app.config['ENTITY_WEBSERVICE_URL'])
-        threading.Thread(target=reindex_all_uuids, args=[indexer]).start()
+        threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
         app.logger.error(e)
     return 'OK', 202
@@ -181,6 +182,10 @@ def init_auth_helper():
 def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
+
+def get_nexus_token(request):
+    auth_helper = init_auth_helper()
+    return auth_helper.getAuthorizationTokens(request)
 
 # Always expect a json body
 def request_json_required(request):
@@ -294,15 +299,18 @@ def get_query_string(url):
     return query_string
 
 
-def get_entity_uuids_from_neo4j():
+def get_uuids_from_neo4j():
     donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
                           "/entities/types/Donor").json()
     samples = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
                            "/entities/types/Sample").json()
     datasets = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
                             "/entities/types/Dataset").json()
+    collections = requests.get(app.config['ENTITY_WEBSERVICE_URL'] +
+                               "/entities/types/Collection").json()
 
-    return donors['uuids'] + samples['uuids'] + datasets['uuids']
+    return (donors['uuids'] + samples['uuids'] + datasets['uuids'] +
+            collections['uuids'])
 
 
 def get_donor_uuids_from_neo4j():
@@ -312,7 +320,7 @@ def get_donor_uuids_from_neo4j():
     return donors['uuids']
 
 
-def get_entity_uuids_from_es(index):
+def get_uuids_from_es(index):
     uuids = []
     size = 10_000
     query = {
@@ -350,28 +358,33 @@ def get_entity_uuids_from_es(index):
     return uuids
 
 
-def reindex_all_uuids(indexer):
+def reindex_all_uuids(indexer, token):
     with app.app_context():
         try:
-            neo4j_uuids = get_entity_uuids_from_neo4j()
+            # remove entities that not in neo4j
+            neo4j_uuids = get_uuids_from_neo4j()
             neo4j_uuids = set(neo4j_uuids)
             es_uuids = []
             for index in ast.literal_eval(app.config['INDICES']).keys():
-                es_uuids.extend(get_entity_uuids_from_es(index))
+                es_uuids.extend(get_uuids_from_es(index))
             es_uuids = set(es_uuids)
-            donor_uuids = get_donor_uuids_from_neo4j()
 
             for uuid in es_uuids:
                 if uuid not in neo4j_uuids:
                     app.logger.debug(f"""uuid: {uuid} not in neo4j.
                                         Delete it from Elasticserach.""")
                     indexer.delete(uuid)
-            # Multi-thread
+
+            donor_uuids = get_donor_uuids_from_neo4j()
+            # Multi-thread index entitiies
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(indexer.reindex, uuid) for uuid
                            in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
                     app.logger.debug(f.result())
-                app.logger.info("###Reindex Live is Done###")
+
+            # index collection
+            indexer.index_collections(token)
+            app.logger.info("###Reindex Live is Done###")
         except Exception as e:
             app.logger.error(e)

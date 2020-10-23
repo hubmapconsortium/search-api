@@ -25,8 +25,8 @@ class ESWriter:
     def write_document(self, index_name, doc, uuid):
         try:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}",
-                            headers={'Content-Type': 'application/json'},
-                            data=doc)
+                                 headers={'Content-Type': 'application/json'},
+                                 data=doc)
             if rspn.ok:
                 self.logger.debug("write doc done")
             else:
@@ -40,7 +40,7 @@ class ESWriter:
     def delete_document(self, index_name, uuid):
         try:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
-                            headers={'Content-Type': 'application/json'})
+                                 headers={'Content-Type': 'application/json'})
             if rspn.ok:
                 self.logger.info(f"doc: {uuid} deleted")
             else:
@@ -51,8 +51,8 @@ class ESWriter:
     def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}",
-                            headers={'Content-Type': 'application/json'},
-                            data=doc)
+                                headers={'Content-Type': 'application/json'},
+                                data=doc)
             if rspn.ok:
                 self.logger.debug(f"write doc done. uudi: {uuid}")
                 return True
@@ -66,7 +66,7 @@ class ESWriter:
 
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
-    
+
     def create_index(self, index_name):
         from elasticsearch.indexer import REPLICATION
         try:
