@@ -265,4 +265,15 @@ contacts:
   - collection
   enum: null
   required: false
-
+creators:
+  description: People Who created this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+datasets:
+  description: datasets belong to this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
