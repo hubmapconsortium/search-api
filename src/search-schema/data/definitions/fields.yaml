@@ -277,3 +277,9 @@ datasets:
   - collection
   enum: null
   required: false
+description:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
