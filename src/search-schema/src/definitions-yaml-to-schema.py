@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
     definitions = load_yaml(args.definitions.read())
 
-    for entity_type in ['donor', 'sample', 'dataset']:
+    for entity_type in ['donor', 'sample', 'dataset', 'collection']:
         path = args.schemas / f'{entity_type}.schema.yaml'
         path.write_text(dump_yaml(make_schema(entity_type, definitions)))
 
