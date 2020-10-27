@@ -1,0 +1,11 @@
+{
+  "create_timestamp": "something",
+  "entity_type": "Collection",
+  "last_modified_timestamp": "something",
+  "uuid": "something",
+  "access_group": "something",
+  "ancestor_ids": "something",
+  "ancestors": "something",
+  "descendant_ids": "something",
+  "descendants": "something"
+}
