@@ -30,11 +30,11 @@
       },
       "contacts": {
         "es_name": "contacts",
-        "is_json_stored_as_text": false
+        "is_json_stored_as_text": true
       },
       "creators": {
         "es_name": "creators",
-        "is_json_stored_as_text": false
+        "is_json_stored_as_text": true
       },
       "description": {
         "es_name": "description",

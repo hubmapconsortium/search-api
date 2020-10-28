@@ -361,7 +361,7 @@ def get_uuids_from_es(index):
 def reindex_all_uuids(indexer, token):
     with app.app_context():
         try:
-            # remove entities that not in neo4j
+            # 1. remove entities that not in neo4j
             neo4j_uuids = get_uuids_from_neo4j()
             neo4j_uuids = set(neo4j_uuids)
             es_uuids = []
@@ -376,14 +376,14 @@ def reindex_all_uuids(indexer, token):
                     indexer.delete(uuid)
 
             donor_uuids = get_donor_uuids_from_neo4j()
-            # Multi-thread index entitiies
+            # 2. Multi-thread index entitiies
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(indexer.reindex, uuid) for uuid
                            in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
                     app.logger.debug(f.result())
 
-            # index collection
+            # 3. index collection
             indexer.index_collections(token)
             app.logger.info("###Reindex Live is Done###")
         except Exception as e:
