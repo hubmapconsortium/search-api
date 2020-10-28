@@ -58,6 +58,7 @@ description:
   - donor
   - sample
   - dataset
+  - collection
   enum: null
   required: false
 display_doi:
