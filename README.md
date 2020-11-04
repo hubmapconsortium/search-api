@@ -144,6 +144,14 @@ response = requests.post(
 hits = response.json()['hits']['hits']
 ```
 
+### Live reindex
+
+````
+curl -i -X PUT -H "Authorization:Bearer <globus-nexus-token>" <search-api base URL>/reindex-all
+````
+
+The token will need to be in the admin group.
+
 ## Development and deployment environments
 
 We have the following 5 development and deployment environments:

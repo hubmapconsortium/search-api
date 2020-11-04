@@ -225,7 +225,8 @@ def _add_validation_errors(doc):
     >>> pprint(doc['mapper_metadata']['validation_errors'][0])
     {'absolute_path': '/entity_type',
      'absolute_schema_path': '/properties/entity_type/enum',
-     'message': "'dataset' is not one of ['Dataset', 'Donor', 'Sample']"}
+     'message': "'dataset' is not one of ['Collection', 'Dataset', 'Donor', "
+                "'Sample']"}
 
     >>> doc = {
     ...    'entity_type': 'Donor',

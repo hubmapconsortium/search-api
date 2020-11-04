@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
     definitions = load_yaml(args.definitions.read())
 
-    for entity_type in ['donor', 'sample', 'dataset']:
+    for entity_type in ['donor', 'sample', 'dataset', 'collection']:
         path = args.schemas / f'{entity_type}.schema.yaml'
         path.write_text(dump_yaml(make_schema(entity_type, definitions)))
 
@@ -51,12 +51,13 @@ def make_schema(entity_type, definitions, top_level=True):
         # TODO: Some (true-y) strings are used for special cases.
     ]
     if top_level:
-        for extra in [
-                'access_group',
-                'ancestor_ids', 'ancestors',
-                'descendant_ids', 'descendants']:
-            properties[extra] = {'description': 'TODO'}
-            required.append(extra)
+        if entity_type != 'collection':
+            for extra in [
+                    'access_group',
+                    'ancestor_ids', 'ancestors',
+                    'descendant_ids', 'descendants']:
+                properties[extra] = {'description': 'TODO'}
+                required.append(extra)
         if 'donor' in properties:
             properties['donor'] = make_schema(
                 'donor', definitions, top_level=False)

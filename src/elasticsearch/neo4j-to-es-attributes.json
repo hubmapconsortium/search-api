@@ -30,11 +30,11 @@
       },
       "contacts": {
         "es_name": "contacts",
-        "is_json_stored_as_text": false
+        "is_json_stored_as_text": true
       },
       "creators": {
         "es_name": "creators",
-        "is_json_stored_as_text": false
+        "is_json_stored_as_text": true
       },
       "description": {
         "es_name": "description",
@@ -177,7 +177,19 @@
       "visit": {
         "es_name": "visit",
         "is_json_stored_as_text": false
-      }
+      },
+      "latest_version": {
+        "es_name": "latest_version",
+        "is_json_stored_as_text": false
+      },
+      "next_version": {
+        "es_name": "next_version",
+        "is_json_stored_as_text": false
+      },
+      "previous_version": {
+        "es_name": "previous_version",
+        "is_json_stored_as_text": false
+      }	    
     },
     "ACTIVITY": {
       "activitytype": {

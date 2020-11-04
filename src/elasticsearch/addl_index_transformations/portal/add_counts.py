@@ -39,15 +39,18 @@ def add_counts(doc):
      'mapped_specimen_type': {'Fresh Frozen Tissue Section': 1}}
 
     '''
-    doc['ancestor_counts'] = {
-        'entity_type': _count_field(doc['ancestors'], 'entity_type')
-    }
-    doc['descendant_counts'] = {k: v for k, v in {
-        'entity_type': _count_field(doc['descendants'], 'entity_type'),
-        'mapped_specimen_type': _count_field(doc['descendants'], 'mapped_specimen_type'),
-        'mapped_organ': _count_field(doc['descendants'], 'mapped_organ'),
-        'mapped_data_types': _count_array_field(doc['descendants'], 'mapped_data_types'),
-    }.items() if v}
+    # Collections do not have ancestors or descendants.
+    if 'ancestors' in doc:
+        doc['ancestor_counts'] = {
+            'entity_type': _count_field(doc['ancestors'], 'entity_type')
+        }
+    if 'descendants' in doc:
+        doc['descendant_counts'] = {k: v for k, v in {
+            'entity_type': _count_field(doc['descendants'], 'entity_type'),
+            'mapped_specimen_type': _count_field(doc['descendants'], 'mapped_specimen_type'),
+            'mapped_organ': _count_field(doc['descendants'], 'mapped_organ'),
+            'mapped_data_types': _count_array_field(doc['descendants'], 'mapped_data_types'),
+        }.items() if v}
 
 
 def _count_field(doc_list, field):
