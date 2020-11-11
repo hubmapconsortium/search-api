@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, List, TypeVar, Iterable
+from typing import Union, List, TypeVar, Iterable, Dict, Any
 import logging
 from yaml import safe_load
 from yaml.error import YAMLError
@@ -12,6 +12,8 @@ from hubmap_commons.schema_tools import (assert_json_matches_schema,
 logging.basicConfig(level=logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
+
+JSONType = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
 
 BoolOrNone = Union[bool, None]
 
@@ -66,7 +68,6 @@ class AssayType(object):
         """
         self._maybe_load_defs()
         safe_name = name if isinstance(name, str) else tuple(name)
-        print(f'testing {name} {safe_name}')
         if safe_name in self.definitions:
             self.name = safe_name
         elif safe_name in self.alt_name_map:
@@ -76,6 +77,13 @@ class AssayType(object):
                                ' even as alternate name')
         self.description = self.definitions[self.name]['description']
         self.primary = self.definitions[self.name]['primary']
+
+    def to_json(self) -> JSONType:
+        """
+        Returns a JSON-compatible representation of the assay type
+        """
+        return {'name': self.name, 'primary': self.primary,
+                'description': self.description}
 
     @classmethod
     def iter_names(cls, primary: BoolOrNone = None) -> Iterable[str]:
@@ -116,6 +124,7 @@ def main() -> None:
         try:
             assay = AssayType(name)
             print(f'{name} produced {assay.name} {assay.description}')
+            print(f'{assay.to_json()}')
         except Exception as e:
             print(f'{name} ({note}) -> exception {e}')
 
