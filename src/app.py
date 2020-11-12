@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 from elasticsearch.indexer import Indexer
 from flask import Flask, jsonify, abort, request, Response, Request
@@ -317,7 +318,7 @@ def get_uuids_from_neo4j():
 
 def get_donor_uuids_from_neo4j():
     uuids = []
-    
+
     donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/all").json()
 
     for donor in donors:

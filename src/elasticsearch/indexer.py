@@ -162,7 +162,6 @@ class Indexer:
                 self.logger.info("################DONE######################")
                 return f"Done."
             else:
-                # collection = requests.get(self.entity_api_url + "/collections/" + uuid).json()
                 collection = {}
                 #This uuid is a collection
                 if collection != {}:
