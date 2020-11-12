@@ -29,7 +29,7 @@ REPLICATION = 1
 
 
 class Indexer:
-    def __init__(self, indices, elasticsearch_url, entity_webservice_url):
+    def __init__(self, indices, elasticsearch_url, entity_api_url):
         global ORIGINAL_DOC_TYPE
         global PORTAL_DOC_TYPE
         try:
@@ -38,7 +38,7 @@ class Indexer:
             PORTAL_DOC_TYPE = app.config['PORTAL_DOC_TYPE']
             app_client_id = app.config['APP_CLIENT_ID']
             app_client_secret = app.config['APP_CLIENT_SECRET']
-            uuid_webservice_url = app.config['UUID_API_URL']
+            uuid_api_url = app.config['UUID_API_URL']
         except:
             ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
@@ -55,7 +55,7 @@ class Indexer:
             # self.logger.addHandler(logging.StreamHandler())
             app_client_id = config['GLOBUS']['APP_CLIENT_ID']
             app_client_secret = config['GLOBUS']['APP_CLIENT_SECRET']
-            uuid_webservice_url = (config['ELASTICSEARCH']
+            uuid_api_url = (config['ELASTICSEARCH']
                                          ['UUID_API_URL'])
         self.report = {
             'success_cnt': 0,
@@ -63,10 +63,8 @@ class Indexer:
             'fail_uuids': set()
         }
         self.eswriter = ESWriter(elasticsearch_url)
-        self.entity_webservice_url = entity_webservice_url
-        self.provenance = Provenance(app_client_id,
-                                     app_client_secret,
-                                     uuid_webservice_url)
+        self.entity_api_url = entity_api_url
+        self.provenance = Provenance(app_client_id, app_client_secret, uuid_api_url)
         try:
             self.indices = ast.literal_eval(indices)
         except:
@@ -81,7 +79,7 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             # Entities #
-            donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
+            donors = requests.get(self.entity_api_url + "/Donor/all").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
@@ -101,7 +99,7 @@ class Indexer:
 
     def index_tree(self, donor):
         # self.logger.info(f"Total threads count: {threading.active_count()}")
-        descendants = requests.get(self.entity_webservice_url + "/descendants/" + donor.get('uuid', None)).json()
+        descendants = requests.get(self.entity_api_url + "/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
             self.logger.debug(node.get('hubmap_identifier', node.get('display_doi', None)))
             self.report[node['entity_type']] = self.report.get(node['entity_type'], 0) + 1
@@ -110,26 +108,16 @@ class Indexer:
         return "Done."
 
     def index_collections(self, token):
-        IndexConfig = collections.namedtuple('IndexConfig',
-                                             ['access_level', 'doc_type'])
+        IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
         # write enitty into indices
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
-            if (
-                configs.access_level == 'consortium'
-                and configs.doc_type == 'original'
-            ):
+            if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
                 # Consortium Collections #
-                rspn = requests.get(
-                                self.entity_webservice_url + "/collections",
-                                headers={"Authorization": f"Bearer {token}"})
-            elif (
-                configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC
-                and configs.doc_type == 'original'
-            ):
+                rspn = requests.get(self.entity_api_url + "/collections/all", headers={"Authorization": f"Bearer {token}"})
+            elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections #
-                rspn = requests.get(self.entity_webservice_url +
-                                    "/collections")
+                rspn = requests.get(self.entity_api_url + "/collections/all")
             else:
                 continue
 
@@ -153,18 +141,18 @@ class Indexer:
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
                 transformed = json.dumps(transform(collection))
-                (self.eswriter
-                     .write_or_update_document(index_name=index,
-                                               doc=transformed,
-                                               uuid=collection['uuid']))
+                (self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid']))
 
     def reindex(self, uuid):
         try:
-            entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
+            entity_dict = requests.get(self.entity_api_url + "/" + uuid).json()
+            entity_class = list(entity_dict.keys())[0]
+            entity = entity_dict[entity_class]
+
             # This uuid is a entity
             if entity != {}:
-                ancestors = requests.get(self.entity_webservice_url + "/ancestors/" + uuid).json()
-                descendants = requests.get(self.entity_webservice_url + "/descendants/" + uuid).json()
+                ancestors = requests.get(self.entity_api_url + "/ancestors/" + uuid).json()
+                descendants = requests.get(self.entity_api_url + "/descendants/" + uuid).json()
                 nodes = [entity] + ancestors + descendants
 
                 for node in nodes:
@@ -174,7 +162,7 @@ class Indexer:
                 self.logger.info("################DONE######################")
                 return f"Done."
             else:
-                # collection = requests.get(self.entity_webservice_url + "/collections/" + uuid).json()
+                # collection = requests.get(self.entity_api_url + "/collections/" + uuid).json()
                 collection = {}
                 #This uuid is a collection
                 if collection != {}:
@@ -206,8 +194,8 @@ class Indexer:
             entity_keys_rename will change the entity inplace
         '''
         try:
-            ancestors = requests.get(self.entity_webservice_url + "/ancestors/" + entity.get('uuid', None)).json()
-            descendants = requests.get(self.entity_webservice_url + "/descendants/" + entity.get('uuid', None)).json()
+            ancestors = requests.get(self.entity_api_url + "/ancestors/" + entity.get('uuid', None)).json()
+            descendants = requests.get(self.entity_api_url + "/descendants/" + entity.get('uuid', None)).json()
 
             donor = None
             for a in ancestors:
@@ -222,8 +210,8 @@ class Indexer:
             entity['descendants'] = descendants
             # entity['access_group'] = self.access_group(entity)
             
-            entity['immediate_descendants'] = requests.get(self.entity_webservice_url + "/children/" + entity.get('uuid', None)).json()
-            entity['immediate_ancestors'] = requests.get(self.entity_webservice_url + "/parents/" + entity.get('uuid', None)).json()
+            entity['immediate_descendants'] = requests.get(self.entity_api_url + "/children/" + entity.get('uuid', None)).json()
+            entity['immediate_ancestors'] = requests.get(self.entity_api_url + "/parents/" + entity.get('uuid', None)).json()
 
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
@@ -238,7 +226,7 @@ class Indexer:
                     entity['source_sample'] = None
                     e = entity
                     while entity['source_sample'] is None:
-                        parents = requests.get(self.entity_webservice_url + "/parents/" + e.get('uuid', None)).json()
+                        parents = requests.get(self.entity_api_url + "/parents/" + e.get('uuid', None)).json()
                         try:
                             if parents[0]['entity_type'] == 'Sample':
                                 entity['source_sample'] = parents
@@ -389,14 +377,14 @@ class Indexer:
                 else:
                     raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
-            self.logger.debug(f"entity uuid: {entity['uuid']} does not have data_access_level attribute")
+            self.logger.debug(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
             return HubmapConst.ACCESS_LEVEL_CONSORTIUM
         except Exception:
             pass
 
     def test(self):
         try:
-            donors = requests.get(self.entity_webservice_url + "/entities?entitytypes=Donor").json()
+            donors = requests.get(self.entity_api_url + "/Donor/all").json()
             donors = [donor for donor in donors if donor['hubmap_identifier'] == 'TEST0086']
             fk_donors = []
             for _ in range(100):
@@ -499,7 +487,7 @@ class Indexer:
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_webservice_url + "/Dataset/" + uuid).json()
+            dataset = requests.get(self.entity_api_url + "/Dataset/" + uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
@@ -529,7 +517,7 @@ if __name__ == '__main__':
         REPLICATION = 0
         
     start = time.time()
-    indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    indexer = Indexer(config['INDEX']['INDICES'], config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['entity_api_url'])
     indexer.main()
     end = time.time()
     indexer.logger.info(f"Total index time: {end - start} seconds")
@@ -543,7 +531,7 @@ if __name__ == '__main__':
         indexer.logger.info(f"key: {key}, value: {value}")
 
     # start = time.time()
-    # indexer = Indexer('entities', config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['ENTITY_WEBSERVICE_URL'])
+    # indexer = Indexer('entities', config['ELASTICSEARCH']['ELASTICSEARCH_DOMAIN_ENDPOINT'], config['ELASTICSEARCH']['entity_api_url'])
     # indexer.test()
     # end = time.time()
     # logging.info(f"Total index time: {end - start} seconds")

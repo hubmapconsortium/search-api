@@ -144,9 +144,7 @@ def reindex(uuid):
 def reindex_all():
     token = get_nexus_token(request.headers)
     try:
-        indexer = Indexer(app.config['INDICES'],
-                          app.config['ELASTICSEARCH_URL'],
-                          app.config['ENTITY_API_URL'])
+        indexer = Indexer(app.config['INDICES'], app.config['ELASTICSEARCH_URL'], app.config['ENTITY_API_URL'])
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
         app.logger.error(e)
@@ -302,18 +300,30 @@ def get_query_string(url):
 
 
 def get_uuids_from_neo4j():
+    uuids = []
+
     donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/all").json()
     samples = requests.get(app.config['ENTITY_API_URL'] + "/Sample/all").json()
     datasets = requests.get(app.config['ENTITY_API_URL'] + "/Dataset/all").json()
     collections = requests.get(app.config['ENTITY_API_URL'] + "/Collection/all").json()
+    
+    all_entities = [donors + samples + datasets + collections]
 
-    return (donors['donor_uuids'] + samples['sample_uuids'] + datasets['dataset_uuids'] + collections['collection_uuids'])
+    for entity in all_entities:
+        uuids.append(entity['uuid'])
+
+    return uuids
 
 
 def get_donor_uuids_from_neo4j():
+    uuids = []
+    
     donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/all").json()
 
-    return donors['donor_uuids']
+    for donor in donors:
+        uuids.append(donor['uuid'])
+
+    return uuids
 
 
 def get_uuids_from_es(index):
