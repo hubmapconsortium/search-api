@@ -310,9 +310,9 @@ def get_uuids_from_neo4j():
 
 
 def get_donor_uuids_from_neo4j():
-    donors = requests.get(app.config['ENTITY_API_URL'] + "/entities/types/Donor").json()
+    donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/all").json()
 
-    return donors['uuids']
+    return donors['donor_uuids']
 
 
 def get_uuids_from_es(index):
@@ -356,6 +356,10 @@ def get_uuids_from_es(index):
 def reindex_all_uuids(indexer, token):
     with app.app_context():
         try:
+            app.logger.info("############# Reindex Live Started #############")
+
+            start = time.time()
+
             # 1. remove entities that not in neo4j
             neo4j_uuids = get_uuids_from_neo4j()
             neo4j_uuids = set(neo4j_uuids)
@@ -366,20 +370,21 @@ def reindex_all_uuids(indexer, token):
 
             for uuid in es_uuids:
                 if uuid not in neo4j_uuids:
-                    app.logger.debug(f"""uuid: {uuid} not in neo4j.
-                                        Delete it from Elasticserach.""")
+                    app.logger.debug(f"""uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
                     indexer.delete(uuid)
 
             donor_uuids = get_donor_uuids_from_neo4j()
             # 2. Multi-thread index entitiies
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.reindex, uuid) for uuid
-                           in donor_uuids]
+                results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
                     app.logger.debug(f.result())
 
             # 3. index collection
             indexer.index_collections(token)
-            app.logger.info("###Reindex Live is Done###")
+
+            end = time.time()
+
+            app.logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
         except Exception as e:
             app.logger.error(e)
