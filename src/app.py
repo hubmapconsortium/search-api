@@ -19,6 +19,7 @@ app.config.from_pyfile('app.cfg')
 
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
+app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
 
 # Set logging level (default is warning)
 logging.basicConfig(level=logging.DEBUG)
@@ -130,7 +131,7 @@ def reindex(uuid):
     try:
         indexer = Indexer(app.config['INDICES'],
                           app.config['ELASTICSEARCH_URL'],
-                          app.config['ENTITY_WEBSERVICE_URL'])
+                          app.config['ENTITY_API_URL'])
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
     except Exception as e:
@@ -144,7 +145,7 @@ def reindex_all():
     try:
         indexer = Indexer(app.config['INDICES'],
                           app.config['ELASTICSEARCH_URL'],
-                          app.config['ENTITY_WEBSERVICE_URL'])
+                          app.config['ENTITY_API_URL'])
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
         app.logger.error(e)
@@ -300,16 +301,16 @@ def get_query_string(url):
 
 
 def get_uuids_from_neo4j():
-    donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] + "/Donor/all").json()
-    samples = requests.get(app.config['ENTITY_WEBSERVICE_URL'] + "/Sample/all").json()
-    datasets = requests.get(app.config['ENTITY_WEBSERVICE_URL'] + "/Dataset/all").json()
-    collections = requests.get(app.config['ENTITY_WEBSERVICE_URL'] + "/Collection/all").json()
+    donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/all").json()
+    samples = requests.get(app.config['ENTITY_API_URL'] + "/Sample/all").json()
+    datasets = requests.get(app.config['ENTITY_API_URL'] + "/Dataset/all").json()
+    collections = requests.get(app.config['ENTITY_API_URL'] + "/Collection/all").json()
 
     return (donors['donor_uuids'] + samples['sample_uuids'] + datasets['dataset_uuids'] + collections['collection_uuids'])
 
 
 def get_donor_uuids_from_neo4j():
-    donors = requests.get(app.config['ENTITY_WEBSERVICE_URL'] + "/entities/types/Donor").json()
+    donors = requests.get(app.config['ENTITY_API_URL'] + "/entities/types/Donor").json()
 
     return donors['uuids']
 

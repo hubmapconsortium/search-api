@@ -9,12 +9,11 @@ PRIVATE_INDEX_PREFIX = 'hm_consortium_'
 # Default index (without prefix) name for `/search` compability, can NOT be empty
 DEFAULT_INDEX_WITHOUT_PREFIX = 'entities'
 
-# Entity-API service, default value works with docker deployment
-# Don't use the trailing slash /
-ENTITY_WEBSERVICE_URL = 'http://hubmap-auth:3333'
-
-# URL for talking to UUID API, default value works with docker deployment
-UUID_WEBSERVICE_URL = 'http://hubmap-auth:9999/hmuuid'
+# URLs for talking to other APIs (default value used for docker deployment, no token needed)
+# Don't use localhost since uuid-api is running on a different container
+# Point to remote URL for non-docker development
+# Works regardless of the trailing slash
+ENTITY_API_URL = 'http://hubmap-auth:3333'
 
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
