@@ -38,7 +38,7 @@ class Indexer:
             PORTAL_DOC_TYPE = app.config['PORTAL_DOC_TYPE']
             app_client_id = app.config['APP_CLIENT_ID']
             app_client_secret = app.config['APP_CLIENT_SECRET']
-            uuid_webservice_url = app.config['UUID_WEBSERVICE_URL']
+            uuid_webservice_url = app.config['UUID_API_URL']
         except:
             ORIGINAL_DOC_TYPE = config['CONSTANTS']['ORIGINAL_DOC_TYPE']
             PORTAL_DOC_TYPE = config['CONSTANTS']['PORTAL_DOC_TYPE']
@@ -56,7 +56,7 @@ class Indexer:
             app_client_id = config['GLOBUS']['APP_CLIENT_ID']
             app_client_secret = config['GLOBUS']['APP_CLIENT_SECRET']
             uuid_webservice_url = (config['ELASTICSEARCH']
-                                         ['UUID_WEBSERVICE_URL'])
+                                         ['UUID_API_URL'])
         self.report = {
             'success_cnt': 0,
             'fail_cnt': 0,
@@ -101,10 +101,10 @@ class Indexer:
 
     def index_tree(self, donor):
         # self.logger.info(f"Total threads count: {threading.active_count()}")
-        descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + donor.get('uuid', None)).json()
+        descendants = requests.get(self.entity_webservice_url + "/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
             self.logger.debug(node.get('hubmap_identifier', node.get('display_doi', None)))
-            self.report[node['entitytype']] = self.report.get(node['entitytype'], 0) + 1
+            self.report[node['entity_type']] = self.report.get(node['entity_type'], 0) + 1
             self.update_index(node)
 
         return "Done."
@@ -163,12 +163,12 @@ class Indexer:
             entity = requests.get(self.entity_webservice_url + "/entities/uuid/" + uuid).json()['entity']
             # This uuid is a entity
             if entity != {}:
-                ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + uuid).json()
-                descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + uuid).json()
+                ancestors = requests.get(self.entity_webservice_url + "/ancestors/" + uuid).json()
+                descendants = requests.get(self.entity_webservice_url + "/descendants/" + uuid).json()
                 nodes = [entity] + ancestors + descendants
 
                 for node in nodes:
-                    self.logger.debug(f"{node.get('entitytype', 'Unknown Entitytype')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
+                    self.logger.debug(f"{node.get('entity_type', 'Unknown Entity type')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
                     self.update_index(node)
                 
                 self.logger.info("################DONE######################")
@@ -206,12 +206,12 @@ class Indexer:
             entity_keys_rename will change the entity inplace
         '''
         try:
-            ancestors = requests.get(self.entity_webservice_url + "/entities/ancestors/" + entity.get('uuid', None)).json()
-            descendants = requests.get(self.entity_webservice_url + "/entities/descendants/" + entity.get('uuid', None)).json()
+            ancestors = requests.get(self.entity_webservice_url + "/ancestors/" + entity.get('uuid', None)).json()
+            descendants = requests.get(self.entity_webservice_url + "/descendants/" + entity.get('uuid', None)).json()
 
             donor = None
             for a in ancestors:
-                if a['entitytype'] == 'Donor':
+                if a['entity_type'] == 'Donor':
                     donor = copy.copy(a)
                     break
 
@@ -222,10 +222,10 @@ class Indexer:
             entity['descendants'] = descendants
             # entity['access_group'] = self.access_group(entity)
             
-            entity['immediate_descendants'] = requests.get(self.entity_webservice_url + "/entities/children/" + entity.get('uuid', None)).json()
-            entity['immediate_ancestors'] = requests.get(self.entity_webservice_url + "/entities/parents/" + entity.get('uuid', None)).json()
+            entity['immediate_descendants'] = requests.get(self.entity_webservice_url + "/children/" + entity.get('uuid', None)).json()
+            entity['immediate_ancestors'] = requests.get(self.entity_webservice_url + "/parents/" + entity.get('uuid', None)).json()
 
-            if entity['entitytype'] in ['Sample', 'Dataset']:
+            if entity['entity_type'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] and entity['metadata']['organ'].strip() != "" else None
                 if entity['origin_sample'] is None:
@@ -234,13 +234,13 @@ class Indexer:
                     except StopIteration:
                         entity['origin_sample'] = {}
 
-                if entity['entitytype'] == 'Dataset':
+                if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
                     while entity['source_sample'] is None:
-                        parents = requests.get(self.entity_webservice_url + "/entities/parents/" + e.get('uuid', None)).json()
+                        parents = requests.get(self.entity_webservice_url + "/parents/" + e.get('uuid', None)).json()
                         try:
-                            if parents[0]['entitytype'] == 'Sample':
+                            if parents[0]['entity_type'] == 'Sample':
                                 entity['source_sample'] = parents
                             e = parents[0]
                         except IndexError:
@@ -352,7 +352,7 @@ class Indexer:
 
     def access_group(self, entity):
         try:
-            if entity['entitytype'] == 'Dataset':
+            if entity['entity_type'] == 'Dataset':
                 if entity['metadata']['status'] == 'Published' and entity['metadata']['phi'].lower() == 'no':
                     return HubmapConst.ACCESS_LEVEL_PUBLIC
                 else:
@@ -368,7 +368,7 @@ class Indexer:
 
     def get_access_level(self, entity):
         try:
-            entity_type = entity['entitytype'] if 'entitytype' in entity else entity['entity_type']
+            entity_type = entity['entity_type'] if 'entity_type' in entity else entity['entity_type']
 
             if entity_type:
                 if entity_type == HubmapConst.COLLECTION_TYPE_CODE:
@@ -472,7 +472,7 @@ class Indexer:
                 result = None
         except KeyError:
             self.logger.error(f"""uuid: {org_node['uuid']}, 
-                            entity_type: {org_node['entitytype']}, 
+                            entity_type: {org_node['entity_type']}, 
                             es_node_entity_type: {node['entity_type']}""")
             self.logger.exception("unexpceted exception")
         except Exception as e:
@@ -491,17 +491,15 @@ class Indexer:
                     (node.get('entity_type', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
         else:  # Original Node
-            return ((node.get('entitytype', '') == 'Dataset' and
+            return ((node.get('entity_type', '') == 'Dataset' and
                     node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entitytype', '') != 'Dataset' and
+                    (node.get('entity_type', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
 
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_webservice_url +
-                                   "/entities/uuid/" +
-                                   uuid).json()
+            dataset = requests.get(self.entity_webservice_url + "/Dataset/" + uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
