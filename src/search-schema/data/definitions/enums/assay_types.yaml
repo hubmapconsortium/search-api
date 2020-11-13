@@ -6,25 +6,27 @@ AF:
     alt-names: []
     primary: true
 
-AF_pyramid:
-    description: Autofluorescence Microscopy [Image Pyramid]
-    alt-names: [["AF", "Image Pyramid"], ["Image Pyramid", "AF"]]
-    primary: false
+# AF_pyramid:
+#     description: Autofluorescence Microscopy [Image Pyramid]
+#     alt-names: [["AF", "Image Pyramid"], ["Image Pyramid", "AF"]]
+#     primary: false
 
 ATACseq-bulk:
     description: Bulk ATAC-seq
     alt-names: []
     primary: true
 
-ATACseq-bulk_BWA_MACS2:
+bulk_atacseq:
+#ATACseq-bulk_BWA_MACS2:
     description: Bulk ATAC-seq [BWA + MACS2]
-    alt-names: [bulk-atacseq]
+#    alt-names: [bulk-atacseq]
+    alt-names: []
     primary: false
 
-cellDIVE:
-    description: ????
-    alt-names: []
-    primary: true
+# cellDIVE:
+#     description: ????
+#     alt-names: []
+#     primary: true
 
 CODEX:
     description: CODEX
@@ -36,23 +38,25 @@ codex_cytokit:
     alt-names: []
     primary: false
 
-DART-FISH:
-    description: ????
+# DART-FISH:
+#     description: ????
+#     alt-names: []
+#     primary: true
+
+image_pyramid:
+    description: Image Pyramid
     alt-names: []
-    primary: true
-
-#image_pyramid:
-#    description: Image Pyramid
-
+    primary: false
+    
 IMC:
     description: Imaging Mass Cytometry
     alt-names: []
     primary: true
 
-IMC_pyramid:
-    description: Imaging Mass Cytometry [Image Pyramid]
-    alt-names: []
-    primary: false
+# IMC_pyramid:
+#     description: Imaging Mass Cytometry [Image Pyramid]
+#     alt-names: []
+#     primary: false
 
 lc-ms_label-free:
     description: Label-free LC-MS
@@ -89,49 +93,53 @@ MALDI-IMS-neg:
     alt-names: []
     primary: true
 
-MALDI-IMS-neg_pyramid:
-    description: MALDI IMS negative [Image Pyramid]
-    alt-names: []
-    primary: false
+#MALDI-IMS-neg_pyramid:
+#    description: MALDI IMS negative [Image Pyramid]
+#    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-neg"]]
+#    primary: false
 
 MALDI-IMS-pos:
     description: MALDI IMS positive
     alt-names: []
     primary: true
 
-MALDI-IMS-pos_pyramid:
-    description: MALDI IMS positive [Image Pyramid]
-    alt-names: []
-    primary: false
+# MALDI-IMS-pos_pyramid:
+#     description: MALDI IMS positive [Image Pyramid]
+#     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-pos"]]
+#     primary: false
 
 MxIF:
     description: Multiplexed IF Microscopy
     alt-names: []
     primary: true
 
-MxIF_pyramid:
-    description: Multiplexed IF Microscopy [Image Pyramid]
-    alt-names: []
-    primary: false
+# MxIF_pyramid:
+#     description: Multiplexed IF Microscopy [Image Pyramid]
+#     alt-names: [["MxIF", "Image Pyramid"], ["Image Pyramid", "MxIF"]]
+#     primary: false
 
 PAS:
     description: PAS Stained Microscopy
     alt-names: []
     primary: true
     
-PAS_pyramid:
-    description: PAS Stained Microscopy [Image Pyramid]
-    alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
-    primary: false    
+# PAS_pyramid:
+#     description: PAS Stained Microscopy [Image Pyramid]
+#     alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
+#     primary: false    
 
-RNAseq-bulk:
+bulk-RNA:
+#RNAseq-bulk:
     description: Bulk RNA-seq
-    alt-names: [bulk-RNA]
+#    alt-names: [bulk-RNA]
+    alt-names: []
     primary: true
 
-RNAseq-bulk_salmon:
+salmon_rnaseq_bulk:
+#RNAseq-bulk_salmon:
     description: Bulk RNA-seq [Salmon]
-    alt-names: [salmon_rnaseq_bulk]
+#    alt-names: [salmon_rnaseq_bulk]
+    alt-names: []
     primary: false
 
 SNAREseq:
@@ -139,14 +147,18 @@ SNAREseq:
     alt-names: []
     primary: true
 
-SNAREseq_lab:
+sc_atac_seq_snare_lab:
+#SNAREseq_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
-    alt-names: [sc_atac_seq_snare_lab]
+#    alt-names: [sc_atac_seq_snare_lab]
+    alt-names: []
     primary: true
 
-SNAREseq_snapATAC:
+sc_atac_seq_snare:
+#SNAREseq_snapATAC:
     description: scATAC-seq (SNARE-seq) [SnapATAC]
-    alt-names: [sc_atac_seq_snare]
+#    alt-names: [sc_atac_seq_snare]
+    alt-names: []
     primary: false
 
 scRNA-Seq-10x:
@@ -155,7 +167,9 @@ scRNA-Seq-10x:
     primary: true
 
 salmon_rnaseq_10x:
+#scRNA-Seq-10x_salmon
     description: scRNA-seq (10x Genomics) [Salmon]
+#    alt-names: [salmon_rnaseq_10x]
     alt-names: []
     primary: false
 
@@ -194,10 +208,10 @@ seqFish:
     alt-names: []
     primary: true
 
-seqFish_pyramid:
-    description: seqFISH [Image Pyramid]
-    alt-names: []
-    primary: true
+# seqFish_pyramid:
+#     description: seqFISH [Image Pyramid]
+#     alt-names: []
+#     primary: true
 
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
@@ -209,9 +223,11 @@ snATACseq:
     alt-names: []
     primary: true
 
-snATACseq_snapATAC:
+sn_atac_seq:
+#snATACseq_snapATAC:
     description: snATAC-seq [SnapATAC]
-    alt-names: [sn_atac_seq]
+#    alt-names: [sn_atac_seq]
+    alt-names: []
     primary: false
 
 snRNAseq:
@@ -223,10 +239,11 @@ salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]
     alt-names: []
     primary: false
-Slide-seq:
-    description: ????
-    alt-names: []
-    primary: true
+
+# Slide-seq:
+#     description: ????
+#     alt-names: []
+#     primary: true
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
