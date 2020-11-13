@@ -79,7 +79,7 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             # Entities #
-            donors = requests.get(self.entity_api_url + "/Donor/all").json()
+            donors = requests.get(self.entity_api_url + "/entities/Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
@@ -114,10 +114,10 @@ class Indexer:
             configs = IndexConfig(*configs)
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
                 # Consortium Collections #
-                rspn = requests.get(self.entity_api_url + "/collections/all", headers={"Authorization": f"Bearer {token}"})
+                rspn = requests.get(self.entity_api_url + "/entities/collections", headers={"Authorization": f"Bearer {token}"})
             elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections #
-                rspn = requests.get(self.entity_api_url + "/collections/all")
+                rspn = requests.get(self.entity_api_url + "/entities/collections")
             else:
                 continue
 
@@ -145,7 +145,7 @@ class Indexer:
 
     def reindex(self, uuid):
         try:
-            entity_dict = requests.get(self.entity_api_url + "/" + uuid).json()
+            entity_dict = requests.get(self.entity_api_url + "/entities/id/" + uuid).json()
             entity_class = list(entity_dict.keys())[0]
             entity = entity_dict[entity_class]
 
@@ -486,7 +486,7 @@ class Indexer:
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_api_url + "/Dataset/" + uuid).json()
+            dataset = requests.get(self.entity_api_url + "/entities/" + uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
