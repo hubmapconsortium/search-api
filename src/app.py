@@ -301,10 +301,10 @@ def get_query_string(url):
 
 
 def get_uuids_from_neo4j():
-    donors = requests.get(app.config['ENTITY_API_URL'] + "/entities/Donor?property=uuid").json()
-    samples = requests.get(app.config['ENTITY_API_URL'] + "/entities/Sample?property=uuid").json()
-    datasets = requests.get(app.config['ENTITY_API_URL'] + "/entities/Dataset?property=uuid").json()
-    collections = requests.get(app.config['ENTITY_API_URL'] + "/entities/Collection?property=uuid").json()
+    donors = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Donor?property=uuid").json()
+    samples = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Sample?property=uuid").json()
+    datasets = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Dataset?property=uuid").json()
+    collections = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Collection?property=uuid").json()
     
     uuids = [donors + samples + datasets + collections]
 
@@ -312,7 +312,7 @@ def get_uuids_from_neo4j():
 
 
 def get_donor_uuids_from_neo4j():
-    uuids = requests.get(app.config['ENTITY_API_URL'] + "/entities/Donor?property=uuid").json()
+    uuids = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Donor?property=uuid").json()
     return uuids
 
 

@@ -79,7 +79,7 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             # Entities #
-            donors = requests.get(self.entity_api_url + "/entities/Donor").json()
+            donors = requests.get(self.entity_api_url + "/entities/class/Donor").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
@@ -114,10 +114,10 @@ class Indexer:
             configs = IndexConfig(*configs)
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
                 # Consortium Collections #
-                rspn = requests.get(self.entity_api_url + "/entities/collections", headers={"Authorization": f"Bearer {token}"})
+                rspn = requests.get(self.entity_api_url + "/entities/class/collections", headers={"Authorization": f"Bearer {token}"})
             elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections #
-                rspn = requests.get(self.entity_api_url + "/entities/collections")
+                rspn = requests.get(self.entity_api_url + "/entities/class/collections")
             else:
                 continue
 
@@ -486,7 +486,7 @@ class Indexer:
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_api_url + "/entities/" + uuid).json()
+            dataset = requests.get(self.entity_api_url + "/entities/id/" + uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
