@@ -1,0 +1,15 @@
+codex (this should fail) -> exception No such assay_type codex, even as alternate name
+CODEX produced CODEX CODEX
+{'name': 'CODEX', 'primary': True, 'description': 'CODEX'}
+codex_cytokit produced codex_cytokit CODEX [Cytokit + SPRM]
+{'name': 'codex_cytokit', 'primary': False, 'description': 'CODEX [Cytokit + SPRM]'}
+salmon_rnaseq_bulk produced salmon_rnaseq_bulk Bulk RNA-seq [Salmon]
+{'name': 'salmon_rnaseq_bulk', 'primary': False, 'description': 'Bulk RNA-seq [Salmon]'}
+['PAS', 'Image Pyramid'] (this is a complex alt name) -> exception No such assay_type ['PAS', 'Image Pyramid'], even as alternate name
+['IMC', 'foo'] (this is an invalid complex alt name) -> exception No such assay_type ['IMC', 'foo'], even as alternate name
+all names:
+['AF', 'ATACseq-bulk', 'bulk_atacseq', 'CODEX', 'codex_cytokit', 'image_pyramid', 'IMC', 'lc-ms_label-free', 'lc-ms_labeled', 'lc-ms-ms_label-free', 'lc-ms-ms_labeled', 'LC-MS-untargeted', 'Lightsheet', 'MALDI-IMS-neg', 'MALDI-IMS-pos', 'MxIF', 'PAS', 'bulk-RNA', 'salmon_rnaseq_bulk', 'SNAREseq', 'sc_atac_seq_snare_lab', 'sc_atac_seq_snare', 'scRNA-Seq-10x', 'salmon_rnaseq_10x', 'sc_rna_seq_snare_lab', 'salmon_rnaseq_snareseq', 'sciATACseq', 'sc_atac_seq_sci', 'sciRNAseq', 'salmon_rnaseq_sciseq', 'seqFish', 'seqFish_lab_processed', 'snATACseq', 'sn_atac_seq', 'snRNAseq', 'salmon_sn_rnaseq_10x', 'Targeted-Shotgun-LC-MS', 'TMT-LC-MS', 'WGS']
+primary names:
+['AF', 'ATACseq-bulk', 'CODEX', 'IMC', 'lc-ms_label-free', 'lc-ms_labeled', 'lc-ms-ms_label-free', 'lc-ms-ms_labeled', 'LC-MS-untargeted', 'Lightsheet', 'MALDI-IMS-neg', 'MALDI-IMS-pos', 'MxIF', 'PAS', 'bulk-RNA', 'SNAREseq', 'sc_atac_seq_snare_lab', 'scRNA-Seq-10x', 'sc_rna_seq_snare_lab', 'sciATACseq', 'sc_atac_seq_sci', 'sciRNAseq', 'seqFish', 'seqFish_lab_processed', 'snATACseq', 'snRNAseq', 'Targeted-Shotgun-LC-MS', 'TMT-LC-MS', 'WGS']
+non-primary names:
+['bulk_atacseq', 'codex_cytokit', 'image_pyramid', 'salmon_rnaseq_bulk', 'sc_atac_seq_snare', 'salmon_rnaseq_10x', 'salmon_rnaseq_snareseq', 'salmon_rnaseq_sciseq', 'sn_atac_seq', 'salmon_sn_rnaseq_10x']
