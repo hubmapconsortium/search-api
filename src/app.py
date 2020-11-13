@@ -306,7 +306,7 @@ def get_uuids_from_neo4j():
     datasets = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Dataset?property=uuid").json()
     collections = requests.get(app.config['ENTITY_API_URL'] + "/entities/class/Collection?property=uuid").json()
     
-    uuids = [donors + samples + datasets + collections]
+    uuids = donors + samples + datasets + collections
 
     return uuids
 
