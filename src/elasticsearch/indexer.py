@@ -206,6 +206,9 @@ class Indexer:
 
             donor = None
             for a in ancestors:
+                self.logger.debug("==============a==============")
+                self.logger.debug(a)
+                self.logger.debug("============================")
                 if a['entity_class'] == 'Donor':
                     donor = copy.copy(a)
                     break
