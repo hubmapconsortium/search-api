@@ -203,6 +203,12 @@ class Indexer:
         try:
             ancestors = requests.get(self.entity_api_url + "/ancestors/" + entity.get('uuid', None)).json()
             descendants = requests.get(self.entity_api_url + "/descendants/" + entity.get('uuid', None)).json()
+            
+            self.logger.debug("==============ancestors==============")
+            self.logger.debug(ancestors)
+
+            self.logger.debug("==============descendants==============")
+            self.logger.debug(descendants)
 
             donor = None
             for a in ancestors:
