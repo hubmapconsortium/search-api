@@ -79,7 +79,7 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             # Entities #
-            donors = requests.get(self.entity_api_url + "/Donoer/entities").json()
+            donors = requests.get(self.entity_api_url + "/Donor/entities").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
@@ -249,17 +249,13 @@ class Indexer:
             self.entity_keys_rename(entity)
 
 
-            group = (self.provenance
-                         .get_group_by_identifier(entity['group_uuid']))
+            group = (self.provenance.get_group_by_identifier(entity['group_uuid']))
             entity['group_name'] = group['displayname']
 
             # timestamp and version
             entity['update_timestamp'] = int(round(time.time() * 1000))
-            entity['update_timestamp_fmted'] = (datetime
-                                                .now()
-                                                .strftime("%Y-%m-%d %H:%M:%S"))
-            entity['index_version'] = ((Path(__file__).parent.parent / 'VERSION')
-                                       .read_text()).strip()
+            entity['update_timestamp_fmted'] = (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            entity['index_version'] = ((Path(__file__).parent.parent / 'VERSION').read_text()).strip()
 
             try:
                 entity['metadata'].pop('files')
