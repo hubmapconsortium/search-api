@@ -219,10 +219,10 @@ class Indexer:
 
             if entity['entity_class'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
-                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] and entity['metadata']['organ'].strip() != "" else None
+                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
                 if entity['origin_sample'] is None:
                     try:
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a['metadata'] and a['metadata']['organ'].strip() != ""))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a and a['organ'].strip() != ""))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
@@ -240,7 +240,7 @@ class Indexer:
 
                     # move files to the root level
                     try:
-                        entity['files'] = ast.literal_eval(entity['metadata']['ingest_metadata'])['files']
+                        entity['files'] = ast.literal_eval(entity['ingest_metadata'])['files']
                     except KeyError:
                         self.logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
                     except TypeError:
@@ -317,20 +317,6 @@ class Indexer:
                 entity.pop(key)
         entity.update(temp)
         
-        temp = {}
-        if 'metadata' in entity:
-            for key in entity['metadata']:
-                if key in self.attr_map['METADATA']:
-                    try:
-                        temp[self.attr_map['METADATA'][key]['es_name']] = ast.literal_eval(entity['metadata'][key]) if self.attr_map['METADATA'][key]['is_json_stored_as_text'] else entity['metadata'][key]
-                    except SyntaxError:
-                        self.logger.warning(f"SyntaxError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
-                        temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
-                    except ValueError:
-                        self.logger.warning(f"ValueError. Failed to eval the field {key} to python object. Value of entity['metadata'][key]: {entity['metadata'][key]}")
-                        temp[self.attr_map['METADATA'][key]['es_name']] = entity['metadata'][key]
-            entity.pop('metadata')
-        entity.update(temp)
 
     def remove_specific_key_entry(self, obj, key_to_remove):
         if type(obj) == dict:
