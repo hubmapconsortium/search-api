@@ -100,13 +100,16 @@ class Indexer:
 
     def index_tree(self, donor):
         # self.logger.info(f"Total threads count: {threading.active_count()}")
+
+        self.logger.info(f"index_tree() for : {donor.get('uuid', None)}")
+
         descendants = requests.get(self.entity_api_url + "/descendants/" + donor.get('uuid', None)).json()
         for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
             self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
             
-            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
+            self.report[node['entity_type']] = self.report.get(node['entity_class'], 0) + 1
             self.update_index(node)
 
         return "Done."
