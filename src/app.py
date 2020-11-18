@@ -14,6 +14,12 @@ from flask import current_app as app
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
+# Set logging fromat and level (default is warning)
+# All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
+# Log rotation is handled via logrotate on the host system with a configuration file
+# Do NOT handle log file and rotation via the Python logging to avoid issues with multi-worker processes
+logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+
 # Specify the absolute path of the instance folder and use the config file relative to the instance path
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
@@ -22,9 +28,6 @@ app.config.from_pyfile('app.cfg')
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
 app.config['UUID_API_URL'] = app.config['UUID_API_URL'].strip('/')
-
-# Set logging level (default is warning)
-logging.basicConfig(level=logging.DEBUG)
 
 # Error handler for 400 Bad Request with custom error message
 @app.errorhandler(400)
