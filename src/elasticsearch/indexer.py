@@ -109,7 +109,7 @@ class Indexer:
             # disploy_doi renamed to hubmap_id
             self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
             
-            self.report[node['entity_type']] = self.report.get(node['entity_class'], 0) + 1
+            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
             self.update_index(node)
 
         return "Done."
@@ -141,7 +141,7 @@ class Indexer:
             for collection in hm_collections:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
-                # Use `entity_type` instead of `entity_class`?????
+                # Use `entity_type` instead of `entity_class`
                 collection.setdefault('entity_type', 'Collection')
                 (self.eswriter
                      .write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid']))
@@ -298,10 +298,8 @@ class Indexer:
             self.logger.error('-'*60)
 
     def generate_public_doc(self, entity):
-        entity['descendants'] = list(filter(self.entity_is_public,
-                                            entity['descendants']))
-        entity['immediate_descendants'] = list(filter(self.entity_is_public,
-                                                      entity['immediate_descendants']))
+        entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
+        entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
         return json.dumps(entity)
 
     def entity_keys_rename(self, entity):
@@ -445,9 +443,7 @@ class Indexer:
                     self.report['fail_uuids'].add(node['uuid'])
                 result = None
         except KeyError:
-            self.logger.error(f"""uuid: {org_node['uuid']}, 
-                            entity_class: {org_node['entity_class']}, 
-                            es_node_entity_class: {node['entity_class']}""")
+            self.logger.error(f"""uuid: {org_node['uuid']}, entity_type: {org_node['entity_class']}, es_node_entity_class: {node['entity_type']}""")
             self.logger.exception("unexpceted exception")
         except Exception as e:
             self.report['fail_cnt'] +=1
