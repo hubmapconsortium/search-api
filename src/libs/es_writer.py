@@ -54,7 +54,7 @@ class ESWriter:
                                 headers={'Content-Type': 'application/json'},
                                 data=doc)
             if rspn.ok:
-                self.logger.debug(f"write doc done. uudi: {uuid}")
+                self.logger.debug(f"write doc done. UUID: {uuid}")
                 return True
             else:
                 self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
