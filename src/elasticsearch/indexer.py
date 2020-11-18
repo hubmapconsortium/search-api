@@ -201,8 +201,16 @@ class Indexer:
             entity_keys_rename will change the entity inplace
         '''
         try:
-            ancestors = requests.get(self.entity_api_url + "/ancestors/" + entity.get('uuid', None)).json()
-            descendants = requests.get(self.entity_api_url + "/descendants/" + entity.get('uuid', None)).json()
+            ancestors = []
+            descendants = []
+
+            ancestors_response = requests.get(self.entity_api_url + "/ancestors/" + entity.get('uuid', None))
+            if ancestors_response.status_code == 200:
+                ancestors = ancestors_response.json()
+
+            descendants_response = requests.get(self.entity_api_url + "/descendants/" + entity.get('uuid', None))
+            if descendants_response.status_code == 200:
+                descendants = descendants_response.json()
             
             self.logger.debug("==============ancestors==============")
             self.logger.debug(ancestors)
