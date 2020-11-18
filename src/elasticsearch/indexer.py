@@ -89,8 +89,9 @@ class Indexer:
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
-            self.index_collections("token")
 
+            # Index collections separately
+            self.index_collections("token")
         except Exception:
             self.logger.error("Exception in user code:")
             self.logger.error('-'*60)
@@ -100,10 +101,11 @@ class Indexer:
     def index_tree(self, donor):
         # self.logger.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_api_url + "/descendants/" + donor.get('uuid', None)).json()
-        for node in [donor] + descendants:
+        for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
             self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
+            
             self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
             self.update_index(node)
 
@@ -139,9 +141,7 @@ class Indexer:
                 # Use `entity_type` instead of `entity_class`?????
                 collection.setdefault('entity_type', 'Collection')
                 (self.eswriter
-                     .write_or_update_document(index_name=index,
-                                               doc=json.dumps(collection),
-                                               uuid=collection['uuid']))
+                     .write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid']))
 
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
@@ -152,8 +152,7 @@ class Indexer:
         try:
             entity = requests.get(self.entity_api_url + "/entities/" + uuid).json()
 
-            # This uuid is a entity
-            if entity != {}:
+            if bool(entity):
                 ancestors = requests.get(self.entity_api_url + "/ancestors/" + uuid).json()
                 descendants = requests.get(self.entity_api_url + "/descendants/" + uuid).json()
                 nodes = [entity] + ancestors + descendants
@@ -161,10 +160,11 @@ class Indexer:
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    self.logger.debug(f"{node.get('entity_class', 'Unknown Entity type')} {node.get('submission_id', node.get('hubmap_id', None))}")
+                    self.logger.debug(f"{node.get('entity_class', 'Unknown Entity class')} {node.get('submission_id', node.get('hubmap_id', None))}")
+                    
                     self.update_index(node)
                 
-                self.logger.info("################DONE######################")
+                self.logger.info("################reindex() DONE######################")
                 return f"Done."
             else:
                 collection = {}
@@ -398,16 +398,13 @@ class Indexer:
             node.setdefault('type', 'entity')
             doc = self.generate_doc(node, 'json')
             transformed = json.dumps(transform(json.loads(doc)))
-            if (transformed is None or
-               transformed == 'null' or
-               transformed == ""):
+            if (transformed is None or transformed == 'null' or transformed == ""):
                 self.logger.error(f"{node['uuid']} Document is empty")
                 self.logger.error(f"Node: {node}")
                 return
 
             result = None
-            IndexConfig = collections.namedtuple('IndexConfig',
-                                                 ['access_level', 'doc_type'])
+            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
             # delete entity from published indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
@@ -417,8 +414,7 @@ class Indexer:
             # write enitty into indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
-                if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
-                   self.entity_is_public(org_node)):
+                if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
                     public_doc = self.generate_public_doc(node)
                     public_transformed = transform(json.loads(public_doc))
                     public_transformed_doc = json.dumps(public_transformed)
