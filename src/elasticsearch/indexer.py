@@ -79,7 +79,7 @@ class Indexer:
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             # Entities #
-            donors = requests.get(self.entity_api_url + "/entities/class/Donor").json()
+            donors = requests.get(self.entity_api_url + "/Donoer/entities").json()
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
@@ -101,8 +101,10 @@ class Indexer:
         # self.logger.info(f"Total threads count: {threading.active_count()}")
         descendants = requests.get(self.entity_api_url + "/descendants/" + donor.get('uuid', None)).json()
         for node in [donor] + descendants:
-            self.logger.debug(node.get('hubmap_identifier', node.get('display_doi', None)))
-            self.report[node['entity_type']] = self.report.get(node['entity_type'], 0) + 1
+            # hubamp_identifier renamed to submission_id 
+            # disploy_doi renamed to hubmap_id
+            self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
+            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
             self.update_index(node)
 
         return "Done."
@@ -113,11 +115,13 @@ class Indexer:
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
+                
+                # ??????????????????????
                 # Consortium Collections #
-                rspn = requests.get(self.entity_api_url + "/entities/class/collections", headers={"Authorization": f"Bearer {token}"})
+                rspn = requests.get(self.entity_api_url + "/Collection/entities", headers={"Authorization": f"Bearer {token}"})
             elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections #
-                rspn = requests.get(self.entity_api_url + "/entities/class/collections")
+                rspn = requests.get(self.entity_api_url + "/Collection/entities")
             else:
                 continue
 
@@ -132,6 +136,7 @@ class Indexer:
             for collection in hm_collections:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
+                # Use `entity_type` instead of `entity_class`?????
                 collection.setdefault('entity_type', 'Collection')
                 (self.eswriter
                      .write_or_update_document(index_name=index,
@@ -145,7 +150,7 @@ class Indexer:
 
     def reindex(self, uuid):
         try:
-            entity_dict = requests.get(self.entity_api_url + "/entities/id/" + uuid).json()
+            entity_dict = requests.get(self.entity_api_url + "/entities/" + uuid).json()
             entity_class = list(entity_dict.keys())[0]
             entity = entity_dict[entity_class]
 
@@ -156,7 +161,9 @@ class Indexer:
                 nodes = [entity] + ancestors + descendants
 
                 for node in nodes:
-                    self.logger.debug(f"{node.get('entity_type', 'Unknown Entity type')} {node.get('hubmap_identifier', node.get('display_doi', None))}")
+                    # hubmap_identifier renamed to submission_id
+                    # display_doi renamed to hubmap_id
+                    self.logger.debug(f"{node.get('entity_class', 'Unknown Entity type')} {node.get('submission_id', node.get('hubmap_id', None))}")
                     self.update_index(node)
                 
                 self.logger.info("################DONE######################")
@@ -198,7 +205,7 @@ class Indexer:
 
             donor = None
             for a in ancestors:
-                if a['entity_type'] == 'Donor':
+                if a['entity_class'] == 'Donor':
                     donor = copy.copy(a)
                     break
 
@@ -212,7 +219,7 @@ class Indexer:
             entity['immediate_descendants'] = requests.get(self.entity_api_url + "/children/" + entity.get('uuid', None)).json()
             entity['immediate_ancestors'] = requests.get(self.entity_api_url + "/parents/" + entity.get('uuid', None)).json()
 
-            if entity['entity_type'] in ['Sample', 'Dataset']:
+            if entity['entity_class'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity['metadata'] and entity['metadata']['organ'].strip() != "" else None
                 if entity['origin_sample'] is None:
@@ -221,13 +228,13 @@ class Indexer:
                     except StopIteration:
                         entity['origin_sample'] = {}
 
-                if entity['entity_type'] == 'Dataset':
+                if entity['entity_class'] == 'Dataset':
                     entity['source_sample'] = None
                     e = entity
                     while entity['source_sample'] is None:
                         parents = requests.get(self.entity_api_url + "/parents/" + e.get('uuid', None)).json()
                         try:
-                            if parents[0]['entity_type'] == 'Sample':
+                            if parents[0]['entity_class'] == 'Sample':
                                 entity['source_sample'] = parents
                             e = parents[0]
                         except IndexError:
@@ -339,8 +346,8 @@ class Indexer:
 
     def access_group(self, entity):
         try:
-            if entity['entity_type'] == 'Dataset':
-                if entity['metadata']['status'] == 'Published' and entity['metadata']['phi'].lower() == 'no':
+            if entity['entity_class'] == 'Dataset':
+                if entity['status'] == 'Published' and entity['contains_human_genetic_sequences'] == False:
                     return HubmapConst.ACCESS_LEVEL_PUBLIC
                 else:
                     return HubmapConst.ACCESS_LEVEL_CONSORTIUM
@@ -355,20 +362,20 @@ class Indexer:
 
     def get_access_level(self, entity):
         try:
-            entity_type = entity['entity_type'] if 'entity_type' in entity else entity['entity_type']
+            entity_class = entity['entity_class'] if 'entity_class' in entity else entity['entity_class']
 
-            if entity_type:
-                if entity_type == HubmapConst.COLLECTION_TYPE_CODE:
+            if entity_class:
+                if entity_class == HubmapConst.COLLECTION_TYPE_CODE:
                     if entity['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
                         return entity['data_access_level']
                     else:
                         return HubmapConst.ACCESS_LEVEL_CONSORTIUM
-                elif entity_type in [HubmapConst.DONOR_TYPE_CODE,
+                elif entity_class in [HubmapConst.DONOR_TYPE_CODE,
                                      HubmapConst.SAMPLE_TYPE_CODE,
                                      HubmapConst.DATASET_TYPE_CODE]:
-                    dal = (entity['metadata']['data_access_level']
-                           if 'metadata' in entity
-                           else entity['data_access_level'])
+                    
+                    dal = entity['data_access_level']
+
                     if dal in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
                         return dal
                     else:
@@ -383,8 +390,9 @@ class Indexer:
 
     def test(self):
         try:
-            donors = requests.get(self.entity_api_url + "/Donor/all").json()
-            donors = [donor for donor in donors if donor['hubmap_identifier'] == 'TEST0086']
+            donors = requests.get(self.entity_api_url + "/Donor/entities").json()
+            # hubmap_identifier renamed to submission_id
+            donors = [donor for donor in donors if donor['submission_id'] == 'TEST0086']
             fk_donors = []
             for _ in range(100):
                 fk_donors.append(copy.copy(donors[0]))
@@ -459,8 +467,8 @@ class Indexer:
                 result = None
         except KeyError:
             self.logger.error(f"""uuid: {org_node['uuid']}, 
-                            entity_type: {org_node['entity_type']}, 
-                            es_node_entity_type: {node['entity_type']}""")
+                            entity_class: {org_node['entity_class']}, 
+                            es_node_entity_class: {node['entity_class']}""")
             self.logger.exception("unexpceted exception")
         except Exception as e:
             self.report['fail_cnt'] +=1
@@ -472,21 +480,21 @@ class Indexer:
             self.logger.error('-'*60)
 
     def entity_is_public(self, node):
-        if 'entity_type' in node:  # Tranformed Node
-            return ((node.get('entity_type', '') == 'Dataset' and
+        if 'entity_class' in node:  # Tranformed Node
+            return ((node.get('entity_class', '') == 'Dataset' and
                     node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entity_type', '') != 'Dataset' and
+                    (node.get('entity_class', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
         else:  # Original Node
-            return ((node.get('entity_type', '') == 'Dataset' and
+            return ((node.get('entity_class', '') == 'Dataset' and
                     node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entity_type', '') != 'Dataset' and
+                    (node.get('entity_class', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
 
     def add_datasets_to_collection(self, collection):
         datasets = []
         for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_api_url + "/entities/id/" + uuid).json()
+            dataset = requests.get(self.entity_api_url + "/entities/" + uuid).json()
             dataset = self.generate_doc(dataset['entity'], 'dict')
             dataset.pop('ancestors')
             dataset.pop('ancestor_ids')
