@@ -150,9 +150,7 @@ class Indexer:
 
     def reindex(self, uuid):
         try:
-            entity_dict = requests.get(self.entity_api_url + "/entities/" + uuid).json()
-            entity_class = list(entity_dict.keys())[0]
-            entity = entity_dict[entity_class]
+            entity = requests.get(self.entity_api_url + "/entities/" + uuid).json()
 
             # This uuid is a entity
             if entity != {}:
