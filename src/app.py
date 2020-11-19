@@ -385,7 +385,7 @@ def reindex_all_uuids(indexer, token):
             es_uuids = set(es_uuids)
 
             for uuid in es_uuids:
-                if uuid not in neo4j_uuids:
+                if uuid not in all_entities_uuids:
                     app.logger.debug(f"""The uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
                     indexer.delete(uuid)
 
