@@ -91,8 +91,7 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    #self.logger.debug(f.result())
-
+                    self.logger.debug(f.result())
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
@@ -370,12 +369,10 @@ class Indexer:
     def entity_keys_rename(self, entity):
         to_delete_keys = []
         temp = {}
-        
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
-        
         for key in to_delete_keys:
             if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants', 'datasets']:
                 entity.pop(key)
@@ -448,7 +445,7 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in fk_donors]
                 for f in concurrent.futures.as_completed(results):
-                    #self.logger.debug(f.result())
+                    self.logger.debug(f.result())
             
             # Single-thread
             # for donor in fk_donors:
