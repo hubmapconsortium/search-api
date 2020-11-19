@@ -315,7 +315,6 @@ class Indexer:
 
             self.entity_keys_rename(entity)
 
-
             group = (self.provenance.get_group_by_identifier(entity['group_uuid']))
             entity['group_name'] = group['displayname']
 
