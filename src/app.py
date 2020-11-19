@@ -376,7 +376,7 @@ def reindex_all_uuids(indexer, token):
             dataset_uuids_list = get_uuids_by_entity_class("Dataset")
 
             # Merge into a big list that with no duplicates
-            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + all_entities_uuids)
+            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + dataset_uuids_list)
 
             # 1. Remove entities that are not found in neo4j
             es_uuids = []
