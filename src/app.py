@@ -393,7 +393,7 @@ def reindex_all_uuids(indexer, token):
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids_list]
                 for f in concurrent.futures.as_completed(results):
-                    app.logger.debug(f.result())
+                    #app.logger.debug(f.result())
 
             # 3. Index collection separately
             indexer.index_collections(token)

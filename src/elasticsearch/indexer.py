@@ -91,7 +91,8 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    self.logger.debug(f.result())
+                    #self.logger.debug(f.result())
+
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
@@ -154,7 +155,8 @@ class Indexer:
             for collection in hm_collections:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
-                # Use `entity_type` instead of `entity_class`
+                # Use `entity_type` instead of `entity_class` explicitly for Collection
+                # Otherwise, it won't get reindexed
                 collection.setdefault('entity_type', 'Collection')
                 (self.eswriter
                      .write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid']))
@@ -296,7 +298,7 @@ class Indexer:
                         if parents_resp.status_code != 200:
                             self.logger.error("indexer.generate_doc() failed to get parents via entity-api for uuid: " + e['uuid'])
                         parents = parents_resp.json()
-                        
+
                         try:
                             if parents[0]['entity_class'] == 'Sample':
                                 entity['source_sample'] = parents
@@ -368,10 +370,12 @@ class Indexer:
     def entity_keys_rename(self, entity):
         to_delete_keys = []
         temp = {}
+        
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
+        
         for key in to_delete_keys:
             if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants', 'datasets']:
                 entity.pop(key)
@@ -444,7 +448,7 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in fk_donors]
                 for f in concurrent.futures.as_completed(results):
-                    self.logger.debug(f.result())
+                    #self.logger.debug(f.result())
             
             # Single-thread
             # for donor in fk_donors:
@@ -506,7 +510,7 @@ class Indexer:
                     self.report['fail_uuids'].add(node['uuid'])
                 result = None
         except KeyError:
-            self.logger.error(f"""uuid: {org_node['uuid']}, entity_type: {org_node['entity_class']}, es_node_entity_class: {node['entity_type']}""")
+            self.logger.error(f"""uuid: {org_node['uuid']}, entity_class: {org_node['entity_class']}, es_node_entity_class: {node['entity_class']}""")
             self.logger.exception("unexpceted exception")
         except Exception as e:
             self.report['fail_cnt'] +=1
