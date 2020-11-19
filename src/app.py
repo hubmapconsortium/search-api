@@ -1,7 +1,6 @@
 import os
 import time
 from pathlib import Path
-from elasticsearch.indexer import Indexer
 from flask import Flask, jsonify, abort, request, Response, Request
 import concurrent.futures
 import threading
@@ -10,6 +9,9 @@ import logging
 import ast
 from urllib.parse import urlparse
 from flask import current_app as app
+
+# Local modules
+from elasticsearch.indexer import Indexer
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -256,9 +258,7 @@ def execute_search(request, target_index, query=None):
         # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     else:
         json_data = query
-        target_url = (app.config['ELASTICSEARCH_URL'] +
-                      '/' + target_index +
-                      '/' + '_search')
+        target_url = (app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + '_search')
 
     resp = requests.post(url=target_url, json=json_data)
 

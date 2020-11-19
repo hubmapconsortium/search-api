@@ -1,5 +1,3 @@
-from libs.es_writer import ESWriter
-from elasticsearch.addl_index_transformations.portal import transform
 import sys
 import json
 import time
@@ -14,6 +12,12 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from flask import current_app as app
+
+# Local modules
+from libs.es_writer import ESWriter
+from elasticsearch.addl_index_transformations.portal import transform
+
+# HuBMAP commons
 from hubmap_commons.hubmap_const import HubmapConst
 from hubmap_commons.provenance import Provenance
 
@@ -62,6 +66,7 @@ class Indexer:
             'fail_cnt': 0,
             'fail_uuids': set()
         }
+
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_api_url = entity_api_url
         self.provenance = Provenance(app_client_id, app_client_secret, uuid_api_url)
@@ -123,6 +128,7 @@ class Indexer:
             self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
             
             self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
+
             self.update_index(node)
 
         return "Done."
@@ -236,6 +242,8 @@ class Indexer:
             uuid = entity['uuid']
             ancestors = []
             descendants = []
+            ancestor_ids = []
+            descendant_ids = []
 
             ancestors_response = requests.get(self.entity_api_url + "/ancestors/" + uuid)
             if ancestors_response.status_code != 200:
@@ -243,17 +251,23 @@ class Indexer:
 
             ancestors = ancestors_response.json()
 
+            ancestor_ids_response = requests.get(self.entity_api_url + "/ancestors/" + uuid + "?property=uuid")
+            if ancestor_ids_response.status_code != 200:
+                self.logger.error("indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: " + uuid)
+
+            ancestor_ids = ancestor_ids_response.json()
+
             descendants_response = requests.get(self.entity_api_url + "/descendants/" + uuid)
             if descendants_response.status_code != 200:
                 self.logger.error("indexer.generate_doc() failed to get descendants via entity-api for uuid: " + uuid)
 
             descendants = descendants_response.json()
-            
-            self.logger.debug("==============ancestors==============")
-            self.logger.debug(ancestors)
 
-            self.logger.debug("==============descendants==============")
-            self.logger.debug(descendants)
+            descendant_ids_response = requests.get(self.entity_api_url + "/descendants/" + uuid + "?property=uuid")
+            if descendant_ids_response.status_code != 200:
+                self.logger.error("indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: " + uuid)
+
+            descendant_ids = descendant_ids_response.json()
 
             donor = None
             for a in ancestors:
@@ -262,8 +276,9 @@ class Indexer:
                     break
 
             # build json
-            entity['ancestor_ids'] = [a.get('uuid', 'missing') for a in ancestors]
-            entity['descendant_ids'] = [d.get('uuid', 'missing') for d in descendants]
+            entity['ancestor_ids'] = ancestor_ids
+            entity['descendant_ids'] = descendant_ids
+
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
             # entity['access_group'] = self.access_group(entity)
@@ -366,16 +381,25 @@ class Indexer:
         return json.dumps(entity)
 
     def entity_keys_rename(self, entity):
+        self.logger.debug("==================entity before renaming keys==================")
+        self.logger.debug(entity)
+
         to_delete_keys = []
         temp = {}
+        
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
+        
         for key in to_delete_keys:
             if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants', 'datasets']:
                 entity.pop(key)
+        
         entity.update(temp)
+
+        self.logger.debug("==================entity after renaming keys==================")
+        self.logger.debug(entity)
         
 
     def remove_specific_key_entry(self, obj, key_to_remove):
@@ -511,6 +535,7 @@ class Indexer:
         except Exception as e:
             self.report['fail_cnt'] +=1
             self.report['fail_uuids'].add(node['uuid'])
+
             self.logger.error(f"""Exception in user code, 
                         uuid: {org_node['uuid']}""")
             self.logger.error('-'*60)
