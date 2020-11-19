@@ -44,6 +44,11 @@ def http_unauthorized(e):
 def http_forbidden(e):
     return jsonify(error=str(e)), 403
 
+# Error handler for 500 Internal Server Error with custom error message
+@app.errorhandler(500)
+def http_internal_server_error(e):
+    return jsonify(error=str(e)), 500
+
 ####################################################################################################
 ## Default route
 ####################################################################################################
@@ -170,6 +175,10 @@ def unauthorized_error(err_msg):
 # Throws error for 403 Forbidden with message
 def forbidden_error(err_msg):
     abort(403, description = err_msg)
+
+# Throws error for 500 Internal Server Error with message
+def internal_server_error(err_msg):
+    abort(500, description = err_msg)
 
 # Initialize AuthHelper (AuthHelper from HuBMAP commons package)
 # HuBMAP commons AuthHelper handles "MAuthorization" or "Authorization"
@@ -303,47 +312,43 @@ def get_query_string(url):
     return query_string
 
 
-def get_uuids_from_neo4j():
-    donors = requests.get(app.config['ENTITY_API_URL'] + "/Donor/entities?property=uuid").json()
-    samples = requests.get(app.config['ENTITY_API_URL'] + "/Sample/entities?property=uuid").json()
-    datasets = requests.get(app.config['ENTITY_API_URL'] + "/Dataset/entities?property=uuid").json()
-    collections = requests.get(app.config['ENTITY_API_URL'] + "/Collection/entities?property=uuid").json()
+# Get a list of entity uuids via entity-api for a given entity class:
+# Collection, Donor, Sample, Dataset. Case-insensitive.
+def get_uuids_by_entity_class(entity_class):
+    response = requests.get(app.config['ENTITY_API_URL'] + "/" + entity_class + "/entities?property=uuid")
     
-    uuids = donors + samples + datasets + collections
-
-    return uuids
-
-
-def get_donor_uuids_from_neo4j():
-    uuids = requests.get(app.config['ENTITY_API_URL'] + "/Donor/entities?property=uuid").json()
-    return uuids
-
+    if response.status_code != 200:
+        internal_server_error("get_uuids_by_entity_class() failed to make a request to entity-api for entity class: " + entity_class)
+    
+    uuids_list = response.json()
+    
+    return uuids_list
+    
 
 def get_uuids_from_es(index):
     uuids = []
     size = 10_000
     query = {
-                "size": size,
-                "from": len(uuids),
-                "_source": ["_id"],
-                "query": {
-                    "bool": {
-                        "must": [],
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "should": [],
-                        "must_not": []
+        "size": size,
+        "from": len(uuids),
+        "_source": ["_id"],
+        "query": {
+            "bool": {
+                "must": [],
+                "filter": [
+                    {
+                        "match_all": {}
                     }
-                }
+                ],
+                "should": [],
+                "must_not": []
             }
+        }
+    }
+
     end_of_list = False
     while not end_of_list:
-        resp = execute_search(None,
-                              index,
-                              query)
+        resp = execute_search(None, index, query)
 
         ret_obj = resp.get_json()
         uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
@@ -364,9 +369,16 @@ def reindex_all_uuids(indexer, token):
 
             start = time.time()
 
-            # 1. remove entities that not in neo4j
-            neo4j_uuids = get_uuids_from_neo4j()
-            neo4j_uuids = set(neo4j_uuids)
+            # Make calls to entity-api to get a list of uuids for each entity class
+            donor_uuids_list = get_uuids_by_entity_class("Donor")
+            sample_uuids_list = get_uuids_by_entity_class("Sample")
+            collection_uuids_list = get_uuids_by_entity_class("Collection")
+            dataset_uuids_list = get_uuids_by_entity_class("Dataset")
+
+            # Merge into a big list that with no duplicates
+            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + all_entities_uuids)
+
+            # 1. Remove entities that are not found in neo4j
             es_uuids = []
             for index in ast.literal_eval(app.config['INDICES']).keys():
                 es_uuids.extend(get_uuids_from_es(index))
@@ -374,17 +386,16 @@ def reindex_all_uuids(indexer, token):
 
             for uuid in es_uuids:
                 if uuid not in neo4j_uuids:
-                    app.logger.debug(f"""uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
+                    app.logger.debug(f"""The uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
                     indexer.delete(uuid)
 
-            donor_uuids = get_donor_uuids_from_neo4j()
             # 2. Multi-thread index entitiies
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids]
+                results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids_list]
                 for f in concurrent.futures.as_completed(results):
                     app.logger.debug(f.result())
 
-            # 3. index collection
+            # 3. Index collection separately
             indexer.index_collections(token)
 
             end = time.time()
