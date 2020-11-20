@@ -9,6 +9,7 @@ import logging
 import ast
 from urllib.parse import urlparse
 from flask import current_app as app
+from urllib3.exceptions import InsecureRequestWarning
 
 # Local modules
 from elasticsearch.indexer import Indexer
@@ -30,6 +31,9 @@ app.config.from_pyfile('app.cfg')
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
 app.config['UUID_API_URL'] = app.config['UUID_API_URL'].strip('/')
+
+# Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
+requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
 
 # Error handler for 400 Bad Request with custom error message
 @app.errorhandler(400)
@@ -315,7 +319,11 @@ def get_query_string(url):
 # Get a list of entity uuids via entity-api for a given entity class:
 # Collection, Donor, Sample, Dataset. Case-insensitive.
 def get_uuids_by_entity_class(entity_class):
-    response = requests.get(app.config['ENTITY_API_URL'] + "/" + entity_class + "/entities?property=uuid")
+    auth_helper = init_auth_helper()
+    request_headers = create_request_headers_for_auth(auth_helper.getProcessSecret())
+
+    url = app.config['ENTITY_API_URL'] + "/" + entity_class + "/entities?property=uuid"
+    response = requests.get(url, headers = request_headers, verify = False)
     
     if response.status_code != 200:
         internal_server_error("get_uuids_by_entity_class() failed to make a request to entity-api for entity class: " + entity_class)
@@ -323,7 +331,18 @@ def get_uuids_by_entity_class(entity_class):
     uuids_list = response.json()
     
     return uuids_list
-    
+
+# Create a dict with HTTP Authorization header with Bearer token
+def create_request_headers_for_auth(token):
+    auth_header_name = 'Authorization'
+    auth_scheme = 'Bearer'
+
+    headers_dict = {
+        # Don't forget the space between scheme and the token value
+        auth_header_name: auth_scheme + ' ' + token
+    }
+
+    return headers_dict
 
 def get_uuids_from_es(index):
     uuids = []
