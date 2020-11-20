@@ -125,7 +125,7 @@ class Indexer:
         for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
-            self.logger.debug(node.get('submission_id', node.get('hubmap_id', None)))
+            self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmp_id', None)}")
             
             self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
 
@@ -162,6 +162,7 @@ class Indexer:
                 self.entity_keys_rename(collection)
                 # Use `entity_type` instead of `entity_class` explicitly for Collection
                 # Otherwise, it won't get reindexed
+                # Because we are not rename the Collection.entity_class to entity_type in json mapping
                 collection.setdefault('entity_type', 'Collection')
                 (self.eswriter
                      .write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid']))
@@ -201,8 +202,9 @@ class Indexer:
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    self.logger.debug(f"{node.get('entity_class', 'Unknown Entity class')} {node.get('submission_id', node.get('hubmap_id', None))}")
+                    self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmp_id', None)}")
                     
+                    self.logger.info("reindex(): About to update_index")
                     self.update_index(node)
                 
                 self.logger.info("################reindex() DONE######################")
@@ -235,9 +237,6 @@ class Indexer:
             self.logger.error('-'*60)
 
     def generate_doc(self, entity, return_type):
-        '''
-            entity_keys_rename will change the entity inplace
-        '''
         try:
             uuid = entity['uuid']
             ancestors = []
@@ -345,6 +344,7 @@ class Indexer:
             except AttributeError:
                 self.logger.debug("There are no files in metadata to pop")
 
+            # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
             if entity.get('origin_sample', None):
@@ -359,11 +359,11 @@ class Indexer:
                 for d in entity.get('descendants', None):
                     self.entity_keys_rename(d)
             if entity.get('immediate_descendants', None):
-                for id in entity.get('immediate_descendants', None):
-                    self.entity_keys_rename(id)
+                for parent in entity.get('immediate_descendants', None):
+                    self.entity_keys_rename(parent)
             if entity.get('immediate_ancestors', None):
-                for ia in entity.get('immediate_ancestors', None):
-                    self.entity_keys_rename(ia)
+                for child in entity.get('immediate_ancestors', None):
+                    self.entity_keys_rename(child)
 
             self.remove_specific_key_entry(entity, "other_metadata")
 
@@ -482,7 +482,10 @@ class Indexer:
     def update_index(self, node):
         try:
             org_node = copy.deepcopy(node)
+
+            # Do we realy need this?
             node.setdefault('type', 'entity')
+
             doc = self.generate_doc(node, 'json')
             transformed = json.dumps(transform(json.loads(doc)))
             if (transformed is None or transformed == 'null' or transformed == ""):
@@ -505,18 +508,14 @@ class Indexer:
                     public_doc = self.generate_public_doc(node)
                     public_transformed = transform(json.loads(public_doc))
                     public_transformed_doc = json.dumps(public_transformed)
-                    result = (self
-                              .eswriter
-                              .write_or_update_document(
+                    result = (self.eswriter.write_or_update_document(
                                 index_name=index,
                                 doc=(public_transformed_doc
                                      if configs.doc_type == PORTAL_DOC_TYPE
                                      else public_doc),
                                 uuid=node['uuid']))
                 elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
-                    result = (self
-                              .eswriter
-                              .write_or_update_document(
+                    result = (self.eswriter.write_or_update_document(
                                 index_name=index,
                                 doc=(transformed
                                      if configs.doc_type == PORTAL_DOC_TYPE
@@ -542,10 +541,11 @@ class Indexer:
             self.logger.error('-'*60)
 
     def entity_is_public(self, node):
-        if 'entity_class' in node:  # Tranformed Node
-            return ((node.get('entity_class', '') == 'Dataset' and
+        # Here the node properties have already been renamed
+        if 'entity_type' in node:  # Tranformed Node
+            return ((node.get('entity_type', '') == 'Dataset' and
                     node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entity_class', '') != 'Dataset' and
+                    (node.get('entity_type', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
         else:  # Original Node
             return ((node.get('entity_class', '') == 'Dataset' and
@@ -572,7 +572,7 @@ class Indexer:
             dataset_doc.pop('donor')
             dataset_doc.pop('origin_sample')
             dataset_doc.pop('source_sample')
-            
+
             datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
