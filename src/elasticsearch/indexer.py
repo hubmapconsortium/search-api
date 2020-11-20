@@ -72,7 +72,8 @@ class Indexer:
             'fail_uuids': set()
         }
 
-        self.request_headers = create_request_headers_for_auth(auth_helper.getProcessSecret())
+        auth_helper = self.init_auth_helper()
+        self.request_headers = self.create_request_headers_for_auth(auth_helper.getProcessSecret())
         
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_api_url = entity_api_url
@@ -413,8 +414,18 @@ class Indexer:
         entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
         return json.dumps(entity)
 
+    # Initialize AuthHelper (AuthHelper from HuBMAP commons package)
+    # HuBMAP commons AuthHelper handles "MAuthorization" or "Authorization"
+    def init_auth_helper(self):
+        if AuthHelper.isInitialized() == False:
+            auth_helper = AuthHelper.create(app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'])
+        else:
+            auth_helper = AuthHelper.instance()
+        
+        return auth_helper
+
     # Create a dict with HTTP Authorization header with Bearer token
-    def create_request_headers_for_auth(token):
+    def create_request_headers_for_auth(self, token):
         auth_header_name = 'Authorization'
         auth_scheme = 'Bearer'
 
@@ -456,16 +467,6 @@ class Indexer:
         elif type(obj) == list:
             for e in obj:
                 self.remove_specific_key_entry(e, key_to_remove)
-
-    # Initialize AuthHelper (AuthHelper from HuBMAP commons package)
-    # HuBMAP commons AuthHelper handles "MAuthorization" or "Authorization"
-    def init_auth_helper():
-        if AuthHelper.isInitialized() == False:
-            auth_helper = AuthHelper.create(app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'])
-        else:
-            auth_helper = AuthHelper.instance()
-        
-        return auth_helper
 
     def access_group(self, entity):
         try:
