@@ -152,7 +152,7 @@ sc_atac_seq_snare_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
 #    alt-names: [sc_atac_seq_snare_lab]
     alt-names: []
-    primary: true
+    primary: false
 
 sc_atac_seq_snare:
 #SNAREseq_snapATAC:
@@ -176,7 +176,7 @@ salmon_rnaseq_10x:
 sc_rna_seq_snare_lab:
     description: snRNA-seq (SNARE-seq) [Lab Processed]
     alt-names: []
-    primary: true
+    primary: false
 
 salmon_rnaseq_snareseq:
     description: snRNA-seq (SNARE-seq) [Salmon]
@@ -216,7 +216,7 @@ seqFish:
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
     alt-names: []
-    primary: true
+    primary: false
 
 snATACseq:
     description: snATAC-seq
