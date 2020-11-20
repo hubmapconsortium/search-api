@@ -562,7 +562,7 @@ class Indexer:
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
         else:  # Original Node
             return ((node.get('entity_class', '') == 'Dataset' and
-                    node.get('metadata', None).get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
                     (node.get('entity_class', '') != 'Dataset' and
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
 
