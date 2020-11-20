@@ -438,9 +438,8 @@ class Indexer:
                         return entity['data_access_level']
                     else:
                         return HubmapConst.ACCESS_LEVEL_CONSORTIUM
-                elif entity_class in [HubmapConst.DONOR_TYPE_CODE,
-                                     HubmapConst.SAMPLE_TYPE_CODE,
-                                     HubmapConst.DATASET_TYPE_CODE]:
+                # Hard code instead of use commons constants for now.
+                elif entity_class in ['Donor', 'Sample', 'Dataset']:
                     
                     dal = entity['data_access_level']
 
@@ -556,19 +555,25 @@ class Indexer:
 
     def add_datasets_to_collection(self, collection):
         datasets = []
-        for uuid in collection.get('dataset_uuids', []):
-            dataset = requests.get(self.entity_api_url + "/entities/" + uuid).json()
-            dataset = self.generate_doc(dataset['entity'], 'dict')
-            dataset.pop('ancestors')
-            dataset.pop('ancestor_ids')
-            dataset.pop('descendants')
-            dataset.pop('descendant_ids')
-            dataset.pop('immediate_descendants')
-            dataset.pop('immediate_ancestors')
-            dataset.pop('donor')
-            dataset.pop('origin_sample')
-            dataset.pop('source_sample')
-            datasets.append(dataset)
+        for uuid in collection['dataset_uuids']:
+            response = requests.get(self.entity_api_url + "/entities/" + uuid)
+            if re.status_code != 200:
+                self.logger.error("indexer.add_datasets_to_collection() failed to get entity via entity-api for uuid: " + uuid)
+
+            dataset = response.json()
+
+            dataset_doc = self.generate_doc(dataset, 'dict')
+            dataset_doc.pop('ancestors')
+            dataset_doc.pop('ancestor_ids')
+            dataset_doc.pop('descendants')
+            dataset_doc.pop('descendant_ids')
+            dataset_doc.pop('immediate_descendants')
+            dataset_doc.pop('immediate_ancestors')
+            dataset_doc.pop('donor')
+            dataset_doc.pop('origin_sample')
+            dataset_doc.pop('source_sample')
+            
+            datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
 
