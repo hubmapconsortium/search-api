@@ -125,7 +125,7 @@ class Indexer:
         for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
-            self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmp_id', None)}")
+            self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
             
             self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
 
@@ -206,7 +206,7 @@ class Indexer:
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmp_id', None)}")
+                    self.logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
                     
                     self.logger.info("reindex(): About to update_index")
                     self.update_index(node)
