@@ -146,6 +146,17 @@ hits = response.json()['hits']['hits']
 
 ### Live reindex
 
+Increase the limit of total fields (default to 1000) in each index:
+
+````
+PUT <index>/_settings
+{
+  "index.mapping.total_fields.limit": 5000
+}
+````
+
+Trigger the reindex:
+
 ````
 curl -i -X PUT -H "Authorization:Bearer <globus-nexus-token>" <search-api base URL>/reindex-all
 ````
