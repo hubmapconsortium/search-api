@@ -174,6 +174,8 @@ class Indexer:
 
 
     def reindex(self, uuid):
+        
+
         try:
             response = requests.get(self.entity_api_url + "/entities/" + uuid)
 
@@ -184,6 +186,8 @@ class Indexer:
             
             # Check if entity is empty
             if bool(entity):
+                self.logger.info("reindex() for uuid: " + uuid + " entity_class: " + entity['entity_class'])
+
                 ancestors_response = requests.get(self.entity_api_url + "/ancestors/" + uuid)
                 if ancestors_response.status_code != 200:
                     self.logger.error("indexer.reindex() failed to get ancestors via entity-api for uuid: " + uuid)
@@ -294,18 +298,25 @@ class Indexer:
 
             entity['immediate_ancestors'] = parents_response.json()
 
+
+            # Why?
             if entity['entity_class'] in ['Sample', 'Dataset']:
                 entity['donor'] = donor
+                # Add a new property
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
+                
                 if entity['origin_sample'] is None:
                     try:
                         entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a and a['organ'].strip() != ""))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
+                # Trying to understand here!!!
                 if entity['entity_class'] == 'Dataset':
                     entity['source_sample'] = None
+
                     e = entity
+                    
                     while entity['source_sample'] is None:
                         parents_resp = requests.get(self.entity_api_url + "/parents/" + e['uuid'])
                         if parents_resp.status_code != 200:
@@ -313,8 +324,10 @@ class Indexer:
                         parents = parents_resp.json()
 
                         try:
+                            # Why?
                             if parents[0]['entity_class'] == 'Sample':
                                 entity['source_sample'] = parents
+
                             e = parents[0]
                         except IndexError:
                              entity['source_sample'] = {}
@@ -430,7 +443,7 @@ class Indexer:
 
     def get_access_level(self, entity):
         try:
-            entity_class = entity['entity_class'] if 'entity_class' in entity else entity['entity_class']
+            entity_class = entity['entity_class'] if 'entity_class' in entity else entity['entity_type']
 
             if entity_class:
                 if entity_class == HubmapConst.COLLECTION_TYPE_CODE:
