@@ -25,6 +25,10 @@
             ]
         'primary':
            'type': 'boolean'
+        'vitessce-hints':
+          'type': 'array'
+          'items': {'type': 'string'}
+          'description': 'keywords used for assay-specific visualization'
      'required': ['description', 'alt-names', 'primary']
 
    'assay_type_table':
