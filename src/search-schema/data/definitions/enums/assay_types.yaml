@@ -197,7 +197,7 @@ scRNA-Seq-10x:
     vitessce-hints: []
 
 salmon_rnaseq_10x:
-#scRNA-Seq-10x_salmon
+#scRNA-Seq-10x_salmon:
     description: scRNA-seq (10x Genomics) [Salmon]
 #    alt-names: [salmon_rnaseq_10x]
     alt-names: []
