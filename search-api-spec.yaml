@@ -301,3 +301,7 @@ components:
           type: string
         primary:
           type: boolean
+        vitessce-hints:
+          type: array
+            items:
+              type: string

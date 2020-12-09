@@ -75,15 +75,20 @@ class AssayType(object):
         else:
             raise RuntimeError(f'No such assay_type {name},'
                                ' even as alternate name')
-        self.description = self.definitions[self.name]['description']
-        self.primary = self.definitions[self.name]['primary']
+        this_def = self.definitions[self.name]
+        self.description = this_def['description']
+        self.primary = this_def['primary']
+        self.vitessce_hints = (this_def['vitessce-hints']
+                              if 'vitessce-hints' in this_def
+                              else [])
 
     def to_json(self) -> JSONType:
         """
         Returns a JSON-compatible representation of the assay type
         """
         return {'name': self.name, 'primary': self.primary,
-                'description': self.description}
+                'description': self.description,
+                'vitessce-hints': self.vitessce_hints}
 
     @classmethod
     def iter_names(cls, primary: BoolOrNone = None) -> Iterable[str]:
