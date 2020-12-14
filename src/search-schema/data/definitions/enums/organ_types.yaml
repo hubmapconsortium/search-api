@@ -1,3 +1,5 @@
+AO:
+  description: Aorta
 BL:
   description: Bladder
 BR:
@@ -6,6 +8,8 @@ HT:
   description: Heart
 LB:
   description: Bronchus (Left)
+LE:
+  description: Eye (Left)
 LI:
   description: Large Intestine
 LK:
@@ -56,14 +60,22 @@ LY20:
   description: Lymph Node 20
 OT:
   description: Other
+PA:
+  description: Pancreas
+PL:
+  description: Placenta
 RB:
   description: Bronchus (Right)
+RE:
+  description: Eye (Right)
 RK:
   description: Kidney (Right)
 RL:
   description: Lung (Right)
 SI:
   description: Small Intestine
+SK:
+  description: Skin
 SP:
   description: Spleen
 TH:
@@ -72,3 +84,5 @@ TR:
   description: Trachea
 UR:
   description: Ureter
+UT:
+  description: Uterus
