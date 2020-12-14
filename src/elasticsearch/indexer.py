@@ -151,7 +151,7 @@ class Indexer:
             configs = IndexConfig(*configs)
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
                 
-                # ??????????????????????
+                # TO-DO
                 # Consortium Collections #
                 url = self.entity_api_url + "/Collection/entities"
                 rspn = requests.get(url, headers = self.request_headers, verify = False)
@@ -321,8 +321,8 @@ class Indexer:
 
             # Why?
             if entity['entity_class'] in ['Sample', 'Dataset']:
+                # Add new properties
                 entity['donor'] = donor
-                # Add a new property
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
                 
                 if entity['origin_sample'] is None:
