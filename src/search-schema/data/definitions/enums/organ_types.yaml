@@ -4,6 +4,10 @@ BL:
   description: Bladder
 BR:
   description: Brain
+LF:
+  description: Fallopian Tube (Left)
+RF:
+  description: Fallopian Tube (Right)
 HT:
   description: Heart
 LB:
@@ -58,6 +62,10 @@ LY19:
   description: Lymph Node 19
 LY20:
   description: Lymph Node 20
+LO:
+  description: Ovary (Left)
+RO:
+  description: Ovary (Right)
 OT:
   description: Other
 PA:
