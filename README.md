@@ -7,17 +7,17 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 ## Development and release process
 
 ### To release via TEST infrastructure
-- Make new feature or bug fix branches from `devel-test`.
-- Make PRs to `devel-test`. (This is the default branch.)
+- Make new feature or bug fix branches from `test-release`.
+- Make PRs to `test-release`. (This is the default branch.)
 - As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to TEST infrastructure, and redeploy and reindex the TEST instance.
 - Developer or someone on the team who is familiar with the change will test/qa the change
 - When any current changes in the `devel-test` have been approved after test/qa on TEST, Zhou will release to PROD.
 
 ### To work on features in the development environment before ready for testing and releasing
-- Make new feature branches from `devel-test`.
-- Make PRs to `cultivate`.
+- Make new feature branches from `test-release`.
+- Make PRs to `dev-integrate`.
 - As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to devel, and redeploy and reindex the DEV instance.
-- When 
+- When a feature branch is ready for testing and release, make a PR to test-release for deployment and testing on the TEST infrastructure as above.
 
 
 ## Updating the enumerations
