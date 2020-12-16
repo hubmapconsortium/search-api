@@ -94,7 +94,7 @@ class Indexer:
                 self.eswriter.create_index(index)
             
             # Entities 
-            url = app.config['ENTITY_API_URL'] + "/Donor/entities?property=uuid"
+            url = app.config['ENTITY_API_URL'] + "/donor/entities?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
@@ -149,16 +149,15 @@ class Indexer:
         # write enitty into indices
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
+
+            url = self.entity_api_url + "/collections"
+
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
-                
-                # TO-DO
-                # Consortium Collections #
-                url = self.entity_api_url + "/Collection/entities"
+                # Consortium Collections - with sending a token that has the right access permission
                 rspn = requests.get(url, headers = self.request_headers, verify = False)
             elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
-                # Public Collections #
-                url = self.entity_api_url + "/Collection/entities"
-                rspn = requests.get(url, headers = self.request_headers, verify = False)
+                # Public Collections - without sending token
+                rspn = requests.get(url, verify = False)
             else:
                 continue
 
@@ -513,7 +512,7 @@ class Indexer:
 
     def test(self):
         try:
-            url = self.entity_api_url + "/Donor/entities"
+            url = self.entity_api_url + "/donor/entities"
             donors = requests.get(url, headers = self.request_headers, verify = False).json()
             # hubmap_identifier renamed to submission_id
             donors = [donor for donor in donors if donor['submission_id'] == 'TEST0086']
@@ -612,7 +611,8 @@ class Indexer:
 
     def add_datasets_to_collection(self, collection):
         datasets = []
-        for uuid in collection['dataset_uuids']:
+        for dataset in collection['datasets']:
+            uuid = dataset['uuid']
             url = self.entity_api_url + "/entities/" + uuid
             response = requests.get(url, headers = self.request_headers, verify = False)
             if re.status_code != 200:
