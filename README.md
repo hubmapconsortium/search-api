@@ -4,11 +4,21 @@ The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data in
 
 The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf02b838022d564da776b03f357158
 
-## Development process
+## Development and release process
 
-- Make new feature branches from `master`.
-- Make PRs to `devel`. (This is the default branch.)
+### To release via TEST infrastructure
+- Make new feature or bug fix branches from `devel-test`.
+- Make PRs to `devel-test`. (This is the default branch.)
+- As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to TEST infrastructure, and redeploy and reindex the TEST instance.
+- Developer or someone on the team who is familiar with the change will test/qa the change
+- When any current changes in the `devel-test` have been approved after test/qa on TEST, Zhou will release to PROD.
+
+### To work on features in the development environment before ready for testing and releasing
+- Make new feature branches from `devel-test`.
+- Make PRs to `cultivate`.
 - As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to devel, and redeploy and reindex the DEV instance.
+- When 
+
 
 ## Updating the enumerations
 
