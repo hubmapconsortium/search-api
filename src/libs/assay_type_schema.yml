@@ -1,0 +1,36 @@
+'$schema': 'http://json-schema.org/schema#'
+'$id': 'http://schemata.hubmapconsortium.org/assay_type_schema.yml'
+'title': 'assay type schema'
+'description': 'schema for assay type information'
+
+'allOf': [{'$ref': '#/definitions/assay_type_table'}]
+
+'definitions':
+
+   'assay_type_entry':
+     'type': 'object'
+     'properties':
+        'description':
+          'type': 'string'
+          'description': 'a human-readable description of the assay type'
+        'alt-names':
+          'type': 'array'
+          'items':
+            'oneOf': [
+              {'type': 'string',
+               'description': 'an alternate but obsolete name for this assay type'},
+              {'type': 'array',
+               'items': {'type': 'string'},
+               'description': 'an alternate but obsolete name for this assay type'}
+            ]
+        'primary':
+           'type': 'boolean'
+     'required': ['description', 'alt-names', 'primary']
+
+   'assay_type_table':
+      'type': 'object'
+      'propertyNames':
+         'pattern': '^[A-Za-z_\-]*'
+      'additionalProperties':
+        '$ref': '#/definitions/assay_type_entry'
+    

@@ -10,6 +10,8 @@ import ast
 from urllib.parse import urlparse
 from flask import current_app as app
 
+from libs.assay_type import AssayType
+
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
@@ -46,6 +48,47 @@ def http_forbidden(e):
 def index():
     return "Hello! This is HuBMAP Search API service :)"
 
+####################################################################################################
+## Assay type API
+####################################################################################################
+
+@app.route('/assaytype', methods = ['GET'])
+def assaytypes():
+    primary = None
+    simple = False
+    for key, val in request.args.items():
+        print(f'{key}:{val}')
+        if key == 'primary':
+            primary = val.lower() == "true"
+        elif key == 'simple':
+            simple = val.lower() == "true"
+        else:
+            abort(400, f'invalid request parameter {key}')
+
+    if primary is None:
+        name_l = [name for name in AssayType.iter_names()]
+    else:
+        name_l = [name for name in AssayType.iter_names(primary=primary)]
+        
+    if simple:
+        return jsonify(result=name_l)
+    else:
+        return jsonify(result=[AssayType(name).to_json() for name in name_l])
+
+@app.route('/assaytype/<name>', methods = ['GET'])
+@app.route('/assayname', methods = ['POST'])
+def assayname(name=None):
+    if name is None:
+        request_json_required(request)
+        try:
+            name = request.json['name']
+        except Exception:
+            abort(400, 'request contains no "name" field')
+    try:
+        return jsonify(AssayType(name).to_json())
+    except Exception as e:
+        abort(400, str(e))
+        
 
 ####################################################################################################
 ## API
