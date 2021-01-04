@@ -614,7 +614,7 @@ class Indexer:
         collection_uuid = collection['uuid']
         url = self.entity_api_url + "/collections/" + collection_uuid
         response = requests.get(url, headers = self.request_headers, verify = False)
-        if re.status_code != 200:
+        if response.status_code != 200:
             self.logger.error("indexer.add_datasets_to_collection() failed to get collection detail via entity-api for collection uuid: " + collection_uuid)
 
         collection_detail_dict = response.json()
@@ -625,7 +625,7 @@ class Indexer:
                 dataset_uuid = dataset['uuid']
                 url = self.entity_api_url + "/entities/" + dataset_uuid
                 response = requests.get(url, headers = self.request_headers, verify = False)
-                if re.status_code != 200:
+                if response.status_code != 200:
                     self.logger.info("Target collection uuid: " + collection_uuid)
                     self.logger.error("indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: " + dataset_uuid)
 
