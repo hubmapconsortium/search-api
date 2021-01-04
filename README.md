@@ -254,6 +254,16 @@ You can also stop the running container and remove it by:
 ./search-api-docker.sh dev down
 ````
 
+### Tweaks needed for Elasticsearch
+
+Will need to increase the fields limit for each index. For example:
+````
+PUT hm_consortium_entities/_settings
+{
+  "index.mapping.total_fields.limit": 5000
+}
+````
+
 ### Updating API Documentation
 
 The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI.  SmartAPI allows users to register API documents.  The documentation is associated with this github account: api-developers@hubmapconsortium.org. Please contact Chuck Borromeo (chb69@pitt.edu) if you want to register a new API on SmartAPI.
