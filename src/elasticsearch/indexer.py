@@ -610,28 +610,39 @@ class Indexer:
                     self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
 
     def add_datasets_to_collection(self, collection):
+        # First get the detail of this collection
+        collection_uuid = collection['uuid']
+        url = self.entity_api_url + "/collections/" + collection_uuid
+        response = requests.get(url, headers = self.request_headers, verify = False)
+        if re.status_code != 200:
+            self.logger.error("indexer.add_datasets_to_collection() failed to get collection detail via entity-api for collection uuid: " + collection_uuid)
+
+        collection_detail_dict = response.json()
+
         datasets = []
-        for dataset in collection['datasets']:
-            uuid = dataset['uuid']
-            url = self.entity_api_url + "/entities/" + uuid
-            response = requests.get(url, headers = self.request_headers, verify = False)
-            if re.status_code != 200:
-                self.logger.error("indexer.add_datasets_to_collection() failed to get entity via entity-api for uuid: " + uuid)
+        if 'datasets' in collection_detail_dict:
+            for dataset in collection_detail_dict['datasets']:
+                dataset_uuid = dataset['uuid']
+                url = self.entity_api_url + "/entities/" + dataset_uuid
+                response = requests.get(url, headers = self.request_headers, verify = False)
+                if re.status_code != 200:
+                    self.logger.info("Target collection uuid: " + collection_uuid)
+                    self.logger.error("indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: " + dataset_uuid)
 
-            dataset = response.json()
+                dataset = response.json()
 
-            dataset_doc = self.generate_doc(dataset, 'dict')
-            dataset_doc.pop('ancestors')
-            dataset_doc.pop('ancestor_ids')
-            dataset_doc.pop('descendants')
-            dataset_doc.pop('descendant_ids')
-            dataset_doc.pop('immediate_descendants')
-            dataset_doc.pop('immediate_ancestors')
-            dataset_doc.pop('donor')
-            dataset_doc.pop('origin_sample')
-            dataset_doc.pop('source_sample')
+                dataset_doc = self.generate_doc(dataset, 'dict')
+                dataset_doc.pop('ancestors')
+                dataset_doc.pop('ancestor_ids')
+                dataset_doc.pop('descendants')
+                dataset_doc.pop('descendant_ids')
+                dataset_doc.pop('immediate_descendants')
+                dataset_doc.pop('immediate_ancestors')
+                dataset_doc.pop('donor')
+                dataset_doc.pop('origin_sample')
+                dataset_doc.pop('source_sample')
 
-            datasets.append(dataset_doc)
+                datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
 
