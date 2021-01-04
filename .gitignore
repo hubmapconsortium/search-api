@@ -2,13 +2,16 @@ BUILD
 
 **/.vscode/
 
-BUILD
-
 # Docker stuff
 docker/data
 docker/search-api/src
 
+# Configuration
 src/instance/app.cfg
+
+# Copied files for localhost and dev
+src/BUILD
+src/VERSION
 
 src/log
 

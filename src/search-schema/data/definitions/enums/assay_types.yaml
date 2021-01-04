@@ -3,93 +3,309 @@
 
 AF:
     description: Autofluorescence Microscopy
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+ 
+# AF_pyramid:
+#     description: Autofluorescence Microscopy [Image Pyramid]
+#     alt-names: [["AF", "Image Pyramid"], ["Image Pyramid", "AF"]]
+#     primary: false
+#     vitessce-hints: ['pyramid']
 
 ATACseq-bulk:
     description: Bulk ATAC-seq
-bulk_atacseq:
-    description: Bulk ATAC-seq [BWA + MACS2]
+    alt-names: []
+    primary: true
+    vitessce-hints: []
 
-bulk-RNA:
-    description: Bulk RNA-seq
-salmon_rnaseq_bulk:
-    description: Bulk RNA-seq [Salmon]
+bulk_atacseq:
+#ATACseq-bulk_BWA_MACS2:
+    description: Bulk ATAC-seq [BWA + MACS2]
+#    alt-names: [bulk-atacseq]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
+# cellDIVE:
+#     description: ????
+#     alt-names: []
+#     primary: true
 
 CODEX:
     description: CODEX
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 codex_cytokit:
     description: CODEX [Cytokit + SPRM]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['codex', 'is_image', 'is_tiled']
+
+# DART-FISH:
+#     description: ????
+#     alt-names: []
+#     primary: true
+#     vitessce-hints: []
 
 image_pyramid:
     description: Image Pyramid
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_image', 'pyramid']
+    
 IMC:
     description: Imaging Mass Cytometry
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+# IMC_pyramid:
+#     description: Imaging Mass Cytometry [Image Pyramid]
+#     alt-names: []
+#     primary: false
+#     vitessce-hints: ['pyramid']
 
 lc-ms_label-free:
     description: Label-free LC-MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 lc-ms_labeled:
     description: Labeled LC-MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 lc-ms-ms_label-free:
     description: Label-free LC-MS/MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 lc-ms-ms_labeled:
     description: Labeled LC-MS/MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+LC-MS-untargeted:
+    description: Untargeted LC-MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
 
 Lightsheet:
     description: Lightsheet Microscopy
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 MALDI-IMS-neg:
     description: MALDI IMS negative
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+#MALDI-IMS-neg_pyramid:
+#    description: MALDI IMS negative [Image Pyramid]
+#    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-neg"]]
+#    primary: false
+#    vitessce-hints: ['pyramid']
+
 MALDI-IMS-pos:
     description: MALDI IMS positive
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+# MALDI-IMS-pos_pyramid:
+#     description: MALDI IMS positive [Image Pyramid]
+#     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-pos"]]
+#     primary: false
+#     vitessce-hints: ['pyramid']
+
 MxIF:
     description: Multiplexed IF Microscopy
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+# MxIF_pyramid:
+#     description: Multiplexed IF Microscopy [Image Pyramid]
+#     alt-names: [["MxIF", "Image Pyramid"], ["Image Pyramid", "MxIF"]]
+#     primary: false
+#     vitessce-hints: ['pyramid']
+
 PAS:
     description: PAS Stained Microscopy
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+    
+# PAS_pyramid:
+#     description: PAS Stained Microscopy [Image Pyramid]
+#     alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
+#     primary: false    
+#     vitessce-hints: ['pyramid']
+
+bulk-RNA:
+#RNAseq-bulk:
+    description: Bulk RNA-seq
+#    alt-names: [bulk-RNA]
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+salmon_rnaseq_bulk:
+#RNAseq-bulk_salmon:
+    description: Bulk RNA-seq [Salmon]
+#    alt-names: [salmon_rnaseq_bulk]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
 SNAREseq:
     description: SNARE-seq
-TMT-LC-MS:
-    description: TMT LC-MS
-Targeted-Shotgun-LC-MS:
-    description: Targeted Shotgun / Flow-injection LC-MS
-LC-MS-untargeted:
-    description: Untargeted LC-MS
-WGS:
-    description: Whole Genome Sequencing
+    alt-names: []
+    primary: true
+    vitessce-hints: []
 
 sc_atac_seq_snare_lab:
+#SNAREseq_lab:
     description: scATAC-seq (SNARE-seq) [Lab Processed]
+#    alt-names: [sc_atac_seq_snare_lab]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
 sc_atac_seq_snare:
+#SNAREseq_snapATAC:
     description: scATAC-seq (SNARE-seq) [SnapATAC]
+#    alt-names: [sc_atac_seq_snare]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'atac']
 
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 salmon_rnaseq_10x:
+#scRNA-Seq-10x_salmon:
     description: scRNA-seq (10x Genomics) [Salmon]
+#    alt-names: [salmon_rnaseq_10x]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'rna']
 
 sc_rna_seq_snare_lab:
     description: snRNA-seq (SNARE-seq) [Lab Processed]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
 salmon_rnaseq_snareseq:
     description: snRNA-seq (SNARE-seq) [Salmon]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'rna']
 
 sciATACseq:
     description: sciATAC-seq
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 sc_atac_seq_sci:
     description: sciATAC-seq [SnapATAC]
+    alt-names: []
+    primary: true
+    vitessce-hints: ['is_sc', 'atac']
 
 sciRNAseq:
     description: sciRNA-seq
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 salmon_rnaseq_sciseq:
     description: sciRNA-seq [Salmon]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'rna']
 
 seqFish:
     description: seqFISH
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+# seqFish_pyramid:
+#     description: seqFISH [Image Pyramid]
+#     alt-names: []
+#     primary: true
+#     vitessce-hints: ['pyramid']
+
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
 
 snATACseq:
     description: snATAC-seq
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 sn_atac_seq:
+#snATACseq_snapATAC:
     description: snATAC-seq [SnapATAC]
+#    alt-names: [sn_atac_seq]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'atac']
 
 snRNAseq:
     description: snRNA-seq
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]
+    alt-names: []
+    primary: false
+    vitessce-hints: ['is_sc', 'rna']
+
+# Slide-seq:
+#     description: ????
+#     alt-names: []
+#     primary: true
+#     vitesse-hints: [[]
+
+Targeted-Shotgun-LC-MS:
+    description: Targeted Shotgun / Flow-injection LC-MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+TMT-LC-MS:
+    description: TMT LC-MS
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+WGS:
+    description: Whole Genome Sequencing
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+    
