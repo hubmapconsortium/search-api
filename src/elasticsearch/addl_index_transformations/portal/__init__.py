@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 from copy import deepcopy
 import logging
@@ -272,3 +273,16 @@ def _as_path_string(mixed):
     '''
     sep = '/'
     return sep + sep.join(str(s) for s in mixed)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Given a source document, transform it.'
+    )
+
+    parser.add_argument('input', type=argparse.FileType('r'), help='Path of input YAML/JSON.')
+    args = parser.parse_args()
+    input_yaml = args.input.read()
+    doc = load_yaml(input_yaml)
+    transformed = transform(doc)
+    print(dumps(transformed, sort_keys=True, indent=2))
