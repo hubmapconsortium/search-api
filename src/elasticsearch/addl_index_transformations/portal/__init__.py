@@ -37,7 +37,7 @@ def _get_version():
     return 'no-build-file'
 
 
-def transform(doc, batch_id='unspecified'):
+def transform(doc, config, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
     >>> transformed = transform({
@@ -114,31 +114,29 @@ def transform(doc, batch_id='unspecified'):
      'status': 'New'}
 
     '''
-    app = Flask(__name__)
-    with app.app_context():
-        id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
-        logging.info(f'Begin: {id_for_log}')
-        logging.info(f'Entity API: {current_app.config["ENTITY_WEBSERVICE_URL"]}')
-        doc_copy = deepcopy(doc)
-        # We will modify in place below,
-        # so make a deep copy so we don't surprise the caller.
-        _add_validation_errors(doc_copy)
-        _clean(doc_copy)
-        try:
-            translate(doc_copy)
-        except TranslationException as e:
-            logging.error(f'Error: {id_for_log}: {e}')
-            return None
-        sort_files(doc_copy)
-        add_counts(doc_copy)
-        add_everything(doc_copy)
-        doc_copy['mapper_metadata'].update({
-            'version': _get_version(),
-            'datetime': str(datetime.datetime.now()),
-            'size': len(dumps(doc_copy))
-        })
-        logging.info(f'End: {id_for_log}')
-        return doc_copy
+    id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
+    logging.info(f'Begin: {id_for_log}')
+    logging.info(f'Entity API: {config["ENTITY_WEBSERVICE_URL"]}')
+    doc_copy = deepcopy(doc)
+    # We will modify in place below,
+    # so make a deep copy so we don't surprise the caller.
+    _add_validation_errors(doc_copy)
+    _clean(doc_copy)
+    try:
+        translate(doc_copy)
+    except TranslationException as e:
+        logging.error(f'Error: {id_for_log}: {e}')
+        return None
+    sort_files(doc_copy)
+    add_counts(doc_copy)
+    add_everything(doc_copy)
+    doc_copy['mapper_metadata'].update({
+        'version': _get_version(),
+        'datetime': str(datetime.datetime.now()),
+        'size': len(dumps(doc_copy))
+    })
+    logging.info(f'End: {id_for_log}')
+    return doc_copy
 
 
 _data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
