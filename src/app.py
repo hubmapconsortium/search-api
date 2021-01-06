@@ -472,7 +472,7 @@ def reindex_all_uuids(indexer, token):
                     app.logger.debug(f.result())
 
             # 3. Index collection separately
-            indexer.index_collections(token)
+            indexer.index_collections()
 
             end = time.time()
 

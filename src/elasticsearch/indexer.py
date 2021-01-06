@@ -64,13 +64,13 @@ class Indexer:
 
     def main(self):
         try:
-            # Create Indices #
+            # Delete and recreate target indecies
             for index, _ in self.indices.items():
                 self.eswriter.remove_index(index)
                 self.eswriter.create_index(index)
             
-            # Entities 
-            url = self.entity_api_url + "/donor/entities?property=uuid"
+            # Get a list of donor dictionaries 
+            url = self.entity_api_url + "/donor/entities"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
@@ -82,14 +82,14 @@ class Indexer:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
+                    self.logger.debug(f.result())
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
 
             # Index collections separately
-            self.index_collections("token")
+            self.index_collections()
         except Exception:
             logger.error("Exception in user code:")
             logger.error('-'*60)
@@ -98,14 +98,16 @@ class Indexer:
 
     def index_tree(self, donor):
         # logger.info(f"Total threads count: {threading.active_count()}")
+        
+        donor_uuid = donor['uuid']
 
-        logger.info(f"index_tree() for : {donor['uuid']}")
+        logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
 
-        url = self.entity_api_url + "/descendants/" + uuid
+        url = self.entity_api_url + "/descendants/" + donor_uuid
         response = requests.get(url, headers = self.request_headers, verify = False)
 
         if response.status_code != 200:
-            logger.error("indexer.index_tree() failed to get descendants via entity-api for uuid: " + uuid)
+            logger.error("indexer.index_tree() failed to get descendants via entity-api for donor of uuid: " + donor_uuid)
         
         descendants = response.json()
 
@@ -120,9 +122,9 @@ class Indexer:
 
         return "Done."
 
-    def index_collections(self, token):
+    def index_collections(self):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-        # write enitty into indices
+        # write entity into indices
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
 
