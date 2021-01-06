@@ -6,7 +6,8 @@ set -o errexit
 cd `dirname $0`
 
 topdir=${PWD}/../..
-reldir=`realpath --relative-to $topdir .`
+reldir=`realpath --relative-to $topdir .` \
+  || die 'On Mac? "brew install coreutils" to get realpath.'
 
 start libs/assay_type
 CMD="python ./assay_type.py"
