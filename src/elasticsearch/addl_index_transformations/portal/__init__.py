@@ -8,7 +8,6 @@ from tempfile import TemporaryDirectory
 
 from yaml import safe_load as load_yaml
 import jsonschema
-from flask import Flask, current_app
 
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
@@ -37,7 +36,7 @@ def _get_version():
     return 'no-build-file'
 
 
-def transform(doc, config, batch_id='unspecified'):
+def transform(doc, config):
     '''
     >>> from pprint import pprint
     >>> transformed = transform({
@@ -72,7 +71,7 @@ def transform(doc, config, batch_id='unspecified'):
     ...            'unrealistic': 'Donors do not have metadata/metadata.'
     ...        }
     ...    }
-    ... })
+    ... }, {'ENTITY_WEBSERVICE_URL': 'http://example.com/fake-api'})
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
     {'ancestor_counts': {'entity_type': {}},
@@ -114,7 +113,7 @@ def transform(doc, config, batch_id='unspecified'):
      'status': 'New'}
 
     '''
-    id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
+    id_for_log = f'UUID {doc["uuid"] if "uuid" in doc else "missing"}'
     logging.info(f'Begin: {id_for_log}')
     logging.info(f'Entity API: {config["ENTITY_WEBSERVICE_URL"]}')
     doc_copy = deepcopy(doc)

@@ -152,7 +152,7 @@ class Indexer:
 
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
-                transformed = json.dumps(transform(collection))
+                transformed = json.dumps(transform(collection, config))
                 (self.eswriter
                      .write_or_update_document(index_name=index,
                                                doc=transformed,
@@ -422,7 +422,7 @@ class Indexer:
             org_node = copy.deepcopy(node)
             node.setdefault('type', 'entity')
             doc = self.generate_doc(node, 'json')
-            transformed = json.dumps(transform(json.loads(doc)))
+            transformed = json.dumps(transform(json.loads(doc), config))
             if (transformed is None or
                transformed == 'null' or
                transformed == ""):
@@ -445,7 +445,7 @@ class Indexer:
                 if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and
                    self.entity_is_public(org_node)):
                     public_doc = self.generate_public_doc(node)
-                    public_transformed = transform(json.loads(public_doc))
+                    public_transformed = transform(json.loads(public_doc), config)
                     public_transformed_doc = json.dumps(public_transformed)
                     result = (self
                               .eswriter
