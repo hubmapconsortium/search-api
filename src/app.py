@@ -188,9 +188,8 @@ def status():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        indexer = Indexer(app.config['INDICES'],
-                          app.config['ELASTICSEARCH_URL'],
-                          app.config['ENTITY_API_URL'])
+        indexer = init_indexer()
+
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
     except Exception as e:
@@ -202,7 +201,8 @@ def reindex(uuid):
 def reindex_all():
     token = get_nexus_token(request.headers)
     try:
-        indexer = Indexer(app.config['INDICES'], app.config['ELASTICSEARCH_URL'], app.config['ENTITY_API_URL'])
+        indexer = init_indexer()
+
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
         app.logger.error(e)
@@ -428,6 +428,15 @@ def get_uuids_from_es(index):
             query['from'] = len(uuids)
 
     return uuids
+
+def init_indexer():
+    return Indexer(app.config['INDICES'],
+            app.config['ORIGINAL_DOC_TYPE'],
+            app.config['PORTAL_DOC_TYPE'],
+            app.config['ELASTICSEARCH_URL'],
+            app.config['ENTITY_API_URL'],
+            app.config['APP_CLIENT_ID'],
+            app.config['APP_CLIENT_SECRET'])
 
 
 def reindex_all_uuids(indexer, token):
