@@ -32,7 +32,6 @@ app.config.from_pyfile('app.cfg')
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
 app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
-app.config['UUID_API_URL'] = app.config['UUID_API_URL'].strip('/')
 
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)

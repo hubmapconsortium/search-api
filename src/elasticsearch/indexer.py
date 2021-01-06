@@ -32,19 +32,6 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
 logger = logging.getLogger(__name__)
 
 class Indexer:
-    # Class variables
-    indices
-    original_doc_type
-    portal_doc_type
-    elasticsearch_url
-    app_client_id
-    app_client_secret
-
-    report
-    request_headers
-    eswriter
-    attr_map
-
     # Constructor method with instance variables to be passed in
     def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret):
 

@@ -3,23 +3,16 @@ import json
 import os
 import logging
 import sys
-from flask import current_app as app
+
+# Set logging fromat and level (default is warning)
+# All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
+# Log rotation is handled via logrotate on the host system with a configuration file
+# Do NOT handle log file and rotation via the Python logging to avoid issues with multi-worker processes
+logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
 
 class ESWriter:
     def __init__(self, elasticsearch_url):
-        try:
-            self.logger = app.logger
-        except:
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-            fh = logging.FileHandler('log')
-            fh.setLevel(logging.INFO)
-            fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
-            sh = logging.StreamHandler(stream=sys.stdout)
-            sh.setLevel(logging.INFO)
-            sh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
-            self.logger.addHandler(fh)
-            self.logger.addHandler(sh)
         self.elasticsearch_url = elasticsearch_url
 
     def write_document(self, index_name, doc, uuid):
@@ -28,12 +21,12 @@ class ESWriter:
                                  headers={'Content-Type': 'application/json'},
                                  data=doc)
             if rspn.ok:
-                self.logger.debug("write doc done")
+                logger.debug("write doc done")
             else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
+                logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
                         Error Message: {rspn.text}""")
         except Exception as e:
-            self.logger.error(str(e))
+            logger.error(str(e))
 
         # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
 
@@ -42,11 +35,11 @@ class ESWriter:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
                                  headers={'Content-Type': 'application/json'})
             if rspn.ok:
-                self.logger.info(f"doc: {uuid} deleted")
+                logger.info(f"doc: {uuid} deleted")
             else:
-                self.logger.error(rspn.text)
+                logger.error(rspn.text)
         except Exception as e:
-            self.logger.error(str(e))
+            logger.error(str(e))
 
     def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
@@ -54,15 +47,15 @@ class ESWriter:
                                 headers={'Content-Type': 'application/json'},
                                 data=doc)
             if rspn.ok:
-                self.logger.debug(f"write doc done. UUID: {uuid}")
+                logger.debug(f"write doc done. UUID: {uuid}")
                 return True
             else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
+                logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
                         Error Message: {rspn.text}""")
-                self.logger.error(f"Document: {doc}")
+                logger.error(f"Document: {doc}")
                 return False
         except Exception as e:
-            self.logger.error(str(e))
+            logger.error(str(e))
 
     def remove_index(self, index_name):
         rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
@@ -81,9 +74,9 @@ class ESWriter:
                                                     "date_detection": False
                                                 }}))
             if rspn.ok:
-                self.logger.info(f"index {index_name} created")
+                logger.info(f"index {index_name} created")
             else:
-                self.logger.error(f"""error happened when creating {index_name} on elasticsearch\n
+                logger.error(f"""error happened when creating {index_name} on elasticsearch\n
                         Error Message: {rspn.text}""")
         except Exception as e:
-            self.logger.error(str(e))
+            logger.error(str(e))

@@ -14,9 +14,7 @@ WORKDIR /usr/src/app
 COPY . .
 
 # Install flask app dependencies with pip (pip3 also works)
-# Also install the user-created packages (must specify the src/ with slash)
-RUN pip install -r src/requirements.txt && \
-    pip install src/
+RUN pip install -r src/requirements.txt
 
 # The EXPOSE instruction informs Docker that the container listens on the specified network ports at runtime. 
 # EXPOSE does not make the ports of the container accessible to the host.
