@@ -94,10 +94,9 @@ class Indexer:
             # Index collections separately
             self.index_collections()
         except Exception:
-            logger.error("Exception in user code:")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+            msg = "Exception encountered during executing indexer.main()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def index_tree(self, donor):
         # logger.info(f"Total threads count: {threading.active_count()}")
@@ -119,10 +118,10 @@ class Indexer:
             # disploy_doi renamed to hubmap_id
             logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
  
-            self.update_index(node)
-
             # Statistics
             self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
+
+            self.update_index(node)
 
         return "indexer.index_tree() finished executing"
 
@@ -222,21 +221,19 @@ class Indexer:
                 else:
                     logger.error(f"Cannot find uuid: {uuid}")
                     return f"Done."
-        except Exception as e:
-            logger.error("Exception in user code:")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+        except Exception:
+            msg = "Exceptions during executing indexer.reindex()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def delete(self, uuid):
         try:
             for index, _ in self.indices.items():
                 self.eswriter.delete_document(index, uuid)
         except Exception:
-            logger.error("Exception in user code:")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+            msg = "Exceptions during executing indexer.delete()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def generate_doc(self, entity, return_type):
         try:
@@ -406,12 +403,10 @@ class Indexer:
             self.remove_specific_key_entry(entity, "other_metadata")
 
             return json.dumps(entity) if return_type == 'json' else entity
-
-        except Exception as e:
-            logger.error(f"Exception in generate_doc()")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+        except Exception:
+            msg = "Exceptions during executing indexer.generate_doc()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def generate_public_doc(self, entity):
         entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
@@ -482,11 +477,10 @@ class Indexer:
             else:
                 return HubmapConst.ACCESS_LEVEL_CONSORTIUM
         
-        except Exception as e:
-            logger.error("Exception in user code:")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+        except Exception:
+            msg = "Exception encountered during executing indexer.access_group()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def get_access_level(self, entity):
         try:
@@ -571,11 +565,12 @@ class Indexer:
             self.report['fail_cnt'] +=1
             self.report['fail_uuids'].add(node['uuid'])
 
-            logger.error(f"""Exception in user code, 
-                        uuid: {org_node['uuid']}""")
-            logger.error('-'*60)
-            logger.exception("unexpected exception")
-            logger.error('-'*60)
+            logger.error(f"""Exception in user code, uuid: {org_node['uuid']}""")
+            
+            msg = "Exception encountered during executing indexer.update_index()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
+
 
     def entity_is_public(self, node):
         # Here the node properties have already been renamed
