@@ -338,9 +338,7 @@ class Indexer:
                     # move files to the root level
                     try:
                         entity['files'] = ast.literal_eval(entity['ingest_metadata'])['files']
-                    except KeyError:
-                        logger.error("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
-                    except TypeError:
+                    except (KeyError, TypeError):
                         logger.error("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
@@ -375,9 +373,7 @@ class Indexer:
 
             try:
                 entity['metadata'].pop('files')
-            except KeyError:
-                logger.error("There are no files in metadata to pop")
-            except AttributeError:
+            except (KeyError, AttributeError):
                 logger.error("There are no files in metadata to pop")
 
             # Rename for properties that are objects
