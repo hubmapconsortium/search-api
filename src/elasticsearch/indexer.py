@@ -118,12 +118,13 @@ class Indexer:
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
             logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
-            
-            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
-
+ 
             self.update_index(node)
 
-        return "Done."
+            # Statistics
+            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
+
+        return "indexer.index_tree() finished executing"
 
     def index_collections(self):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
@@ -155,15 +156,17 @@ class Indexer:
                 self.entity_keys_rename(collection)
                 # Use `entity_type` instead of `entity_class` explicitly for Collection
                 # Otherwise, it won't get reindexed
-                # Because we are not rename the Collection.entity_class to entity_type in json mapping
+                # Because we are not renaming the Collection.entity_class to entity_type in json mapping file
                 collection.setdefault('entity_type', 'Collection')
-                (self.eswriter
-                     .write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid']))
+                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
 
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
                 transformed = json.dumps(transform(collection))
-                (self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid']))
+                self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
+
+                # Statistics
+                self.report[collection['entity_class']] = self.report.get(collection['entity_class'], 0) + 1
 
 
     def reindex(self, uuid):
@@ -206,7 +209,8 @@ class Indexer:
                     self.update_index(node)
                 
                 logger.info("################reindex() DONE######################")
-                return f"Done."
+                
+                return "indexer.reindex() finished executing"
             else:
                 collection = {}
                 #This uuid is a collection
@@ -658,5 +662,6 @@ if __name__ == "__main__":
     logger.info(f"Count of failed nodes: {indexer.report['fail_cnt']}")
     logger.info(f"The uuids of failed nodes: {indexer.report['fail_uuids']}")
 
+    # Show the counts by entity class
     for key, value in indexer.report.items():
-        logger.info(f"key: {key}, value: {value}")
+        logger.info(f"Entity class: {key}, nodes indexed: {value}")
