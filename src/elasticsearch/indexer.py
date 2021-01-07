@@ -69,7 +69,7 @@ class Indexer:
         try:
             # Delete and recreate target indecies
             for index, _ in self.indices.items():
-                self.eswriter.remove_index(index)
+                self.eswriter.delete_index(index)
                 self.eswriter.create_index(index)
             
             # Get a list of donor dictionaries 
@@ -536,6 +536,8 @@ class Indexer:
                     public_doc = self.generate_public_doc(node)
                     public_transformed = transform(json.loads(public_doc))
                     public_transformed_doc = json.dumps(public_transformed)
+                    
+                    # eswriter.write_or_update_document returns boolean
                     result = (self.eswriter.write_or_update_document(
                                 index_name=index,
                                 doc=(public_transformed_doc
