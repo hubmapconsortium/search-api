@@ -12,6 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from urllib3.exceptions import InsecureRequestWarning
 
+# For reusing the app.cfg configuration when running indexer.py as script
+from flask import Flask
+
 # Local modules
 from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
@@ -620,3 +623,40 @@ class Indexer:
 
         collection['datasets'] = datasets
 
+
+####################################################################################################
+## Run indexer.py as script
+####################################################################################################
+
+# Running indexer.py as a script in command line
+# This approach is different from the live reindex via HTTP request
+# It'll delete all the existing indices and recreate then then index everything
+if __name__ == "__main__":
+    # Specify the absolute path of the instance folder and use the config file relative to the instance path
+    app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance'), instance_relative_config=True)
+    app.config.from_pyfile('app.cfg')
+
+    # Create an instance of the indexer
+    indexer = Indexer(
+        app.config['INDICES'],
+        app.config['ORIGINAL_DOC_TYPE'],
+        app.config['PORTAL_DOC_TYPE'],
+        app.config['ELASTICSEARCH_URL'],
+        app.config['ENTITY_API_URL'],
+        app.config['APP_CLIENT_ID'],
+        app.config['APP_CLIENT_SECRET']
+    )
+
+    start = time.time()
+    logger.info("############# Full index via script started #############")
+
+    indexer.main()
+
+    end = time.time()
+    logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
+    logger.info(f"Count of successfully indexed nodes: {indexer.report['success_cnt']}")
+    logger.info(f"Count of failed nodes: {indexer.report['fail_cnt']}")
+    logger.info(f"The uuids of failed nodes: {indexer.report['fail_uuids']}")
+
+    for key, value in indexer.report.items():
+        logger.info(f"key: {key}, value: {value}")

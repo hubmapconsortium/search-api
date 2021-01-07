@@ -4,57 +4,15 @@
 
 The file named `mapper_metadata.VERSION` in this current directory is used to keep tracking the the version of the indexed data entries in Elasticsearch. The portal-ui also queries this version number from Elasticsearch and shows it at `https://portal.hubmapconsortium.org/dev-search`. Ensuring the version number consitency between the deployed search-api code and the one shows up in portal-ui is critical for data integrity purposes. Before the indexer code reindexes the data from Neo4j, we should increment this version number to indicte this reindexing. 
 
-## Run the indexer from a Python script
+## Run the indexer as script
 
-You can either pass in the following configuration items found in `instance/app.cfg.example` via the Flask application context or initialize separately then run from a Python script, for example `src/indexer_runner.py`:
+When running this indexer as a Python script, it will delete all the existing indices and recreate them then index everything. And it requires to have all the dependencies installed already. For the DEV/TEST/STAGE/PROD deployment, we can just run the below command within the search-api container under the source code directory (either mounted or copied) `src`:
 
 ````
-# Local modules
-from elasticsearch.indexer import Indexer
-
-####################################################################################################
-## Variables to initialize the indexer
-####################################################################################################
-
-# Open: Only entities can open to the public
-# All: All entities
-# original: directly from neo4j
-# transformed: transformed by portal transform method
-indices = """{
-            'hm_public_entities': ('public','original'),
-            'hm_consortium_entities': ('consortium', 'original'),
-            'hm_public_portal': ('public', 'portal'),
-            'hm_consortium_portal': ('consortium', 'portal')
-            }"""
-
-original_doc_type = 'original'
-portal_doc_type = 'portal'
-
-# AWS ElasticSearch Endpoint
-# Works regardless of the trailing slash /
-elasticsearch_url = ''
-
-# URLs for talking to Entity API (default value used for docker deployment, no token needed)
-# Don't use localhost since uuid-api is running on a different container
-# Point to remote URL for non-docker development
-# Works regardless of the trailing slash
-entity_api_url = 'https://entity-api.refactor.hubmapconsortium.org'
-
-# Globus app client ID and secret
-app_client_id = ''
-app_client_secret = ''
-
-####################################################################################################
-## Create indexer instance and run
-####################################################################################################
-
-if __name__ == "__main__":
-    # Create an instance of the indexer
-    indexer = Indexer(indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret)
-    
-    # Delete existing indices and recreate indices then index everything
-    indexer.main()
+python3 -m elasticsearch.indexer
 ````
+
+This approach uses the same configuration file `src/instance/app.cfg` so make sure it exists.
 
 ## Live reindex via HTTP request
 
