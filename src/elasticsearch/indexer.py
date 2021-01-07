@@ -209,7 +209,7 @@ class Indexer:
                     self.update_index(node)
                 
                 logger.info("################reindex() DONE######################")
-                
+
                 return "indexer.reindex() finished executing"
             else:
                 collection = {}
@@ -341,9 +341,9 @@ class Indexer:
                     try:
                         entity['files'] = ast.literal_eval(entity['ingest_metadata'])['files']
                     except KeyError:
-                        logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        logger.error("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
                     except TypeError:
-                        logger.debug("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
+                        logger.error("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
 
             self.entity_keys_rename(entity)
 
@@ -378,9 +378,9 @@ class Indexer:
             try:
                 entity['metadata'].pop('files')
             except KeyError:
-                logger.debug("There are no files in metadata to pop")
+                logger.error("There are no files in metadata to pop")
             except AttributeError:
-                logger.debug("There are no files in metadata to pop")
+                logger.error("There are no files in metadata to pop")
 
             # Rename for properties that are objects
             if entity.get('donor', None):
@@ -441,8 +441,8 @@ class Indexer:
         return headers_dict
 
     def entity_keys_rename(self, entity):
-        logger.debug("==================entity before renaming keys==================")
-        logger.debug(entity)
+        # logger.debug("==================entity before renaming keys==================")
+        # logger.debug(entity)
 
         to_delete_keys = []
         temp = {}
@@ -458,8 +458,8 @@ class Indexer:
         
         entity.update(temp)
 
-        logger.debug("==================entity after renaming keys==================")
-        logger.debug(entity)
+        # logger.debug("==================entity after renaming keys==================")
+        # logger.debug(entity)
         
 
     def remove_specific_key_entry(self, obj, key_to_remove):
@@ -510,7 +510,7 @@ class Indexer:
                 else:
                     raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
-            logger.debug(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
+            logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
             return HubmapConst.ACCESS_LEVEL_CONSORTIUM
         except Exception:
             pass
