@@ -17,7 +17,8 @@ class ESWriter:
 
     def write_document(self, index_name, doc, uuid):
         try:
-            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}", json=doc)
+            headers = {'Content-Type': 'application/json'}
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}", headers=headers, data=doc)
             if rspn.ok:
                 logger.debug("write doc done")
             else:
@@ -30,7 +31,8 @@ class ESWriter:
 
     def delete_document(self, index_name, uuid):
         try:
-            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}")
+            headers = {'Content-Type': 'application/json'}
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}", headers=headers)
             if rspn.ok:
                 logger.info(f"doc: {uuid} deleted")
             else:
@@ -40,7 +42,8 @@ class ESWriter:
 
     def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", json=doc)
+            headers = {'Content-Type': 'application/json'}
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
             if rspn.ok:
                 logger.debug(f"write doc done. UUID: {uuid}")
                 return True
@@ -63,6 +66,8 @@ class ESWriter:
 
     def create_index(self, index_name):
         try:
+            headers = {'Content-Type': 'application/json'}
+
             index_info_dict = {
                 "settings": {
                     "index" : {
@@ -75,7 +80,7 @@ class ESWriter:
                 }
             }
 
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", json=index_info_dict)
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(index_info_dict))
             if rspn.ok:
                 logger.info(f"index {index_name} created")
             else:
