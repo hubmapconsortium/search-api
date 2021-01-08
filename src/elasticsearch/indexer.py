@@ -369,7 +369,7 @@ class Indexer:
             entity['update_timestamp_fmted'] = (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             
             # Parse the VERSION number
-            entity['index_version'] = ((Path(__file__).parent.parent / 'VERSION').read_text()).strip()
+            entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
 
             try:
                 entity['metadata'].pop('files')
