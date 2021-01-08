@@ -2,8 +2,6 @@ BUILD
 
 **/.vscode/
 
-BUILD
-
 # Docker stuff
 docker/data
 docker/search-api/src
@@ -18,10 +16,6 @@ src/log
 # Rotated log files
 **/*.log*
 
-src/elasticsearch/instance
-src/elasticsearch/conf.py
-src/elasticsearch/conf.ini
-src/search_api.egg-info
 
 __pycache__/
 

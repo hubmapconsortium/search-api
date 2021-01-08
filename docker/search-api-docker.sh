@@ -99,17 +99,17 @@ else
             # On test/stage/prod, copy the VERSION file and BUILD file to image
             if [[ "$1" != "localhost" && "$1" != "dev" && "$1" != "refactor" ]]; then
                 # Delete old VERSION and BUILD files if found
-                if [ -f "search-api/src/VERSION" ]; then
-                    rm -rf search-api/src/VERSION
+                if [ -f "search-api/VERSION" ]; then
+                    rm -rf search-api/VERSION
                 fi
                 
-                if [ -f "search-api/src/BUILD" ]; then
-                    rm -rf search-api/src/BUILD
+                if [ -f "search-api/BUILD" ]; then
+                    rm -rf search-api/BUILD
                 fi
                 
-                # Copy over the one files
-                cp ../VERSION search-api/src
-                cp ../BUILD search-api/src
+                # Copy over the VERSION and BUILD files
+                cp ../VERSION search-api
+                cp ../BUILD search-api
             fi
 
             docker-compose -f docker-compose.yml -f docker-compose.$1.yml -p search-api build

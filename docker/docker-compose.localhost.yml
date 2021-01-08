@@ -8,7 +8,7 @@ services:
       - HOST_UID=${HOST_UID:-1000}
     volumes:
       # Mount the VERSION file and BUILD file
-      - "../VERSION:/usr/src/app/src/VERSION"
-      - "../BUILD:/usr/src/app/src/BUILD"
+      - "../VERSION:/usr/src/app/VERSION"
+      - "../BUILD:/usr/src/app/BUILD"
       # Mount the app config to container in order to keep it outside of the image
       - "../src:/usr/src/app/src"
