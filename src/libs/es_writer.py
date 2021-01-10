@@ -47,10 +47,10 @@ class ESWriter:
         try:
             headers = {'Content-Type': 'application/json'}
 
-            logger.debug(f"Document: {doc}")
+            #logger.debug(f"Document: {doc}")
 
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
-            if rspn.ok:
+            if rspn.status_code in [200, 201, 202]:
                 logger.info(f"""Added doc of uuid: {uuid} to index: {index_name}""")
                 
                 return True
