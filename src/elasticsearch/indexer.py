@@ -537,20 +537,19 @@ class Indexer:
                     public_transformed = transform(json.loads(public_doc))
                     public_transformed_doc = json.dumps(public_transformed)
                     
+                    target_doc = public_doc
+                    if configs.doc_type == self.portal_doc_type:
+                        target_doc = public_transformed_doc
+
                     # eswriter.write_or_update_document returns boolean
-                    result = (self.eswriter.write_or_update_document(
-                                index_name=index,
-                                doc=(public_transformed_doc
-                                     if configs.doc_type == self.portal_doc_type
-                                     else public_doc),
-                                uuid=node['uuid']))
+                    result = (self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid']))
                 elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
-                    result = (self.eswriter.write_or_update_document(
-                                index_name=index,
-                                doc=(transformed
-                                     if configs.doc_type == self.portal_doc_type
-                                     else doc),
-                                uuid=node['uuid']))
+                    target_doc = doc
+                    if configs.doc_type == self.portal_doc_type:
+                        target_doc = transformed
+
+                    result = (self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid']))
+                
                 if result:
                     self.report['success_cnt'] += 1
                 else:

@@ -46,6 +46,9 @@ class ESWriter:
     def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
             headers = {'Content-Type': 'application/json'}
+
+            logger.debug(f"Document: {doc}")
+
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
             if rspn.ok:
                 logger.info(f"""Added doc of uuid: {uuid} to index: {index_name}""")
@@ -54,7 +57,6 @@ class ESWriter:
             else:
                 logger.error(f"""Failed to write doc of uuid: {uuid} to index: {index_name}""")
                 logger.error(f"""Error Message: {rspn.text}""")
-                logger.error(f"Document: {doc}")
 
                 return False
         except Exception:
