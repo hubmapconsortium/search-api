@@ -14,6 +14,12 @@ python3 -m elasticsearch.indexer
 
 This approach uses the same configuration file `src/instance/app.cfg` so make sure it exists.
 
+By default, the logging output of this script goes to either STDERR or STDOUT. For debugging purpose, we can redirect STDOUT (1) to a file, and then we redirect to STDERR (2) to the new address of 1 (the file). Now both STDOUT and STDERR are going to the same `indexer.log`.
+
+````
+python3 -m elasticsearch.indexer 1>indexer.log 2>&1
+````
+
 ## Live reindex via HTTP request
 
 The live reindex will NOT recreate the indices, instead it will just delete and documents that are no longer in Neo4j and reindex each entity document found in Neo4j.
