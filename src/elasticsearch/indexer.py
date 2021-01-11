@@ -20,7 +20,6 @@ from libs.es_writer import ESWriter
 from elasticsearch.addl_index_transformations.portal import transform
 
 # HuBMAP commons
-from hubmap_commons.hubmap_const import HubmapConst
 from hubmap_commons.hm_auth import AuthHelper
 from hubmap_commons import globus_groups
 
@@ -35,6 +34,11 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
 logger = logging.getLogger(__name__)
 
 class Indexer:
+    # Class variables/constants
+    ACCESS_LEVEL_PUBLIC = 'public'
+    ACCESS_LEVEL_CONSORTIUM = 'consortium'
+    DATASET_STATUS_PUBLISHED = 'Published'
+
     # Constructor method with instance variables to be passed in
     def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret):
 
@@ -137,7 +141,7 @@ class Indexer:
             if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
                 # Consortium Collections - with sending a token that has the right access permission
                 rspn = requests.get(url, headers = self.request_headers, verify = False)
-            elif (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
+            elif (configs.access_level == self.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections - without sending token
                 rspn = requests.get(url, verify = False)
             else:
@@ -468,11 +472,11 @@ class Indexer:
         try:
             if entity['entity_class'] == 'Dataset':
                 if entity['status'] == 'Published' and entity['contains_human_genetic_sequences'] == False:
-                    return HubmapConst.ACCESS_LEVEL_PUBLIC
+                    return self.ACCESS_LEVEL_PUBLIC
                 else:
-                    return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                    return self.ACCESS_LEVEL_CONSORTIUM
             else:
-                return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                return self.ACCESS_LEVEL_CONSORTIUM
         
         except Exception:
             msg = "Exception encountered during executing indexer.access_group()"
@@ -484,25 +488,25 @@ class Indexer:
             entity_class = entity['entity_class'] if 'entity_class' in entity else entity['entity_type']
 
             if entity_class:
-                if entity_class == HubmapConst.COLLECTION_TYPE_CODE:
-                    if entity['data_access_level'] in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                if entity_class == 'Collection':
+                    if entity['data_access_level'] in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
                         return entity['data_access_level']
                     else:
-                        return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                        return self.ACCESS_LEVEL_CONSORTIUM
                 # Hard code instead of use commons constants for now.
                 elif entity_class in ['Donor', 'Sample', 'Dataset']:
                     
                     dal = entity['data_access_level']
 
-                    if dal in HubmapConst.DATA_ACCESS_LEVEL_OPTIONS:
+                    if dal in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
                         return dal
                     else:
-                        return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+                        return self.ACCESS_LEVEL_CONSORTIUM
                 else:
                     raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
             logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
-            return HubmapConst.ACCESS_LEVEL_CONSORTIUM
+            return self.ACCESS_LEVEL_CONSORTIUM
         except Exception:
             pass
 
@@ -526,13 +530,13 @@ class Indexer:
             # delete entity from published indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
-                if configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC:
+                if configs.access_level == self.ACCESS_LEVEL_PUBLIC:
                     self.eswriter.delete_document(index, node['uuid'])
 
             # write enitty into indices
             for index, configs in self.indices.items():
                 configs = IndexConfig(*configs)
-                if (configs.access_level == HubmapConst.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
+                if (configs.access_level == self.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
                     public_doc = self.generate_public_doc(node)
                     public_transformed = transform(json.loads(public_doc))
                     public_transformed_doc = json.dumps(public_transformed)
@@ -543,7 +547,7 @@ class Indexer:
 
                     # eswriter.write_or_update_document returns boolean
                     result = (self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid']))
-                elif configs.access_level == HubmapConst.ACCESS_LEVEL_CONSORTIUM:
+                elif configs.access_level == self.ACCESS_LEVEL_CONSORTIUM:
                     target_doc = doc
                     if configs.doc_type == self.portal_doc_type:
                         target_doc = transformed
@@ -574,14 +578,14 @@ class Indexer:
         # Here the node properties have already been renamed
         if 'entity_type' in node:  # Tranformed Node
             return ((node.get('entity_type', '') == 'Dataset' and
-                    node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    node.get('status', '') == self.DATASET_STATUS_PUBLISHED) or
                     (node.get('entity_type', '') != 'Dataset' and
-                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+                    self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC))
         else:  # Original Node
             return ((node.get('entity_class', '') == 'Dataset' and
-                    node.get('status', '') == HubmapConst.DATASET_STATUS_PUBLISHED) or
+                    node.get('status', '') == self.DATASET_STATUS_PUBLISHED) or
                     (node.get('entity_class', '') != 'Dataset' and
-                    self.get_access_level(node) == HubmapConst.ACCESS_LEVEL_PUBLIC))
+                    self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC))
 
     def add_datasets_to_collection(self, collection):
         # First get the detail of this collection
