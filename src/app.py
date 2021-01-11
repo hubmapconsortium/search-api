@@ -358,23 +358,23 @@ def get_query_string(url):
     return query_string
 
 
-# Get a list of entity uuids via entity-api for a given entity class:
+# Get a list of entity uuids via entity-api for a given entity type:
 # Collection, Donor, Sample, Dataset. Case-insensitive.
-def get_uuids_by_entity_class(entity_class):
-    entity_class = entity_class.lower()
+def get_uuids_by_entity_type(entity_type):
+    entity_type = entity_type.lower()
 
     auth_helper = init_auth_helper()
     request_headers = create_request_headers_for_auth(auth_helper.getProcessSecret())
 
-    if entity_class == 'collection':
+    if entity_type == 'collection':
         url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
     else:
-        url = app.config['ENTITY_API_URL'] + "/" + entity_class + "/entities?property=uuid"
+        url = app.config['ENTITY_API_URL'] + "/" + entity_type + "/entities?property=uuid"
 
     response = requests.get(url, headers = request_headers, verify = False)
     
     if response.status_code != 200:
-        internal_server_error("get_uuids_by_entity_class() failed to make a request to entity-api for entity class: " + entity_class)
+        internal_server_error("get_uuids_by_entity_type() failed to make a request to entity-api for entity type: " + entity_type)
     
     uuids_list = response.json()
     
@@ -447,11 +447,11 @@ def reindex_all_uuids(indexer, token):
 
             start = time.time()
 
-            # Make calls to entity-api to get a list of uuids for each entity class
-            donor_uuids_list = get_uuids_by_entity_class("donor")
-            sample_uuids_list = get_uuids_by_entity_class("sample")
-            collection_uuids_list = get_uuids_by_entity_class("collection")
-            dataset_uuids_list = get_uuids_by_entity_class("dataset")
+            # Make calls to entity-api to get a list of uuids for each entity type
+            donor_uuids_list = get_uuids_by_entity_type("donor")
+            sample_uuids_list = get_uuids_by_entity_type("sample")
+            collection_uuids_list = get_uuids_by_entity_type("collection")
+            dataset_uuids_list = get_uuids_by_entity_type("dataset")
 
             # Merge into a big list that with no duplicates
             all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + dataset_uuids_list)

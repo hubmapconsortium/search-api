@@ -115,7 +115,7 @@ class Indexer:
         for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
-            logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown entity type')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
  
             self.update_index(node)
 
@@ -146,9 +146,7 @@ class Indexer:
             for collection in collections_list:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
-                # Use `entity_type` instead of `entity_class` explicitly for Collection
-                # Otherwise, it won't get reindexed
-                # Because we are not renaming the Collection.entity_class to entity_type in json mapping file
+                
                 collection.setdefault('entity_type', 'Collection')
                 self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
 
@@ -170,7 +168,7 @@ class Indexer:
             
             # Check if entity is empty
             if bool(entity):
-                logger.info("reindex() for uuid: " + uuid + " entity_class: " + entity['entity_class'])
+                logger.info("reindex() for uuid: " + uuid + " entity_type: " + entity['entity_type'])
 
                 url = self.entity_api_url + "/ancestors/" + uuid
                 ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
@@ -192,7 +190,7 @@ class Indexer:
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+                    logger.debug(f"entity_type: {node.get('entity_type', 'Unknown entity type')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
                     
                     logger.info("reindex(): About to update_index")
                     self.update_index(node)
@@ -263,7 +261,7 @@ class Indexer:
 
             donor = None
             for a in ancestors:
-                if a['entity_class'] == 'Donor':
+                if a['entity_type'] == 'Donor':
                     donor = copy.copy(a)
                     break
 
@@ -291,7 +289,7 @@ class Indexer:
 
 
             # Why?
-            if entity['entity_class'] in ['Sample', 'Dataset']:
+            if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Add new properties
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
@@ -303,7 +301,7 @@ class Indexer:
                         entity['origin_sample'] = {}
 
                 # Trying to understand here!!!
-                if entity['entity_class'] == 'Dataset':
+                if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
 
                     e = entity
@@ -317,7 +315,7 @@ class Indexer:
 
                         try:
                             # Why?
-                            if parents[0]['entity_class'] == 'Sample':
+                            if parents[0]['entity_type'] == 'Sample':
                                 entity['source_sample'] = parents
 
                             e = parents[0]
@@ -455,7 +453,7 @@ class Indexer:
 
     def access_group(self, entity):
         try:
-            if entity['entity_class'] == 'Dataset':
+            if entity['entity_type'] == 'Dataset':
                 if entity['status'] == 'Published' and entity['contains_human_genetic_sequences'] == False:
                     return self.ACCESS_LEVEL_PUBLIC
                 else:
@@ -470,25 +468,24 @@ class Indexer:
 
     def get_access_level(self, entity):
         try:
-            entity_class = entity['entity_class'] if 'entity_class' in entity else entity['entity_type']
+            entity_type = entity['entity_type']
 
-            if entity_class:
-                if entity_class == 'Collection':
-                    if entity['data_access_level'] in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
-                        return entity['data_access_level']
-                    else:
-                        return self.ACCESS_LEVEL_CONSORTIUM
-                # Hard code instead of use commons constants for now.
-                elif entity_class in ['Donor', 'Sample', 'Dataset']:
-                    
-                    dal = entity['data_access_level']
-
-                    if dal in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
-                        return dal
-                    else:
-                        return self.ACCESS_LEVEL_CONSORTIUM
+            if entity_type == 'Collection':
+                if entity['data_access_level'] in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
+                    return entity['data_access_level']
                 else:
-                    raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
+                    return self.ACCESS_LEVEL_CONSORTIUM
+            # Hard code instead of use commons constants for now.
+            elif entity_type in ['Donor', 'Sample', 'Dataset']:
+                
+                dal = entity['data_access_level']
+
+                if dal in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
+                    return dal
+                else:
+                    return self.ACCESS_LEVEL_CONSORTIUM
+            else:
+                raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
             logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
             return self.ACCESS_LEVEL_CONSORTIUM
@@ -547,16 +544,8 @@ class Indexer:
     # This method is only applied to Donor/Sample/Dataset
     def entity_is_public(self, node):
         is_public = False
-
-        # Original node has 'entity_class' key,
-        # Tranformed node uses 'entity_type' key
-        property_key = 'entity_class'
-
-        # Property key of tranformed node has already been renamed to 'entity_type' 
-        if 'entity_type' in node:  
-            property_key = 'entity_type'
-
-        if node[property_key] == 'Dataset':
+        
+        if node['entity_type'] == 'Dataset':
             if ('status' in node) and (node['status'].lower() == self.DATASET_STATUS_PUBLISHED):
                 is_public = True
         else:

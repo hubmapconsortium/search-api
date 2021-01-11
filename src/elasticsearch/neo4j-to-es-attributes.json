@@ -4,10 +4,6 @@
         "es_name": "display_doi",
         "is_json_stored_as_text": false
       },
-      "entity_class": {
-        "es_name": "entity_type",
-        "is_json_stored_as_text": false
-      },
       "submission_id": {
         "es_name": "hubmap_display_id",
         "is_json_stored_as_text": false
