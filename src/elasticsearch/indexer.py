@@ -35,9 +35,10 @@ logger = logging.getLogger(__name__)
 
 class Indexer:
     # Class variables/constants
+    # All lowercase for easy comparision
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
-    DATASET_STATUS_PUBLISHED = 'Published'
+    DATASET_STATUS_PUBLISHED = 'published'
 
     # Constructor method with instance variables to be passed in
     def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret):
@@ -574,18 +575,27 @@ class Indexer:
             logger.exception(msg)
 
 
+    # Collection doesn't actually have this `data_access_level` property
+    # This method is only applied to Donor/Sample/Dataset
     def entity_is_public(self, node):
-        # Here the node properties have already been renamed
-        if 'entity_type' in node:  # Tranformed Node
-            return ((node.get('entity_type', '') == 'Dataset' and
-                    node.get('status', '') == self.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entity_type', '') != 'Dataset' and
-                    self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC))
-        else:  # Original Node
-            return ((node.get('entity_class', '') == 'Dataset' and
-                    node.get('status', '') == self.DATASET_STATUS_PUBLISHED) or
-                    (node.get('entity_class', '') != 'Dataset' and
-                    self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC))
+        is_public = False
+
+        # Original node has 'entity_class' key,
+        # Tranformed node uses 'entity_type' key
+        property_key = 'entity_class'
+
+        # Property key of tranformed node has already been renamed to 'entity_type' 
+        if 'entity_type' in node:  
+            property_key = 'entity_type'
+
+        if node[property_key] == 'Dataset':
+            if ('status' in node) and (node['status'].lower() == self.DATASET_STATUS_PUBLISHED):
+                is_public = True
+        else:
+            if self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC:
+                is_public = True
+
+        return is_public
 
     def add_datasets_to_collection(self, collection):
         # First get the detail of this collection
