@@ -53,12 +53,6 @@ class Indexer:
         self.elasticsearch_url = elasticsearch_url
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
-        
-        self.report = {
-            'success_cnt': 0,
-            'fail_cnt': 0,
-            'fail_uuids': set()
-        }
 
         auth_helper = self.init_auth_helper()
         self.request_headers = self.create_request_headers_for_auth(auth_helper.getProcessSecret())
@@ -123,10 +117,6 @@ class Indexer:
             # disploy_doi renamed to hubmap_id
             logger.debug(f"entity_clss: {node.get('entity_class', 'Unknown Entity class')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
  
-            # Statistics, must placed before the line of self.update_index(node)
-            # Otherwise won't work
-            self.report[node['entity_class']] = self.report.get(node['entity_class'], 0) + 1
-
             self.update_index(node)
 
         return "indexer.index_tree() finished executing"
@@ -139,27 +129,21 @@ class Indexer:
 
             url = self.entity_api_url + "/collections"
 
-            if (configs.access_level == 'consortium' and configs.doc_type == 'original'):
+            if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
                 # Consortium Collections - with sending a token that has the right access permission
-                rspn = requests.get(url, headers = self.request_headers, verify = False)
+                response = requests.get(url, headers = self.request_headers, verify = False)
             elif (configs.access_level == self.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
                 # Public Collections - without sending token
-                rspn = requests.get(url, verify = False)
+                response = requests.get(url, verify = False)
             else:
                 continue
 
-            if not rspn.ok:
-                if rspn.status_code == 401:
-                    raise ValueError("Token is not valid.")
-                else:
-                    raise Exception("Something wrong with entity-api.")
+            if response.status_code != 200:
+                logger.error("indexer.index_collections() failed to get collections via entity-api")
+        
+            collections_list = response.json()
 
-            hm_collections = rspn.json()
-
-            for collection in hm_collections:
-                # Statistics, must place this before the ES call
-                self.report[collection['entity_class']] = self.report.get(collection['entity_class'], 0) + 1
-
+            for collection in collections_list:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
                 # Use `entity_type` instead of `entity_class` explicitly for Collection
@@ -546,31 +530,15 @@ class Indexer:
                     if configs.doc_type == self.portal_doc_type:
                         target_doc = public_transformed_doc
 
-                    # eswriter.write_or_update_document returns boolean
-                    result = (self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid']))
+                    self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
                 elif configs.access_level == self.ACCESS_LEVEL_CONSORTIUM:
                     target_doc = doc
                     if configs.doc_type == self.portal_doc_type:
                         target_doc = transformed
 
-                    result = (self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid']))
-                
-                if result:
-                    self.report['success_cnt'] += 1
-                else:
-                    self.report['fail_cnt'] += 1
-                    self.report['fail_uuids'].add(node['uuid'])
-                result = None
-        except KeyError:
-            logger.error(f"""uuid: {org_node['uuid']}, entity_class: {org_node['entity_class']}, es_node_entity_class: {node['entity_class']}""")
-            logger.exception("unexpceted exception")
-        except Exception as e:
-            self.report['fail_cnt'] +=1
-            self.report['fail_uuids'].add(node['uuid'])
-
-            logger.error(f"""Exception in user code, uuid: {org_node['uuid']}""")
-            
-            msg = "Exception encountered during executing indexer.update_index()"
+                    self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
+        except Exception:
+            msg = "Exception encountered during executing indexer.update_index() for uuid: " + org_node['uuid']
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -665,10 +633,3 @@ if __name__ == "__main__":
 
     end = time.time()
     logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
-    logger.info(f"Count of successfully indexed nodes: {indexer.report['success_cnt']}")
-    logger.info(f"Count of failed nodes: {indexer.report['fail_cnt']}")
-    logger.info(f"The uuids of failed nodes: {indexer.report['fail_uuids']}")
-
-    # Show the counts by entity class
-    for key, value in indexer.report.items():
-        logger.info(f"Entity class: {key}, nodes indexed: {value}")

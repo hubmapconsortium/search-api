@@ -52,13 +52,9 @@ class ESWriter:
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
             if rspn.status_code in [200, 201, 202]:
                 logger.info(f"""Added doc of uuid: {uuid} to index: {index_name}""")
-                
-                return True
             else:
                 logger.error(f"""Failed to write doc of uuid: {uuid} to index: {index_name}""")
                 logger.error(f"""Error Message: {rspn.text}""")
-
-                return False
         except Exception:
             msg = "Exception encountered during executing ESWriter.write_or_update_document()"
             # Log the full stack trace, prepend a line with our message
