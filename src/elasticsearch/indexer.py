@@ -519,7 +519,7 @@ class Indexer:
                     is_public = True
             else:
                 # Log as an error to be fixed in Neo4j
-                logger.error(f"{node['entity_type']} of uuid: {entity['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+                logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
 
         return is_public
 
