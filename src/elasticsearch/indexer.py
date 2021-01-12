@@ -458,35 +458,6 @@ class Indexer:
             for e in obj:
                 self.remove_specific_key_entry(e, key_to_remove)
 
-
-    # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Donor/Sample/Dataset
-    def get_access_level(self, entity):
-        try:
-            entity_type = entity['entity_type']
-
-            if entity_type == 'Collection':
-                if entity['data_access_level'] in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
-                    return entity['data_access_level']
-                else:
-                    return self.ACCESS_LEVEL_CONSORTIUM
-            # Hardcode instead of using commons constants for now
-            elif entity_type in ['Donor', 'Sample', 'Dataset']:
-                dal = entity['data_access_level']
-
-                if dal in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
-                    return dal
-                else:
-                    return self.ACCESS_LEVEL_CONSORTIUM
-            else:
-                raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
-        except KeyError as ke:
-            logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' property")
-            return self.ACCESS_LEVEL_CONSORTIUM
-        except Exception:
-            pass
-
-
     def update_index(self, node):
         try:
             org_node = copy.deepcopy(node)
@@ -543,8 +514,13 @@ class Indexer:
             if ('status' in node) and (node['status'].lower() == self.DATASET_STATUS_PUBLISHED):
                 is_public = True
         else:
-            if self.get_access_level(node) == self.ACCESS_LEVEL_PUBLIC:
-                is_public = True
+            # In case 'data_access_level' not set
+            if 'data_access_level' in node:
+                if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(f"{node['entity_type']} of uuid: {entity['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
 
         return is_public
 
