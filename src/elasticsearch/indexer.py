@@ -351,7 +351,7 @@ class Indexer:
 
             # Remove the `files` element from the entity['metadata'] dict 
             # to reduce the doc size to be indexed?
-            if 'files' in entity['metadata']:
+            if ('metadata' in entity) and ('files' in entity['metadata']):
                 entity['metadata'].pop('files')
 
             # Rename for properties that are objects
