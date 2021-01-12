@@ -324,9 +324,9 @@ class Indexer:
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
-                    	ingest_metadata = ast.literal_eval(entity['ingest_metadata'])
-                    	if 'files' in ingest_metadata:
-                    		entity['files'] = ingest_metadata['files']
+                        ingest_metadata = ast.literal_eval(entity['ingest_metadata'])
+                        if 'files' in ingest_metadata:
+                            entity['files'] = ingest_metadata['files']
                     
             self.entity_keys_rename(entity)
 
@@ -506,20 +506,19 @@ class Indexer:
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
+    # Here we rely on the `data_access_level` to be set correctly
+    # For Dataset: when contains_human_genetic_sequences is true, 
+    # even if status is 'Published', the `data_access_level` is still 'protected'
     def entity_is_public(self, node):
         is_public = False
-        
-        if node['entity_type'] == 'Dataset':
-            if ('status' in node) and (node['status'].lower() == self.DATASET_STATUS_PUBLISHED):
+ 
+        # In case 'data_access_level' not set
+        if 'data_access_level' in node:
+            if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
                 is_public = True
         else:
-            # In case 'data_access_level' not set
-            if 'data_access_level' in node:
-                if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
-                    is_public = True
-            else:
-                # Log as an error to be fixed in Neo4j
-                logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+            # Log as an error to be fixed in Neo4j
+            logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
 
         return is_public
 
