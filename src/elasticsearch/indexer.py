@@ -271,8 +271,7 @@ class Indexer:
 
             entity['ancestors'] = ancestors
             entity['descendants'] = descendants
-            # entity['access_group'] = self.access_group(entity)
-            
+ 
             url = self.entity_api_url + "/children/" + uuid
             children_response = requests.get(url, headers = self.request_headers, verify = False)
             if children_response.status_code != 200:
@@ -330,10 +329,6 @@ class Indexer:
 
             self.entity_keys_rename(entity)
 
-                
-
-
-
             # Is group_uuid always set?
             # In case if group_name not set
             if ('group_uuid' in entity) and ('group_uuid' not in entity):
@@ -347,10 +342,6 @@ class Indexer:
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-
-
-
-
             # timestamp and version
             entity['update_timestamp'] = int(round(time.time() * 1000))
             entity['update_timestamp_fmted'] = (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -358,10 +349,10 @@ class Indexer:
             # Parse the VERSION number
             entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
 
-            try:
+            # Remove the `files` element from the entity['metadata'] dict 
+            # to reduce the doc size to be indexed?
+            if 'files' in entity['metadata']:
                 entity['metadata'].pop('files')
-            except (KeyError, AttributeError):
-                logger.error("There are no files in metadata to pop")
 
             # Rename for properties that are objects
             if entity.get('donor', None):
@@ -431,8 +422,23 @@ class Indexer:
             if key in self.attr_map['ENTITY']:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
         
+        properties_list = [
+            'metadata', 
+            'donor', 
+            'origin_sample', 
+            'source_sample', 
+            'ancestor_ids', 
+            'descendant_ids', 
+            'ancestors', 
+            'descendants', 
+            'files', 
+            'immediate_ancestors', 
+            'immediate_descendants', 
+            'datasets'
+        ]
+
         for key in to_delete_keys:
-            if key not in ['metadata', 'donor', 'origin_sample', 'source_sample', 'access_group', 'ancestor_ids', 'descendant_ids', 'ancestors', 'descendants', 'files', 'immediate_ancestors', 'immediate_descendants', 'datasets']:
+            if key not in properties_list:
                 entity.pop(key)
         
         entity.update(temp)
@@ -445,27 +451,16 @@ class Indexer:
         if type(obj) == dict:
             if key_to_remove in obj.keys(): 
                 obj.pop(key_to_remove)
+            
             for key in obj.keys():
                 self.remove_specific_key_entry(obj[key], key_to_remove)
         elif type(obj) == list:
             for e in obj:
                 self.remove_specific_key_entry(e, key_to_remove)
 
-    def access_group(self, entity):
-        try:
-            if entity['entity_type'] == 'Dataset':
-                if entity['status'] == 'Published' and entity['contains_human_genetic_sequences'] == False:
-                    return self.ACCESS_LEVEL_PUBLIC
-                else:
-                    return self.ACCESS_LEVEL_CONSORTIUM
-            else:
-                return self.ACCESS_LEVEL_CONSORTIUM
-        
-        except Exception:
-            msg = "Exception encountered during executing indexer.access_group()"
-            # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
 
+    # Collection doesn't actually have this `data_access_level` property
+    # This method is only applied to Donor/Sample/Dataset
     def get_access_level(self, entity):
         try:
             entity_type = entity['entity_type']
@@ -475,9 +470,8 @@ class Indexer:
                     return entity['data_access_level']
                 else:
                     return self.ACCESS_LEVEL_CONSORTIUM
-            # Hard code instead of use commons constants for now.
+            # Hardcode instead of using commons constants for now
             elif entity_type in ['Donor', 'Sample', 'Dataset']:
-                
                 dal = entity['data_access_level']
 
                 if dal in [self.ACCESS_LEVEL_PUBLIC, self.ACCESS_LEVEL_CONSORTIUM]:
@@ -487,7 +481,7 @@ class Indexer:
             else:
                 raise ValueError("The type of entitiy is not Donor, Sample, Collection or Dataset")
         except KeyError as ke:
-            logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' attribute")
+            logger.error(f"Entity of uuid: {entity['uuid']} does not have 'data_access_level' property")
             return self.ACCESS_LEVEL_CONSORTIUM
         except Exception:
             pass
