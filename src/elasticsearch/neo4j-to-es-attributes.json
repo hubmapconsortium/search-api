@@ -16,6 +16,10 @@
         "es_name": "lab_tissue_id",
         "is_json_stored_as_text": false
       },
+      "lab_tissue_sample_id": {
+        "es_name": "lab_tissue_sample_id",
+        "is_json_stored_as_text": false
+      },
       "created_timestamp": {
         "es_name": "create_timestamp",
         "is_json_stored_as_text": false
