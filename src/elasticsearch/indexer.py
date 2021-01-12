@@ -332,7 +332,7 @@ class Indexer:
 
             # Is group_uuid always set?
             # In case if group_name not set
-            if ('group_uuid' in entity) and ('group_uuid' not in entity):
+            if ('group_uuid' in entity) and ('group_name' not in entity):
                 group_uuid = entity['group_uuid']
 
                 # Get the globus groups info based on the groups json file in commons package
