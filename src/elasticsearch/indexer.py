@@ -76,7 +76,7 @@ class Indexer:
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
-                logger.error("indexer.main() failed to make a request to entity-api for entity class: Donor")
+                logger.error("indexer.main() failed to get all the Donors via entity-api")
             
             donors = response.json()
 
@@ -85,6 +85,7 @@ class Indexer:
                 results = [executor.submit(self.index_tree, donor) for donor in donors]
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
+            
             # for debuging: comment out the Multi-thread above and commnet in Signle-thread below
             # Single-thread
             # for donor in donors:
@@ -115,7 +116,7 @@ class Indexer:
         for node in ([donor] + descendants):
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
-            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown entity type')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
  
             self.update_index(node)
 
@@ -146,13 +147,13 @@ class Indexer:
             for collection in collections_list:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
-                
-                collection.setdefault('entity_type', 'Collection')
+       
                 self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
 
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
                 transformed = json.dumps(transform(collection))
+
                 self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
 
 
@@ -190,9 +191,8 @@ class Indexer:
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    logger.debug(f"entity_type: {node.get('entity_type', 'Unknown entity type')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+                    logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
                     
-                    logger.info("reindex(): About to update_index")
                     self.update_index(node)
                 
                 logger.info("################reindex() DONE######################")
@@ -214,6 +214,7 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+    # Used by app.py reindex_all_uuids() for Live reindex all 
     def delete(self, uuid):
         try:
             for index, _ in self.indices.items():
@@ -461,9 +462,6 @@ class Indexer:
     def update_index(self, node):
         try:
             org_node = copy.deepcopy(node)
-
-            # Do we realy need this?
-            node.setdefault('type', 'entity')
 
             doc = self.generate_doc(node, 'json')
             transformed = json.dumps(transform(json.loads(doc)))
