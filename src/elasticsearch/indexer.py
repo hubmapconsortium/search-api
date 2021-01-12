@@ -461,17 +461,9 @@ class Indexer:
 
     def update_index(self, node):
         try:
-            logger.info("==============")
-            logger.info(f"update_index() - node: {node}")
-            logger.info("==============")
-
             org_node = copy.deepcopy(node)
 
             doc = self.generate_doc(node, 'json')
-
-            logger.info("==============")
-            logger.info(f"generate_doc() - doc: {doc}")
-            logger.info("==============")
 
             transformed = json.dumps(transform(json.loads(doc)))
             if (transformed is None or transformed == 'null' or transformed == ""):

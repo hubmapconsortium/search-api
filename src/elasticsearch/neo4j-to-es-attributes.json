@@ -4,6 +4,10 @@
         "es_name": "display_doi",
         "is_json_stored_as_text": false
       },
+      "entity_type": {
+        "es_name": "entity_type",
+        "is_json_stored_as_text": false
+      },
       "submission_id": {
         "es_name": "hubmap_display_id",
         "is_json_stored_as_text": false
@@ -74,10 +78,6 @@
       },
       "rui_location": {
         "es_name": "rui_location",
-        "is_json_stored_as_text": false
-      },
-      "lab_tissue_id": {
-        "es_name": "lab_tissue_sample_id",
         "is_json_stored_as_text": false
       },
       "data_access_level": {
