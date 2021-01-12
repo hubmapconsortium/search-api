@@ -322,12 +322,12 @@ class Indexer:
                         except IndexError:
                              entity['source_sample'] = {}
 
-                    # move files to the root level
-                    try:
-                        entity['files'] = ast.literal_eval(entity['ingest_metadata'])['files']
-                    except (KeyError, TypeError):
-                        logger.error("There are either no files in ingest_metadata or no ingest_metdata in metadata. Skip.")
-
+                    # Move files to the root level if exist
+                    if 'ingest_metadata' in entity:
+                    	ingest_metadata = ast.literal_eval(entity['ingest_metadata'])
+                    	if 'files' in ingest_metadata:
+                    		entity['files'] = ingest_metadata['files']
+                    
             self.entity_keys_rename(entity)
 
             # Is group_uuid always set?
