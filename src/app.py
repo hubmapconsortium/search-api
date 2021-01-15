@@ -191,8 +191,11 @@ def reindex(uuid):
 
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
+
+        app.logger.info(f"Started to reindex uuid: {uuid}")
     except Exception as e:
         app.logger.error(e)
+
     return 'OK', 202
 
 
