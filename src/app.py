@@ -127,7 +127,7 @@ def search():
     logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_search(request, target_index)
+    return execute_query('_search', request, target_index)
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
@@ -149,7 +149,49 @@ def search_by_index(index_without_prefix):
     logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_search(request, target_index)
+    return execute_query('_search', request, target_index)
+
+
+# HTTP GET can be used to execute search with body against ElasticSearch REST API. 
+@app.route('/count', methods = ['GET'])
+def count():
+    # Always expect a json body
+    request_json_required(request)
+
+    logger.info("======count with no index provided======")
+    
+    # Determine the target real index in Elasticsearch to be searched against
+    # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
+    target_index = get_target_index(request, app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
+
+    logger.info("======target_index======")
+    logger.info(target_index)
+
+    # Return the elasticsearch resulting json data as json string
+    return execute_query('_count', request, target_index)
+
+# HTTP GET can be used to execute search with body against ElasticSearch REST API.
+# Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
+@app.route('/<index_without_prefix>/count', methods = ['GET'])
+def count_by_index(index_without_prefix):
+    # Always expect a json body
+    request_json_required(request)
+
+    # Make sure the requested index in URL is valid
+    validate_index(index_without_prefix)
+    
+    logger.info("======requested index_without_prefix======")
+    logger.info(index_without_prefix)
+
+    # Determine the target real index in Elasticsearch to be searched against
+    target_index = get_target_index(request, index_without_prefix)
+
+    logger.info("======target_index======")
+    logger.info(target_index)
+
+    # Return the elasticsearch resulting json data as json string
+    return execute_query('_count', request, target_index)
+
 
 # Get a list of indices
 @app.route('/indices', methods = ['GET'])
@@ -259,9 +301,10 @@ def request_json_required(request):
 
 # We'll need to verify the requested index in URL is valid
 def validate_index(index_without_prefix):
+	separator = ','
     indices = get_filtered_indices()
     if index_without_prefix not in indices:
-        bad_request_error("Invalid index name. Use one of the following: " + ', '.join(indices))
+        bad_request_error(f"Invalid index name. Use one of the following: {separator.join(indices)}")
 
 # Determine the target real index in Elasticsearch bases on the request header and given index (without prefix)
 # The Authorization header with globus token is optional
@@ -295,7 +338,15 @@ def get_target_index(request, index_without_prefix):
     return target_index
 
 # Make a call to Elasticsearch
-def execute_search(request, target_index, query=None):
+def execute_query(query_against, request, target_index, query=None):
+	supported_query_against = ['_search', '_count']
+	separator = ','
+
+	if query_against not in supported_query_against:
+		bad_request_error(f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
+
+    target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
+
     if query is None:
         # Parse incoming json string into json data(python dict object)
         json_data = request.get_json()
@@ -303,13 +354,12 @@ def execute_search(request, target_index, query=None):
         # All we need to do is to simply pass the search json to elasticsearch
         # The request json may contain "access_group" in this case
         # Will also pass through the query string in URL
-        target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + '_search' + get_query_string(request.url)
+        target_url = target_url + get_query_string(request.url)
         # Make a request with json data
         # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
     else:
         json_data = query
-        target_url = (app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + '_search')
-
+ 
     resp = requests.post(url=target_url, json=json_data)
 
     # Return the elasticsearch resulting json data as json string
@@ -419,7 +469,7 @@ def get_uuids_from_es(index):
 
     end_of_list = False
     while not end_of_list:
-        resp = execute_search(None, index, query)
+        resp = execute_query('_search', None, index, query)
 
         ret_obj = resp.get_json()
         uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))

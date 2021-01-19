@@ -69,6 +69,23 @@ Due to data access restriction, indexed entries are protected and calls to the a
 
 NOTE: currently, the Search API doesn't support comma-separated list or wildcard expression of index names in the URL path used to limit the request.
 
+
+### Get search result count without specifiing an index
+
+Similar to making a request against `/search` but for getting the count:
+
+````
+GET /count
+````
+
+### Get search result count against a specified index
+
+Similar to making a request against `/<index>/search` but for getting the count:
+
+````
+GET /<index>/count
+````
+
 ## Query examples
 
 ### Leaf query - match
