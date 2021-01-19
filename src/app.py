@@ -301,7 +301,7 @@ def request_json_required(request):
 
 # We'll need to verify the requested index in URL is valid
 def validate_index(index_without_prefix):
-	separator = ','
+    separator = ','
     indices = get_filtered_indices()
     if index_without_prefix not in indices:
         bad_request_error(f"Invalid index name. Use one of the following: {separator.join(indices)}")
@@ -339,11 +339,11 @@ def get_target_index(request, index_without_prefix):
 
 # Make a call to Elasticsearch
 def execute_query(query_against, request, target_index, query=None):
-	supported_query_against = ['_search', '_count']
-	separator = ','
+    supported_query_against = ['_search', '_count']
+    separator = ','
 
-	if query_against not in supported_query_against:
-		bad_request_error(f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
+    if query_against not in supported_query_against:
+        bad_request_error(f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
 
     target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
 
