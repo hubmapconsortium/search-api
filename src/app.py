@@ -24,6 +24,7 @@ from hubmap_commons.hm_auth import AuthHelper
 # Log rotation is handled via logrotate on the host system with a configuration file
 # Do NOT handle log file and rotation via the Python logging to avoid issues with multi-worker processes
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
 
 # Specify the absolute path of the instance folder and use the config file relative to the instance path
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
@@ -116,14 +117,14 @@ def search():
     # Always expect a json body
     request_json_required(request)
 
-    app.logger.info("======search with no index provided======")
+    logger.info("======search with no index provided======")
     
     # Determine the target real index in Elasticsearch to be searched against
     # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
     target_index = get_target_index(request, app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
 
-    app.logger.info("======target_index======")
-    app.logger.info(target_index)
+    logger.info("======target_index======")
+    logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
     return execute_search(request, target_index)
@@ -138,14 +139,14 @@ def search_by_index(index_without_prefix):
     # Make sure the requested index in URL is valid
     validate_index(index_without_prefix)
     
-    app.logger.info("======requested index_without_prefix======")
-    app.logger.info(index_without_prefix)
+    logger.info("======requested index_without_prefix======")
+    logger.info(index_without_prefix)
 
     # Determine the target real index in Elasticsearch to be searched against
     target_index = get_target_index(request, index_without_prefix)
 
-    app.logger.info("======target_index======")
-    app.logger.info(target_index)
+    logger.info("======target_index======")
+    logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
     return execute_search(request, target_index)
@@ -192,9 +193,9 @@ def reindex(uuid):
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
 
-        app.logger.info(f"Started to reindex uuid: {uuid}")
+        logger.info(f"Started to reindex uuid: {uuid}")
     except Exception as e:
-        app.logger.error(e)
+        logger.error(e)
 
     return 'OK', 202
 
@@ -207,7 +208,7 @@ def reindex_all():
 
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
-        app.logger.error(e)
+        logger.error(e)
     return 'OK', 202
 
 ####################################################################################################
@@ -277,8 +278,8 @@ def get_target_index(request, index_without_prefix):
         # user_info is a dict
         user_info = get_user_info_for_access_check(request, True)
 
-        app.logger.info("======user_info======")
-        app.logger.info(user_info)
+        logger.info("======user_info======")
+        logger.info(user_info)
 
         # Case #3
         if isinstance(user_info, Response):
@@ -351,8 +352,8 @@ def get_query_string(url):
     query_string = ''
     parsed_url = urlparse(url)
                 
-    app.logger.debug("======parsed_url======")
-    app.logger.debug(parsed_url)
+    logger.debug("======parsed_url======")
+    logger.debug(parsed_url)
 
     # Add the ? at beginning of the query string if not empty
     if not parsed_url.query:
@@ -446,7 +447,7 @@ def init_indexer():
 def reindex_all_uuids(indexer, token):
     with app.app_context():
         try:
-            app.logger.info("############# Reindex Live Started #############")
+            logger.info("############# Reindex Live Started #############")
 
             start = time.time()
 
@@ -467,20 +468,20 @@ def reindex_all_uuids(indexer, token):
 
             for uuid in es_uuids:
                 if uuid not in all_entities_uuids:
-                    app.logger.debug(f"""The uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
+                    logger.debug(f"""The uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
                     indexer.delete(uuid)
 
             # 2. Multi-thread index entitiies
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids_list]
                 for f in concurrent.futures.as_completed(results):
-                    app.logger.debug(f.result())
+                    logger.debug(f.result())
 
             # 3. Index collection separately
             indexer.index_collections()
 
             end = time.time()
 
-            app.logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
+            logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
         except Exception as e:
-            app.logger.error(e)
+            logger.error(e)
