@@ -113,7 +113,9 @@ class Indexer:
         
         descendants = response.json()
 
-        for node in ([donor] + descendants):
+        self.update_index(donor)
+
+        for node in descendants:
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
             logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
