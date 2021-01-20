@@ -71,6 +71,9 @@ class Indexer:
                 self.eswriter.delete_index(index)
                 self.eswriter.create_index(index)
             
+            # First, index collections separately
+            self.index_collections()
+
             # Get a list of donor dictionaries 
             url = self.entity_api_url + "/donor/entities"
             response = requests.get(url, headers = self.request_headers, verify = False)
@@ -90,9 +93,6 @@ class Indexer:
             # Single-thread
             # for donor in donors:
             #     self.index_tree(donor)
-
-            # Index collections separately
-            self.index_collections()
         except Exception:
             msg = "Exception encountered during executing indexer.main()"
             # Log the full stack trace, prepend a line with our message
