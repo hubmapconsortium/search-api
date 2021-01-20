@@ -101,30 +101,32 @@ class Indexer:
     def index_tree(self, donor):
         # logger.info(f"Total threads count: {threading.active_count()}")
         
-        donor_uuid = donor['uuid']
+        if isinstance(node, dict):
+            donor_uuid = donor['uuid']
 
-        logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
+            logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
 
-        url = self.entity_api_url + "/descendants/" + donor_uuid
-        response = requests.get(url, headers = self.request_headers, verify = False)
+            url = self.entity_api_url + "/descendants/" + donor_uuid
+            response = requests.get(url, headers = self.request_headers, verify = False)
 
-        if response.status_code != 200:
-            logger.error(f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}")
-        
-        descendants = response.json()
+            if response.status_code != 200:
+                logger.error(f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}")
+            
+            descendants = response.json()
 
-        for node in ([donor] + descendants):
-            if isinstance(node, dict):
+            for node in ([donor] + descendants):
                 # hubamp_identifier renamed to submission_id 
                 # disploy_doi renamed to hubmap_id
                 logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
      
                 self.update_index(node)
-            else:
-                logger.error(f"The current node to be indexed is not a dict")
-                logger.debug(node)
 
-        return "indexer.index_tree() finished executing"
+            msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
+            logger.info(msg)
+            return msg
+        else:
+            logger.error(f"The current donor node to be indexed is not a dict, skip")
+            logger.debug(node)
 
     def index_collections(self):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
