@@ -101,7 +101,7 @@ class Indexer:
     def index_tree(self, donor):
         # logger.info(f"Total threads count: {threading.active_count()}")
         
-        if isinstance(node, dict):
+        if isinstance(donor, dict):
             donor_uuid = donor['uuid']
 
             logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
@@ -126,7 +126,7 @@ class Indexer:
             return msg
         else:
             logger.error(f"The current donor node to be indexed is not a dict, skip")
-            logger.debug(node)
+            logger.debug(donor)
 
     def index_collections(self):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
