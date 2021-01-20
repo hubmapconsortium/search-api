@@ -113,14 +113,16 @@ class Indexer:
         
         descendants = response.json()
 
-        self.update_index(donor)
-
-        for node in descendants:
-            # hubamp_identifier renamed to submission_id 
-            # disploy_doi renamed to hubmap_id
-            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
- 
-            self.update_index(node)
+        for node in ([donor] + descendants):
+            if isinstance(node, dict):
+                # hubamp_identifier renamed to submission_id 
+                # disploy_doi renamed to hubmap_id
+                logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+     
+                self.update_index(node)
+            else:
+                logger.error(f"The current node to be indexed is not a dict")
+                logger.debug(node)
 
         return "indexer.index_tree() finished executing"
 
