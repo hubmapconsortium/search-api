@@ -79,7 +79,9 @@ class Indexer:
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
-                logger.error("indexer.main() failed to get all the Donors via entity-api")
+                msg = "indexer.main() failed to get all the Donors via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
             
             donors = response.json()
 
@@ -100,33 +102,31 @@ class Indexer:
 
     def index_tree(self, donor):
         # logger.info(f"Total threads count: {threading.active_count()}")
+
+        donor_uuid = donor['uuid']
+
+        logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
+
+        url = self.entity_api_url + "/descendants/" + donor_uuid
+        response = requests.get(url, headers = self.request_headers, verify = False)
+
+        if response.status_code != 200:
+            msg = f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}"
+            logger.error(msg)
+            sys.exit(msg)
         
-        if isinstance(donor, dict):
-            donor_uuid = donor['uuid']
+        descendants = response.json()
 
-            logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
+        for node in ([donor] + descendants):
+            # hubamp_identifier renamed to submission_id 
+            # disploy_doi renamed to hubmap_id
+            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+ 
+            self.update_index(node)
 
-            url = self.entity_api_url + "/descendants/" + donor_uuid
-            response = requests.get(url, headers = self.request_headers, verify = False)
-
-            if response.status_code != 200:
-                logger.error(f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}")
-            
-            descendants = response.json()
-
-            for node in ([donor] + descendants):
-                # hubamp_identifier renamed to submission_id 
-                # disploy_doi renamed to hubmap_id
-                logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
-     
-                self.update_index(node)
-
-            msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
-            logger.info(msg)
-            return msg
-        else:
-            logger.error(f"The current donor node to be indexed is not a dict, skip")
-            logger.debug(donor)
+        msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
+        logger.info(msg)
+        return msg
 
     def index_collections(self):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
@@ -146,7 +146,9 @@ class Indexer:
                 continue
 
             if response.status_code != 200:
-                logger.error("indexer.index_collections() failed to get collections via entity-api")
+                msg = "indexer.index_collections() failed to get collections via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
         
             collections_list = response.json()
 
@@ -169,7 +171,9 @@ class Indexer:
             response = requests.get(url, headers = self.request_headers, verify = False)
 
             if response.status_code != 200:
-                logger.error(f"indexer.reindex() failed to get entity via entity-api for uuid: {uuid}")
+                msg = f"indexer.reindex() failed to get entity via entity-api for uuid: {uuid}"
+                logger.error()
+                sys.exit(msg)
             
             entity = response.json()
             
@@ -180,14 +184,18 @@ class Indexer:
                 url = self.entity_api_url + "/ancestors/" + uuid
                 ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
                 if ancestors_response.status_code != 200:
-                    logger.error(f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}")
+                    msg = f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
                 
                 ancestors = ancestors_response.json()
 
                 url = self.entity_api_url + "/descendants/" + uuid
                 descendants_response = requests.get(url, headers = self.request_headers, verify = False)
                 if descendants_response.status_code != 200:
-                    logger.error(f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}")
+                    msg = f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}"
+                    logger.error()
+                    sys.exit(msg)
                 
                 descendants = descendants_response.json()
 
@@ -241,28 +249,36 @@ class Indexer:
             url = self.entity_api_url + "/ancestors/" + uuid
             ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
             if ancestors_response.status_code != 200:
-                logger.error(f"indexer.generate_doc() failed to get ancestors via entity-api for uuid: {uuid}")
+                msg = f"indexer.generate_doc() failed to get ancestors via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             ancestors = ancestors_response.json()
 
             url = self.entity_api_url + "/ancestors/" + uuid + "?property=uuid"
             ancestor_ids_response = requests.get(url, headers = self.request_headers, verify = False)
             if ancestor_ids_response.status_code != 200:
-                logger.error(f"indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: {uuid}")
+                msg = f"indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             ancestor_ids = ancestor_ids_response.json()
 
             url = self.entity_api_url + "/descendants/" + uuid
             descendants_response = requests.get(url, headers = self.request_headers, verify = False)
             if descendants_response.status_code != 200:
-                logger.error("indexer.generate_doc() failed to get descendants via entity-api for uuid: " + uuid)
+                msg = f"indexer.generate_doc() failed to get descendants via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             descendants = descendants_response.json()
 
             url = self.entity_api_url + "/descendants/" + uuid + "?property=uuid"
             descendant_ids_response = requests.get(url, headers = self.request_headers, verify = False)
             if descendant_ids_response.status_code != 200:
-                logger.error(f"indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: {uuid}")
+                msg = f"indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             descendant_ids = descendant_ids_response.json()
 
@@ -282,14 +298,18 @@ class Indexer:
             url = self.entity_api_url + "/children/" + uuid
             children_response = requests.get(url, headers = self.request_headers, verify = False)
             if children_response.status_code != 200:
-                logger.error(f"indexer.generate_doc() failed to get children via entity-api for uuid: {uuid}")
+                msg = f"indexer.generate_doc() failed to get children via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             entity['immediate_descendants'] = children_response.json()
             
             url = self.entity_api_url + "/parents/" + uuid
             parents_response = requests.get(url, headers = self.request_headers, verify = False)
             if parents_response.status_code != 200:
-                logger.error(f"indexer.generate_doc() failed to get parents via entity-api for uuid: {uuid}")
+                msg = f"indexer.generate_doc() failed to get parents via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
 
             entity['immediate_ancestors'] = parents_response.json()
 
@@ -316,7 +336,10 @@ class Indexer:
                         url = self.entity_api_url + "/parents/" + e['uuid']
                         parents_resp = requests.get(url, headers = self.request_headers, verify = False)
                         if parents_resp.status_code != 200:
-                            logger.error(f"indexer.generate_doc() failed to get parents via entity-api for uuid: {e['uuid']}")
+                            msg = f"indexer.generate_doc() failed to get parents via entity-api for uuid: {e['uuid']}"
+                            logger.error(msg)
+                            sys.exit(msg)
+
                         parents = parents_resp.json()
 
                         try:
@@ -534,7 +557,9 @@ class Indexer:
         url = self.entity_api_url + "/collections/" + collection_uuid
         response = requests.get(url, headers = self.request_headers, verify = False)
         if response.status_code != 200:
-            logger.error(f"indexer.add_datasets_to_collection() failed to get collection detail via entity-api for collection uuid: {collection_uuid}")
+            msg = f"indexer.add_datasets_to_collection() failed to get collection detail via entity-api for collection uuid: {collection_uuid}"
+            logger.error(msg)
+            sys.exit(msg)
 
         collection_detail_dict = response.json()
 
@@ -545,8 +570,9 @@ class Indexer:
                 url = self.entity_api_url + "/entities/" + dataset_uuid
                 response = requests.get(url, headers = self.request_headers, verify = False)
                 if response.status_code != 200:
-                    logger.info(f"Target collection uuid: {collection_uuid}")
-                    logger.error(f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid}")
+                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} during collection for collection uuid: {collection_uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
                 dataset = response.json()
 
