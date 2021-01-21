@@ -535,20 +535,30 @@ class Indexer:
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
-    # Here we rely on the `data_access_level` to be set correctly
-    # For Dataset: when contains_human_genetic_sequences is true, 
-    # even if status is 'Published', the `data_access_level` is still 'protected'
+    # For Dataset, if status=='Published', it goes into the public index
+    # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
+    # then they go into public index
+    # Don't confuse with `data_access_level`
     def entity_is_public(self, node):
         is_public = False
  
-        # In case 'data_access_level' not set
-        if 'data_access_level' in node:
-            if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
-                is_public = True
+        if node['entity_type'] == 'Dataset':
+            # In case 'status' not set
+            if 'status' in node:
+                if node['status'].lower() == self.DATASET_STATUS_PUBLISHED:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'status' property, treat as not public, verify and set the status.")
         else:
-            # Log as an error to be fixed in Neo4j
-            logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
-
+            # In case 'data_access_level' not set
+            if 'data_access_level' in node:
+                if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+        
         return is_public
 
     def add_datasets_to_collection(self, collection):
