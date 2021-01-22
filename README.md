@@ -125,18 +125,6 @@ GET /<index>/count
 }
 ````
 
-For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the hits with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
-
-````
-{
-  "query": {
-    "term": {
-      "access_group": "Readonly"
-    }
-  }
-}
-````
-
 ### Aggregation 
 
 ````
@@ -171,15 +159,6 @@ hits = response.json()['hits']['hits']
 ```
 
 ### Live reindex
-
-Increase the limit of total fields (default to 1000) in each index:
-
-````
-PUT <index>/_settings
-{
-  "index.mapping.total_fields.limit": 5000
-}
-````
 
 Trigger the reindex:
 
