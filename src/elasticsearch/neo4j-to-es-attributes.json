@@ -90,7 +90,7 @@
       },	
       "data_types": {
         "es_name": "data_types",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "description": {
         "es_name": "description",
@@ -98,19 +98,19 @@
       },
       "ingest_metadata": {
         "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "metadata": {
         "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "specimen_metadata": {
         "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "image_file_metadata": {
         "es_name": "portal_uploaded_image_files",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "lab_donor_id": {
         "es_name": "lab_donor_id",
