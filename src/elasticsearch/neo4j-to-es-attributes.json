@@ -34,11 +34,11 @@
       },
       "contacts": {
         "es_name": "contacts",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "creators": {
         "es_name": "creators",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "doi_url": {
         "es_name": "doi_url",
@@ -122,7 +122,7 @@
       },
       "portal_metadata_upload_files": {
         "es_name": "portal_metadata_upload_files",
-        "is_json_stored_as_text": true
+        "is_json_stored_as_text": false
       },
       "organ": {
         "es_name": "organ",
