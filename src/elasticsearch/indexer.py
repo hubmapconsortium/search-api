@@ -450,7 +450,7 @@ class Indexer:
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
-                temp[self.attr_map['ENTITY'][key]['es_name']] = ast.literal_eval(entity[key]) if self.attr_map['ENTITY'][key]['is_json_stored_as_text'] else entity[key]
+                temp[self.attr_map['ENTITY'][key]['es_name']] = entity[key]
         
         properties_list = [
             'metadata', 
