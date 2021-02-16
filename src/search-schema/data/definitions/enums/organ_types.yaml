@@ -2,6 +2,10 @@ AO:
   description: Aorta
 BL:
   description: Bladder
+BD:
+  description: Blood
+BM:
+  description: Bone Marrow
 BR:
   description: Brain
 LF:
@@ -86,6 +90,8 @@ SK:
   description: Skin
 SP:
   description: Spleen
+ST:
+  description: Sternum
 TH:
   description: Thymus
 TR:
