@@ -26,6 +26,8 @@ LL:
   description: Lung (Left)
 LV:
   description: Liver
+LY:
+  description: Lymph Node
 LY01:
   description: Lymph Node 01
 LY02:
