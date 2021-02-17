@@ -53,6 +53,7 @@ class Indexer:
         self.elasticsearch_url = elasticsearch_url
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
+        self.token = token
 
         auth_helper = self.init_auth_helper()
         self.request_headers = self.create_request_headers_for_auth(token)
@@ -72,7 +73,7 @@ class Indexer:
                 self.eswriter.create_index(index)
             
             # First, index collections separately
-            self.index_collections()
+            self.index_collections(self.token)
 
             # Get a list of donor dictionaries 
             url = self.entity_api_url + "/donor/entities"
