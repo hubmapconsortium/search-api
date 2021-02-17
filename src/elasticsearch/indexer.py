@@ -353,7 +353,7 @@ class Indexer:
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
-                        ingest_metadata = ast.literal_eval(entity['ingest_metadata'])
+                        ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
                             entity['files'] = ingest_metadata['files']
                     
