@@ -230,9 +230,11 @@ def status():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
-        indexer = init_indexer()
+        token = get_user_token(request.headers)
 
-        threading.Thread(target=indexer.reindex, args=[uuid]).start()
+        indexer = init_indexer(token)
+
+        threading.Thread(target=indexer.reindex, args=[uuid, token]).start()
         # indexer.reindex(uuid)
 
         logger.info(f"Started to reindex uuid: {uuid}")
@@ -244,9 +246,10 @@ def reindex(uuid):
 
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
-    token = get_nexus_token(request.headers)
     try:
-        indexer = init_indexer()
+        token = get_user_token(request.headers)
+
+        indexer = init_indexer(token)
 
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
     except Exception as e:
@@ -290,9 +293,31 @@ def get_user_info_for_access_check(request, group_required):
     auth_helper = init_auth_helper()
     return auth_helper.getUserInfoUsingRequest(request, group_required)
 
-def get_nexus_token(request):
+"""
+Parase the token from Authorization header
+
+Parameters
+----------
+request_headers: request.headers
+    The http request headers
+
+Returns
+-------
+str
+    The token string if valid
+"""
+def get_user_token(request_headers):
+    # Get user token from Authorization header
+    # getAuthorizationTokens() also handles MAuthorization header but we are not using that here
     auth_helper = init_auth_helper()
-    return auth_helper.getAuthorizationTokens(request)
+    user_token = auth_helper.getAuthorizationTokens(request_headers) 
+
+    # The user_token is flask.Response on error
+    if isinstance(user_token, Response):
+        # The Response.data returns binary string, need to decode
+        unauthorized_error(user_token.data.decode())
+
+    return user_token
 
 # Always expect a json body
 def request_json_required(request):
@@ -414,11 +439,11 @@ def get_query_string(url):
 
 # Get a list of entity uuids via entity-api for a given entity type:
 # Collection, Donor, Sample, Dataset. Case-insensitive.
-def get_uuids_by_entity_type(entity_type):
+def get_uuids_by_entity_type(entity_type, token):
     entity_type = entity_type.lower()
 
     auth_helper = init_auth_helper()
-    request_headers = create_request_headers_for_auth(auth_helper.getProcessSecret())
+    request_headers = create_request_headers_for_auth(token)
 
     if entity_type == 'collection':
         url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
@@ -482,7 +507,7 @@ def get_uuids_from_es(index):
 
     return uuids
 
-def init_indexer():
+def init_indexer(token):
     return Indexer(
         app.config['INDICES'],
         app.config['ORIGINAL_DOC_TYPE'],
@@ -490,7 +515,8 @@ def init_indexer():
         app.config['ELASTICSEARCH_URL'],
         app.config['ENTITY_API_URL'],
         app.config['APP_CLIENT_ID'],
-        app.config['APP_CLIENT_SECRET']
+        app.config['APP_CLIENT_SECRET'],
+        token
     )
 
 
@@ -502,10 +528,10 @@ def reindex_all_uuids(indexer, token):
             start = time.time()
 
             # Make calls to entity-api to get a list of uuids for each entity type
-            donor_uuids_list = get_uuids_by_entity_type("donor")
-            sample_uuids_list = get_uuids_by_entity_type("sample")
-            collection_uuids_list = get_uuids_by_entity_type("collection")
-            dataset_uuids_list = get_uuids_by_entity_type("dataset")
+            donor_uuids_list = get_uuids_by_entity_type("donor", token)
+            sample_uuids_list = get_uuids_by_entity_type("sample", token)
+            collection_uuids_list = get_uuids_by_entity_type("collection", token)
+            dataset_uuids_list = get_uuids_by_entity_type("dataset", token)
 
             # Merge into a big list that with no duplicates
             all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + dataset_uuids_list)
@@ -528,7 +554,7 @@ def reindex_all_uuids(indexer, token):
                     logger.debug(f.result())
 
             # 3. Index collection separately
-            indexer.index_collections()
+            indexer.index_collections(token)
 
             end = time.time()
 

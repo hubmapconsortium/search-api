@@ -41,7 +41,7 @@ class Indexer:
     DATASET_STATUS_PUBLISHED = 'published'
 
     # Constructor method with instance variables to be passed in
-    def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret):
+    def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret, token):
 
         try:
             self.indices = ast.literal_eval(indices)
@@ -55,7 +55,7 @@ class Indexer:
         self.app_client_secret = app_client_secret
 
         auth_helper = self.init_auth_helper()
-        self.request_headers = self.create_request_headers_for_auth(auth_helper.getProcessSecret())
+        self.request_headers = self.create_request_headers_for_auth(token)
 
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_api_url = entity_api_url
@@ -128,7 +128,7 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_collections(self):
+    def index_collections(self, token):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
         # write entity into indices
         for index, configs in self.indices.items():
@@ -610,6 +610,14 @@ class Indexer:
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
+	try:
+        token = sys.argv[1]
+    except IndexError as e:
+    	msg = "Missing token argument"
+    	# Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+        sys.exit(msg)
+
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
     app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance'), instance_relative_config=True)
     app.config.from_pyfile('app.cfg')
@@ -622,7 +630,8 @@ if __name__ == "__main__":
         app.config['ELASTICSEARCH_URL'],
         app.config['ENTITY_API_URL'],
         app.config['APP_CLIENT_ID'],
-        app.config['APP_CLIENT_SECRET']
+        app.config['APP_CLIENT_SECRET'],
+        token
     )
 
     start = time.time()
