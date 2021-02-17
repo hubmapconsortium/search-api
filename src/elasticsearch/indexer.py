@@ -610,11 +610,11 @@ class Indexer:
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
-	try:
+    try:
         token = sys.argv[1]
     except IndexError as e:
-    	msg = "Missing token argument"
-    	# Log the full stack trace, prepend a line with our message
+        msg = "Missing token argument"
+        # Log the full stack trace, prepend a line with our message
         logger.exception(msg)
         sys.exit(msg)
 
