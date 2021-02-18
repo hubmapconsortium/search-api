@@ -373,10 +373,6 @@ class Indexer:
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-            # timestamp and version
-            entity['update_timestamp'] = int(round(time.time() * 1000))
-            entity['update_timestamp_fmted'] = (datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            
             # Parse the VERSION number
             entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
 
