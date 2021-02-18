@@ -317,6 +317,9 @@ class Indexer:
 
             # Why?
             if entity['entity_type'] in ['Sample', 'Dataset']:
+                # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
+                entity = self.special_handling(entity)
+
                 # Add new properties
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
@@ -462,10 +465,6 @@ class Indexer:
     def entity_keys_rename(self, entity):
         # logger.debug("==================entity before renaming keys==================")
         # logger.debug(entity)
-
-        # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
-        if entity['entity_type'] in ['Sample', 'Dataset']:
-            entity = special_handling(entity)
 
         to_delete_keys = []
         temp = {}
