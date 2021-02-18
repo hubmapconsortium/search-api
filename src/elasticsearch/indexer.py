@@ -327,6 +327,13 @@ class Indexer:
                     except StopIteration:
                         entity['origin_sample'] = {}
 
+                # To be backward compatible for API clients relying on the old version
+                # Won't be needed eventually - Joe
+                # Special handling to `Sample.rui_location`
+                if 'rui_location' in entity:
+                    # Treat python dict as json string in ES
+                    entity['rui_location'] = json.dumps(entity['rui_location'])
+
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
@@ -357,7 +364,17 @@ class Indexer:
                         ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
                             entity['files'] = ingest_metadata['files']
-                    
+
+                    # To be backward compatible for API clients relying on the old version
+                    # Won't be needed eventually - Joe
+                    # Special handling to `Dataset.contains_human_genetic_sequences`
+                    if 'contains_human_genetic_sequences' in entity:
+                        # Convert Python bool True/False to string 'yes'/'no'
+                        if entity['contains_human_genetic_sequences']:
+                            entity['contains_human_genetic_sequences'] = 'yes'
+                        entity['contains_human_genetic_sequences'] = 'no'
+
+
             self.entity_keys_rename(entity)
 
             # Is group_uuid always set?
@@ -447,11 +464,8 @@ class Indexer:
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
-                # To be backward compatible for API clients relying on the old version
-                # Won't be needed eventually - Joe
-                # temp[self.attr_map['ENTITY'][key]['es_name']] = entity[key]
-                temp[self.attr_map['ENTITY'][key]['es_name']] = special_handling(key, entity[key])
-        
+                temp[self.attr_map['ENTITY'][key]['es_name']] = entity[key]
+
         properties_list = [
             'metadata', 
             'donor', 
@@ -475,23 +489,6 @@ class Indexer:
 
         # logger.debug("==================entity after renaming keys==================")
         # logger.debug(entity)
-        
-    # To be backward compatible for API clients relying on the old version
-    # Won't be needed eventually - Joe
-    def special_handling(key, value):
-        if key == 'rui_location':
-            # Treat`rui_location` as a json string instead of json object(python dict)
-            es_val = json.dumps(value)
-        elif key == 'contains_human_genetic_sequences':
-            # Convert Python bool True/False to string 'yes'/'no' 
-            if value:
-                es_val = 'yes'
-
-            es_val = 'no'
-        else:
-            es_val = value
-
-        return es_val
 
 
     def remove_specific_key_entry(self, obj, key_to_remove):
