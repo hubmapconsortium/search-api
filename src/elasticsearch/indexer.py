@@ -241,6 +241,9 @@ class Indexer:
 
     def generate_doc(self, entity, return_type):
         try:
+            # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
+            entity = special_handling(entity)
+            
             uuid = entity['uuid']
             ancestors = []
             descendants = []
@@ -327,13 +330,6 @@ class Indexer:
                     except StopIteration:
                         entity['origin_sample'] = {}
 
-                # To be backward compatible for API clients relying on the old version
-                # Won't be needed eventually - Joe
-                # Special handling to `Sample.rui_location`
-                if 'rui_location' in entity:
-                    # Treat python dict as json string in ES
-                    entity['rui_location'] = json.dumps(entity['rui_location'])
-
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
@@ -364,15 +360,6 @@ class Indexer:
                         ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
                             entity['files'] = ingest_metadata['files']
-
-                    # To be backward compatible for API clients relying on the old version
-                    # Won't be needed eventually - Joe
-                    # Special handling to `Dataset.contains_human_genetic_sequences`
-                    if 'contains_human_genetic_sequences' in entity:
-                        # Convert Python bool True/False to string 'yes'/'no'
-                        if entity['contains_human_genetic_sequences']:
-                            entity['contains_human_genetic_sequences'] = 'yes'
-                        entity['contains_human_genetic_sequences'] = 'no'
 
 
             self.entity_keys_rename(entity)
@@ -426,6 +413,26 @@ class Indexer:
             msg = "Exceptions during executing indexer.generate_doc()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+
+    # To be backward compatible for API clients relying on the old version
+    # Won't be needed eventually - Joe    
+    def special_handling(entity):
+        if entity['entity_type'] == 'Sample':
+            # Special handling to `Sample.rui_location`
+            if 'rui_location' in entity:
+                # Treat python dict as json string in ES
+                entity['rui_location'] = json.dumps(entity['rui_location'])
+        elif entity['entity_type'] == 'Dataset':     
+            # Special handling to `Dataset.contains_human_genetic_sequences`
+            if 'contains_human_genetic_sequences' in entity:
+                # Convert Python bool True/False to string 'yes'/'no'
+                if entity['contains_human_genetic_sequences']:
+                    entity['contains_human_genetic_sequences'] = 'yes'
+                else:
+                    entity['contains_human_genetic_sequences'] = 'no'
+
+        return entity
 
     def generate_public_doc(self, entity):
         entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
