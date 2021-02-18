@@ -318,7 +318,7 @@ class Indexer:
             # Why?
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
-                entity = self.special_handling(entity)
+                #entity = self.special_handling(entity)
 
                 # Add new properties
                 entity['donor'] = donor
