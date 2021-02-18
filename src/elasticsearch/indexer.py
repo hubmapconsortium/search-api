@@ -484,7 +484,10 @@ class Indexer:
             es_val = json.dumps(value)
         elif key == 'contains_human_genetic_sequences':
             # Convert Python bool True/False to string 'yes'/'no' 
-            es_val = value ? 'yes' : 'no'
+            if value:
+                es_val = 'yes'
+
+            es_val = 'no'
         else:
             es_val = value
 
