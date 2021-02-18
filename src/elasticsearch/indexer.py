@@ -417,12 +417,13 @@ class Indexer:
     def special_handling(entity):
         if entity['entity_type'] == 'Sample':
             # Special handling to `Sample.rui_location`
-            if 'rui_location' in entity:
+            # Use isinstance() to avoid to repeating the conversion
+            if ('rui_location' in entity) and isinstance(entity['rui_location'], dict):
                 # Treat python dict as json string in ES
                 entity['rui_location'] = json.dumps(entity['rui_location'])
         elif entity['entity_type'] == 'Dataset':     
             # Special handling to `Dataset.contains_human_genetic_sequences`
-            if 'contains_human_genetic_sequences' in entity:
+            if 'contains_human_genetic_sequences' in entity and isinstance(entity['contains_human_genetic_sequences'], bool):
                 # Convert Python bool True/False to string 'yes'/'no'
                 if entity['contains_human_genetic_sequences']:
                     entity['contains_human_genetic_sequences'] = 'yes'
@@ -463,7 +464,8 @@ class Indexer:
         # logger.debug(entity)
 
         # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
-        entity = special_handling(entity)
+        if entity['entity_type'] in ['Sample', 'Dataset']:
+            entity = special_handling(entity)
 
         to_delete_keys = []
         temp = {}
