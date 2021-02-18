@@ -241,9 +241,6 @@ class Indexer:
 
     def generate_doc(self, entity, return_type):
         try:
-            # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
-            entity = special_handling(entity)
-            
             uuid = entity['uuid']
             ancestors = []
             descendants = []
@@ -464,6 +461,9 @@ class Indexer:
     def entity_keys_rename(self, entity):
         # logger.debug("==================entity before renaming keys==================")
         # logger.debug(entity)
+
+        # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
+        entity = special_handling(entity)
 
         to_delete_keys = []
         temp = {}
