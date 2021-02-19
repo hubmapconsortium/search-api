@@ -472,7 +472,21 @@ class Indexer:
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
-                temp[self.attr_map['ENTITY'][key]['es_name']] = entity[key]
+                # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
+                # To be backward compatible for API clients relying on the old version
+                # Won't be needed eventually
+                # Note: rui_location if stored as dict in ES with the default dynamic mapping,
+                # may get errors due to the changing data types of some internal fields - Joe
+                if (key == 'rui_location') and isinstance(entity[key], dict):
+                    # Convert Python dict to json string
+                    temp_val = json.dumps(entity[key])
+                elif (key == 'contains_human_genetic_sequences') and isinstance(entity[key], bool):
+                    # Convert Python bool True/False to string 'yes'/'no'
+                    temp_val = 'yes' if entity[key] else 'no'
+                else:
+                    temp_val = entity[key]
+
+                temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
         properties_list = [
             'metadata', 

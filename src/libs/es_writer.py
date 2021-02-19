@@ -20,10 +20,10 @@ class ESWriter:
             headers = {'Content-Type': 'application/json'}
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}", headers=headers, data=doc)
             if rspn.ok:
-                logger.info(f"""Added doc of uuid: {uuid} to index: {index_name}""")
+                logger.info(f"Added doc of uuid: {uuid} to index: {index_name}")
             else:
-                logger.error(f"""Failed to write {uuid} to elasticsearch, index: {index_name}""")
-                logger.error(f"""Error Message: {rspn.text}""")
+                logger.error(f"Failed to write {uuid} to elasticsearch, index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
         except Exception:
             msg = "Exception encountered during executing ESWriter.write_document()"
             # Log the full stack trace, prepend a line with our message
@@ -34,10 +34,10 @@ class ESWriter:
             headers = {'Content-Type': 'application/json'}
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}", headers=headers)
             if rspn.ok:
-                logger.info(f"""Deleted doc of uuid: {uuid} from index: {index_name}""")
+                logger.info(f"Deleted doc of uuid: {uuid} from index: {index_name}")
             else:
-                logger.error(f"""Failed to delete doc of uuid: {uuid} from index: {index_name}""")
-                logger.error(f"""Error Message: {rspn.text}""")
+                logger.error(f"Failed to delete doc of uuid: {uuid} from index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
         except Exception:
             msg = "Exception encountered during executing ESWriter.delete_document()"
             # Log the full stack trace, prepend a line with our message
@@ -51,10 +51,10 @@ class ESWriter:
 
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
             if rspn.status_code in [200, 201, 202]:
-                logger.info(f"""Added doc of uuid: {uuid} to index: {index_name}""")
+                logger.info(f"Added doc of uuid: {uuid} to index: {index_name}")
             else:
-                logger.error(f"""Failed to write doc of uuid: {uuid} to index: {index_name}""")
-                logger.error(f"""Error Message: {rspn.text}""")
+                logger.error(f"Failed to write doc of uuid: {uuid} to index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
         except Exception:
             msg = "Exception encountered during executing ESWriter.write_or_update_document()"
             # Log the full stack trace, prepend a line with our message
@@ -65,10 +65,10 @@ class ESWriter:
             rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
 
             if rspn.ok:
-                logger.info(f"""Deleted index: {index_name}""")
+                logger.info(f"Deleted index: {index_name}")
             else:
-                logger.error(f"""Failed to delete index: {index_name} in elasticsearch.""")
-                logger.error(f"""Error Message: {rspn.text}""")
+                logger.error(f"Failed to delete index: {index_name} in elasticsearch.")
+                logger.error(f"Error Message: {rspn.text}")
         except Exception:
             msg = "Exception encountered during executing ESWriter.delete_index()"
             # Log the full stack trace, prepend a line with our message
@@ -92,10 +92,10 @@ class ESWriter:
 
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(index_info_dict))
             if rspn.ok:
-                logger.info(f"""Created index: {index_name}""")
+                logger.info(f"Created index: {index_name}")
             else:
-                logger.error(f"""Failed to create index: {index_name} in elasticsearch.""")
-                logger.error(f"""Error Message: {rspn.text}""")
+                logger.error(f"Failed to create index: {index_name} in elasticsearch.")
+                logger.error(f"Error Message: {rspn.text}")
         except Exception:
             msg = "Exception encountered during executing ESWriter.create_index()"
             # Log the full stack trace, prepend a line with our message
