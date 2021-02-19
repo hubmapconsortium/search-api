@@ -317,9 +317,6 @@ class Indexer:
 
             # Why?
             if entity['entity_type'] in ['Sample', 'Dataset']:
-                # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
-                #entity = self.special_handling(entity)
-
                 # Add new properties
                 entity['donor'] = donor
                 entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
@@ -414,27 +411,6 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-
-    # To be backward compatible for API clients relying on the old version
-    # Won't be needed eventually - Joe    
-    def special_handling(entity):
-        if entity['entity_type'] == 'Sample':
-            # Special handling to `Sample.rui_location`
-            # Use isinstance() to avoid to repeating the conversion
-            if ('rui_location' in entity) and isinstance(entity['rui_location'], dict):
-                # Treat python dict as json string in ES
-                entity['rui_location'] = json.dumps(entity['rui_location'])
-        elif entity['entity_type'] == 'Dataset':     
-            # Special handling to `Dataset.contains_human_genetic_sequences`
-            if 'contains_human_genetic_sequences' in entity and isinstance(entity['contains_human_genetic_sequences'], bool):
-                # Convert Python bool True/False to string 'yes'/'no'
-                if entity['contains_human_genetic_sequences']:
-                    entity['contains_human_genetic_sequences'] = 'yes'
-                else:
-                    entity['contains_human_genetic_sequences'] = 'no'
-
-        return entity
-
     def generate_public_doc(self, entity):
         entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
         entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
@@ -472,17 +448,16 @@ class Indexer:
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
-                # Special case of Sample.rui_location and Dataset.contains_human_genetic_sequences
+                # Special case of Sample.rui_location
                 # To be backward compatible for API clients relying on the old version
-                # Won't be needed eventually
-                # Note: rui_location if stored as dict in ES with the default dynamic mapping,
-                # may get errors due to the changing data types of some internal fields - Joe
+                # Also gives the ES consumer flexibility to change the inner structure
+                # Note: when `rui_location` is stored as json object (Python dict) in ES
+                # with the default dynamic mapping, it can cause errors due to 
+                # the changing data types of some internal fields
+                # isinstance() check is to avoid json.dumps() on json string again
                 if (key == 'rui_location') and isinstance(entity[key], dict):
                     # Convert Python dict to json string
                     temp_val = json.dumps(entity[key])
-                elif (key == 'contains_human_genetic_sequences') and isinstance(entity[key], bool):
-                    # Convert Python bool True/False to string 'yes'/'no'
-                    temp_val = 'yes' if entity[key] else 'no'
                 else:
                     temp_val = entity[key]
 
