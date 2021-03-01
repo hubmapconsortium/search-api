@@ -126,14 +126,11 @@
       "visit": {
         "es_name": "visit"
       },
-      "latest_version": {
-        "es_name": "latest_version"
+      "next_revision_uuid": {
+        "es_name": "next_revision_uuid"
       },
-      "next_version": {
-        "es_name": "next_version"
-      },
-      "previous_version": {
-        "es_name": "previous_version"
+      "previous_revision_uuid": {
+        "es_name": "previous_revision_uuid"
       }	    
     },
     "ACTIVITY": {
