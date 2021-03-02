@@ -62,6 +62,12 @@ IMC:
     primary: true
     vitessce-hints: []
 
+3D-IMC:
+    description: 3D Imaging Mass Cytometry
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
 # IMC_pyramid:
 #     description: Imaging Mass Cytometry [Image Pyramid]
 #     alt-names: []
