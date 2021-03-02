@@ -1,5 +1,7 @@
-# This list should be in sync with the Assays List from Elizabeth Neumann & Peter Kant:
+# When updating this document, please suggest a corresponding update to:
 # https://docs.google.com/document/d/1X4wpotexDmvPtUjIN8P5kOgqDGwk0aBLxJSXgSuNqnU/edit
+# Reference the PR in this repo, and '@' Elizabeth Neumann & Peter Kant
+# to incorporate the change into the the google doc.
 
 AF:
     description: Autofluorescence Microscopy
