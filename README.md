@@ -158,7 +158,7 @@ response = requests.post(
 hits = response.json()['hits']['hits']
 ```
 
-## Development and deployment environments
+## Docker development and deployment environments
 
 We have the following 5 development and deployment environments:
 
