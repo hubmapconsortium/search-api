@@ -6,6 +6,5 @@ env:
   - COMMONS_BRANCH=master
 install:
   - pip install -r src/requirements.txt
-  - pip install -r src/requirements-dev.txt
 script:
   - ./test.sh

@@ -14,4 +14,3 @@ CMD="python ./assay_type.py"
 diff ${topdir}/examples/libs/assay_type_out.txt <( eval $CMD ) \
   || die "Try: python ${reldir}/assay_type.py > examples/libs/assay_type_out.txt"
 end libs/assay_type
-

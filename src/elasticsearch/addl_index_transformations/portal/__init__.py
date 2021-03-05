@@ -28,9 +28,9 @@ from elasticsearch.addl_index_transformations.portal.sort_files import (
 
 
 def _get_version():
-    # Use the generated BUILD (under root directory) version (git branch name:short commit hash)
+    # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
     # as Elasticsearch mapper_metadata.version
-    build_path = Path(__file__).parent.parent.parent.parent.parent / 'BUILD'
+    build_path = Path(__file__).absolute().parent.parent.parent.parent.parent / 'BUILD'
     if build_path.is_file():
         # Use strip() to remove leading and trailing spaces, newlines, and tabs
         version = build_path.read_text().strip()

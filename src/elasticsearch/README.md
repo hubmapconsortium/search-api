@@ -4,42 +4,31 @@
 
 The file named `mapper_metadata.VERSION` in this current directory is used to keep tracking the the version of the indexed data entries in Elasticsearch. The portal-ui also queries this version number from Elasticsearch and shows it at `https://portal.hubmapconsortium.org/dev-search`. Ensuring the version number consitency between the deployed search-api code and the one shows up in portal-ui is critical for data integrity purposes. Before the indexer code reindexes the data from Neo4j, we should increment this version number to indicte this reindexing. 
 
-## How to run this script
+## Run the indexer as script
 
-1. Make sure python 3.6 or above installed.
-2. Create a conf.ini file in the same directory of this readme file, use the conf.example.ini as example.
+When running this indexer as a Python script, it will delete all the existing indices and recreate them then index everything. And it requires to have all the dependencies installed already. Below is the command to run within the search-api container under the source code directory `/usr/src/app/src` (either mounted or copied):
 
-Edit the content with you elasticsearch domain endpoint and entity-api URL.
+````
+python3 -m elasticsearch.indexer <globus-nexus-token>
+````
 
-3. Install Pipenv (Optional but Recommanded)
+This approach uses the same configuration file `src/instance/app.cfg` so make sure it exists.
 
-Pipenv Install instruction https://pipenv.kennethreitz.org/en/latest/
+By default, the logging output of this script goes to either STDERR or STDOUT. For debugging purpose, we can redirect STDOUT (1) to a file, and then we redirect to STDERR (2) to the new address of 1 (the file). Now both STDOUT and STDERR are going to the same `indexer.log`.
 
-After install Pipenv
+````
+python3 -m elasticsearch.indexer <globus-nexus-token> 1>indexer.log 2>&1
+````
 
-```
-#cd into the /search-api/elasticsearch directory
+## Live reindex via HTTP request
 
-pipenv shell
+The live reindex will NOT recreate the indices, instead it will just delete and documents that are no longer in Neo4j and reindex each entity document found in Neo4j.
 
-# install the src/requirements.txt and setup.py 
-pipenv install -e ./src
+````
+curl -i -X PUT -H "Authorization:Bearer <globus-nexus-token>" <search-api base URL>/reindex-all
+````
 
-# install hubmapconsortium/commons individually because it sits on github. #egg speficy the package name in your local development enviorment.
-pipenv install -e git+git://github.com/hubmapconsortium/commons.git#egg=hubmap-commons
-# if you are developing commons lib also, install it from  your local directory.
-pipenv install -e ../commons (relative path to your commons)
-```
-4. Configure the conf.ini file.
-- Configure [ELASTICSEARCH] section.
-- COnfigure [INDEX] section.
-
-5. Run the script
-Different env will create different number of replica shard.
-
-```
-python indexer.py [DEV|TEST|STAGE|PROD]
-```
+The token will need to be in the admin group.
 
 ## To debug
 

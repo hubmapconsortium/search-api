@@ -1,200 +1,141 @@
 {
     "ENTITY": {
-      "display_doi": {
-        "es_name": "display_doi",
-        "is_json_stored_as_text": false
+      "hubmap_id": {
+        "es_name": "display_doi"
       },
-      "entitytype": {
-        "es_name": "entity_type",
-        "is_json_stored_as_text": false
+      "entity_type": {
+        "es_name": "entity_type"
       },
-      "hubmap_identifier": {
-        "es_name": "hubmap_display_id",
-        "is_json_stored_as_text": false
+      "submission_id": {
+        "es_name": "hubmap_display_id"
       },
-      "lab_tissue_id": {
-        "es_name": "lab_tissue_id",
-        "is_json_stored_as_text": false
+      "lab_tissue_sample_id": {
+        "es_name": "lab_tissue_id"
       },
-      "provenance_create_timestamp": {
-        "es_name": "create_timestamp",
-        "is_json_stored_as_text": false
+      "lab_tissue_sample_id": {
+        "es_name": "lab_tissue_sample_id"
+      },
+      "created_timestamp": {
+        "es_name": "create_timestamp"
       },
       "uuid": {
-        "es_name": "uuid",
-        "is_json_stored_as_text": false
+        "es_name": "uuid"
       },
       "registered_doi": {
-        "es_name": "registered_doi",
-        "is_json_stored_as_text": false
+        "es_name": "registered_doi"
       },
       "contacts": {
-        "es_name": "contacts",
-        "is_json_stored_as_text": true
+        "es_name": "contacts"
       },
       "creators": {
-        "es_name": "creators",
-        "is_json_stored_as_text": true
-      },
-      "description": {
-        "es_name": "description",
-        "is_json_stored_as_text": false
+        "es_name": "creators"
       },
       "doi_url": {
-        "es_name": "doi_url",
-        "is_json_stored_as_text": false
+        "es_name": "doi_url"
       },
       "has_doi": {
-        "es_name": "has_doi",
-        "is_json_stored_as_text": false
+        "es_name": "has_doi"
       },
-      "name": {
-        "es_name": "title",
-        "is_json_stored_as_text": false
+      "title": {
+        "es_name": "title"
       },
-      "provenance_modified_timestamp": {
-        "es_name": "last_modified_timestamp",
-        "is_json_stored_as_text": false
-      }
-    },
-    "METADATA": {
+      "last_modified_timestamp": {
+        "es_name": "last_modified_timestamp"
+      },
       "donor_metadata_status": {
-        "es_name": "donor_metadata_status",
-        "is_json_stored_as_text": false
+        "es_name": "donor_metadata_status"
       },
       "sample_metadata_status": {
-        "es_name": "sample_metadata_status",
-        "is_json_stored_as_text": false
+        "es_name": "sample_metadata_status"
       },
       "assay_metadata_status": {
-        "es_name": "assay_metadata_status",
-        "is_json_stored_as_text": false
+        "es_name": "assay_metadata_status"
       },
       "data_metric_availability": {
-        "es_name": "data_metric_availability",
-        "is_json_stored_as_text": false
+        "es_name": "data_metric_availability"
       },
       "data_processing_level": {
-        "es_name": "data_processing_level",
-        "is_json_stored_as_text": false
+        "es_name": "data_processing_level"
       },
       "dataset_sign_off_status": {
-        "es_name": "dataset_sign_off_status",
-        "is_json_stored_as_text": false
+        "es_name": "dataset_sign_off_status"
       },
       "rui_location": {
-        "es_name": "rui_location",
-        "is_json_stored_as_text": false
-      },
-      "lab_tissue_id": {
-        "es_name": "lab_tissue_sample_id",
-        "is_json_stored_as_text": false
+        "es_name": "rui_location"
       },
       "data_access_level": {
-        "es_name": "data_access_level",
-        "is_json_stored_as_text": false
+        "es_name": "data_access_level"
       },	
       "data_types": {
-        "es_name": "data_types",
-        "is_json_stored_as_text": true
+        "es_name": "data_types"
       },
       "description": {
-        "es_name": "description",
-        "is_json_stored_as_text": false
+        "es_name": "description"
       },
       "ingest_metadata": {
-        "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "es_name": "metadata"
       },
       "metadata": {
-        "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "es_name": "metadata"
       },
       "specimen_metadata": {
-        "es_name": "metadata",
-        "is_json_stored_as_text": true
+        "es_name": "metadata"
       },
       "image_file_metadata": {
-        "es_name": "portal_uploaded_image_files",
-        "is_json_stored_as_text": true
+        "es_name": "portal_uploaded_image_files"
       },
       "lab_donor_id": {
-        "es_name": "lab_donor_id",
-        "is_json_stored_as_text": false
+        "es_name": "lab_donor_id"
       },
-      "label": {
-        "es_name": "lab_name",
-        "is_json_stored_as_text": false
+      "lab_name": {
+        "es_name": "lab_name"
       },
-      "metadatas": {
-        "es_name": "portal_metadata_upload_files",
-        "is_json_stored_as_text": true
+      "portal_metadata_upload_files": {
+        "es_name": "portal_metadata_upload_files"
       },
       "organ": {
-        "es_name": "organ",
-        "is_json_stored_as_text": false
+        "es_name": "organ"
       },
       "organ_other": {
-        "es_name": "organ_other",
-        "is_json_stored_as_text": false
+        "es_name": "organ_other"
       },
-      "phi": {
-        "es_name": "contains_human_genetic_sequences",
-        "is_json_stored_as_text": false
+      "contains_human_genetic_sequences": {
+        "es_name": "contains_human_genetic_sequences"
       },
-      "protocol": {
-        "es_name": "protocol_url",
-        "is_json_stored_as_text": false
+      "protocol_url": {
+        "es_name": "protocol_url"
       },
-      "provenance_group_uuid": {
-        "es_name": "group_uuid",
-        "is_json_stored_as_text": false
+      "group_uuid": {
+        "es_name": "group_uuid"
       },
-      "provenance_modified_timestamp": {
-        "es_name": "last_modified_timestamp",
-        "is_json_stored_as_text": false
+      "created_by_user_displayname": {
+        "es_name": "created_by_user_displayname"
       },
-      "provenance_user_displayname": {
-        "es_name": "created_by_user_displayname",
-        "is_json_stored_as_text": false
-      },
-      "provenance_user_email": {
-        "es_name": "created_by_user_email",
-        "is_json_stored_as_text": false
+      "created_by_user_email": {
+        "es_name": "created_by_user_email"
       },
       "specimen_type": {
-        "es_name": "specimen_type",
-        "is_json_stored_as_text": false
+        "es_name": "specimen_type"
       },
       "specimen_type_other": {
-        "es_name": "specimen_type_other",
-        "is_json_stored_as_text": false
+        "es_name": "specimen_type_other"
       },
       "status": {
-        "es_name": "status",
-        "is_json_stored_as_text": false
+        "es_name": "status"
       },
       "visit": {
-        "es_name": "visit",
-        "is_json_stored_as_text": false
+        "es_name": "visit"
       },
-      "latest_version": {
-        "es_name": "latest_version",
-        "is_json_stored_as_text": false
+      "next_revision_uuid": {
+        "es_name": "next_revision_uuid"
       },
-      "next_version": {
-        "es_name": "next_version",
-        "is_json_stored_as_text": false
-      },
-      "previous_version": {
-        "es_name": "previous_version",
-        "is_json_stored_as_text": false
+      "previous_revision_uuid": {
+        "es_name": "previous_revision_uuid"
       }	    
     },
     "ACTIVITY": {
-      "activitytype": {
-        "es_name": "creation_action",
-        "is_json_stored_as_text": false
+      "creation_action": {
+        "es_name": "creation_action"
       }
     }
 }
