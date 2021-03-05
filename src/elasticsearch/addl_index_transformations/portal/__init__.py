@@ -79,7 +79,8 @@ def transform(doc, batch_id='unspecified'):
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
-    {'anatomy_1': 'abdominal cavity',
+    {'anatomy_0': 'body',
+     'anatomy_1': 'abdominal cavity',
      'anatomy_2': 'colon',
      'anatomy_3': 'transverse colon',
      'ancestor_counts': {'entity_type': {}},
@@ -107,6 +108,7 @@ def transform(doc, batch_id='unspecified'):
                     'Donors do not have metadata/metadata.',
                     'New',
                     'abdominal cavity',
+                    'body',
                     'codex_cytokit',
                     'colon',
                     'consortium',

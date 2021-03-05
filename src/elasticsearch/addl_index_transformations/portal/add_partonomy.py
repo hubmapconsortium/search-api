@@ -15,7 +15,7 @@ def add_partonomy(doc):
     >>> add_partonomy(doc)
     >>> del doc['rui_location']
     >>> doc
-    {'anatomy_1': 'abdominal cavity', 'anatomy_2': 'colon', 'anatomy_3': 'transverse colon'}
+    {'anatomy_0': 'body', 'anatomy_1': 'abdominal cavity', 'anatomy_2': 'colon', 'anatomy_3': 'transverse colon'}
 
     '''
     if 'rui_location' not in doc:
@@ -43,7 +43,7 @@ def _make_dict_from_ancestors(ancestors):
     numbered = enumerate(ancestors)
     return {
         f'anatomy_{i}': term
-        for i, term in list(numbered)[1:]
+        for i, term in numbered
     }
 
 
