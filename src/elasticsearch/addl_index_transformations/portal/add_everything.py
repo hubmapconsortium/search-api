@@ -10,11 +10,12 @@ def add_everything(doc):
     ...     'b': {
     ...       'c': ['', 'deep', 'deep']
     ...     }
-    ...   }
+    ...   },
+    ...   'rui_location': 'ignored!'
     ... }
     >>> add_everything(doc)
     >>> doc
-    {'a': {'b': {'c': ['', 'deep', 'deep']}}, 'everything': ['deep']}
+    {'a': {'b': {'c': ['', 'deep', 'deep']}}, 'rui_location': 'ignored!', 'everything': ['deep']}
 
     '''
     everything = set(_get_nested_values(doc))
@@ -23,7 +24,7 @@ def add_everything(doc):
     doc['everything'] = sorted(everything)
 
 
-single_valued_fields = ['donor', 'origin_sample', 'source_sample']
+single_valued_fields = ['donor', 'origin_sample', 'source_sample', 'rui_location']
 multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
 
 

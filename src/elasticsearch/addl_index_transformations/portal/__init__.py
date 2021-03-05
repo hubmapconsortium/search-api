@@ -19,6 +19,9 @@ from elasticsearch.addl_index_transformations.portal.add_everything import (
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from elasticsearch.addl_index_transformations.portal.add_partonomy import (
+    add_partonomy
+)
 from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
@@ -71,11 +74,16 @@ def transform(doc, batch_id='unspecified'):
     ...            '_random_stuff_that_should_not_be_ui': True,
     ...            'unrealistic': 'Donors do not have metadata/metadata.'
     ...        }
-    ...    }
+    ...    },
+    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
-    {'ancestor_counts': {'entity_type': {}},
+    {'anatomy_0': 'body',
+     'anatomy_1': 'abdominal cavity',
+     'anatomy_2': 'colon',
+     'anatomy_3': 'transverse colon',
+     'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
                     'mapped_specimen_type': 'Fresh frozen tissue section',
@@ -99,10 +107,14 @@ def transform(doc, batch_id='unspecified'):
                     'Consortium',
                     'Donors do not have metadata/metadata.',
                     'New',
+                    'abdominal cavity',
+                    'body',
                     'codex_cytokit',
+                    'colon',
                     'consortium',
                     'dataset',
-                    'seqFish'],
+                    'seqFish',
+                    'transverse colon'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
@@ -111,6 +123,8 @@ def transform(doc, batch_id='unspecified'):
      'metadata': {'metadata': {'unrealistic': 'Donors do not have '
                                               'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
+     'rui_location': '{"ccf_annotations": '
+                     '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
      'status': 'New'}
 
     '''
@@ -128,6 +142,7 @@ def transform(doc, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    add_partonomy(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
