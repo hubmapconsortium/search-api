@@ -10,12 +10,6 @@ flake8 \
   || die "Try: autopep8 --in-place --aggressive -r $PWD"
 end portal/flake8
 
-start portal/partonomy
-cd ../../..
-python elasticsearch/addl_index_transformations/portal/demo_partonomy.py
-cd -
-end portal/partonomy
-
 start portal/doctests
 cd ../../..
 for F in elasticsearch/addl_index_transformations/portal/*.py; do
