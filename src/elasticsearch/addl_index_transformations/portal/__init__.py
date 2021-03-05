@@ -112,9 +112,7 @@ def transform(doc, batch_id='unspecified'):
                     'consortium',
                     'dataset',
                     'seqFish',
-                    'transverse colon',
-                    '{"ccf_annotations": '
-                    '["http://purl.obolibrary.org/obo/UBERON_0001157"]}'],
+                    'transverse colon'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
