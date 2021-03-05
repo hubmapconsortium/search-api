@@ -6,9 +6,12 @@ BUILD
 docker/data
 docker/search-api/src
 
+# Configuration
 src/instance/app.cfg
 
-src/log
+# Copied files for localhost and dev
+src/BUILD
+src/VERSION
 
 # log files in any path
 **/*.log
