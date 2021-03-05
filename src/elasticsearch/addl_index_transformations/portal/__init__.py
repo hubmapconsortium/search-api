@@ -19,6 +19,9 @@ from elasticsearch.addl_index_transformations.portal.add_everything import (
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from elasticsearch.addl_index_transformations.portal.add_partonomy import (
+    add_partonomy
+)
 from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
@@ -128,6 +131,7 @@ def transform(doc, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    add_partonomy(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
