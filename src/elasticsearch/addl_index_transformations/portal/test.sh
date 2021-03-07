@@ -6,6 +6,9 @@ set -o errexit
 cd `dirname $0`
 
 start portal/flake8
+pip install flake8
+# TODO: dev dependencies are normally installed for CI
+# ... but I'm not sure how the commons dependency is supposed to be resolved.
 flake8 \
   || die "Try: autopep8 --in-place --aggressive -r $PWD"
 end portal/flake8
