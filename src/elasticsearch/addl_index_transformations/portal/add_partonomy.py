@@ -6,7 +6,10 @@ from json import loads
 def add_partonomy(doc):
     '''
     >>> rui_location = {
-    ...     'ccf_annotations': ['http://purl.obolibrary.org/obo/UBERON_0001157']
+    ...     'ccf_annotations': [
+    ...         'http://purl.obolibrary.org/obo/UBERON_0001157',
+    ...         'http://example.com/some-other-random-id'
+    ...     ]
     ... }
     >>> from json import dumps
     >>> doc = {
