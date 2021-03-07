@@ -36,6 +36,8 @@ def add_partonomy(doc):
 
 
 def _get_ancestors_of(node_id, index):
+    if node_id not in index:
+        return []
     node = index[node_id]
     ancestors = _get_ancestors_of(node['parent_id'], index) if node['parent_id'] else []
     ancestors.append(node['value'])
