@@ -6,7 +6,10 @@ from json import loads
 def add_partonomy(doc):
     '''
     >>> rui_location = {
-    ...     'ccf_annotations': ['http://purl.obolibrary.org/obo/UBERON_0001157']
+    ...     'ccf_annotations': [
+    ...         'http://purl.obolibrary.org/obo/UBERON_0001157',
+    ...         'http://example.com/some-other-random-id'
+    ...     ]
     ... }
     >>> from json import dumps
     >>> doc = {
@@ -33,6 +36,8 @@ def add_partonomy(doc):
 
 
 def _get_ancestors_of(node_id, index):
+    if node_id not in index:
+        return []
     node = index[node_id]
     ancestors = _get_ancestors_of(node['parent_id'], index) if node['parent_id'] else []
     ancestors.append(node['value'])
