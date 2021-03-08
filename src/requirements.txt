@@ -1,8 +1,11 @@
-requests>=2.25.1
 urllib3>=1.26.3
 Flask>=1.1.2
 jsonschema>=3.2.0
-PyYAML>=5.2
+
+# It's an agreement with other collaborators to use the beblow versions
+# for requests and PyYAML
+requests>=2.22.0
+PyYAML>=5.3.1
 
 # The branch name of commons to be used during image build
 # Default is master branch specified in docker-compose.yml if not set
