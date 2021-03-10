@@ -6,6 +6,14 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 
 ## Development process
 
+### Local development
+After checking out the repo, install the dependencies, and tests should pass:
+```
+COMMONS_BRANCH=master pip install -r requirements.txt
+pip install -r requirements-dev.txt
+./test.sh
+```
+
 ### To release via TEST infrastructure
 - Make new feature or bug fix branches from `test-release`.
 - Make PRs to `test-release`. (This is the default branch.)
