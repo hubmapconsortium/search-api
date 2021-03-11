@@ -319,10 +319,7 @@ class Indexer:
                 # Add new properties
                 entity['donor'] = donor
 
-                entity['origin_sample'] = None
-                # If the entity itself is the origin_sample
-                if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
-                    entity['origin_sample'] = copy.copy(entity)
+                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
 
                 if entity['origin_sample'] is None:
                     try:
