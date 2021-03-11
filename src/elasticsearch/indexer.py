@@ -314,16 +314,20 @@ class Indexer:
 
             entity['immediate_ancestors'] = parents_response.json()
 
-
-            # Why?
+            # The origin_sample is the sample that `specimen_type` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Add new properties
                 entity['donor'] = donor
-                entity['origin_sample'] = copy.copy(entity) if 'organ' in entity and entity['organ'].strip() != "" else None
-                
+
+                entity['origin_sample'] = None
+                # If the entity itself is the origin_sample
+                if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
+                    entity['origin_sample'] = copy.copy(entity)
+
                 if entity['origin_sample'] is None:
                     try:
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if 'organ' in a and a['organ'].strip() != ""))
+                        # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
