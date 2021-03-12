@@ -173,7 +173,7 @@ class Indexer:
 
             if response.status_code != 200:
                 msg = f"indexer.reindex() failed to get entity via entity-api for uuid: {uuid}"
-                logger.error()
+                logger.error(msg)
                 sys.exit(msg)
             
             entity = response.json()
