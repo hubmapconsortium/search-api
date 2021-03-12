@@ -87,7 +87,7 @@
       "lab_donor_id": {
         "es_name": "lab_donor_id"
       },
-      "lab_name": {
+      "label": {
         "es_name": "lab_name"
       },
       "portal_metadata_upload_files": {
