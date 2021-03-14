@@ -1,14 +1,13 @@
-urllib3>=1.26.3
-Flask>=1.1.2
-jsonschema>=3.2.0
+urllib3==1.26.3
+Flask==1.1.2
+jsonschema==3.2.0
 
-# It's an agreement with other collaborators to use the beblow versions
-# for requests and PyYAML
-requests>=2.22.0
-PyYAML>=5.3.1
+# The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
+requests==2.25.1
+PyYAML==5.4.1
 
 # The branch name of commons to be used during image build:
 # Default is master branch specified in docker-compose.yml if not set.
 # For local development:
-#   COMMONS_BRANCH=master pip install -r requirements.txt
+# COMMONS_BRANCH=master pip install -r requirements.txt
 git+git://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
