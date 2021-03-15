@@ -23,6 +23,8 @@ services:
     volumes:
       # Mount the app config to container in order to keep it outside of the image
       - "../src/instance:/usr/src/app/src/instance"
+      # To avoid permission issue
+      - "../src/elasticsearch/addl_index_transformations/portal/cache:/usr/src/app/src/elasticsearch/addl_index_transformations/portal/cache"
       # Mount the logging to container
       - "../log:/usr/src/app/log"
     networks:

@@ -6,6 +6,14 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 
 ## Development process
 
+### Local development
+After checking out the repo, install the dependencies, and tests should pass:
+```
+COMMONS_BRANCH=master pip install -r requirements.txt
+pip install -r requirements-dev.txt
+./test.sh
+```
+
 ### To release via TEST infrastructure
 - Make new feature or bug fix branches from `test-release`.
 - Make PRs to `test-release`. (This is the default branch.)
@@ -69,6 +77,23 @@ Due to data access restriction, indexed entries are protected and calls to the a
 
 NOTE: currently, the Search API doesn't support comma-separated list or wildcard expression of index names in the URL path used to limit the request.
 
+
+### Get search result count without specifiing an index
+
+Similar to making a request against `/search` but for getting the count:
+
+````
+GET /count
+````
+
+### Get search result count against a specified index
+
+Similar to making a request against `/<index>/search` but for getting the count:
+
+````
+GET /<index>/count
+````
+
 ## Query examples
 
 ### Leaf query - match
@@ -108,18 +133,6 @@ NOTE: currently, the Search API doesn't support comma-separated list or wildcard
 }
 ````
 
-For a request with a valid token that resprents a member who belongs to the HuBMAP read group, the request JSON may narrow down the hits with the `access_group` field, currently only "Open" and "Readonly" are the valid values.
-
-````
-{
-  "query": {
-    "term": {
-      "access_group": "Readonly"
-    }
-  }
-}
-````
-
 ### Aggregation 
 
 ````
@@ -153,15 +166,7 @@ response = requests.post(
 hits = response.json()['hits']['hits']
 ```
 
-### Live reindex
-
-````
-curl -i -X PUT -H "Authorization:Bearer <globus-nexus-token>" <search-api base URL>/reindex-all
-````
-
-The token will need to be in the admin group.
-
-## Development and deployment environments
+## Docker development and deployment environments
 
 We have the following 5 development and deployment environments:
 
@@ -245,5 +250,5 @@ You can also stop the running container and remove it by:
 
 ### Updating API Documentation
 
-The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI.  SmartAPI allows users to register API documents.  The documentation is associated with this github account: api-developers@hubmapconsortium.org. Please contact Chuck Borromeo (chb69@pitt.edu) if you want to register a new API on SmartAPI.
+The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI. SmartAPI allows users to register API documents. The documentation is associated with this github account: api-developers@hubmapconsortium.org.
 

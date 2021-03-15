@@ -3,92 +3,100 @@ import json
 import os
 import logging
 import sys
-from flask import current_app as app
+
+# Set logging fromat and level (default is warning)
+# All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
+# Log rotation is handled via logrotate on the host system with a configuration file
+# Do NOT handle log file and rotation via the Python logging to avoid issues with multi-worker processes
+logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
 
 class ESWriter:
     def __init__(self, elasticsearch_url):
-        try:
-            self.logger = app.logger
-        except:
-            self.logger = logging.getLogger(__name__)
-            self.logger.setLevel(logging.INFO)
-            fh = logging.FileHandler('log')
-            fh.setLevel(logging.INFO)
-            fh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
-            sh = logging.StreamHandler(stream=sys.stdout)
-            sh.setLevel(logging.INFO)
-            sh.setFormatter(logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s'))
-            self.logger.addHandler(fh)
-            self.logger.addHandler(sh)
         self.elasticsearch_url = elasticsearch_url
 
     def write_document(self, index_name, doc, uuid):
         try:
-            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}",
-                                 headers={'Content-Type': 'application/json'},
-                                 data=doc)
+            headers = {'Content-Type': 'application/json'}
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_doc/{uuid}", headers=headers, data=doc)
             if rspn.ok:
-                self.logger.debug("write doc done")
+                logger.info(f"Added doc of uuid: {uuid} to index: {index_name}")
             else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
-                        Error Message: {rspn.text}""")
-        except Exception as e:
-            self.logger.error(str(e))
-
-        # rspn = requests.get(f"{self.elasticsearch_url}/{index_name}/_search?pretty")
+                logger.error(f"Failed to write {uuid} to elasticsearch, index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
+        except Exception:
+            msg = "Exception encountered during executing ESWriter.write_document()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def delete_document(self, index_name, uuid):
         try:
-            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}",
-                                 headers={'Content-Type': 'application/json'})
+            headers = {'Content-Type': 'application/json'}
+            rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_delete_by_query?q=uuid:{uuid}", headers=headers)
             if rspn.ok:
-                self.logger.info(f"doc: {uuid} deleted")
+                logger.info(f"Deleted doc of uuid: {uuid} from index: {index_name}")
             else:
-                self.logger.error(rspn.text)
-        except Exception as e:
-            self.logger.error(str(e))
+                logger.error(f"Failed to delete doc of uuid: {uuid} from index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
+        except Exception:
+            msg = "Exception encountered during executing ESWriter.delete_document()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def write_or_update_document(self, index_name='index', type_='_doc', doc='', uuid=''):
         try:
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}",
-                                headers={'Content-Type': 'application/json'},
-                                data=doc)
-            if rspn.ok:
-                self.logger.debug(f"write doc done. uudi: {uuid}")
-                return True
-            else:
-                self.logger.error(f"""error happened when writing {uuid} to elasticsearch, index: {index_name}\n
-                        Error Message: {rspn.text}""")
-                self.logger.error(f"Document: {doc}")
-                return False
-        except Exception as e:
-            self.logger.error(str(e))
+            headers = {'Content-Type': 'application/json'}
 
-    def remove_index(self, index_name):
-        rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
+            #logger.debug(f"Document: {doc}")
+
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}/{type_}/{uuid}", headers=headers, data=doc)
+            if rspn.status_code in [200, 201, 202]:
+                logger.info(f"Added doc of uuid: {uuid} to index: {index_name}")
+            else:
+                logger.error(f"Failed to write doc of uuid: {uuid} to index: {index_name}")
+                logger.error(f"Error Message: {rspn.text}")
+        except Exception:
+            msg = "Exception encountered during executing ESWriter.write_or_update_document()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
+
+    def delete_index(self, index_name):
+        try:
+            rspn = requests.delete(f"{self.elasticsearch_url}/{index_name}")
+
+            if rspn.ok:
+                logger.info(f"Deleted index: {index_name}")
+            else:
+                logger.error(f"Failed to delete index: {index_name} in elasticsearch.")
+                logger.error(f"Error Message: {rspn.text}")
+        except Exception:
+            msg = "Exception encountered during executing ESWriter.delete_index()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     def create_index(self, index_name):
-        from elasticsearch.indexer import REPLICATION
         try:
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", 
-                                headers={'Content-Type': 'application/json'},
-                                data=json.dumps({"settings": {"index" : {
-                                                            "mapping.total_fields.limit": 5000,
-                                                            "query.default_field": 2048,
-                                                            "number_of_shards": 1,
-                                                            "number_of_replicas": REPLICATION}},
-                                                "mappings": {
-                                                    "date_detection": False
-                                                }}))
+            headers = {'Content-Type': 'application/json'}
+
+            index_info_dict = {
+                "settings": {
+                    "index" : {
+                        "mapping.total_fields.limit": 5000,
+                        "query.default_field": 2048
+                    }
+                },
+                "mappings": {
+                    "date_detection": False
+                }
+            }
+
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(index_info_dict))
             if rspn.ok:
-                self.logger.info(f"index {index_name} created")
+                logger.info(f"Created index: {index_name}")
             else:
-                self.logger.error(f"""error happened when creating {index_name} on elasticsearch\n
-                        Error Message: {rspn.text}""")
-        except Exception as e:
-            self.logger.error(str(e))
-# if __name__ == '__main__':
-#     db_reader = DBReader({'NEO4J_SERVER':'bolt://18.205.215.12:7687', 'NEO4J_USERNAME': 'neo4j', 'NEO4J_PASSWORD': 'td8@-F7yC8cjrJ?3'})
-#     node = db_reader.get_donor('TEST0010')
-#     es_writer = ESWriter({'ELASTICSEARCH_DOMAIN_ENDPOINT': 'https://search-hubmap-entity-es-dev-zhdpuhhf2vjpvqfq7zmn2gdgqq.us-east-1.es.amazonaws.com'})
-#     es_writer.write_document(json.dumps(node))
+                logger.error(f"Failed to create index: {index_name} in elasticsearch.")
+                logger.error(f"Error Message: {rspn.text}")
+        except Exception:
+            msg = "Exception encountered during executing ESWriter.create_index()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)

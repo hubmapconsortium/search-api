@@ -1,6 +1,3 @@
-# This list should be in sync with the Assays List from Elizabeth Neumann & Peter Kant:
-# https://docs.google.com/document/d/1X4wpotexDmvPtUjIN8P5kOgqDGwk0aBLxJSXgSuNqnU/edit
-
 AF:
     description: Autofluorescence Microscopy
     alt-names: []
@@ -58,6 +55,12 @@ image_pyramid:
     
 IMC:
     description: Imaging Mass Cytometry
+    alt-names: []
+    primary: true
+    vitessce-hints: []
+
+3D-IMC:
+    description: 3D Imaging Mass Cytometry
     alt-names: []
     primary: true
     vitessce-hints: []

@@ -2,6 +2,10 @@ AO:
   description: Aorta
 BL:
   description: Bladder
+BD:
+  description: Blood
+BM:
+  description: Bone Marrow
 BR:
   description: Brain
 LF:
@@ -22,6 +26,8 @@ LL:
   description: Lung (Left)
 LV:
   description: Liver
+LY:
+  description: Lymph Node
 LY01:
   description: Lymph Node 01
 LY02:
@@ -86,6 +92,8 @@ SK:
   description: Skin
 SP:
   description: Spleen
+ST:
+  description: Sternum
 TH:
   description: Thymus
 TR:

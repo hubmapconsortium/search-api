@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 from copy import deepcopy
 import logging
@@ -18,15 +19,18 @@ from elasticsearch.addl_index_transformations.portal.add_everything import (
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from elasticsearch.addl_index_transformations.portal.add_partonomy import (
+    add_partonomy
+)
 from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
 
 
 def _get_version():
-    # Use the generated BUILD (under root directory) version (git branch name:short commit hash)
+    # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
     # as Elasticsearch mapper_metadata.version
-    build_path = Path(__file__).parent.parent.parent.parent.parent / 'BUILD'
+    build_path = Path(__file__).absolute().parent.parent.parent.parent.parent / 'BUILD'
     if build_path.is_file():
         # Use strip() to remove leading and trailing spaces, newlines, and tabs
         version = build_path.read_text().strip()
@@ -70,11 +74,16 @@ def transform(doc, batch_id='unspecified'):
     ...            '_random_stuff_that_should_not_be_ui': True,
     ...            'unrealistic': 'Donors do not have metadata/metadata.'
     ...        }
-    ...    }
+    ...    },
+    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
-    {'ancestor_counts': {'entity_type': {}},
+    {'anatomy_0': 'body',
+     'anatomy_1': 'abdominal cavity',
+     'anatomy_2': 'colon',
+     'anatomy_3': 'transverse colon',
+     'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
                     'mapped_specimen_type': 'Fresh frozen tissue section',
@@ -98,10 +107,14 @@ def transform(doc, batch_id='unspecified'):
                     'Consortium',
                     'Donors do not have metadata/metadata.',
                     'New',
+                    'abdominal cavity',
+                    'body',
                     'codex_cytokit',
+                    'colon',
                     'consortium',
                     'dataset',
-                    'seqFish'],
+                    'seqFish',
+                    'transverse colon'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
@@ -110,6 +123,8 @@ def transform(doc, batch_id='unspecified'):
      'metadata': {'metadata': {'unrealistic': 'Donors do not have '
                                               'metadata/metadata.'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
+     'rui_location': '{"ccf_annotations": '
+                     '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
      'status': 'New'}
 
     '''
@@ -127,6 +142,7 @@ def transform(doc, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    add_partonomy(doc_copy)
     add_everything(doc_copy)
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
@@ -272,3 +288,16 @@ def _as_path_string(mixed):
     '''
     sep = '/'
     return sep + sep.join(str(s) for s in mixed)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Given a source document, transform it.'
+    )
+
+    parser.add_argument('input', type=argparse.FileType('r'), help='Path of input YAML/JSON.')
+    args = parser.parse_args()
+    input_yaml = args.input.read()
+    doc = load_yaml(input_yaml)
+    transformed = transform(doc)
+    print(dumps(transformed, sort_keys=True, indent=2))

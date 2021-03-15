@@ -13,18 +13,12 @@ src/instance/app.cfg
 src/BUILD
 src/VERSION
 
-src/log
-
 # log files in any path
 **/*.log
 
 # Rotated log files
 **/*.log*
 
-src/elasticsearch/instance
-src/elasticsearch/conf.py
-src/elasticsearch/conf.ini
-src/search_api.egg-info
 
 __pycache__/
 
