@@ -464,6 +464,14 @@ class Indexer:
 
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
+                # Add the fields hubmap_id (All entities) and submission_id (Donors and Samples) to ES. 
+                # Leave the existing hubmap_display_id and display_doi attributes in place now. 
+                # We will deprecate these existing attributes and remove 
+                # once others dependent on them have switched to the new attributes.
+                if key in ['hubmap_id', 'submission_id']:
+                    temp[key] = temp_val
+
+
         properties_list = [
             'metadata', 
             'donor', 
