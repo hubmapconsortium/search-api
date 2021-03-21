@@ -200,8 +200,26 @@ class Indexer:
                 
                 descendants = descendants_response.json()
 
+                url = self.entity_api_url + "/previous_revisions/" + uuid
+                previous_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
+                if previous_revisions_response.status_code != 200:
+                    msg = f"indexer.reindex() failed to get previous revisions via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
+                
+                previous_revisions = previous_revisions_response.json()
+
+                url = self.entity_api_url + "/next_revisions/" + uuid
+                next_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
+                if next_revisions_response.status_code != 200:
+                    msg = f"indexer.reindex() failed to get next revisions via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
+                
+                next_revisions = next_revisions_response.json()
+
                 # All nodes in the path including the entity itself
-                nodes = [entity] + ancestors + descendants
+                nodes = [entity] + ancestors + descendants + previous_revisions + next_revisions
 
                 for node in nodes:
                     # hubmap_identifier renamed to submission_id
