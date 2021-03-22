@@ -431,6 +431,29 @@ class Indexer:
             logger.exception(msg)
 
     def generate_public_doc(self, entity):
+        # Only Dataset has this 'next_revision_uuid' property
+        property_key = 'next_revision_uuid'
+        if (entity['entity_type'] == 'Dataset') and (property_key in entity):
+            next_revision_uuid = entity[property_key]
+
+            # Making a call against entity-api/entities/<next_revision_uuid>?property=status
+            url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
+            response = requests.get(url, headers = self.request_headers, verify = False)
+
+            if response.status_code != 200:
+                msg = f"indexer.generate_public_doc() failed to get status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
+                logger.error(msg)
+                sys.exit(msg)
+            
+            # The call to entity-api returns string directly
+            dataset_status = (response.text).lower()
+
+            # Check the `next_revision_uuid` and if the dataset is not published, 
+            # pop the `next_revision_uuid` from this entity
+            if dataset_status != self.DATASET_STATUS_PUBLISHED:
+                logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
+                entity.pop(property_key)
+
         entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
         entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
         return json.dumps(entity)
