@@ -433,10 +433,9 @@ class Indexer:
     def generate_public_doc(self, entity):
         # Only Dataset has this 'next_revision_uuid' property
         property_key = 'next_revision_uuid'
-        if property_key in entity:
+        if (entity['entity_type'] == 'Dataset') and (property_key in entity):
             next_revision_uuid = entity[property_key]
 
-            
             # Making a call against entity-api/entities/<next_revision_uuid>?property=status
             url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
             response = requests.get(url, headers = self.request_headers, verify = False)
@@ -452,6 +451,7 @@ class Indexer:
             # Check the `next_revision_uuid` and if the dataset is not published, 
             # pop the `next_revision_uuid` from this entity
             if dataset_status != self.DATASET_STATUS_PUBLISHED:
+                logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
         entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
