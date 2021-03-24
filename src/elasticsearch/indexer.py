@@ -75,7 +75,10 @@ class Indexer:
             # First, index collections separately
             self.index_collections(self.token)
 
-            # Get a list of donor dictionaries 
+            # Next, index submissions separately
+            self.index_submissions(self.token)
+
+            # Then, get a list of donor dictionaries and index the tree from the root node - donor
             url = self.entity_api_url + "/donor/entities"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
@@ -156,14 +159,52 @@ class Indexer:
             for collection in collections_list:
                 self.add_datasets_to_collection(collection)
                 self.entity_keys_rename(collection)
-       
+                
+                # Add doc to hm_public_entities and hm_consortium_entities indices
                 self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
 
+                # Add transformed doc to hm_public_portal and hm_consortium_portal indices
                 prefix0, prefix1, _ = index.split("_")
                 index = f"{prefix0}_{prefix1}_portal"
                 transformed = json.dumps(transform(collection))
-
                 self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
+
+
+    # When indexing Submissions WILL NEVER BE PUBLIC
+    def index_submissions(self, token):
+        IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+        # write entity into indices
+        for index, configs in self.indices.items():
+            configs = IndexConfig(*configs)
+
+            url = self.entity_api_url + "/submission/entities"
+
+            # Only add submissions to the consortium indices
+            # Query only once based on hm_consortium_entities index (original)
+            if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
+                response = requests.get(url, headers = self.request_headers, verify = False)
+            else:
+                continue
+
+            if response.status_code != 200:
+                msg = "indexer.index_submissions() failed to get submissions via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
+        
+            submissions_list = response.json()
+
+            for submissions in submissions_list:
+                self.add_datasets_to_submission(submission)
+                self.entity_keys_rename(submission)
+       
+                # Add doc to hm_consortium_entities index
+                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(submission), uuid=submission['uuid'])
+
+                # Add transformed doc to hm_consortium_portal index
+                prefix0, prefix1, _ = index.split("_")
+                index = f"{prefix0}_{prefix1}_portal"
+                transformed = json.dumps(transform(submission))
+                self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=submission['uuid'])
 
 
     def reindex(self, uuid):
@@ -641,7 +682,7 @@ class Indexer:
                 url = self.entity_api_url + "/entities/" + dataset_uuid
                 response = requests.get(url, headers = self.request_headers, verify = False)
                 if response.status_code != 200:
-                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} during collection for collection uuid: {collection_uuid}"
+                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for collection uuid: {collection_uuid}"
                     logger.error(msg)
                     sys.exit(msg)
 
@@ -661,6 +702,47 @@ class Indexer:
                 datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
+    
+
+    def add_datasets_to_submission(self, submission):
+        # First get the detail of this submission
+        submission_uuid = submission['uuid']
+        url = self.entity_api_url + "/entities/" + submission_uuid
+        response = requests.get(url, headers = self.request_headers, verify = False)
+        if response.status_code != 200:
+            msg = f"indexer.add_datasets_to_submission() failed to get submission detail via entity-api for submission uuid: {submission_uuid}"
+            logger.error(msg)
+            sys.exit(msg)
+
+        submission_detail_dict = response.json()
+
+        datasets = []
+        if 'datasets' in submission_detail_dict:
+            for dataset in submission_detail_dict['datasets']:
+                dataset_uuid = dataset['uuid']
+                url = self.entity_api_url + "/entities/" + dataset_uuid
+                response = requests.get(url, headers = self.request_headers, verify = False)
+                if response.status_code != 200:
+                    msg = f"indexer.add_datasets_to_submission() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for submission uuid: {submission_uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
+
+                dataset = response.json()
+
+                dataset_doc = self.generate_doc(dataset, 'dict')
+                dataset_doc.pop('ancestors')
+                dataset_doc.pop('ancestor_ids')
+                dataset_doc.pop('descendants')
+                dataset_doc.pop('descendant_ids')
+                dataset_doc.pop('immediate_descendants')
+                dataset_doc.pop('immediate_ancestors')
+                dataset_doc.pop('donor')
+                dataset_doc.pop('origin_sample')
+                dataset_doc.pop('source_sample')
+
+                datasets.append(dataset_doc)
+
+        submission['datasets'] = datasets
 
 
 ####################################################################################################
