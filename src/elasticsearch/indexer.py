@@ -73,7 +73,7 @@ class Indexer:
                 self.eswriter.create_index(index)
             
             # First, index public collections separately
-            self.index_public_collections(self.token)
+            self.index_public_collections()
 
             # Get a list of donor dictionaries 
             url = self.entity_api_url + "/donor/entities"
@@ -129,7 +129,7 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_public_collections(self, token):
+    def index_public_collections(self):
         # The entity-api only returns public collections, for either 
         # - a valid token in HuBMAP-Read group, 
         # - a valid token with no HuBMAP-Read group or 
