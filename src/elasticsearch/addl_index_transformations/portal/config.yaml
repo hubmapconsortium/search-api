@@ -1,24 +1,8 @@
-{
-  "mappings": {
-    "properties": {
-      "first_name": {
-        "type": "text",
-        "copy_to": "full_name" 
-      },
-      "last_name": {
-        "type": "text",
-        "copy_to": "full_name" 
-      },
-      "full_name": {
-        "type": "text"
-      }
-    }
-  }
-}
-  # dynamic_templates:
-  #   - 
-  #     copy_every_string: # This is an arbitrary label.
-  #       match_mapping_type: string
-  #       mapping:
-  #         copy_to: all_strings
-  #         type: text
+mappings:
+  dynamic_templates:
+    - 
+      copy_every_string: # This is an arbitrary label.
+        match_mapping_type: string
+        mapping:
+          copy_to: full_name
+          type: text

@@ -26,7 +26,7 @@ assert put_index_response['acknowledged']
 
 get_index_response = requests.get(f'{base_url}/{index}').json()
 print(get_index_response)
-assert 'full_name' in get_index_response[index]['mappings']['properties']
+assert 'dynamic_templates' in get_index_response[index]['mappings']
 
 # Add a document:
 
