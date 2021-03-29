@@ -1,0 +1,8 @@
+mappings:
+  dynamic_templates:
+    - 
+      copy_every_string: # This is an arbitrary label.
+        match_mapping_type: string
+        mapping:
+          copy_to: all_strings
+          type: text
