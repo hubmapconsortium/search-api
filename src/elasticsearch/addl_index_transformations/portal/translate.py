@@ -54,6 +54,19 @@ def _add_metadata_metadata_placeholder(doc):
     "metadata.metadata" and in dev-search, there is a boolean facet
     that looks for this path. Samples and Donors don't follow this pattern,
     but to enable the boolean facet, we add a placeholder.
+
+    >>> doc = {'entity_type': 'donor', 'metadata': {}}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' in doc['metadata']
+
+    >>> doc = {'entity_type': 'donor'}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' not in doc
+
+    >>> doc = {'entity_type': 'dataset', 'metadata': {}}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' not in doc['metadata']
+
     '''
     if doc['entity_type'] in ['donor', 'sample'] and 'metadata' in doc:
         doc['metadata']['metadata'] = 'PLACEHOLDER!'
