@@ -2,6 +2,10 @@ language: python
 python:
   - '3.7'
 cache: pip
+services:
+  - elasticsearch
+before_script:
+  - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
 env:
   - COMMONS_BRANCH=master
 install:

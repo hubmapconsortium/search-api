@@ -29,3 +29,7 @@ PYTHONPATH="src:$PYTHONPATH" \
   # Doctest covers the details: Just want to make sure it runs.
 cd -
 end portal/cli
+
+start portal/elasticsearch
+./test-es.sh
+end portal/elasticsearch
