@@ -31,8 +31,7 @@ assert 'dynamic_templates' in get_index_response[index]['mappings']
 # Add a document:
 
 doc = {
-    "first_name": "John",
-    "last_name": "Smith"
+    "description": "Lorem ipsum dolor sit amet",
 }
 # NOTE: Without "?refresh", the index is not guaranteed to be
 # up-to-date when the response returns. Should not be unused
@@ -45,11 +44,10 @@ assert '_index' in put_doc_response
 
 get_doc_response = requests.get(f'{base_url}/{index}/_doc/1').json()
 print(get_doc_response)
-assert get_doc_response['_source']['first_name'] == 'John'
+assert 'description' in get_doc_response['_source']
 
-query = {'query': {'match': {'full_name': {
-    "query": "John Smith",
-    "operator": "and"
+query = {'query': {'match': {'all_text': {
+    "query": "Lorem"
 }}}}
 headers = {'Content-Type': 'application/json'}
 get_search_response = requests.request(
@@ -60,6 +58,6 @@ get_search_response = requests.request(
 ).json()
 print(get_search_response)
 assert len(get_search_response['hits']['hits']) == 1
-assert 'full_name' not in get_search_response['hits']['hits'][0]['_source']
+assert 'all_text' not in get_search_response['hits']['hits'][0]['_source']
 
 print('No errors!')

@@ -1,8 +1,10 @@
 mappings:
   dynamic_templates:
     - 
-      copy_every_string: # This is an arbitrary label.
+      # This is an arbitrary label:
+      copy_every_string:
         match_mapping_type: string
         mapping:
-          copy_to: full_name
+          # TODO: "all_text" will replace the "everything" field.
+          copy_to: all_text
           type: text
