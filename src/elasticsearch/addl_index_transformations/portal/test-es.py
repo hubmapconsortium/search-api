@@ -60,5 +60,6 @@ get_search_response = requests.request(
 ).json()
 print(get_search_response)
 assert len(get_search_response['hits']['hits']) == 1
+assert 'full_name' not in get_search_response['hits']['hits'][0]['_source']
 
 print('No errors!')
