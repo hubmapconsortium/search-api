@@ -265,6 +265,7 @@ def _translate_donor_metadata(doc):
 def _donor_metadata_map(metadata):
     mapped_metadata = defaultdict(list)
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
+        metadata['metadata'] = 'PLACEHOLDER!'
         for kv in metadata['organ_donor_data']:
             term = kv['grouping_concept_preferred_term']
             key = re.sub(r'\W+', '_', term).lower()
