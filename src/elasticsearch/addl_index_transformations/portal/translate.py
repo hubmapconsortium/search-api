@@ -15,6 +15,7 @@ def _unexpected(s):
 
 
 def translate(doc):
+    _add_metadata_metadata_placeholder(doc)
     _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
@@ -45,6 +46,17 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
+
+
+def _add_metadata_metadata_placeholder(doc):
+    '''
+    For datasets, the "metadata" used by the portal is actually at
+    "metadata.metadata" and in dev-search, there is a boolean facet
+    that looks for this path. Samples and Donors don't follow this pattern,
+    but to enable the boolean facet, we add a placeholder.
+    '''
+    if doc['entity_type'] in ['donor', 'sample'] and 'metadata' in doc:
+        doc['metadata']['metadata'] = 'PLACEHOLDER!'
 
 
 # Data access level:
@@ -265,7 +277,6 @@ def _translate_donor_metadata(doc):
 def _donor_metadata_map(metadata):
     mapped_metadata = defaultdict(list)
     if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
-        metadata['metadata'] = 'PLACEHOLDER!'
         for kv in metadata['organ_donor_data']:
             term = kv['grouping_concept_preferred_term']
             key = re.sub(r'\W+', '_', term).lower()
