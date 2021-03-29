@@ -31,5 +31,5 @@ cd -
 end portal/cli
 
 start portal/elasticsearch
-./test-es.sh
+./test-es.py
 end portal/elasticsearch
