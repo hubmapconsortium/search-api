@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-from json import loads
 from pathlib import Path
 
 import requests
@@ -51,10 +49,10 @@ query = {'query': {'match': {'all_text': {
 }}}}
 headers = {'Content-Type': 'application/json'}
 get_search_response = requests.request(
-  'GET',
-  url=f'{base_url}/{index}/_search',
-  headers=headers,
-  json=query
+    'GET',
+    url=f'{base_url}/{index}/_search',
+    headers=headers,
+    json=query
 ).json()
 print(get_search_response)
 assert len(get_search_response['hits']['hits']) == 1
