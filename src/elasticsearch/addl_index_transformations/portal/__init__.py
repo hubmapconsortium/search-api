@@ -44,7 +44,7 @@ def get_config():
     '''
     >>> es_config = get_config()
     >>> print(list(es_config.keys()))
-    ['mappings']
+    ['settings', 'mappings']
 
     '''
     return load_yaml((Path(__file__).parent / 'config.yaml').read_text())
