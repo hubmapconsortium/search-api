@@ -8,16 +8,14 @@ from yaml import safe_load as load_yaml
 
 LOGGER = logging.getLogger(__name__)
 
+base_url = 'http://127.0.0.1:9200'
+index = 'test_index'
 
-def test_elasticsearch():
-    base_url = 'http://127.0.0.1:9200'
 
+def setup_module(module):
     base_response = requests.get(base_url).json()
     assert 'cluster_name' in base_response
 
-    # Set up clean index:
-
-    index = 'test_index'
     delete_response = requests.delete(f'{base_url}/{index}').json()
     LOGGER.info(f'delete:\t{delete_response}')
     assert 'error' in delete_response or delete_response['acknowledged']
@@ -35,6 +33,8 @@ def test_elasticsearch():
     LOGGER.info(f'get index:\t{get_index_response}')
     assert 'dynamic_templates' in get_index_response[index]['mappings']
 
+
+def test_elasticsearch():
     # Add a document:
 
     doc = {
