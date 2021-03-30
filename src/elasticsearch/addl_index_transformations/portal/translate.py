@@ -55,20 +55,20 @@ def _add_metadata_metadata_placeholder(doc):
     that looks for this path. Samples and Donors don't follow this pattern,
     but to enable the boolean facet, we add a placeholder.
 
-    >>> doc = {'entity_type': 'donor', 'metadata': {}}
+    >>> doc = {'entity_type': 'Donor', 'metadata': {}}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' in doc['metadata']
 
-    >>> doc = {'entity_type': 'donor'}
+    >>> doc = {'entity_type': 'Donor'}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' not in doc
 
-    >>> doc = {'entity_type': 'dataset', 'metadata': {}}
+    >>> doc = {'entity_type': 'Dataset', 'metadata': {}}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' not in doc['metadata']
 
     '''
-    if doc['entity_type'] in ['donor', 'sample'] and 'metadata' in doc:
+    if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
         doc['metadata']['metadata'] = 'PLACEHOLDER!'
 
 
