@@ -61,6 +61,9 @@ class Indexer:
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_api_url = entity_api_url
 
+        # Add index_version by parsing the VERSION file
+        self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
+
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
 
@@ -507,7 +510,7 @@ class Indexer:
             # Add additional caculated fields
 
             # Add index_version by parsing the VERSION file
-            entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
+            entity['index_version'] = self.index_version
 
             # Add display_subtype
             if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
