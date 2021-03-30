@@ -9,8 +9,6 @@ before_install:
   - sudo dpkg -i --force-confnew elasticsearch.deb
   - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
   - sudo service elasticsearch restart
-services:
-  - elasticsearch
 before_script:
   - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
 env:
