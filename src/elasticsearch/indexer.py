@@ -72,8 +72,8 @@ class Indexer:
                 self.eswriter.delete_index(index)
                 self.eswriter.create_index(index)
             
-            # First, index collections separately
-            self.index_collections(self.token)
+            # First, index public collections separately
+            self.index_public_collections()
 
             # Get a list of donor dictionaries 
             url = self.entity_api_url + "/donor/entities"
@@ -129,41 +129,43 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_collections(self, token):
+    def index_public_collections(self):
+        # The entity-api only returns public collections, for either 
+        # - a valid token in HuBMAP-Read group, 
+        # - a valid token with no HuBMAP-Read group or 
+        # - no token at all
+        url = self.entity_api_url + "/collections"
+        response = requests.get(url, verify = False)
+
+        if response.status_code != 200:
+            msg = "indexer.index_public_collections() failed to get public collections via entity-api"
+            logger.error(msg)
+            sys.exit(msg)
+    
+        collections_list = response.json()
+
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-        # write entity into indices
-        for index, configs in self.indices.items():
-            configs = IndexConfig(*configs)
 
-            url = self.entity_api_url + "/collections"
+        # Write doc to indices
+        for collection in collections_list:
+            self.add_datasets_to_collection(collection)
+            self.entity_keys_rename(collection)
+   
+            # write doc into indices
+            for index, configs in self.indices.items():
+                configs = IndexConfig(*configs)
 
-            if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
-                # Consortium Collections - with sending a token that has the right access permission
-                response = requests.get(url, headers = self.request_headers, verify = False)
-            elif (configs.access_level == self.ACCESS_LEVEL_PUBLIC and configs.doc_type == 'original'):
-                # Public Collections - without sending token
-                response = requests.get(url, verify = False)
-            else:
-                continue
-
-            if response.status_code != 200:
-                msg = "indexer.index_collections() failed to get collections via entity-api"
-                logger.error(msg)
-                sys.exit(msg)
-        
-            collections_list = response.json()
-
-            for collection in collections_list:
-                self.add_datasets_to_collection(collection)
-                self.entity_keys_rename(collection)
-       
-                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
-
-                prefix0, prefix1, _ = index.split("_")
-                index = f"{prefix0}_{prefix1}_portal"
-                transformed = json.dumps(transform(collection))
-
-                self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
+                if configs.doc_type == 'original':
+                    # Add public collection doc to the original index
+                    self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
+                elif configs.doc_type == 'portal':
+                    # Add the tranformed doc to the portal index
+                    transformed = json.dumps(transform(collection))
+                    self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
+                else:
+                    msg = "indexer.index_public_collections() failed to add doc to indices due to invalid INDICES configuration"
+                    logger.error(msg)
+                    sys.exit(msg)
 
 
     def reindex(self, uuid):
