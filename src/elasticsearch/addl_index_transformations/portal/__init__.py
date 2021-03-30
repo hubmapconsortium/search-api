@@ -25,6 +25,9 @@ from elasticsearch.addl_index_transformations.portal.add_partonomy import (
 from elasticsearch.addl_index_transformations.portal.sort_files import (
     sort_files
 )
+from elasticsearch.addl_index_transformations.portal.reset_entity_type import (
+    reset_entity_type
+)
 
 
 def _get_version():
@@ -144,6 +147,7 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_partonomy(doc_copy)
     add_everything(doc_copy)
+    reset_entity_type(doc_copy)
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
