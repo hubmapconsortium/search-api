@@ -300,6 +300,37 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+
+    # For DataSubmission, Dataset, Donor and Sample objects:
+    # add a calculated (not stored in Neo4j) field called `display_subtype` to 
+    # all Elasticsearch documents of the above types with the following rules:
+    # Submission: Just make it "Data Submission" for all submissions
+    # Donor: "Donor"
+    # Sample: if specimen_type == 'organ' the display name linked to the value of the organ field
+    # otherwise the display name linked to the value of the specimen_type
+    # Dataset: the display names linked to the values in data_types as a comma separated list
+    def generate_display_subtype(self, entity):
+        entity_type = entity['entity_type']
+        display_subtype = ''
+
+        if entity_type == 'Submission':
+            display_subtype = 'Data Submission'
+        elif entity_type == 'Donor':
+            display_subtype = 'Donor'
+        elif entity_type == 'Sample':
+            if entity['specimen_type'].lower() == 'organ':
+                display_subtype = entity['organ']
+            else:
+                display_subtype = entity['specimen_type']
+        elif entity_type == 'Dataset':
+            display_subtype = ','.join(entity['data_types'])
+        else:
+            # Do nothing
+            logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Submission/Donor/Sample/Dataset")
+
+        return display_subtype
+
+
     def generate_doc(self, entity, return_type):
         try:
             uuid = entity['uuid']
@@ -445,9 +476,6 @@ class Indexer:
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-            # Parse the VERSION number
-            entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
-
             # Remove the `files` element from the entity['metadata'] dict 
             # to reduce the doc size to be indexed?
             if ('metadata' in entity) and ('files' in entity['metadata']):
@@ -475,6 +503,15 @@ class Indexer:
                     self.entity_keys_rename(child)
 
             self.remove_specific_key_entry(entity, "other_metadata")
+
+            # Add additional caculated fields
+
+            # Add index_version by parsing the VERSION file
+            entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
+
+            # Add display_subtype
+            if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
+                entity['display_subtype'] = self.generate_display_subtype(entity)
 
             return json.dumps(entity) if return_type == 'json' else entity
         except Exception:
