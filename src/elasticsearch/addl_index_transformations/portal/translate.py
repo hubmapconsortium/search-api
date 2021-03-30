@@ -20,6 +20,7 @@ def translate(doc):
     _translate_donor_metadata(doc)
     _translate_specimen_type(doc)
     _translate_data_type(doc)
+    _add_data_type_hierarchy(doc)
     _translate_timestamp(doc)
     _translate_access_level(doc)
 
@@ -213,6 +214,11 @@ _data_types_dict = {
     for k, v in _enums['assay_types'].items()
     # NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
 }
+
+
+def _add_data_type_hierarchy(doc):
+    doc['data_type_0'] = 'TODO: top-level'
+    doc['data_type_1'] = doc['mapped_data_types'][0]
 
 
 # Donor metadata:
