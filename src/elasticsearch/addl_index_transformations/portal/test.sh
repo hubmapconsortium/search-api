@@ -30,6 +30,8 @@ PYTHONPATH="src:$PYTHONPATH" \
 cd -
 end portal/cli
 
-start portal/elasticsearch
-./test-es.py
-end portal/elasticsearch
+start portal/pytest
+cd ../../../..
+PYTHONPATH="src:$PYTHONPATH" pytest --verbose --log-cli-level INFO
+cd -
+end portal/pytest
