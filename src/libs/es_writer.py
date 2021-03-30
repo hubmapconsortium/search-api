@@ -3,6 +3,9 @@ import json
 import os
 import logging
 import sys
+from pathlib import Path
+
+from yaml import safe_load as load_yaml
 
 # Set logging fromat and level (default is warning)
 # All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
@@ -77,19 +80,7 @@ class ESWriter:
     def create_index(self, index_name):
         try:
             headers = {'Content-Type': 'application/json'}
-
-            index_info_dict = {
-                "settings": {
-                    "index" : {
-                        "mapping.total_fields.limit": 5000,
-                        "query.default_field": 2048
-                    }
-                },
-                "mappings": {
-                    "date_detection": False
-                }
-            }
-
+            index_info_dict = _get_configuration(index_name)
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(index_info_dict))
             if rspn.ok:
                 logger.info(f"Created index: {index_name}")
@@ -100,3 +91,22 @@ class ESWriter:
             msg = "Exception encountered during executing ESWriter.create_index()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+
+def _get_configuration(index_name):
+    if index_name == 'portal':
+        return load_yaml(
+            (Path(__file__).parent.parent /
+            'elasticsearch/addl_index_transformations/portal/config.yaml').read_text()
+        )
+    return {
+        "settings": {
+            "index": {
+                "mapping.total_fields.limit": 5000,
+                "query.default_field": 2048
+            }
+        },
+        "mappings": {
+            "date_detection": False
+        }
+    }
