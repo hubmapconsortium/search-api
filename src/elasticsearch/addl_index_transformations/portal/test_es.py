@@ -14,7 +14,8 @@ index = 'test_index'
 
 def setup_module(module):
     base_response = requests.get(base_url).json()
-    assert 'cluster_name' in base_response
+    LOGGER.info(f'base:\t{base_response}')
+    assert base_response['version']['number'].startswith('7.')
 
     delete_response = requests.delete(f'{base_url}/{index}').json()
     LOGGER.info(f'delete:\t{delete_response}')
