@@ -1,4 +1,10 @@
+settings:
+  index:
+    mapping.total_fields.limit: 5000
+    query.default_field: 2048
+
 mappings:
+  date_detection: False
   dynamic_templates:
     - 
       # This is an arbitrary label:
