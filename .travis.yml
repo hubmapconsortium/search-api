@@ -2,6 +2,13 @@ language: python
 python:
   - '3.7'
 cache: pip
+before_install:
+  # From https://docs.travis-ci.com/user/database-setup/#installing-specific-versions-of-elasticsearch
+  # (Version matches that used on AWS.)
+  - curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.4.2-amd64.deb -o elasticsearch.deb
+  - sudo dpkg -i --force-confnew elasticsearch.deb
+  - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
+  - sudo service elasticsearch restart
 services:
   - elasticsearch
 before_script:
