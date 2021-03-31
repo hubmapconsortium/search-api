@@ -69,7 +69,7 @@ def _add_metadata_metadata_placeholder(doc):
 
     '''
     if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
-        doc['metadata']['metadata'] = 'PLACEHOLDER!'
+        doc['metadata']['metadata'] = {'has_metadata': True}
 
 
 # Data access level:
