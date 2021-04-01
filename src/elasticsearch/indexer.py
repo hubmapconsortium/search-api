@@ -196,7 +196,7 @@ class Indexer:
         
             submissions_list = response.json()
 
-            for submissions in submissions_list:
+            for submission in submissions_list:
                 self.add_datasets_to_submission(submission)
                 self.entity_keys_rename(submission)
        
