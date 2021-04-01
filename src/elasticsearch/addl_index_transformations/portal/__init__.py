@@ -71,8 +71,13 @@ def transform(doc, batch_id='unspecified'):
     ...    },
     ...    'metadata': {
     ...        'metadata': {
-    ...            '_random_stuff_that_should_not_be_ui': True,
-    ...            'unrealistic': 'Donors do not have metadata/metadata.'
+    ...            '_random_stuff_that_should_not_be_ui': 'No!',
+    ...            'collectiontype': 'No!',
+    ...            'data_path': 'No!',
+    ...            'metadata_path': 'No!',
+    ...            'tissue_id': 'No!',
+    ...            'donor_id': 'No!',
+    ...            'keep_this_field': 'Yes!'
     ...        }
     ...    },
     ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
@@ -105,8 +110,8 @@ def transform(doc, batch_id='unspecified'):
                     '5678',
                     'CODEX [Cytokit + SPRM] / seqFISH',
                     'Consortium',
-                    'Donors do not have metadata/metadata.',
                     'New',
+                    'Yes!',
                     'abdominal cavity',
                     'body',
                     'codex_cytokit',
@@ -120,8 +125,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'unrealistic': 'Donors do not have '
-                                              'metadata/metadata.'}},
+     'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
@@ -186,12 +190,17 @@ def _simple_clean(doc):
         doc[field] = 'Amir Bahmani'
 
     if 'metadata' in doc and 'metadata' in doc['metadata']:
-        underscores = [
-            k for k in doc['metadata']['metadata'].keys()
-            if k.startswith('_')
+        bad_fields = [
+            'collectiontype',  # Inserted by IEC.
+            'data_path', 'metadata_path',  # Only meaningful at submission time.
+            'donor_id', 'tissue_id'  # For internal use only.
         ]
-        for k in underscores:
-            del doc['metadata']['metadata'][k]
+        metadata = {
+            k: v for k, v
+            in doc['metadata']['metadata'].items()
+            if k not in bad_fields and not k.startswith('_')
+        }
+        doc['metadata']['metadata'] = metadata
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
