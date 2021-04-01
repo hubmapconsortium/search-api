@@ -61,6 +61,9 @@ class Indexer:
         self.eswriter = ESWriter(elasticsearch_url)
         self.entity_api_url = entity_api_url
 
+        # Add index_version by parsing the VERSION file
+        self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
+
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
 
@@ -75,7 +78,10 @@ class Indexer:
             # First, index public collections separately
             self.index_public_collections()
 
-            # Get a list of donor dictionaries 
+            # Next, index submissions separately
+            self.index_submissions(self.token)
+
+            # Then, get a list of donor dictionaries and index the tree from the root node - donor
             url = self.entity_api_url + "/donor/entities"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
@@ -168,6 +174,37 @@ class Indexer:
                     sys.exit(msg)
 
 
+    # When indexing Submissions WILL NEVER BE PUBLIC
+    def index_submissions(self, token):
+        IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+        # write entity into indices
+        for index, configs in self.indices.items():
+            configs = IndexConfig(*configs)
+
+            url = self.entity_api_url + "/submission/entities"
+
+            # Only add submissions to the hm_consortium_entities index (original)
+            if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
+                response = requests.get(url, headers = self.request_headers, verify = False)
+            else:
+                continue
+
+            if response.status_code != 200:
+                msg = "indexer.index_submissions() failed to get submissions via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
+        
+            submissions_list = response.json()
+
+            for submissions in submissions_list:
+                self.add_datasets_to_submission(submission)
+                self.entity_keys_rename(submission)
+       
+                # Add doc to hm_consortium_entities index
+                # Do NOT tranform the doc and add to hm_consortium_portal index
+                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(submission), uuid=submission['uuid'])
+
+
     def reindex(self, uuid):
         try:
             url = self.entity_api_url + "/entities/" + uuid
@@ -184,51 +221,58 @@ class Indexer:
             if bool(entity):
                 logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
-                url = self.entity_api_url + "/ancestors/" + uuid
-                ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
-                if ancestors_response.status_code != 200:
-                    msg = f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-                
-                ancestors = ancestors_response.json()
-
-                url = self.entity_api_url + "/descendants/" + uuid
-                descendants_response = requests.get(url, headers = self.request_headers, verify = False)
-                if descendants_response.status_code != 200:
-                    msg = f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}"
-                    logger.error()
-                    sys.exit(msg)
-                
-                descendants = descendants_response.json()
-
-                url = self.entity_api_url + "/previous_revisions/" + uuid
-                previous_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
-                if previous_revisions_response.status_code != 200:
-                    msg = f"indexer.reindex() failed to get previous revisions via entity-api for uuid: {uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-                
-                previous_revisions = previous_revisions_response.json()
-
-                url = self.entity_api_url + "/next_revisions/" + uuid
-                next_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
-                if next_revisions_response.status_code != 200:
-                    msg = f"indexer.reindex() failed to get next revisions via entity-api for uuid: {uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-                
-                next_revisions = next_revisions_response.json()
-
-                # All nodes in the path including the entity itself
-                nodes = [entity] + ancestors + descendants + previous_revisions + next_revisions
-
-                for node in nodes:
+                if entity['entity_type'] == 'Submission':
                     # hubmap_identifier renamed to submission_id
                     # display_doi renamed to hubmap_id
-                    logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, submission_id: {node.get('submission_id', None)}, hubmap_id: {node.get('hubmap_id', None)}")
+                    logger.debug(f"reindex Submission with uuid: {uuid}")
                     
-                    self.update_index(node)
+                    self.update_index(entity)
+                else:
+                    url = self.entity_api_url + "/ancestors/" + uuid
+                    ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if ancestors_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}"
+                        logger.error(msg)
+                        sys.exit(msg)
+                    
+                    ancestors = ancestors_response.json()
+
+                    url = self.entity_api_url + "/descendants/" + uuid
+                    descendants_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if descendants_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}"
+                        logger.error()
+                        sys.exit(msg)
+                    
+                    descendants = descendants_response.json()
+
+                    url = self.entity_api_url + "/previous_revisions/" + uuid
+                    previous_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if previous_revisions_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get previous revisions via entity-api for uuid: {uuid}"
+                        logger.error(msg)
+                        sys.exit(msg)
+                    
+                    previous_revisions = previous_revisions_response.json()
+
+                    url = self.entity_api_url + "/next_revisions/" + uuid
+                    next_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if next_revisions_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get next revisions via entity-api for uuid: {uuid}"
+                        logger.error(msg)
+                        sys.exit(msg)
+                    
+                    next_revisions = next_revisions_response.json()
+
+                    # All nodes in the path including the entity itself
+                    nodes = [entity] + ancestors + descendants + previous_revisions + next_revisions
+
+                    for node in nodes:
+                        # hubmap_identifier renamed to submission_id
+                        # display_doi renamed to hubmap_id
+                        logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, submission_id: {node.get('submission_id', None)}, hubmap_id: {node.get('hubmap_id', None)}")
+                        
+                        self.update_index(node)
                 
                 logger.info("################reindex() DONE######################")
 
@@ -259,80 +303,120 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+
+    # For DataSubmission, Dataset, Donor and Sample objects:
+    # add a calculated (not stored in Neo4j) field called `display_subtype` to 
+    # all Elasticsearch documents of the above types with the following rules:
+    # Submission: Just make it "Data Submission" for all submissions
+    # Donor: "Donor"
+    # Sample: if specimen_type == 'organ' the display name linked to the value of the organ field
+    # otherwise the display name linked to the value of the specimen_type
+    # Dataset: the display names linked to the values in data_types as a comma separated list
+    def generate_display_subtype(self, entity):
+        entity_type = entity['entity_type']
+        display_subtype = ''
+
+        if entity_type == 'Submission':
+            display_subtype = 'Data Submission'
+        elif entity_type == 'Donor':
+            display_subtype = 'Donor'
+        elif entity_type == 'Sample':
+            if entity['specimen_type'].lower() == 'organ':
+                display_subtype = entity['organ']
+            else:
+                display_subtype = entity['specimen_type']
+        elif entity_type == 'Dataset':
+            display_subtype = ','.join(entity['data_types'])
+        else:
+            # Do nothing
+            logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Submission/Donor/Sample/Dataset")
+
+        return display_subtype
+
+
     def generate_doc(self, entity, return_type):
         try:
             uuid = entity['uuid']
-            ancestors = []
-            descendants = []
-            ancestor_ids = []
-            descendant_ids = []
 
-            url = self.entity_api_url + "/ancestors/" + uuid
-            ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
-            if ancestors_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get ancestors via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+            if entity['entity_type'] != 'Submission':
+                ancestors = []
+                descendants = []
+                ancestor_ids = []
+                descendant_ids = []
+                immediate_ancestors = []
+                immediate_descendants = []
 
-            ancestors = ancestors_response.json()
+                url = self.entity_api_url + "/ancestors/" + uuid
+                ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
+                if ancestors_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get ancestors via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
-            url = self.entity_api_url + "/ancestors/" + uuid + "?property=uuid"
-            ancestor_ids_response = requests.get(url, headers = self.request_headers, verify = False)
-            if ancestor_ids_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                ancestors = ancestors_response.json()
 
-            ancestor_ids = ancestor_ids_response.json()
+                # Find the Donor?
+                donor = None
+                for a in ancestors:
+                    if a['entity_type'] == 'Donor':
+                        donor = copy.copy(a)
+                        break
 
-            url = self.entity_api_url + "/descendants/" + uuid
-            descendants_response = requests.get(url, headers = self.request_headers, verify = False)
-            if descendants_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get descendants via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                url = self.entity_api_url + "/ancestors/" + uuid + "?property=uuid"
+                ancestor_ids_response = requests.get(url, headers = self.request_headers, verify = False)
+                if ancestor_ids_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
-            descendants = descendants_response.json()
+                ancestor_ids = ancestor_ids_response.json()
 
-            url = self.entity_api_url + "/descendants/" + uuid + "?property=uuid"
-            descendant_ids_response = requests.get(url, headers = self.request_headers, verify = False)
-            if descendant_ids_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                url = self.entity_api_url + "/descendants/" + uuid
+                descendants_response = requests.get(url, headers = self.request_headers, verify = False)
+                if descendants_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get descendants via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
-            descendant_ids = descendant_ids_response.json()
+                descendants = descendants_response.json()
 
-            donor = None
-            for a in ancestors:
-                if a['entity_type'] == 'Donor':
-                    donor = copy.copy(a)
-                    break
+                url = self.entity_api_url + "/descendants/" + uuid + "?property=uuid"
+                descendant_ids_response = requests.get(url, headers = self.request_headers, verify = False)
+                if descendant_ids_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
-            # build json
-            entity['ancestor_ids'] = ancestor_ids
-            entity['descendant_ids'] = descendant_ids
+                descendant_ids = descendant_ids_response.json()
 
-            entity['ancestors'] = ancestors
-            entity['descendants'] = descendants
- 
-            url = self.entity_api_url + "/children/" + uuid
-            children_response = requests.get(url, headers = self.request_headers, verify = False)
-            if children_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get children via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                url = self.entity_api_url + "/parents/" + uuid
+                parents_response = requests.get(url, headers = self.request_headers, verify = False)
+                if parents_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get parents via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
 
-            entity['immediate_descendants'] = children_response.json()
-            
-            url = self.entity_api_url + "/parents/" + uuid
-            parents_response = requests.get(url, headers = self.request_headers, verify = False)
-            if parents_response.status_code != 200:
-                msg = f"indexer.generate_doc() failed to get parents via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                immediate_ancestors = parents_response.json()
 
-            entity['immediate_ancestors'] = parents_response.json()
+                url = self.entity_api_url + "/children/" + uuid
+                children_response = requests.get(url, headers = self.request_headers, verify = False)
+                if children_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get children via entity-api for uuid: {uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
+
+                immediate_descendants = children_response.json()
+
+                # Add new properties to entity
+                entity['ancestors'] = ancestors
+                entity['descendants'] = descendants
+
+                entity['ancestor_ids'] = ancestor_ids
+                entity['descendant_ids'] = descendant_ids
+
+                entity['immediate_ancestors'] = immediate_ancestors
+                entity['immediate_descendants'] = immediate_descendants
+
 
             # The origin_sample is the sample that `specimen_type` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset']:
@@ -395,9 +479,6 @@ class Indexer:
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-            # Parse the VERSION number
-            entity['index_version'] = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
-
             # Remove the `files` element from the entity['metadata'] dict 
             # to reduce the doc size to be indexed?
             if ('metadata' in entity) and ('files' in entity['metadata']):
@@ -425,6 +506,15 @@ class Indexer:
                     self.entity_keys_rename(child)
 
             self.remove_specific_key_entry(entity, "other_metadata")
+
+            # Add additional caculated fields
+
+            # Add index_version by parsing the VERSION file
+            entity['index_version'] = self.index_version
+
+            # Add display_subtype
+            if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
+                entity['display_subtype'] = self.generate_display_subtype(entity)
 
             return json.dumps(entity) if return_type == 'json' else entity
         except Exception:
@@ -557,39 +647,48 @@ class Indexer:
 
             doc = self.generate_doc(node, 'json')
 
-            transformed = json.dumps(transform(json.loads(doc)))
-            if (transformed is None or transformed == 'null' or transformed == ""):
-                logger.error(f"{node['uuid']} Document is empty")
-                logger.error(f"Node: {node}")
-                return
+            # Handle Submission differently by only updating it in the hm_consortium_entities index
+            if node['entity_type'] == 'Submission':
+                target_index = 'hm_consortium_entities'
 
-            result = None
-            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-            # delete entity from published indices
-            for index, configs in self.indices.items():
-                configs = IndexConfig(*configs)
-                if configs.access_level == self.ACCESS_LEVEL_PUBLIC:
-                    self.eswriter.delete_document(index, node['uuid'])
+                # Delete old doc and write with new one
+                self.eswriter.delete_document(target_index, node['uuid'])
+                self.eswriter.write_or_update_document(index_name=target_index, doc=doc, uuid=node['uuid'])
+            else:
+                transformed = json.dumps(transform(json.loads(doc)))
+                if (transformed is None or transformed == 'null' or transformed == ""):
+                    logger.error(f"{node['uuid']} Document is empty")
+                    logger.error(f"Node: {node}")
+                    return
 
-            # write enitty into indices
-            for index, configs in self.indices.items():
-                configs = IndexConfig(*configs)
-                if (configs.access_level == self.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
-                    public_doc = self.generate_public_doc(node)
-                    public_transformed = transform(json.loads(public_doc))
-                    public_transformed_doc = json.dumps(public_transformed)
-                    
-                    target_doc = public_doc
-                    if configs.doc_type == self.portal_doc_type:
-                        target_doc = public_transformed_doc
+                result = None
+                IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+                # delete entity from published indices
+                for index, configs in self.indices.items():
+                    configs = IndexConfig(*configs)
+                    if configs.access_level == self.ACCESS_LEVEL_PUBLIC:
+                        self.eswriter.delete_document(index, node['uuid'])
 
-                    self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
-                elif configs.access_level == self.ACCESS_LEVEL_CONSORTIUM:
-                    target_doc = doc
-                    if configs.doc_type == self.portal_doc_type:
-                        target_doc = transformed
+                # write enitty into indices
+                for index, configs in self.indices.items():
+                    configs = IndexConfig(*configs)
+                    if (configs.access_level == self.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
+                        public_doc = self.generate_public_doc(node)
+                        public_transformed = transform(json.loads(public_doc))
+                        public_transformed_doc = json.dumps(public_transformed)
+                        
+                        target_doc = public_doc
+                        if configs.doc_type == self.portal_doc_type:
+                            target_doc = public_transformed_doc
 
-                    self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
+                        self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
+                    elif configs.access_level == self.ACCESS_LEVEL_CONSORTIUM:
+                        target_doc = doc
+                        if configs.doc_type == self.portal_doc_type:
+                            target_doc = transformed
+
+                        self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
+        
         except Exception:
             msg = f"Exception encountered during executing indexer.update_index() for uuid: {org_node['uuid']}"
             # Log the full stack trace, prepend a line with our message
@@ -643,7 +742,7 @@ class Indexer:
                 url = self.entity_api_url + "/entities/" + dataset_uuid
                 response = requests.get(url, headers = self.request_headers, verify = False)
                 if response.status_code != 200:
-                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} during collection for collection uuid: {collection_uuid}"
+                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for collection uuid: {collection_uuid}"
                     logger.error(msg)
                     sys.exit(msg)
 
@@ -663,6 +762,47 @@ class Indexer:
                 datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
+    
+
+    def add_datasets_to_submission(self, submission):
+        # First get the detail of this submission
+        submission_uuid = submission['uuid']
+        url = self.entity_api_url + "/entities/" + submission_uuid
+        response = requests.get(url, headers = self.request_headers, verify = False)
+        if response.status_code != 200:
+            msg = f"indexer.add_datasets_to_submission() failed to get submission detail via entity-api for submission uuid: {submission_uuid}"
+            logger.error(msg)
+            sys.exit(msg)
+
+        submission_detail_dict = response.json()
+
+        datasets = []
+        if 'datasets' in submission_detail_dict:
+            for dataset in submission_detail_dict['datasets']:
+                dataset_uuid = dataset['uuid']
+                url = self.entity_api_url + "/entities/" + dataset_uuid
+                response = requests.get(url, headers = self.request_headers, verify = False)
+                if response.status_code != 200:
+                    msg = f"indexer.add_datasets_to_submission() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for submission uuid: {submission_uuid}"
+                    logger.error(msg)
+                    sys.exit(msg)
+
+                dataset = response.json()
+
+                dataset_doc = self.generate_doc(dataset, 'dict')
+                dataset_doc.pop('ancestors')
+                dataset_doc.pop('ancestor_ids')
+                dataset_doc.pop('descendants')
+                dataset_doc.pop('descendant_ids')
+                dataset_doc.pop('immediate_descendants')
+                dataset_doc.pop('immediate_ancestors')
+                dataset_doc.pop('donor')
+                dataset_doc.pop('origin_sample')
+                dataset_doc.pop('source_sample')
+
+                datasets.append(dataset_doc)
+
+        submission['datasets'] = datasets
 
 
 ####################################################################################################
