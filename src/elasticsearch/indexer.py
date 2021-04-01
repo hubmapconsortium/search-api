@@ -204,7 +204,7 @@ class Indexer:
                 # Do NOT tranform the doc and add to hm_consortium_portal index
                 self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(submission), uuid=submission['uuid'])
 
-
+    # By design, reindex() doesn't work on Collection reindex
     def reindex(self, uuid):
         try:
             url = self.entity_api_url + "/entities/" + uuid
@@ -222,8 +222,6 @@ class Indexer:
                 logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
                 if entity['entity_type'] == 'Submission':
-                    # hubmap_identifier renamed to submission_id
-                    # display_doi renamed to hubmap_id
                     logger.debug(f"reindex Submission with uuid: {uuid}")
                     
                     self.update_index(entity)
@@ -277,17 +275,6 @@ class Indexer:
                 logger.info("################reindex() DONE######################")
 
                 return "indexer.reindex() finished executing"
-            else:
-                collection = {}
-                #This uuid is a collection
-                if collection != {}:
-                    self.index_collection(collection)
-
-                    logger.info("################DONE######################")
-                    return "Done."
-                else:
-                    logger.error(f"Cannot find uuid: {uuid}")
-                    return "Done."
         except Exception:
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
