@@ -156,6 +156,9 @@ class Indexer:
         for collection in collections_list:
             self.add_datasets_to_collection(collection)
             self.entity_keys_rename(collection)
+
+            # Add additional caculated fields
+            self.add_caculated_fields(collection)
    
             # write doc into indices
             for index, configs in self.indices.items():
