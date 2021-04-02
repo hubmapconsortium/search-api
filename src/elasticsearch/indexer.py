@@ -213,7 +213,7 @@ class Indexer:
 
     # These caculated fields are not stored in neo4j but will be generated
     # and added to the ES
-    def add_caculated_fields(entity):
+    def add_caculated_fields(self, entity):
         # Add index_version by parsing the VERSION file
         entity['index_version'] = self.index_version
 
