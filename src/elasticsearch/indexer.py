@@ -199,10 +199,25 @@ class Indexer:
             for submission in submissions_list:
                 self.add_datasets_to_submission(submission)
                 self.entity_keys_rename(submission)
+
+                # Add additional caculated fields
+                self.add_caculated_fields(submission)
        
                 # Add doc to hm_consortium_entities index
                 # Do NOT tranform the doc and add to hm_consortium_portal index
                 self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(submission), uuid=submission['uuid'])
+
+
+    # These caculated fields are not stored in neo4j but will be generated
+    # and added to the ES
+    def add_caculated_fields(entity):
+        # Add index_version by parsing the VERSION file
+        entity['index_version'] = self.index_version
+
+        # Add display_subtype
+        if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
+            entity['display_subtype'] = self.generate_display_subtype(entity)
+
 
     # By design, reindex() doesn't work on Collection reindex
     def reindex(self, uuid):
@@ -507,13 +522,7 @@ class Indexer:
             self.remove_specific_key_entry(entity, "other_metadata")
 
             # Add additional caculated fields
-
-            # Add index_version by parsing the VERSION file
-            entity['index_version'] = self.index_version
-
-            # Add display_subtype
-            if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
-                entity['display_subtype'] = self.generate_display_subtype(entity)
+            self.add_caculated_fields(entity)
 
             return json.dumps(entity) if return_type == 'json' else entity
         except Exception:
