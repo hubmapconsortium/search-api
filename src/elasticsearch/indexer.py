@@ -308,12 +308,24 @@ class Indexer:
         elif entity_type == 'Donor':
             display_subtype = 'Donor'
         elif entity_type == 'Sample':
-            if entity['specimen_type'].lower() == 'organ':
-                display_subtype = entity['organ']
+            if 'specimen_type' in entity:
+                if entity['specimen_type'].lower() == 'organ':
+                    if 'organ' in entity:
+                        display_subtype = entity['organ']
+                    else:
+                        logger.error(f"Missing missing organ when specimen_type is set of Sample with uuid: {entity['uuid']}")
+                        display_subtype = 'Error: missing organ when specimen_type is set'
+                else:
+                    display_subtype = entity['specimen_type']
             else:
-                display_subtype = entity['specimen_type']
+                logger.error(f"Missing specimen_type of Sample with uuid: {entity['uuid']}")
+                display_subtype = 'Error: missing specimen_type'
         elif entity_type == 'Dataset':
-            display_subtype = ','.join(entity['data_types'])
+            if 'data_types' in entity:
+                display_subtype = ','.join(entity['data_types'])
+            else:
+                logger.error(f"Missing data_types of Dataset with uuid: {entity['uuid']}")
+                display_subtype = 'Error: missing data_types'
         else:
             # Do nothing
             logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Submission/Donor/Sample/Dataset")
