@@ -563,3 +563,14 @@ def reindex_all_uuids(indexer, token):
             logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
         except Exception as e:
             logger.error(e)
+
+
+# For local development/testing
+if __name__ == "__main__":
+    try:
+        app.run(host='0.0.0.0', port="5005")
+    except Exception as e:
+        print("Error during starting debug server.")
+        print(str(e))
+        logger.error(e, exc_info=True)
+        print("Error during startup check the log file for further information")
