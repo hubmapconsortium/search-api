@@ -10,6 +10,7 @@ import os
 import logging
 from datetime import datetime
 from pathlib import Path
+from yaml import safe_load
 from urllib3.exceptions import InsecureRequestWarning
 
 # For reusing the app.cfg configuration when running indexer.py as script
@@ -42,7 +43,6 @@ class Indexer:
 
     # Constructor method with instance variables to be passed in
     def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret, token):
-
         try:
             self.indices = ast.literal_eval(indices)
         except:
@@ -67,10 +67,42 @@ class Indexer:
 
     def main(self):
         try:
-            # Delete and recreate target indecies
-            for index, _ in self.indices.items():
+            # Settings and mappings definition for creating 
+            # the original indices (hm_consortium_entities and hm_public_entities)
+            original_index_config = {
+                "settings": {
+                    "index" : {
+                        "mapping.total_fields.limit": 5000,
+                        "query.default_field": 2048
+                    }
+                },
+                "mappings": {
+                    "date_detection": False
+                }
+            }
+
+            # Settings and mappings definition for creating the 
+            # portal indices (hm_consortium_portal and hm_public_portal) 
+            # is specified in the yaml config file
+            portal_index_config = safe_load((Path(__file__).absolute().parent / 'addl_index_transformations/portal/config.yaml').read_text())
+            
+            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
+
+            # Delete and recreate target indices
+            for index, configs in self.indices.items():
+                configs = IndexConfig(*configs)
+
                 self.eswriter.delete_index(index)
-                self.eswriter.create_index(index)
+
+                # Use different settings/mappings for entities and portal indices on recreation
+                if configs.doc_type == 'original':
+                    self.eswriter.create_index(index, original_index_config)
+                elif configs.doc_type == 'portal':
+                    self.eswriter.create_index(index, portal_index_config)
+                else:
+                    msg = "indexer.main() failed to recreate indices due to invalid INDICES configuration"
+                    logger.error(msg)
+                    sys.exit(msg)
             
             # First, index public collections separately
             self.index_public_collections()
