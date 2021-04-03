@@ -7,10 +7,17 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 ## Development process
 
 ### Local development
-After checking out the repo, install the dependencies, and tests should pass:
-```
+After checking out the repo, installing the dependencies,
+and starting a local Elasticsearch instance, tests should pass:
+```shell
 COMMONS_BRANCH=master pip install -r requirements.txt
 pip install -r requirements-dev.txt
+
+# on mac:
+brew tap elastic/tap
+brew install elastic/tap/elasticsearch-full
+elasticsearch &  # Wait for it to start...
+
 ./test.sh
 ```
 
