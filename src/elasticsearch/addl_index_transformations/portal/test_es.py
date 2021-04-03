@@ -32,7 +32,7 @@ def setup_function(function):
 
     get_index_response = requests.get(f'{base_url}/{index}').json()
     LOGGER.info(f'get index:\t{get_index_response}')
-    assert 'dynamic_templates' in get_index_response[index]['mappings']
+    # assert 'dynamic_templates' in get_index_response[index]['mappings']
 
 
 def test_tokenization_and_search():
@@ -71,29 +71,26 @@ def test_tokenization_and_search():
 
 def test_sort_by_keyword():
     docs = [
-        {"animal": "dog"},
+        {"animal": "zebra"},
+        {"animal": "ant"},
+        {"animal": "bear"},
         {"animal": "cat"},
-        {"animal": "mouse"},
-        {"animal": "horse"},
     ]
-    for doc in docs:
-        requests.put(f'{base_url}/{index}/_doc/1?refresh', json=doc).json()
+    for i, doc in enumerate(docs):
+        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
 
     query = {
         # TODO: Add tests to make sure all parts of the query work as intended.
         # "post_filter": {},
         # "aggs": {}
-        "sort": [{"animal.keyword": "desc"}],
+        "sort": [{"animal.keyword": "asc"}],
         # "highlight": {},
         "_source": ["animal"]
     }
 
-    headers = {'Content-Type': 'application/json'}
-    get_search_response = requests.request(
-        'GET',
-        url=f'{base_url}/{index}/_search',
-        headers=headers,
-        json=query
-    ).json()
+    get_search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
     LOGGER.info(f'get query:\t{get_search_response}')
-    assert get_search_response['hits']['hits'] == ['foo']
+    assert [
+        hit['_source']['animal']
+        for hit in get_search_response['hits']['hits']
+    ] == ['ant', 'bear', 'cat', 'zebra']

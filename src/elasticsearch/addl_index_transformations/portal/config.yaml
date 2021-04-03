@@ -7,17 +7,15 @@ mappings:
   date_detection: False
   dynamic_templates:
     -
-      copy_every_string_to_all_text:
+      map_every_string:
         match_mapping_type: string
         mapping:
           # TODO: "all_text" will replace the "everything" field.
           copy_to: all_text
           type: text
-    -
-      copy_every_string_to_keyword:
-        match_mapping_type: string
-        mapping:
-          # This is the default behavior when no mapping is specified.
-          # Sorting results on the portal requires keyword fields to exist.
-          copy_to: '{name}.keyword'
-          type: keyword
+          fields:
+            # This emulates the default ES behavior,
+            # giving us a "keyword" subfield,
+            # with a "keyword" type.
+            keyword:
+              type: keyword
