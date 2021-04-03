@@ -12,7 +12,7 @@ base_url = 'http://127.0.0.1:9200'
 index = 'test_index'
 
 
-def setup_module(module):
+def setup_function(function):
     base_response = requests.get(base_url).json()
     LOGGER.info(f'base:\t{base_response}')
     assert base_response['version']['number'].startswith('7.')
@@ -35,9 +35,7 @@ def setup_module(module):
     assert 'dynamic_templates' in get_index_response[index]['mappings']
 
 
-def test_elasticsearch():
-    # Add a document:
-
+def test_tokenization_and_search():
     doc = {
         "description": "Lorem ipsum dolor sit amet",
     }
@@ -55,6 +53,8 @@ def test_elasticsearch():
     assert 'description' in get_doc_response['_source']
 
     query = {'query': {'match': {'all_text': {
+        # NOTE: This is just one word from the string,
+        # so it's testing whether tokenization works.
         "query": "Lorem"
     }}}}
     headers = {'Content-Type': 'application/json'}
@@ -67,3 +67,33 @@ def test_elasticsearch():
     LOGGER.info(f'get query:\t{get_search_response}')
     assert len(get_search_response['hits']['hits']) == 1
     assert 'all_text' not in get_search_response['hits']['hits'][0]['_source']
+
+
+def test_sort_by_keyword():
+    docs = [
+        {"animal": "dog"},
+        {"animal": "cat"},
+        {"animal": "mouse"},
+        {"animal": "horse"},
+    ]
+    for doc in docs:
+        requests.put(f'{base_url}/{index}/_doc/1?refresh', json=doc).json()
+
+    query = {
+        # TODO: Add tests to make sure all parts of the query work as intended.
+        # "post_filter": {},
+        # "aggs": {}
+        "sort": [{"animal.keyword": "desc"}],
+        # "highlight": {},
+        "_source": ["animal"]
+    }
+
+    headers = {'Content-Type': 'application/json'}
+    get_search_response = requests.request(
+        'GET',
+        url=f'{base_url}/{index}/_search',
+        headers=headers,
+        json=query
+    ).json()
+    LOGGER.info(f'get query:\t{get_search_response}')
+    assert get_search_response['hits']['hits'] == ['foo']
