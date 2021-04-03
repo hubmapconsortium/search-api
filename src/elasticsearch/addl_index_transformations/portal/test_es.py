@@ -12,7 +12,7 @@ base_url = 'http://127.0.0.1:9200'
 index = 'test_index'
 
 
-def setup_module(module):
+def setup_function(function):
     base_response = requests.get(base_url).json()
     LOGGER.info(f'base:\t{base_response}')
     assert base_response['version']['number'].startswith('7.')
@@ -32,12 +32,10 @@ def setup_module(module):
 
     get_index_response = requests.get(f'{base_url}/{index}').json()
     LOGGER.info(f'get index:\t{get_index_response}')
-    assert 'dynamic_templates' in get_index_response[index]['mappings']
+    # assert 'dynamic_templates' in get_index_response[index]['mappings']
 
 
-def test_elasticsearch():
-    # Add a document:
-
+def test_tokenization_and_search():
     doc = {
         "description": "Lorem ipsum dolor sit amet",
     }
@@ -55,6 +53,8 @@ def test_elasticsearch():
     assert 'description' in get_doc_response['_source']
 
     query = {'query': {'match': {'all_text': {
+        # NOTE: This is just one word from the string,
+        # so it's testing whether tokenization works.
         "query": "Lorem"
     }}}}
     headers = {'Content-Type': 'application/json'}
@@ -67,3 +67,30 @@ def test_elasticsearch():
     LOGGER.info(f'get query:\t{get_search_response}')
     assert len(get_search_response['hits']['hits']) == 1
     assert 'all_text' not in get_search_response['hits']['hits'][0]['_source']
+
+
+def test_sort_by_keyword():
+    docs = [
+        {"animal": "zebra"},
+        {"animal": "ant"},
+        {"animal": "bear"},
+        {"animal": "cat"},
+    ]
+    for i, doc in enumerate(docs):
+        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+
+    query = {
+        # TODO: Add tests to make sure all parts of the query work as intended.
+        # "post_filter": {},
+        # "aggs": {}
+        "sort": [{"animal.keyword": "asc"}],
+        # "highlight": {},
+        "_source": ["animal"]
+    }
+
+    get_search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+    LOGGER.info(f'get query:\t{get_search_response}')
+    assert [
+        hit['_source']['animal']
+        for hit in get_search_response['hits']['hits']
+    ] == ['ant', 'bear', 'cat', 'zebra']
