@@ -41,7 +41,7 @@ cd src/instance
 cp app.cfg.example app.cfg
 ````
 
-Edit the four fields at the top `app.cfg`, leave the remaining fields in the configuration file as the defaults specified in `app.cfg.example`:
+Edit the four fields at the top of `app.cfg`, leave the remaining fields in the configuration file as the defaults specified in `app.cfg.example`:
 
 *ELASTICSEARCH_URL* - URL to your Elasticsearch installation from above.
 *APP_CLIENT_ID* - A Globus Application Client ID, Nexus scope required.
@@ -70,7 +70,7 @@ APP_CLIENT_SECRET = 'fy92lfumf&92m2093/22mkg'
 
 ## Start the server
 
-Both methods below will run the search-api web service at `http://localhost:5005`.
+Either methods below will run the search-api web service at `http://localhost:5005`. Choose one:
 
 #### Directly via Python
 
@@ -95,6 +95,8 @@ When running this indexer as a Python script, it will delete all the existing in
 ````
 python3 -m elasticsearch.indexer <globus-nexus-token> 1>indexer.log 2>&1
 ````
+
+This completes a local development installation of the HuBMAP search API.  For debugging purposes it may also be convenient to reindex a single entity at a time with: 
 
 ## Reindex a single entity
 
