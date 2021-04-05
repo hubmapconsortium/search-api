@@ -12,11 +12,11 @@ In the project root directory:
 
 ## Install Dependencies
 
-Create a new virtual environment named `hm-search-api` (the name can be dirrerent) under the `src/` directory:
+Create a new Python 3.x virtual environment:
 
 ````
-python3 -m venv hm-search-api
-source hm-search-api/bin/activate
+python3 -m venv venv-hm-search-api
+source venv-hm-search-api/bin/activate
 ````
 
 Then install the dependencies:
@@ -28,10 +28,27 @@ pip install -r requirements.txt
 
 Note: the above example uses the `master` branch of `commons` from Github. You can also specify to use a released version.
 
+## Install Elasticsearch
+
+Install or configure a hosted Elasticsearch instance.  Currently we're using Elasticsearch 7.4.  [Installation Instructions](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html)
 
 ## Configuration
 
 Create a new file named `app.cfg` under `src/instance` directory based off the `app.cfg.example` with the following details:
+
+````
+cd src/instance
+cp app.cfg.example app.cfg
+````
+
+Edit the four fields at the top of `app.cfg`, leave the remaining fields in the configuration file as the defaults specified in `app.cfg.example`:
+
+*ELASTICSEARCH_URL* - URL to your Elasticsearch installation from above.
+*APP_CLIENT_ID* - A Globus Application Client ID, Nexus scope required.
+*APP_CLIENT_SECRET* - The secret associated with the Globus Application Client ID above.
+*ENTITY_API_URL* - URL to the HuBMAP entity-api 
+
+Example values:
 
 ````
 # ElasticSearch Endpoint
@@ -39,39 +56,29 @@ Create a new file named `app.cfg` under `src/instance` directory based off the `
 # Point to your local ES instance
 ELASTICSEARCH_URL = 'http://localhost:8000'
 
-# Naming convention of indices (always in pair) in Elasticsearch, can NOT be empty
-PUBLIC_INDEX_PREFIX = 'hm_public_'
-PRIVATE_INDEX_PREFIX = 'hm_consortium_'
-
-# Default index (without prefix) name for `/search` compability, can NOT be empty
-DEFAULT_INDEX_WITHOUT_PREFIX = 'entities'
-
 # URL for talking to Entity API on DEV
 # Works regardless of the trailing slash
 ENTITY_API_URL = 'https://entity-api.dev.hubmapconsortium.org'
 
 # Globus app client ID and secret
-APP_CLIENT_ID = ''
-APP_CLIENT_SECRET = ''
+APP_CLIENT_ID = '23-29202309-93929-293924'
+APP_CLIENT_SECRET = 'fy92lfumf&92m2093/22mkg'
 
-# Globus Hubmap-Read group UUID
-GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
+  . . . .
 
-# Open: Only entities can open to the public
-# All: All entities
-# original: directly from neo4j
-# transformed: transformed by portal transform method
-INDICES = """{
-            'hm_public_entities': ('public','original'),
-            'hm_consortium_entities': ('consortium', 'original'),
-            'hm_public_portal': ('public', 'portal'),
-            'hm_consortium_portal': ('consortium', 'portal')
-            }"""
-ORIGINAL_DOC_TYPE = 'original'
-PORTAL_DOC_TYPE = 'portal'
 ````
 
-## Start Flask Development Server
+## Start the server
+
+Either methods below will run the search-api web service at `http://localhost:5005`. Choose one:
+
+#### Directly via Python
+
+````
+python3 app.py
+````
+
+#### With the Flask Development Server
 
 ````
 cd src
@@ -80,31 +87,20 @@ export FLASK_ENV=development
 flask run -p 5005
 ````
 
-This will run the search-api at `http://localhost:5005`.
 
-Alternatively, you can also 
+## Run a full reindex
 
-````
-python3 app.py
-````
-
-## Run the indexer as script
-
-When running this indexer as a Python script, it will delete all the existing indices (defined in the above `app.cfg`) and recreate them then start indexing everything. Below is the command to run under the source code directory `src`:
-
-````
-python3 -m elasticsearch.indexer <globus-nexus-token>
-````
-
-By default, the logging output of this script goes to either STDERR or STDOUT. For debugging purpose, we can redirect STDOUT (1) to a file, and then we redirect to STDERR (2) to the new address of 1 (the file). Now both STDOUT and STDERR are going to the same `indexer.log`.
+When running this indexer as a Python script, it will delete all the existing indices (defined in the above `app.cfg`) and recreate them then start indexing everything. Below is the command to run under the source code directory `src`, you must provide a valid Globus Nexus token with HuBMAP write access.  By default, the logging output of this script goes to either STDERR or STDOUT. For debugging purpose, we can redirect STDOUT (1) to a file, and then we redirect to STDERR (2) to the new address of 1 (the file). Now both STDOUT and STDERR are going to the same `indexer.log`.
 
 ````
 python3 -m elasticsearch.indexer <globus-nexus-token> 1>indexer.log 2>&1
 ````
 
-## Reindex for a given uuid via HTTP request
+This completes a local development installation of the HuBMAP search API.  For debugging purposes it may also be convenient to reindex a single entity at a time with: 
 
-The reindex will NOT recreate the indices, instead it will just delete the old document and reindex the updated document.
+## Reindex a single entity
+
+Reindex for a single entity given the uuid of the entity via HTTP request.  The reindex will NOT recreate the indices, instead it will just delete the old document and reindex the updated document along with the other entities in it's provenance chain.
 
 ````
 curl -i -X PUT -H "Authorization:Bearer <globus-nexus-token>" http://localhost:5005/reindex/<uuid>

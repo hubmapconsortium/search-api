@@ -74,23 +74,12 @@ class ESWriter:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    def create_index(self, index_name):
+    # The settings and mappings definition needs to be passed in via config
+    def create_index(self, index_name, config):
         try:
             headers = {'Content-Type': 'application/json'}
 
-            index_info_dict = {
-                "settings": {
-                    "index" : {
-                        "mapping.total_fields.limit": 5000,
-                        "query.default_field": 2048
-                    }
-                },
-                "mappings": {
-                    "date_detection": False
-                }
-            }
-
-            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(index_info_dict))
+            rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(config))
             if rspn.ok:
                 logger.info(f"Created index: {index_name}")
             else:

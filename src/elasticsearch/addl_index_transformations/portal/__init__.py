@@ -40,6 +40,16 @@ def _get_version():
     return 'no-build-file'
 
 
+def get_config():
+    '''
+    >>> es_config = get_config()
+    >>> print(list(es_config.keys()))
+    ['settings', 'mappings']
+
+    '''
+    return load_yaml((Path(__file__).parent / 'config.yaml').read_text())
+
+
 def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint

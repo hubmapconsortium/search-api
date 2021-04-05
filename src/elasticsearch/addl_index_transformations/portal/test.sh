@@ -29,3 +29,9 @@ PYTHONPATH="src:$PYTHONPATH" \
   # Doctest covers the details: Just want to make sure it runs.
 cd -
 end portal/cli
+
+start portal/pytest
+cd ../../../..
+PYTHONPATH="src:$PYTHONPATH" pytest --verbose --log-cli-level WARN
+cd -
+end portal/pytest

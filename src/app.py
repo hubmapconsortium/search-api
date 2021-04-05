@@ -440,13 +440,14 @@ def get_query_string(url):
 
 
 # Get a list of entity uuids via entity-api for a given entity type:
-# Collection, Donor, Sample, Dataset. Case-insensitive.
+# Collection, Donor, Sample, Dataset, Submission. Case-insensitive.
 def get_uuids_by_entity_type(entity_type, token):
     entity_type = entity_type.lower()
 
     auth_helper = init_auth_helper()
     request_headers = create_request_headers_for_auth(token)
 
+    # Use different entity-api endpoint for Collection
     if entity_type == 'collection':
         url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
     else:
@@ -532,11 +533,12 @@ def reindex_all_uuids(indexer, token):
             # Make calls to entity-api to get a list of uuids for each entity type
             donor_uuids_list = get_uuids_by_entity_type("donor", token)
             sample_uuids_list = get_uuids_by_entity_type("sample", token)
-            collection_uuids_list = get_uuids_by_entity_type("collection", token)
             dataset_uuids_list = get_uuids_by_entity_type("dataset", token)
+            submission_uuids_list = get_uuids_by_entity_type("submission", token)
+            collection_uuids_list = get_uuids_by_entity_type("collection", token)
 
             # Merge into a big list that with no duplicates
-            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + collection_uuids_list + dataset_uuids_list)
+            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + submission_uuids_list + collection_uuids_list)
 
             # 1. Remove entities that are not found in neo4j
             es_uuids = []
@@ -555,8 +557,8 @@ def reindex_all_uuids(indexer, token):
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
 
-            # 3. Index collection separately
-            indexer.index_collections(token)
+            # 3. Index public collections separately
+            indexer.index_public_collections()
 
             end = time.time()
 
