@@ -1,0 +1,21 @@
+settings:
+  index:
+    mapping.total_fields.limit: 5000
+    query.default_field: 2048
+
+mappings:
+  date_detection: False
+  dynamic_templates:
+    -
+      map_every_string:
+        match_mapping_type: string
+        mapping:
+          # TODO: "all_text" will replace the "everything" field.
+          copy_to: all_text
+          type: text
+          fields:
+            # This emulates the default ES behavior,
+            # giving us a "keyword" subfield,
+            # with a "keyword" type.
+            keyword:
+              type: keyword
