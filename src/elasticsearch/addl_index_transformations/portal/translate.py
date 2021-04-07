@@ -11,10 +11,11 @@ class TranslationException(Exception):
 
 
 def _unexpected(s):
-    return f'{{{s}}}'
+    return f'No translation for "{s}"'
 
 
 def translate(doc):
+    _add_metadata_metadata_placeholder(doc)
     _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
@@ -47,6 +48,30 @@ def _map(doc, key, map):
             _map(ancestor, key, map)
 
 
+def _add_metadata_metadata_placeholder(doc):
+    '''
+    For datasets, the "metadata" used by the portal is actually at
+    "metadata.metadata" and in dev-search, there is a boolean facet
+    that looks for this path. Samples and Donors don't follow this pattern,
+    but to enable the boolean facet, we add a placeholder.
+
+    >>> doc = {'entity_type': 'Donor', 'metadata': {}}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' in doc['metadata']
+
+    >>> doc = {'entity_type': 'Donor'}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' not in doc
+
+    >>> doc = {'entity_type': 'Dataset', 'metadata': {}}
+    >>> _add_metadata_metadata_placeholder(doc)
+    >>> assert 'metadata' not in doc['metadata']
+
+    '''
+    if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
+        doc['metadata']['metadata'] = {'has_metadata': True}
+
+
 # Data access level:
 
 def _translate_access_level(doc):
@@ -56,7 +81,7 @@ def _translate_access_level(doc):
     {'data_access_level': 'consortium', 'mapped_data_access_level': 'Consortium'}
     >>> doc = {'data_access_level': 'top-secret'}
     >>> _translate_access_level(doc); doc
-    {'data_access_level': 'top-secret', 'mapped_data_access_level': '{top-secret}'}
+    {'data_access_level': 'top-secret', 'mapped_data_access_level': 'No translation for "top-secret"'}
 
     '''
     _map(doc, 'data_access_level', _access_level_map)
@@ -106,7 +131,7 @@ def _translate_status(doc):
 
     >>> doc = {'status': 'Foobar'}
     >>> _translate_status(doc); doc
-    {'status': 'Foobar', 'mapped_status': '{Foobar}'}
+    {'status': 'Foobar', 'mapped_status': 'No translation for "Foobar"'}
     '''
     _map(doc, 'status', _status_map)
 
@@ -131,7 +156,7 @@ def _translate_organ(doc):
 
     >>> doc = {'origin_sample': {'organ': 'ZZ'}}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': '{ZZ}'}}
+    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': 'No translation for "ZZ"'}}
 
     '''
     _map(doc, 'organ', _organ_map)
@@ -159,7 +184,7 @@ def _translate_specimen_type(doc):
 
     >>> doc = {'specimen_type': 'xyz'}
     >>> _translate_specimen_type(doc); doc
-    {'specimen_type': 'xyz', 'mapped_specimen_type': '{xyz}'}
+    {'specimen_type': 'xyz', 'mapped_specimen_type': 'No translation for "xyz"'}
 
     '''
     _map(doc, 'specimen_type', _specimen_types_map)
@@ -191,7 +216,7 @@ def _translate_data_type(doc):
 
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['{abc} / {xyz} [Image Pyramid]']}
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "abc" / No translation for "xyz" [Image Pyramid]']}
 
     '''
     _map(doc, 'data_types', _data_types_map)

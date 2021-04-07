@@ -24,10 +24,10 @@ bulk_atacseq:
     primary: false
     vitessce-hints: []
 
-# cellDIVE:
-#     description: ????
-#     alt-names: []
-#     primary: true
+cell-dive:
+    description: Cell DIVE
+    alt-names: []
+    primary: true
 
 CODEX:
     description: CODEX
