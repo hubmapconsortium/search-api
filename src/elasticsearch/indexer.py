@@ -110,8 +110,8 @@ class Indexer:
             # First, index public collections separately
             self.index_public_collections()
 
-            # Next, index submissions separately
-            self.index_submissions(self.token)
+            # Next, index uploads separately
+            self.index_uploads(self.token)
 
             # Then, get a list of donor dictionaries and index the tree from the root node - donor
             url = self.entity_api_url + "/donor/entities"
@@ -209,38 +209,38 @@ class Indexer:
                     sys.exit(msg)
 
 
-    # When indexing Submissions WILL NEVER BE PUBLIC
-    def index_submissions(self, token):
+    # When indexing Uploads WILL NEVER BE PUBLIC
+    def index_uploads(self, token):
         IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
         # write entity into indices
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
 
-            url = self.entity_api_url + "/submission/entities"
+            url = self.entity_api_url + "/upload/entities"
 
-            # Only add submissions to the hm_consortium_entities index (original)
+            # Only add uploads to the hm_consortium_entities index (original)
             if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
                 response = requests.get(url, headers = self.request_headers, verify = False)
             else:
                 continue
 
             if response.status_code != 200:
-                msg = "indexer.index_submissions() failed to get submissions via entity-api"
+                msg = "indexer.index_uploads() failed to get uploads via entity-api"
                 logger.error(msg)
                 sys.exit(msg)
         
-            submissions_list = response.json()
+            uploads_list = response.json()
 
-            for submission in submissions_list:
-                self.add_datasets_to_submission(submission)
-                self.entity_keys_rename(submission)
+            for upload in uploads_list:
+                self.add_datasets_to_upload(upload)
+                self.entity_keys_rename(upload)
 
                 # Add additional caculated fields
-                self.add_caculated_fields(submission)
+                self.add_caculated_fields(upload)
        
                 # Add doc to hm_consortium_entities index
                 # Do NOT tranform the doc and add to hm_consortium_portal index
-                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(submission), uuid=submission['uuid'])
+                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(upload), uuid=upload['uuid'])
 
 
     # These caculated fields are not stored in neo4j but will be generated
@@ -344,7 +344,7 @@ class Indexer:
     # For DataSubmission, Dataset, Donor and Sample objects:
     # add a calculated (not stored in Neo4j) field called `display_subtype` to 
     # all Elasticsearch documents of the above types with the following rules:
-    # Submission: Just make it "Data Submission" for all submissions
+    # Submission: Just make it "Data Submission" for all uploads
     # Donor: "Donor"
     # Sample: if specimen_type == 'organ' the display name linked to the value of the organ field
     # otherwise the display name linked to the value of the specimen_type
@@ -353,7 +353,7 @@ class Indexer:
         entity_type = entity['entity_type']
         display_subtype = ''
 
-        if entity_type == 'Submission':
+        if entity_type == 'Upload':
             display_subtype = 'Data Submission'
         elif entity_type == 'Donor':
             display_subtype = 'Donor'
@@ -378,7 +378,7 @@ class Indexer:
                 display_subtype = 'Error: missing data_types'
         else:
             # Do nothing
-            logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Submission/Donor/Sample/Dataset")
+            logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
 
         return display_subtype
 
@@ -387,7 +387,7 @@ class Indexer:
         try:
             uuid = entity['uuid']
 
-            if entity['entity_type'] != 'Submission':
+            if entity['entity_type'] != 'Upload':
                 ancestors = []
                 descendants = []
                 ancestor_ids = []
@@ -807,26 +807,26 @@ class Indexer:
         collection['datasets'] = datasets
     
 
-    def add_datasets_to_submission(self, submission):
-        # First get the detail of this submission
-        submission_uuid = submission['uuid']
-        url = self.entity_api_url + "/entities/" + submission_uuid
+    def add_datasets_to_upload(self, upload):
+        # First get the detail of this upload
+        upload_uuid = upload['uuid']
+        url = self.entity_api_url + "/entities/" + upload_uuid
         response = requests.get(url, headers = self.request_headers, verify = False)
         if response.status_code != 200:
-            msg = f"indexer.add_datasets_to_submission() failed to get submission detail via entity-api for submission uuid: {submission_uuid}"
+            msg = f"indexer.add_datasets_to_upload() failed to get upload detail via entity-api for upload uuid: {upload_uuid}"
             logger.error(msg)
             sys.exit(msg)
 
-        submission_detail_dict = response.json()
+        upload_detail_dict = response.json()
 
         datasets = []
-        if 'datasets' in submission_detail_dict:
-            for dataset in submission_detail_dict['datasets']:
+        if 'datasets' in upload_detail_dict:
+            for dataset in upload_detail_dict['datasets']:
                 dataset_uuid = dataset['uuid']
                 url = self.entity_api_url + "/entities/" + dataset_uuid
                 response = requests.get(url, headers = self.request_headers, verify = False)
                 if response.status_code != 200:
-                    msg = f"indexer.add_datasets_to_submission() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for submission uuid: {submission_uuid}"
+                    msg = f"indexer.add_datasets_to_upload() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for upload uuid: {upload_uuid}"
                     logger.error(msg)
                     sys.exit(msg)
 
@@ -845,7 +845,7 @@ class Indexer:
 
                 datasets.append(dataset_doc)
 
-        submission['datasets'] = datasets
+        upload['datasets'] = datasets
 
 
 ####################################################################################################
