@@ -250,7 +250,7 @@ class Indexer:
         entity['index_version'] = self.index_version
 
         # Add display_subtype
-        if entity['entity_type'] in ['Submission', 'Donor', 'Sample', 'Dataset']:
+        if entity['entity_type'] in ['Upload', 'Donor', 'Sample', 'Dataset']:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
 
@@ -271,8 +271,8 @@ class Indexer:
             if bool(entity):
                 logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
-                if entity['entity_type'] == 'Submission':
-                    logger.debug(f"reindex Submission with uuid: {uuid}")
+                if entity['entity_type'] == 'Upload':
+                    logger.debug(f"reindex Upload with uuid: {uuid}")
                     
                     self.update_index(entity)
                 else:
@@ -341,10 +341,10 @@ class Indexer:
             logger.exception(msg)
 
 
-    # For DataSubmission, Dataset, Donor and Sample objects:
+    # For Upload, Dataset, Donor and Sample objects:
     # add a calculated (not stored in Neo4j) field called `display_subtype` to 
     # all Elasticsearch documents of the above types with the following rules:
-    # Submission: Just make it "Data Submission" for all uploads
+    # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
     # Sample: if specimen_type == 'organ' the display name linked to the value of the organ field
     # otherwise the display name linked to the value of the specimen_type
@@ -354,7 +354,7 @@ class Indexer:
         display_subtype = ''
 
         if entity_type == 'Upload':
-            display_subtype = 'Data Submission'
+            display_subtype = 'Data Upload'
         elif entity_type == 'Donor':
             display_subtype = 'Donor'
         elif entity_type == 'Sample':
@@ -690,8 +690,8 @@ class Indexer:
 
             doc = self.generate_doc(node, 'json')
 
-            # Handle Submission differently by only updating it in the hm_consortium_entities index
-            if node['entity_type'] == 'Submission':
+            # Handle Upload differently by only updating it in the hm_consortium_entities index
+            if node['entity_type'] == 'Upload':
                 target_index = 'hm_consortium_entities'
 
                 # Delete old doc and write with new one
