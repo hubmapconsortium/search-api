@@ -39,19 +39,17 @@ def query_docs(query):
 
 
 def test_tokenization_and_search():
-    index_docs([{
-        'description': 'Lorem ipsum dolor sit amet',
-    }])
+    doc = {'description': 'Lorem ipsum dolor sit amet'}
+    index_docs([doc])
 
-    # Confirm that it is indexed:
     get_doc_response = requests.get(f'{base_url}/{index}/_doc/0').json()
-    assert 'description' in get_doc_response['_source']
+    assert get_doc_response['_source'] == doc
 
     search_response = query_docs({'query': {'match': {'all_text': {
         'query': 'Lorem'
     }}}})
     assert len(search_response['hits']['hits']) == 1
-    assert 'all_text' not in search_response['hits']['hits'][0]['_source']
+    assert search_response['hits']['hits'][0]['_source'] == doc
 
 
 def test_sort_by_keyword():
