@@ -34,6 +34,10 @@ def index_docs(docs):
         requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
 
 
+def query_docs(query):
+    return requests.post(f'{base_url}/{index}/_search', json=query).json()
+
+
 def test_tokenization_and_search():
     index_docs([{
         'description': 'Lorem ipsum dolor sit amet',
@@ -43,12 +47,9 @@ def test_tokenization_and_search():
     get_doc_response = requests.get(f'{base_url}/{index}/_doc/0').json()
     assert 'description' in get_doc_response['_source']
 
-    query = {'query': {'match': {'all_text': {
-        # NOTE: This is just one word from the string,
-        # so it's testing whether tokenization works.
+    search_response = query_docs({'query': {'match': {'all_text': {
         'query': 'Lorem'
-    }}}}
-    search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+    }}}})
     assert len(search_response['hits']['hits']) == 1
     assert 'all_text' not in search_response['hits']['hits'][0]['_source']
 
@@ -61,16 +62,14 @@ def test_sort_by_keyword():
         {'animal': 'cat'},
     ])
 
-    query = {
+    search_response = query_docs({
         # TODO: Add tests to make sure all parts of the query work as intended.
         # 'post_filter': {},
         # 'aggs': {}
         'sort': [{'animal.keyword': 'asc'}],
-        # 'highlight': {},
         '_source': ['animal']
-    }
+    })
 
-    search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
     assert [
         hit['_source']['animal']
         for hit in search_response['hits']['hits']
@@ -93,8 +92,7 @@ def test_sort_by_relevance():
     ])
 
     def search(term):
-        query = {'query': {'match': {'item': term}}}
-        search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+        search_response = query_docs({'query': {'match': {'item': term}}})
         return [
             hit['_source']['item']
             for hit in search_response['hits']['hits']
@@ -113,11 +111,10 @@ def test_highlight():
         {'missing': 'not here'}
     ])
 
-    query = {
+    search_response = query_docs({
         'query': {'match': {'all_text': 'term'}},
         'highlight': {'fields': {'*': {}}}
-    }
-    search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+    })
     assert [
         hit['highlight']['all_text']
         for hit in search_response['hits']['hits']
