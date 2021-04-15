@@ -35,18 +35,12 @@ def index_docs(docs):
 
 
 def test_tokenization_and_search():
-    doc = {
+    index_docs([{
         'description': 'Lorem ipsum dolor sit amet',
-    }
-    # NOTE: Without '?refresh', the index is not guaranteed to be
-    # up-to-date when the response returns. Should not be unused
-    # in production, but necessary for a synchronous test like this.
-    put_doc_response = requests.put(f'{base_url}/{index}/_doc/1?refresh', json=doc).json()
-    assert '_index' in put_doc_response
+    }])
 
     # Confirm that it is indexed:
-
-    get_doc_response = requests.get(f'{base_url}/{index}/_doc/1').json()
+    get_doc_response = requests.get(f'{base_url}/{index}/_doc/0').json()
     assert 'description' in get_doc_response['_source']
 
     query = {'query': {'match': {'all_text': {
