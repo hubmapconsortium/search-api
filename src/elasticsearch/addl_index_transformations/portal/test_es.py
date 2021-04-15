@@ -26,6 +26,14 @@ def setup_function(function):
     # assert 'dynamic_templates' in get_index_response[index]['mappings']
 
 
+def index_docs(docs):
+    for i, doc in enumerate(docs):
+        # NOTE: Without '?refresh', the index is not guaranteed to be
+        # up-to-date when the response returns. Should not be unused
+        # in production, but necessary for a synchronous test like this.
+        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+
+
 def test_tokenization_and_search():
     doc = {
         'description': 'Lorem ipsum dolor sit amet',
@@ -52,14 +60,12 @@ def test_tokenization_and_search():
 
 
 def test_sort_by_keyword():
-    docs = [
+    index_docs([
         {'animal': 'zebra'},
         {'animal': 'ant'},
         {'animal': 'bear'},
         {'animal': 'cat'},
-    ]
-    for i, doc in enumerate(docs):
-        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+    ])
 
     query = {
         # TODO: Add tests to make sure all parts of the query work as intended.
@@ -85,14 +91,12 @@ def test_sort_by_relevance():
     # but also possible that I don't have it configured correctly.
     # Since the goal is to save disk space, that's the real test we need to do.
 
-    docs = [
+    index_docs([
         {'item': 'duck duck goose'},
         {'item': 'duck duck grey duck'},
         {'item': 'donald duck'},
         {'item': 'your goose is cooked'},
-    ]
-    for i, doc in enumerate(docs):
-        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+    ])
 
     def search(term):
         query = {'query': {'match': {'item': term}}}
@@ -107,15 +111,13 @@ def test_sort_by_relevance():
 
 
 def test_highlight():
-    docs = [
+    index_docs([
         {'start': 'Term at the start'},
         {'end': 'or at the end: term'},
         {'repeated': 'lorem impsum TERM repeated TERM dolor sit amet'},
         {'separate': f'Term? {" " * 100} Term!'},  # Default window is 100 characters
         {'missing': 'not here'}
-    ]
-    for i, doc in enumerate(docs):
-        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+    ])
 
     query = {
         'query': {'match': {'all_text': 'term'}},
@@ -127,7 +129,7 @@ def test_highlight():
         for hit in search_response['hits']['hits']
     ] == [
         ['lorem impsum <em>TERM</em> repeated <em>TERM</em> dolor sit amet'],
-        ['<em>Term</em>?', '<em>Term</em>!']
+        ['<em>Term</em>?', '<em>Term</em>!'],
         ['<em>Term</em> at the start'],
         ['or at the end: <em>term</em>']
     ]
