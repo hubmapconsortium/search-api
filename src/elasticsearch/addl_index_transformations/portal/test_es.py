@@ -83,7 +83,7 @@ def test_sort_by_relevance():
     # ... but it still seems to work?
     # My guess is that it now needs to calculate relevance after the results are retrieved ...
     # but also possible that I don't have it configured correctly.
-    # Since the goal is to save space, that's the real test.
+    # Since the goal is to save disk space, that's the real test we need to do.
 
     docs = [
         {'item': 'duck duck goose'},
@@ -104,3 +104,30 @@ def test_sort_by_relevance():
 
     assert search('duck') == ['duck duck grey duck', 'duck duck goose', 'donald duck']
     assert search('goose') == ['duck duck goose', 'your goose is cooked']
+
+
+def test_highlight():
+    docs = [
+        {'start': 'Term at the start'},
+        {'end': 'or at the end: term'},
+        {'repeated': 'lorem impsum TERM repeated TERM dolor sit amet'},
+        {'separate': f'Term? {" " * 100} Term!'},  # Default window is 100 characters
+        {'missing': 'not here'}
+    ]
+    for i, doc in enumerate(docs):
+        requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
+
+    query = {
+        'query': {'match': {'all_text': 'term'}},
+        'highlight': {'fields': {'*': {}}}
+    }
+    search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+    assert [
+        hit['highlight']['all_text']
+        for hit in search_response['hits']['hits']
+    ] == [
+        ['lorem impsum <em>TERM</em> repeated <em>TERM</em> dolor sit amet'],
+        ['<em>Term</em>?', '<em>Term</em>!']
+        ['<em>Term</em> at the start'],
+        ['or at the end: <em>term</em>']
+    ]
