@@ -13,6 +13,10 @@ mappings:
           # TODO: "all_text" will replace the "everything" field.
           copy_to: all_text
           type: text
+
+          # https://www.elastic.co/guide/en/elasticsearch/reference/current/norms.html
+          norms: false 
+          
           fields:
             # This emulates the default ES behavior,
             # giving us a "keyword" subfield,

@@ -78,6 +78,13 @@ def test_sort_by_keyword():
 
 
 def test_sort_by_relevance():
+    # I had thought that sorting by relevance would not work without norms...
+    # (and since the portal always explicitly sorts by a field, that's fine)
+    # ... but it still seems to work?
+    # My guess is that it now needs to calculate relevance after the results are retrieved ...
+    # but also possible that I don't have it configured correctly.
+    # Since the goal is to save space, that's the real test.
+
     docs = [
         {'item': 'duck duck goose'},
         {'item': 'duck duck grey duck'},
@@ -95,6 +102,5 @@ def test_sort_by_relevance():
             for hit in search_response['hits']['hits']
         ]
 
-    # With norms, results are returned in order of relevance:
     assert search('duck') == ['duck duck grey duck', 'duck duck goose', 'donald duck']
     assert search('goose') == ['duck duck goose', 'your goose is cooked']
