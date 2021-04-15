@@ -46,15 +46,9 @@ def test_tokenization_and_search():
         # so it's testing whether tokenization works.
         'query': 'Lorem'
     }}}}
-    headers = {'Content-Type': 'application/json'}
-    get_search_response = requests.request(
-        'GET',
-        url=f'{base_url}/{index}/_search',
-        headers=headers,
-        json=query
-    ).json()
-    assert len(get_search_response['hits']['hits']) == 1
-    assert 'all_text' not in get_search_response['hits']['hits'][0]['_source']
+    search_response = requests.post(f'{base_url}/{index}/_search', json=query).json()
+    assert len(search_response['hits']['hits']) == 1
+    assert 'all_text' not in search_response['hits']['hits'][0]['_source']
 
 
 def test_sort_by_keyword():
