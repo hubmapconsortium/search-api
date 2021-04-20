@@ -10,6 +10,7 @@ index = 'test_index'
 
 def setup_function(function):
     base_response = requests.get(base_url).json()
+    print('ES info: ', base_response)
     assert base_response['version']['number'].startswith('7.')
 
     delete_response = requests.delete(f'{base_url}/{index}').json()

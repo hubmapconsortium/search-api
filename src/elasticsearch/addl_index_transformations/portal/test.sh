@@ -32,6 +32,6 @@ end portal/cli
 
 start portal/pytest
 cd ../../../..
-PYTHONPATH="src:$PYTHONPATH" pytest --verbose --log-cli-level WARN
+PYTHONPATH="src:$PYTHONPATH" pytest --verbose --log-cli-level WARN --capture=no
 cd -
 end portal/pytest
