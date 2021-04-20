@@ -113,6 +113,8 @@ def test_highlight():
         'query': {'match': {'all_text': 'term'}},
         'highlight': {'fields': {'*': {}}}
     })
+    assert sorted(search_response['hits']['hits'][0].keys()) \
+        == ['_id', '_index', '_score', '_source', '_type', 'highlight']
     assert [
         hit['highlight']['all_text']
         for hit in search_response['hits']['hits']
