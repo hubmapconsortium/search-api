@@ -29,7 +29,7 @@ def setup_function(function):
 def index_docs(docs):
     for i, doc in enumerate(docs):
         # NOTE: Without '?refresh', the index is not guaranteed to be
-        # up-to-date when the response returns. Should not be unused
+        # up-to-date when the response returns. Should not be used
         # in production, but necessary for a synchronous test like this.
         requests.put(f'{base_url}/{index}/_doc/{i}?refresh', json=doc).json()
 
