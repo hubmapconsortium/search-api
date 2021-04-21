@@ -409,7 +409,7 @@ class Indexer:
 
                 logger.error(msg)
 
-                definition_desc = f"{{definition_code}}"
+                definition_desc = f"{definition_code}"
 
             logger.debug(f"========definition_desc: {definition_desc}")
 
