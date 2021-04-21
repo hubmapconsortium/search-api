@@ -352,7 +352,7 @@ class Indexer:
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
         entity_type = entity['entity_type']
-        display_subtype = ''
+        display_subtype = '{unknown}'
 
         if entity_type == 'Upload':
             display_subtype = 'Data Upload'
@@ -365,18 +365,15 @@ class Indexer:
                         display_subtype = self.get_organ_description(entity['organ'])
                     else:
                         logger.error(f"Missing missing organ when specimen_type is set of Sample with uuid: {entity['uuid']}")
-                        display_subtype = 'Error: missing organ when specimen_type is set'
                 else:
                     display_subtype = self.get_tissue_sample_description(entity['specimen_type'])
             else:
                 logger.error(f"Missing specimen_type of Sample with uuid: {entity['uuid']}")
-                display_subtype = 'Error: missing specimen_type'
         elif entity_type == 'Dataset':
             if 'data_types' in entity:
                 display_subtype = ','.join(entity['data_types'])
             else:
                 logger.error(f"Missing data_types of Dataset with uuid: {entity['uuid']}")
-                display_subtype = 'Error: missing data_types'
         else:
             # Do nothing
             logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
@@ -406,13 +403,15 @@ class Indexer:
 
             if definition_code in definition_dict:
                 definition_desc = definition_dict[definition_code]['description']
-
-                logger.debug(f"========definition_desc: {definition_desc}")
             else:
                 # Return the error message as description
-                definition_desc = f"Missing definition key {definition_code} in {definition_yaml_file}"
+                msg = f"Missing definition key {definition_code} in {definition_yaml_file}"
 
-                logger.error(definition_desc)
+                logger.error(msg)
+
+                definition_desc = f"{{definition_code}}"
+
+            logger.debug(f"========definition_desc: {definition_desc}")
 
             return definition_desc
 
