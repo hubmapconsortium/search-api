@@ -168,7 +168,7 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_public_collections(self):
+    def index_public_collections(self, reindex = False):
         # The entity-api only returns public collections, for either 
         # - a valid token in HuBMAP-Read group, 
         # - a valid token with no HuBMAP-Read group or 
@@ -198,9 +198,17 @@ class Indexer:
                 configs = IndexConfig(*configs)
 
                 if configs.doc_type == 'original':
+                    # Delete old doc for reindex
+                    if reindex:
+                        self.eswriter.delete_document(index, collection['uuid'])
+                         
                     # Add public collection doc to the original index
                     self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
                 elif configs.doc_type == 'portal':
+                    # Delete old doc for reindex
+                    if reindex:
+                        self.eswriter.delete_document(index, collection['uuid'])
+                         
                     # Add the tranformed doc to the portal index
                     transformed = json.dumps(transform(collection))
                     self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
@@ -256,6 +264,7 @@ class Indexer:
 
 
     # By design, reindex() doesn't work on Collection reindex
+    # Use index_public_collections(reindex = True) for reindexing Collection
     def reindex(self, uuid):
         try:
             url = self.entity_api_url + "/entities/" + uuid
