@@ -557,8 +557,8 @@ def reindex_all_uuids(indexer, token):
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
 
-            # 3. Index public collections separately
-            indexer.index_public_collections()
+            # 3. Reindex public collections separately
+            indexer.index_public_collections(reindex = True)
 
             end = time.time()
 
