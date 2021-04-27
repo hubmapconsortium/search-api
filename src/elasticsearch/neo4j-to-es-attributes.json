@@ -33,8 +33,8 @@
       "doi_url": {
         "es_name": "doi_url"
       },
-      "has_doi": {
-        "es_name": "has_doi"
+      "published_timestamp": {
+        "es_name": "published_timestamp"
       },
       "title": {
         "es_name": "title"

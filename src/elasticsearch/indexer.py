@@ -1,5 +1,6 @@
 import sys
 import json
+import yaml
 import time
 import concurrent.futures
 import copy
@@ -167,7 +168,7 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_public_collections(self):
+    def index_public_collections(self, reindex = False):
         # The entity-api only returns public collections, for either 
         # - a valid token in HuBMAP-Read group, 
         # - a valid token with no HuBMAP-Read group or 
@@ -197,9 +198,17 @@ class Indexer:
                 configs = IndexConfig(*configs)
 
                 if configs.doc_type == 'original':
+                    # Delete old doc for reindex
+                    if reindex:
+                        self.eswriter.delete_document(index, collection['uuid'])
+                         
                     # Add public collection doc to the original index
                     self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
                 elif configs.doc_type == 'portal':
+                    # Delete old doc for reindex
+                    if reindex:
+                        self.eswriter.delete_document(index, collection['uuid'])
+                         
                     # Add the tranformed doc to the portal index
                     transformed = json.dumps(transform(collection))
                     self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
@@ -255,6 +264,7 @@ class Indexer:
 
 
     # By design, reindex() doesn't work on Collection reindex
+    # Use index_public_collections(reindex = True) for reindexing Collection
     def reindex(self, uuid):
         try:
             url = self.entity_api_url + "/entities/" + uuid
@@ -346,12 +356,12 @@ class Indexer:
     # all Elasticsearch documents of the above types with the following rules:
     # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
-    # Sample: if specimen_type == 'organ' the display name linked to the value of the organ field
-    # otherwise the display name linked to the value of the specimen_type
+    # Sample: if specimen_type == 'organ' the display name linked to the corresponding description of organ code
+    # otherwise the display name linked to the value of the corresponding description of specimen_type code
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
         entity_type = entity['entity_type']
-        display_subtype = ''
+        display_subtype = '{unknown}'
 
         if entity_type == 'Upload':
             display_subtype = 'Data Upload'
@@ -361,26 +371,59 @@ class Indexer:
             if 'specimen_type' in entity:
                 if entity['specimen_type'].lower() == 'organ':
                     if 'organ' in entity:
-                        display_subtype = entity['organ']
+                        display_subtype = self.get_organ_description(entity['organ'])
                     else:
                         logger.error(f"Missing missing organ when specimen_type is set of Sample with uuid: {entity['uuid']}")
-                        display_subtype = 'Error: missing organ when specimen_type is set'
                 else:
-                    display_subtype = entity['specimen_type']
+                    display_subtype = self.get_tissue_sample_description(entity['specimen_type'])
             else:
                 logger.error(f"Missing specimen_type of Sample with uuid: {entity['uuid']}")
-                display_subtype = 'Error: missing specimen_type'
         elif entity_type == 'Dataset':
             if 'data_types' in entity:
                 display_subtype = ','.join(entity['data_types'])
             else:
                 logger.error(f"Missing data_types of Dataset with uuid: {entity['uuid']}")
-                display_subtype = 'Error: missing data_types'
         else:
             # Do nothing
             logger.error(f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
 
         return display_subtype
+
+
+    def get_organ_description(self, organ_code):
+        definition_yaml_file = Path(__file__).absolute().parent.parent / 'search-schema/data/definitions/enums/organ_types.yaml'
+        
+        return self.load_definition_code_description(organ_code, definition_yaml_file)
+
+
+    def get_tissue_sample_description(self, tissue_sample_code):
+        definition_yaml_file = Path(__file__).absolute().parent.parent / 'search-schema/data/definitions/enums/tissue_sample_types.yaml'
+
+        return self.load_definition_code_description(tissue_sample_code, definition_yaml_file)
+
+
+    def load_definition_code_description(self, definition_code, definition_yaml_file):
+        logger.debug(f"========definition_code: {definition_code}")
+
+        with open(definition_yaml_file) as file:
+            definition_dict = yaml.safe_load(file)
+
+            logger.info(f"Definition yaml file {definition_yaml_file} loaded successfully")
+
+            if definition_code in definition_dict:
+                definition_desc = definition_dict[definition_code]['description']
+            else:
+                # Return the error message as description
+                msg = f"Missing definition key {definition_code} in {definition_yaml_file}"
+
+                logger.error(msg)
+
+                # Use triple {{{}}}
+                definition_desc = f"{{{definition_code}}}"
+
+            logger.debug(f"========definition_desc: {definition_desc}")
+
+            return definition_desc
 
 
     def generate_doc(self, entity, return_type):
