@@ -210,9 +210,7 @@ salmon_rnaseq_10x:
 salmon_rnaseq_10x_sn:
     description: snRNA-seq (10x Genomics) [Salmon]
     alt-names: []
-    # Assuming false, based on salmon_rnaseq_10x?
     primary: false
-    # First use of "is_sn": Generalize vitessce config generation?
     vitessce-hints: ['is_sn', 'rna']
 
 sc_rna_seq_snare_lab:
