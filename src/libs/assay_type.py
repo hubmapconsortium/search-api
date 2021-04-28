@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Union, List, TypeVar, Iterable, Dict, Any
 import logging
-from yaml import safe_load
+from yaml import safe_load, dump
 from yaml.error import YAMLError
 
 # HuBMAP commons
@@ -133,13 +133,11 @@ def main() -> None:
         except Exception as e:
             print(f'{name} ({note}) -> exception {e}')
 
-    print('all names:')
-    print([k for k in AssayType.iter_names()])
-    print('primary names:')
-    print([k for k in AssayType.iter_names(primary=True)])
-    print('non-primary names:')
-    print([k for k in AssayType.iter_names(primary=False)])
-
+    print(dump({
+        'all names': sorted(AssayType.iter_names()),
+        'primary names': sorted(AssayType.iter_names(primary=True)),
+        'non-primary names': sorted(AssayType.iter_names(primary=False))
+    }))
 
 if __name__ == '__main__':
     main()
