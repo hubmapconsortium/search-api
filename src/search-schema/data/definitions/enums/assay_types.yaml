@@ -41,11 +41,11 @@ codex_cytokit:
     primary: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
 
-# DART-FISH:
-#     description: ????
-#     alt-names: []
-#     primary: true
-#     vitessce-hints: []
+DART-FISH:
+    description: DART-FISH
+    alt-names: []
+    primary: true
+    vitessce-hints: []
 
 image_pyramid:
     description: Image Pyramid
@@ -207,6 +207,14 @@ salmon_rnaseq_10x:
     primary: false
     vitessce-hints: ['is_sc', 'rna']
 
+salmon_rnaseq_10x_sn:
+    description: snRNA-seq (10x Genomics) [Salmon]
+    alt-names: []
+    # Assuming false, based on salmon_rnaseq_10x?
+    primary: false
+    # First use of "is_sn": Generalize vitessce config generation?
+    vitessce-hints: ['is_sn', 'rna']
+
 sc_rna_seq_snare_lab:
     description: snRNA-seq (SNARE-seq) [Lab Processed]
     alt-names: []
@@ -287,11 +295,11 @@ salmon_sn_rnaseq_10x:
     primary: false
     vitessce-hints: ['is_sc', 'rna']
 
-# Slide-seq:
-#     description: ????
-#     alt-names: []
-#     primary: true
-#     vitesse-hints: [[]
+Slide-seq:
+    description: Slide-seq
+    alt-names: []
+    primary: true
+    vitesse-hints: []
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
