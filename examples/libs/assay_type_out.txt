@@ -35,7 +35,6 @@ all names:
 - lc-ms_label-free
 - lc-ms_labeled
 - salmon_rnaseq_10x
-- salmon_rnaseq_10x_sn
 - salmon_rnaseq_bulk
 - salmon_rnaseq_sciseq
 - salmon_rnaseq_snareseq
@@ -57,7 +56,6 @@ non-primary names:
 - codex_cytokit
 - image_pyramid
 - salmon_rnaseq_10x
-- salmon_rnaseq_10x_sn
 - salmon_rnaseq_bulk
 - salmon_rnaseq_sciseq
 - salmon_rnaseq_snareseq
