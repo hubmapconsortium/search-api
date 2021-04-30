@@ -291,7 +291,7 @@ Slide-seq:
     description: Slide-seq
     alt-names: []
     primary: true
-    vitesse-hints: []
+    vitesse-hints: ['rna']
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
