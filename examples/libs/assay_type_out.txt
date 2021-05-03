@@ -60,6 +60,7 @@ non-primary names:
 - salmon_rnaseq_sciseq
 - salmon_rnaseq_snareseq
 - salmon_sn_rnaseq_10x
+- sc_atac_seq_sci
 - sc_atac_seq_snare
 - sc_atac_seq_snare_lab
 - sc_rna_seq_snare_lab
@@ -90,7 +91,6 @@ primary names:
 - lc-ms_label-free
 - lc-ms_labeled
 - scRNA-Seq-10x
-- sc_atac_seq_sci
 - sciATACseq
 - sciRNAseq
 - seqFish
