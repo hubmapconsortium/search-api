@@ -228,7 +228,7 @@ sciATACseq:
 sc_atac_seq_sci:
     description: sciATAC-seq [SnapATAC]
     alt-names: []
-    primary: true
+    primary: false
     vitessce-hints: ['is_sc', 'atac']
 
 sciRNAseq:
