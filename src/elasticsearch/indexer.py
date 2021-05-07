@@ -543,11 +543,11 @@ class Indexer:
                         try:
                             # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                entity['source_sample'] = parents
+                                entity['source_sample'] = parents[0]
 
                             e = parents[0]
                         except IndexError:
-                             entity['source_sample'] = {}
+                            entity['source_sample'] = {}
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
