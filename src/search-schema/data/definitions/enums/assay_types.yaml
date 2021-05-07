@@ -41,11 +41,11 @@ codex_cytokit:
     primary: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
 
-# DART-FISH:
-#     description: ????
-#     alt-names: []
-#     primary: true
-#     vitessce-hints: []
+DART-FISH:
+    description: DART-FISH
+    alt-names: []
+    primary: true
+    vitessce-hints: []
 
 image_pyramid:
     description: Image Pyramid
@@ -228,7 +228,7 @@ sciATACseq:
 sc_atac_seq_sci:
     description: sciATAC-seq [SnapATAC]
     alt-names: []
-    primary: true
+    primary: false
     vitessce-hints: ['is_sc', 'atac']
 
 sciRNAseq:
@@ -283,15 +283,15 @@ snRNAseq:
 
 salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]
-    alt-names: []
+    alt-names: ['salmon_rnaseq_10x_sn']
     primary: false
     vitessce-hints: ['is_sc', 'rna']
 
-# Slide-seq:
-#     description: ????
-#     alt-names: []
-#     primary: true
-#     vitesse-hints: [[]
+Slide-seq:
+    description: Slide-seq
+    alt-names: []
+    primary: true
+    vitesse-hints: ['rna']
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
