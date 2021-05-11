@@ -19,8 +19,11 @@ PRIVATE_INDEX_PREFIX = 'hm_consortium_'
 # Default index (without prefix) name for `/search` compability, can NOT be empty
 DEFAULT_INDEX_WITHOUT_PREFIX = 'entities'
 
-# Globus Hubmap-Read group UUID
+# Globus HuBMAP-Read group UUID
 GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
+
+# Globus HuBMAP-Data_Admin group UUID
+GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID = '89a69625-99d7-11ea-9366-0e98982705c1'
 
 # Open: Only entities can open to the public
 # All: All entities

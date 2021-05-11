@@ -232,6 +232,8 @@ def status():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     try:
+        # Reindex individual entity doesn't require the token to belong
+        # to the HuBMAP-Data-Admin group
         token = get_user_token(request.headers)
 
         indexer = init_indexer(token)
@@ -246,10 +248,12 @@ def reindex(uuid):
     return 'OK', 202
 
 
+# Live reindex without deleting and recreating the indices
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
     try:
-        token = get_user_token(request.headers)
+        # The token needs to belong to the HuBMAP-Data_Admin group for live reindex all
+        token = get_user_token(request.headers, admin_access_required = True)
 
         indexer = init_indexer(token)
 
@@ -302,24 +306,127 @@ Parameters
 ----------
 request_headers: request.headers
     The http request headers
+admin_access_required : bool
+    If the token is required to belong to the HuBMAP-Data-Admin group, default to False
 
 Returns
 -------
 str
     The token string if valid
 """
-def get_user_token(request_headers):
+def get_user_token(request_headers, admin_access_required = False):
+    auth_helper = init_auth_helper()
+
     # Get user token from Authorization header
     # getAuthorizationTokens() also handles MAuthorization header but we are not using that here
-    auth_helper = init_auth_helper()
-    user_token = auth_helper.getAuthorizationTokens(request_headers) 
+    try:
+        user_token = auth_helper.getAuthorizationTokens(request_headers) 
+    except Exception:
+        msg = "Failed to parse the Authorization token by calling commons.auth_helper.getAuthorizationTokens()"
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+        internal_server_error(msg)
 
     # The user_token is flask.Response on error
     if isinstance(user_token, Response):
         # The Response.data returns binary string, need to decode
         unauthorized_error(user_token.data.decode())
 
+    if admin_access_required:
+        # By now the token is already a valid token
+        # But we also need to ensure the user belongs to HuBMAP-Data-Admin group
+        # in order to execute the live reindex-all
+        # Return a 403 response if the user doesn't belong to HuBMAP-Data-Admin group
+        if not user_in_hubmap_data_admin_group(request):
+            forbidden_error("Access not granted")
+
     return user_token
+
+"""
+Check if the user with token is in the HuBMAP-Data-Admin group
+
+Parameters
+----------
+request : falsk.request
+    The flask http request object that containing the Authorization header
+    with a valid Globus nexus token for checking group information
+
+Returns
+-------
+bool
+    True if the user belongs to HuBMAP-Data-Admin group, otherwise False
+"""
+def user_in_hubmap_data_admin_group(request):
+    try:
+        auth_helper = init_auth_helper()
+        # The property 'hmgroupids' is ALWASYS in the output with using get_user_info()
+        # when the token in request is a nexus_token
+        user_info = get_user_info(request)
+        hubmap_data_admin_group_uuid = auth_helper.groupNameToId('HuBMAP-Data-Admin')['uuid']
+    except Exception as e:
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(e)
+
+        # If the token is not a nexus token, no group information available
+        # The commons.hm_auth.AuthCache would return a Response with 500 error message
+        # We treat such cases as the user not in the HuBMAP-Data-Admin group
+        return False
+        
+    return (hubmap_data_admin_group_uuid in user_info['hmgroupids'])
+
+"""
+Get user infomation dict based on the http request(headers)
+The result will be used by the trigger methods
+
+Parameters
+----------
+request : Flask request object
+    The Flask request passed from the API endpoint 
+
+Returns
+-------
+dict
+    A dict containing all the user info
+
+    {
+        "scope": "urn:globus:auth:scope:nexus.api.globus.org:groups",
+        "name": "First Last",
+        "iss": "https://auth.globus.org",
+        "client_id": "21f293b0-5fa5-4ee1-9e0e-3cf88bd70114",
+        "active": True,
+        "nbf": 1603761442,
+        "token_type": "Bearer",
+        "aud": ["nexus.api.globus.org", "21f293b0-5fa5-4ee1-9e0e-3cf88bd70114"],
+        "iat": 1603761442,
+        "dependent_tokens_cache_id": "af2d5979090a97536619e8fbad1ebd0afa875c880a0d8058cddf510fc288555c",
+        "exp": 1603934242,
+        "sub": "c0f8907a-ec78-48a7-9c85-7da995b05446",
+        "email": "email@pitt.edu",
+        "username": "username@pitt.edu",
+        "hmscopes": ["urn:globus:auth:scope:nexus.api.globus.org:groups"],
+    }
+"""
+def get_user_info(request):
+    auth_helper = init_auth_helper()
+ 
+    # `group_required` is a boolean, when True, 'hmgroupids' is in the output
+    user_info = auth_helper.getUserInfoUsingRequest(request, True)
+
+    logger.debug("======get_user_info()======")
+    logger.debug(user_info)
+
+    # It returns error response when:
+    # - invalid header or token
+    # - token is valid but not nexus token, can't find group info
+    if isinstance(user_info, Response):
+        # Bubble up the actual error message from commons
+        # The Response.data returns binary string, need to decode
+        msg = user_info.get_data().decode()
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+        raise Exception(msg)
+
+    return user_info
 
 # Always expect a json body
 def request_json_required(request):
