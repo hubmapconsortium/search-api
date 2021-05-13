@@ -80,8 +80,6 @@ sequence_library:
   description: Sequence library
 serum:
   description: Serum
-sequence_library:
-  description: Sequence Library
 single_cell_cryopreserved:
   description: Single cell cryopreserved
 snatacseq:
