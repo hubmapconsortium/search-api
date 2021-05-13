@@ -13,9 +13,6 @@ import jsonschema
 from elasticsearch.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
-from elasticsearch.addl_index_transformations.portal.add_everything import (
-    add_everything, single_valued_fields, multi_valued_fields
-)
 from elasticsearch.addl_index_transformations.portal.add_counts import (
     add_counts
 )
@@ -116,23 +113,6 @@ def transform(doc, batch_id='unspecified'):
                                                   'grouping_concept_preferred_term': 'Sex',
                                                   'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
-     'everything': ['1',
-                    '1234',
-                    '1575489509656',
-                    '2019-12-04 19:58:29',
-                    '5678',
-                    'CODEX [Cytokit + SPRM] / seqFISH',
-                    'Consortium',
-                    'New',
-                    'Yes!',
-                    'abdominal cavity',
-                    'body',
-                    'codex_cytokit',
-                    'colon',
-                    'consortium',
-                    'dataset',
-                    'seqFish',
-                    'transverse colon'],
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
@@ -160,7 +140,6 @@ def transform(doc, batch_id='unspecified'):
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_partonomy(doc_copy)
-    add_everything(doc_copy)
     reset_entity_type(doc_copy)
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
@@ -182,6 +161,10 @@ def _map(doc, clean):
     # The recursion is usually not needed...
     # but better to do it everywhere than to miss one case.
     clean(doc)
+
+    single_valued_fields = ['donor', 'origin_sample', 'source_sample', 'rui_location']
+    multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
+
     for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
             fragment = doc[single_doc_field]
