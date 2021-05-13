@@ -253,38 +253,43 @@ def status():
 
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
+    # Reindex individual document doesn't require the token to belong
+    # to the HuBMAP-Data-Admin group 
+    # since this is being used by entity-api and ingest-api too
+    token = get_user_token(request.headers)
+
     try:
-        # Reindex individual document doesn't require the token to belong
-        # to the HuBMAP-Data-Admin group 
-        # since this is being used by entity-api and ingest-api too
-        token = get_user_token(request.headers)
-
         indexer = init_indexer(token)
-
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
         # indexer.reindex(uuid)
 
         logger.info(f"Started to reindex uuid: {uuid}")
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
 
-    return 'OK', 202
+        internal_server_error(e)
 
+    return f"Request of reindexing {uuid} accepted", 202
 
 # Live reindex without deleting and recreating the indices
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
+	# The token needs to belong to the HuBMAP-Data-Admin group 
+    # to be able to trigger a live reindex for all documents
+    token = get_user_token(request.headers, admin_access_required = True)
+
     try:
-        # The token needs to belong to the HuBMAP-Data-Admin group 
-        # to be able to trigger a live reindex for all documents
-        token = get_user_token(request.headers, admin_access_required = True)
-
         indexer = init_indexer(token)
-
         threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
+
+        logger.info('Started live reindex all')
     except Exception as e:
-        logger.error(e)
-    return 'OK', 202
+        logger.exception(e)
+
+        internal_server_error(e)
+
+    return 'Request of live reindex all documents accepted', 202
+
 
 ####################################################################################################
 ## Internal Functions Used By API 
