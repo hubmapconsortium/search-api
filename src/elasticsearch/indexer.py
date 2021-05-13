@@ -919,7 +919,7 @@ def token_belongs_to_data_admin_group(token, data_admin_group_uuid):
     groups_info_list = response.json()
 
     for group_info in groups_info_list:
-        if ('id' in group_info) and (group_info['id'] == '89a69625-99d7-11ea-9366-0e98982705c1'):
+        if ('id' in group_info) and (group_info['id'] == data_admin_group_uuid):
             return True
 
     # By now, no match
