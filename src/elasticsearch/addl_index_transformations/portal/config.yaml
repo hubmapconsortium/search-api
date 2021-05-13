@@ -10,7 +10,6 @@ mappings:
       map_every_string:
         match_mapping_type: string
         mapping:
-          # TODO: "all_text" will replace the "everything" field.
           copy_to: all_text
           type: text
           fields:
