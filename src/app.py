@@ -16,8 +16,6 @@ from elasticsearch.indexer import Indexer
 
 from libs.assay_type import AssayType
 
-from libs.assay_type import AssayType
-
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 

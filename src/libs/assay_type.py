@@ -81,6 +81,9 @@ class AssayType(object):
         self.vitessce_hints = (this_def['vitessce-hints']
                               if 'vitessce-hints' in this_def
                               else [])
+        self.contains_pii = (this_def['contains_pii']
+                             if 'contains_pii' in this_def
+                             else True)  # default to True for safety
 
     def to_json(self) -> JSONType:
         """
@@ -88,7 +91,8 @@ class AssayType(object):
         """
         return {'name': self.name, 'primary': self.primary,
                 'description': self.description,
-                'vitessce-hints': self.vitessce_hints}
+                'vitessce-hints': self.vitessce_hints,
+                'contains_pii': self.contains_pii}
 
     @classmethod
     def iter_names(cls, primary: BoolOrNone = None) -> Iterable[str]:
