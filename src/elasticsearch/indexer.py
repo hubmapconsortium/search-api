@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from yaml import safe_load
 from urllib3.exceptions import InsecureRequestWarning
+from globus_sdk import AccessTokenAuthorizer, AuthClient
 
 # For reusing the app.cfg configuration when running indexer.py as script
 from flask import Flask
@@ -67,7 +68,6 @@ class Indexer:
 
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
-
 
     def main(self):
         try:
@@ -543,11 +543,11 @@ class Indexer:
                         try:
                             # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                entity['source_sample'] = parents
+                                entity['source_sample'] = parents[0]
 
                             e = parents[0]
                         except IndexError:
-                             entity['source_sample'] = {}
+                            entity['source_sample'] = {}
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
@@ -895,21 +895,57 @@ class Indexer:
 ## Run indexer.py as script
 ####################################################################################################
 
+# Get the user infomation dict based on the token
+# To be used by the full index to ensure the nexus token 
+# belongs to HuBMAP-Data-Admin group
+def token_belongs_to_data_admin_group(token, data_admin_group_uuid):
+    request_headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+
+    url='https://nexus.api.globusonline.org/groups?fields=id,name,description,group_type,has_subgroups,identity_set_properties&for_all_identities=false&include_identaaaaay_set_properties=false&my_statuses=active'
+    
+    response = requests.get(url, headers = request_headers)
+    
+    if response.status_code != 200:
+        msg = (f"Unable to get groups information for token: {token}"
+               f"{response.text}")
+
+        logger.error(msg)
+        sys.exit(msg)
+
+    groups_info_list = response.json()
+
+    for group_info in groups_info_list:
+        if ('id' in group_info) and (group_info['id'] == data_admin_group_uuid):
+            return True
+
+    # By now, no match
+    return False
+
 # Running indexer.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
-    try:
-        token = sys.argv[1]
-    except IndexError as e:
-        msg = "Missing token argument"
-        # Log the full stack trace, prepend a line with our message
-        logger.exception(msg)
-        sys.exit(msg)
-
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
     app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance'), instance_relative_config=True)
     app.config.from_pyfile('app.cfg')
+
+    try:
+        token = sys.argv[1]
+
+        # Ensure the token belongs to the HuBMAP-Data-Admin group
+        if not token_belongs_to_data_admin_group(token, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
+            msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
+            sys.exit(msg)
+    except IndexError as e:
+        msg = "Missing admin nexus token argument"
+        logger.exception(msg)
+        sys.exit(msg)
 
     # Create an instance of the indexer
     indexer = Indexer(
@@ -930,3 +966,6 @@ if __name__ == "__main__":
 
     end = time.time()
     logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
+
+
+
