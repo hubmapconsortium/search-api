@@ -214,6 +214,10 @@ def _translate_data_type(doc):
     >>> _translate_data_type(doc); doc
     {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
 
+    >>> doc = {'data_types': ['salmon_rnaseq_10x_sn']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['salmon_rnaseq_10x_sn'], 'mapped_data_types': ['snRNA-seq [Salmon]']}
+
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
     {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "abc" / No translation for "xyz" [Image Pyramid]']}
@@ -233,10 +237,11 @@ def _data_types_map(ks):
     return [types]  # Downstream code expects to see an array.
 
 
+# NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
 _data_types_dict = {
-    k: v['description']
+    name: v['description']
     for k, v in _enums['assay_types'].items()
-    # NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
+    for name in v['alt-names'] + [k]
 }
 
 
