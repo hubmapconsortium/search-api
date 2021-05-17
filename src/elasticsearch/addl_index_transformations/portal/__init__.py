@@ -66,7 +66,7 @@ def transform(doc, batch_id='unspecified'):
     ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
     ...    'data_access_level': 'consortium',
-    ...    'data_types': ['codex_cytokit', 'seqFish'],
+    ...    'data_types': ['codex_cytokit', 'seqFish', 'salmon_rnaseq_10x_sn'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
