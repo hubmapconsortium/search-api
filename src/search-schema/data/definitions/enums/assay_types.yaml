@@ -171,15 +171,15 @@ salmon_rnaseq_bulk:
     primary: false
     vitessce-hints: []
 
-SNARE2-ATACseq:
+SNARE-ATACseq2:
     description: snATACseq (SNARE-seq2)
-    alt-names: [SNAREseq]
+    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
     primary: true
     vitessce-hints: []
 
-SNARE2-RNAseq:
+SNARE-RNAseq2:
     description: snRNAseq (SNARE-seq2)
-    alt-names: []
+    alt-names: ['SNARE2-RNAseq']
     primary: true
     vitessce-hints: []
 
