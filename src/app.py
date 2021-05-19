@@ -74,7 +74,7 @@ def assaytypes():
     primary = None
     simple = False
     for key, val in request.args.items():
-        print(f'{key}:{val}')
+        #print(f'{key}:{val}')
         if key == 'primary':
             primary = val.lower() == "true"
         elif key == 'simple':
