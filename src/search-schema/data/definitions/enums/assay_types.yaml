@@ -198,25 +198,44 @@ salmon_rnaseq_bulk:
     contains-pii: false
     vitessce-hints: []
 
-SNAREseq:
-    description: SNARE-seq
-    alt-names: []
+SNARE-ATACseq2:
+    description: snATACseq (SNARE-seq2)
+    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
+    primary: true
+    vitessce-hints: []
+
+SNARE-RNAseq2:
+    description: snRNAseq (SNARE-seq2)
+    alt-names: ['SNARE2-RNAseq']
     primary: true
     contains-pii: true
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
 #SNAREseq_lab:
-    description: scATAC-seq (SNARE-seq) [Lab Processed]
+    description: snATAC-seq (SNARE-seq2) [Lab Processed]
 #    alt-names: [sc_atac_seq_snare_lab]
     alt-names: []
     primary: false
     contains-pii: false
     vitessce-hints: []
 
+sc_rna_seq_snare_lab:
+    description: snRNA-seq (SNARE-seq2) [Lab Processed]
+    alt-names: []
+    primary: false
+    vitessce-hints: []
+
+salmon_rnaseq_snareseq:
+    description: snRNA-seq (SNARE-seq2) [Salmon]
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: ['is_sc', 'rna']
+
 sc_atac_seq_snare:
 #SNAREseq_snapATAC:
-    description: scATAC-seq (SNARE-seq) [SnapATAC]
+    description: snATAC-seq (SNARE-seq2) [SnapATAC]
 #    alt-names: [sc_atac_seq_snare]
     alt-names: []
     primary: false
@@ -234,19 +253,6 @@ salmon_rnaseq_10x:
 #scRNA-Seq-10x_salmon:
     description: scRNA-seq (10x Genomics) [Salmon]
 #    alt-names: [salmon_rnaseq_10x]
-    alt-names: []
-    primary: false
-    contains-pii: false
-    vitessce-hints: ['is_sc', 'rna']
-
-sc_rna_seq_snare_lab:
-    description: snRNA-seq (SNARE-seq) [Lab Processed]
-    alt-names: []
-    primary: false
-    vitessce-hints: []
-
-salmon_rnaseq_snareseq:
-    description: snRNA-seq (SNARE-seq) [Salmon]
     alt-names: []
     primary: false
     contains-pii: false

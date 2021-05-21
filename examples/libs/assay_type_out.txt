@@ -20,7 +20,8 @@ all names:
 - MALDI-IMS-pos
 - MxIF
 - PAS
-- SNAREseq
+- SNARE-ATACseq2
+- SNARE-RNAseq2
 - Slide-seq
 - TMT-LC-MS
 - Targeted-Shotgun-LC-MS
@@ -79,7 +80,8 @@ primary names:
 - MALDI-IMS-pos
 - MxIF
 - PAS
-- SNAREseq
+- SNARE-ATACseq2
+- SNARE-RNAseq2
 - Slide-seq
 - TMT-LC-MS
 - Targeted-Shotgun-LC-MS
