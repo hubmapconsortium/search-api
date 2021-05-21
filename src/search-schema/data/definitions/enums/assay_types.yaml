@@ -202,6 +202,7 @@ SNARE-ATACseq2:
     description: snATACseq (SNARE-seq2)
     alt-names: ['SNAREseq', 'SNARE2-ATACseq']
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 SNARE-RNAseq2:
@@ -212,12 +213,9 @@ SNARE-RNAseq2:
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
-#SNAREseq_lab:
     description: snATAC-seq (SNARE-seq2) [Lab Processed]
-#    alt-names: [sc_atac_seq_snare_lab]
     alt-names: []
     primary: false
-    contains-pii: false
     vitessce-hints: []
 
 sc_rna_seq_snare_lab:
@@ -234,9 +232,7 @@ salmon_rnaseq_snareseq:
     vitessce-hints: ['is_sc', 'rna']
 
 sc_atac_seq_snare:
-#SNAREseq_snapATAC:
     description: snATAC-seq (SNARE-seq2) [SnapATAC]
-#    alt-names: [sc_atac_seq_snare]
     alt-names: []
     primary: false
     contains-pii: false
