@@ -33,6 +33,7 @@ cell-dive:
     description: Cell DIVE
     alt-names: []
     primary: true
+    contains-pii: false
 
 CODEX:
     description: CODEX
@@ -53,6 +54,7 @@ DART-FISH:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 image_pyramid:
     description: Image Pyramid
@@ -89,18 +91,21 @@ lc-ms_label-free:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms_labeled:
     description: Labeled LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms-ms_label-free:
     description: Label-free LC-MS/MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms-ms_labeled:
     description: Labeled LC-MS/MS
@@ -113,6 +118,7 @@ LC-MS-untargeted:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 Lightsheet:
     description: Lightsheet Microscopy
@@ -171,6 +177,7 @@ PAS:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
     
 PAS_pyramid:
     description: PAS Stained Microscopy [Image Pyramid]
@@ -287,6 +294,7 @@ seqFish:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 seqFish_pyramid:
     description: seqFISH [Image Pyramid]
@@ -301,6 +309,7 @@ seqFish_lab_processed:
     alt-names: []
     primary: false
     vitessce-hints: []
+    contains-pii: false
 
 snATACseq:
     description: snATAC-seq
@@ -337,18 +346,22 @@ Slide-seq:
     alt-names: []
     primary: true
     vitesse-hints: ['rna']
+    contains-pii: true
+
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 TMT-LC-MS:
     description: TMT LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 WGS:
     description: Whole Genome Sequencing
