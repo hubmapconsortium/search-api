@@ -244,10 +244,10 @@ _data_types_dict = {
 
 def _translate_donor_metadata(doc):
     '''
-    >>> doc = {"metadata": "Not a dict!"}
+    >>> doc = {"metadata": None}
     >>> _translate_donor_metadata(doc)
     >>> doc
-    {'metadata': 'Not a dict!', 'mapped_metadata': {}}
+    {'metadata': None, 'mapped_metadata': {}}
 
     Multi-valued fields are supported:
 
@@ -288,21 +288,24 @@ def _translate_donor_metadata(doc):
 
 
 def _donor_metadata_map(metadata):
+    if metadata is None:
+        return {}
+    donor_metadata = metadata.get('organ_donor_data') or metadata.get('living_donor_data') or {}
     mapped_metadata = defaultdict(list)
-    if isinstance(metadata, dict) and 'organ_donor_data' in metadata:
-        for kv in metadata['organ_donor_data']:
-            term = kv['grouping_concept_preferred_term']
-            key = re.sub(r'\W+', '_', term).lower()
-            value = (
-                float(kv['data_value'])
-                if 'data_type' in kv and kv['data_type'] == 'Numeric'
-                else kv['preferred_term']
-            )
 
-            if 'units' not in kv or not len(kv['units']):
-                mapped_metadata[key].append(value)
-                continue
-            mapped_metadata[f'{key}_value'].append(value)
-            mapped_metadata[f'{key}_unit'].append(kv['units'])
+    for kv in donor_metadata:
+        term = kv['grouping_concept_preferred_term']
+        key = re.sub(r'\W+', '_', term).lower()
+        value = (
+            float(kv['data_value'])
+            if 'data_type' in kv and kv['data_type'] == 'Numeric'
+            else kv['preferred_term']
+        )
+
+        if 'units' not in kv or not len(kv['units']):
+            mapped_metadata[key].append(value)
+            continue
+        mapped_metadata[f'{key}_value'].append(value)
+        mapped_metadata[f'{key}_unit'].append(kv['units'])
 
     return dict(mapped_metadata)
