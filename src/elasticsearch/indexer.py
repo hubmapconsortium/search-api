@@ -543,7 +543,8 @@ class Indexer:
                         try:
                             # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                entity['source_sample'] = parents[0]
+                                #entity['source_sample'] = parents[0]
+                                entity['source_sample'] = parents
 
                             e = parents[0]
                         except IndexError:
