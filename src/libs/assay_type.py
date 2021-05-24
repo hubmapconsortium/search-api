@@ -126,21 +126,6 @@ def main() -> None:
     """
     Some test routines
     """
-    # for name, note in [('codex', 'this should fail'),
-    #                    ('CODEX', 'this should work'),
-    #                    ('codex_cytokit', 'this is not primary'),
-    #                    ('salmon_rnaseq_bulk', 'this is an alt name'),
-    #                    (['PAS', 'Image Pyramid'],
-    #                     'this is a complex alt name'),
-    #                    (['IMC', 'foo'],
-    #                     'this is an invalid complex alt name')]:
-    #     try:
-    #         assay = AssayType(name)
-    #         print(f'{name} produced {assay.name} {assay.description}')
-    #         print(f'{assay.to_json()}')
-    #     except Exception as e:
-    #         print(f'{name} ({note}) -> exception {e}')
-
     cases = [('codex',
               False, None, None, None,
               'should be uppercase'),
@@ -173,16 +158,6 @@ def main() -> None:
             print(f'{assay.to_json()}')
         except Exception as e:
             print(f'{name} ({note}) -> exception {e}')
-
-        # if valid:
-        #     a_t = tc.getAssayType(name)
-        #     self.assertTrue(contains_pii == a_t.contains_pii)
-        #     self.assertTrue(vis_only == a_t.vis_only)
-        # else:
-        #     print('This is an expected failure...')
-        #     with self.assertRaises(Exception):
-        #         tc.getAssayType(name)
-        #     print('... that was expected')
 
     print(dump({
         'all names': sorted(AssayType.iter_names()),
