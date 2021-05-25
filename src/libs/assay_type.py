@@ -81,12 +81,8 @@ class AssayType(object):
         self.vitessce_hints = (this_def['vitessce-hints']
                               if 'vitessce-hints' in this_def
                               else [])
-        self.contains_pii = (this_def['contains-pii']
-                             if 'contains-pii' in this_def
-                             else True)  # default to True for safety
-        self.vis_only = (this_def['vis-only']
-                             if 'vis-only' in this_def
-                             else False)  # False is more common
+        self.contains_pii = this_def.get('contains-pii', True)  # default to True for safety
+        self.vis_only = this_def.get('vis-only', False)  # False is more common
 
     def to_json(self) -> JSONType:
         """
