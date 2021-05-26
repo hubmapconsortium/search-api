@@ -154,16 +154,11 @@ class AssayType(object):
         >>> all_names = [elt for elt in AssayType.iter_names()]
         >>> primary_names = [elt for elt in AssayType.iter_names(primary=True)]
         >>> nonprimary_names = [elt for elt in AssayType.iter_names(primary=False)]
-        >>> all(elt in all_names for elt in primary_names)
-        True
-        >>> any(elt in nonprimary_names for elt in primary_names)
-        False
-        >>> all(elt in all_names for elt in nonprimary_names)
-        True
-        >>> any(elt in primary_names for elt in nonprimary_names)
-        False
-        >>> len(all_names) == len(primary_names) + len(nonprimary_names)
-        True
+        >>> assert all(elt in all_names for elt in primary_names)
+        >>> assert not any(elt in nonprimary_names for elt in primary_names)
+        >>> assert all(elt in all_names for elt in nonprimary_names)
+        >>> assert not any(elt in primary_names for elt in nonprimary_names)
+        >>> assert len(all_names) == len(primary_names) + len(nonprimary_names)
 
         """
         cls._maybe_load_defs()
