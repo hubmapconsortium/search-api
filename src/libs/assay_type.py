@@ -31,7 +31,7 @@ class AssayType(object):
     """
     A class intended to represent a single assay type, derived or otherwise.
 
-y    >>> AssayType('codex')  # should be uppercase
+    >>> AssayType('codex')  # should be uppercase
     Traceback (most recent call last):
     ...
     RuntimeError: No such assay_type codex, even as alternate name
