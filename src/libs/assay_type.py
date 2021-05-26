@@ -30,6 +30,49 @@ SCHEMA_BASE_URI = 'http://schemata.hubmapconsortium.org/'
 class AssayType(object):
     """
     A class intended to represent a single assay type, derived or otherwise.
+
+y    >>> AssayType('codex')  # should be uppercase
+    Traceback (most recent call last):
+    ...
+    RuntimeError: No such assay_type codex, even as alternate name
+
+    >>> a_t = AssayType('CODEX')
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['CODEX', 'CODEX', False, False]
+
+    >>> a_t = AssayType('codex_cytokit')  # this one does not contain PII
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['codex_cytokit', 'CODEX [Cytokit + SPRM]', False, False]
+
+    >>> a_t = AssayType('salmon_rnaseq_bulk')
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['salmon_rnaseq_bulk', 'Bulk RNA-seq [Salmon]', False, False]
+
+    >>> a_t = AssayType('scRNA-Seq-10x')  # This one does contain PII
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['scRNA-Seq-10x', 'scRNA-seq (10x Genomics)', False, True]
+
+    >>> a_t = AssayType(['PAS', 'Image Pyramid'])  # complex alt name
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['PAS_pyramid', 'PAS Stained Microscopy [Image Pyramid]', True, False]
+
+    >>> a_t = AssayType(['Image Pyramid', 'PAS'])  # complex alt name
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['PAS_pyramid', 'PAS Stained Microscopy [Image Pyramid]', True, False]
+
+    >>> a_t = AssayType('image_pyramid')  # simple vis-only alt name
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['image_pyramid', 'Image Pyramid', True, False]
+
+    >>> a_t = AssayType(['Image Pyramid', 'foo'])  # invalid complex alt name
+    Traceback (most recent call last):
+    ...
+    RuntimeError: No such assay_type ['Image Pyramid', 'foo'], even as alternate name
+
+    >>> a_t = AssayType('salmon_rnaseq_10x_sn')  # simple valid alt name
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['salmon_sn_rnaseq_10x', 'snRNA-seq [Salmon]', False, False]
+
     """
     definitions = None  # lazy load
     alt_name_map = {}   # map from alt assay names to canonical name
@@ -107,6 +150,21 @@ class AssayType(object):
              False: iterate only over the names of derived assays, that is,
                     those for which a dataset of the given type has at least
                     one parent which is also a dataset.
+
+        >>> all_names = [elt for elt in AssayType.iter_names()]
+        >>> primary_names = [elt for elt in AssayType.iter_names(primary=True)]
+        >>> nonprimary_names = [elt for elt in AssayType.iter_names(primary=False)]
+        >>> all(elt in all_names for elt in primary_names)
+        True
+        >>> any(elt in nonprimary_names for elt in primary_names)
+        False
+        >>> all(elt in all_names for elt in nonprimary_names)
+        True
+        >>> any(elt in primary_names for elt in nonprimary_names)
+        False
+        >>> len(all_names) == len(primary_names) + len(nonprimary_names)
+        True
+
         """
         cls._maybe_load_defs()
         if primary is None:
@@ -119,47 +177,9 @@ class AssayType(object):
 
 
 def main() -> None:
-    """
-    Some test routines
-    """
-    cases = [('codex',
-              False, None, None, None,
-              'should be uppercase'),
-             ('CODEX',
-              True, True, False, False,
-              'this one is valid'),
-             ('codex_cytokit',
-              True, False, False, False,
-              'this one is valid'),
-             ('salmon_rnaseq_bulk',
-              True, False, False, False,
-              'this is an alt-name'),
-             ('scRNA-Seq-10x',
-              True, True, True, False,
-              'this is a valid name containing pii'),
-             (['PAS', 'Image Pyramid'],
-              True, False, False, True,
-              'complex alt-name'),
-             (['Image Pyramid', 'PAS'],
-              True, False, False, True,
-              'complex alt-name'),
-             (['IMC', 'foo'],
-              False, None, None, None,
-              'invalid complex name')
-             ]
-    for name, valid, is_primary, contains_pii, vis_only, note in cases:
-        try:
-            assay = AssayType(name)
-            print(f'{name} produced {assay.name} {assay.description}')
-            print(f'{assay.to_json()}')
-        except Exception as e:
-            print(f'{name} ({note}) -> exception {e}')
-
-    print(dump({
-        'all names': sorted(AssayType.iter_names()),
-        'primary names': sorted(AssayType.iter_names(primary=True)),
-        'non-primary names': sorted(AssayType.iter_names(primary=False))
-    }))
-
+    import doctest
+    doctest.testmod()
+    
+    
 if __name__ == '__main__':
     main()
