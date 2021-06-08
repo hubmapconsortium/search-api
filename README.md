@@ -6,6 +6,12 @@ The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf
 
 ## Development process
 
+### Portal index
+
+Front end developers who need to work on the `portal` index should start in
+[the `addl_index_transformations/portal` subdirectory](https://github.com/hubmapconsortium/search-api/tree/test-release/src/elasticsearch/addl_index_transformations/portal);
+You don't need to read the rest of this page.
+
 ### Local development
 After checking out the repo, installing the dependencies,
 and starting a local Elasticsearch instance, tests should pass:
