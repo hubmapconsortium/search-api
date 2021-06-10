@@ -9,6 +9,9 @@
       "submission_id": {
         "es_name": "hubmap_display_id"
       },
+      "lab_dataset_id": {
+        "es_name": "lab_dataset_id"
+      },
       "lab_tissue_sample_id": {
         "es_name": "lab_tissue_id"
       },
