@@ -29,6 +29,17 @@
           'type': 'array'
           'items': {'type': 'string'}
           'description': 'keywords used for assay-specific visualization'
+        'contains-pii':
+          'type': 'boolean'
+          'description': >-
+            if True, this assay type contains personally identifying information
+            and must not be made public if the donor is human
+        'vis-only':
+          'type': 'boolean'
+          'description': >-
+            if True, this dataset contains only post-processed data
+            generated for visualization purposes, not assay data or
+            analysis per se.
      'required': ['description', 'alt-names', 'primary']
 
    'assay_type_table':
