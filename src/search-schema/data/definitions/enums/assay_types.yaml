@@ -223,12 +223,14 @@ sc_atac_seq_snare_lab:
     description: snATAC-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
 sc_rna_seq_snare_lab:
     description: snRNA-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
 salmon_rnaseq_snareseq:
