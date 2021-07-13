@@ -25,107 +25,107 @@
 - ancestors.ingest_metadata.dag_provenance_list.hash	# text
 - ancestors.ingest_metadata.dag_provenance_list.origin	# text
 - ancestors.ingest_metadata.extra_metadata.collectiontype	# text
-- ancestors.ingest_metadata.metadata._from_metadatatsv	# boolean
-- ancestors.ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- ancestors.ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- ancestors.ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- ancestors.ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- ancestors.ingest_metadata.metadata.ablation_frequency_unit	# text
-- ancestors.ingest_metadata.metadata.ablation_frequency_value	# text
-- ancestors.ingest_metadata.metadata.acquisition_id	# text
-- ancestors.ingest_metadata.metadata.acquisition_instrument_model	# text
-- ancestors.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- ancestors.ingest_metadata.metadata.analyte_class	# text
-- ancestors.ingest_metadata.metadata.assay_category	# text
-- ancestors.ingest_metadata.metadata.assay_type	# text
-- ancestors.ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- ancestors.ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- ancestors.ingest_metadata.metadata.bulk_rna_yield_value	# text
-- ancestors.ingest_metadata.metadata.cell_barcode_offset	# text
-- ancestors.ingest_metadata.metadata.cell_barcode_read	# text
-- ancestors.ingest_metadata.metadata.cell_barcode_size	# text
-- ancestors.ingest_metadata.metadata.collectiontype	# text
-- ancestors.ingest_metadata.metadata.contributors_path	# text
-- ancestors.ingest_metadata.metadata.data_path	# text
-- ancestors.ingest_metadata.metadata.data_precision_bytes	# text
-- ancestors.ingest_metadata.metadata.donor_id	# text
-- ancestors.ingest_metadata.metadata.dual_count_start	# text
-- ancestors.ingest_metadata.metadata.end_datetime	# text
-- ancestors.ingest_metadata.metadata.execution_datetime	# text
-- ancestors.ingest_metadata.metadata.is_targeted	# text
-- ancestors.ingest_metadata.metadata.is_technical_replicate	# text
-- ancestors.ingest_metadata.metadata.library_adapter_sequence	# text
-- ancestors.ingest_metadata.metadata.library_average_fragment_size	# text
-- ancestors.ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.library_final_yield	# text
-- ancestors.ingest_metadata.metadata.library_final_yield_unit	# text
-- ancestors.ingest_metadata.metadata.library_final_yield_value	# text
-- ancestors.ingest_metadata.metadata.library_id	# text
-- ancestors.ingest_metadata.metadata.library_layout	# text
-- ancestors.ingest_metadata.metadata.library_pcr_cycles	# text
-- ancestors.ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- ancestors.ingest_metadata.metadata.max_x_width_unit	# text
-- ancestors.ingest_metadata.metadata.max_x_width_value	# text
-- ancestors.ingest_metadata.metadata.max_y_height_unit	# text
-- ancestors.ingest_metadata.metadata.max_y_height_value	# text
-- ancestors.ingest_metadata.metadata.metadata_path	# text
-- ancestors.ingest_metadata.metadata.ms_source	# text
-- ancestors.ingest_metadata.metadata.mz_range_high_value	# text
-- ancestors.ingest_metadata.metadata.mz_range_low_value	# text
-- ancestors.ingest_metadata.metadata.null	# text
-- ancestors.ingest_metadata.metadata.number_of_antibodies	# text
-- ancestors.ingest_metadata.metadata.number_of_barcode_probes	# text
-- ancestors.ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- ancestors.ingest_metadata.metadata.number_of_channels	# text
-- ancestors.ingest_metadata.metadata.number_of_cycles	# text
-- ancestors.ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- ancestors.ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- ancestors.ingest_metadata.metadata.operator	# text
-- ancestors.ingest_metadata.metadata.operator_email	# text
-- ancestors.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.pi	# text
-- ancestors.ingest_metadata.metadata.pi_email	# text
-- ancestors.ingest_metadata.metadata.polarity	# text
-- ancestors.ingest_metadata.metadata.preparation_instrument_model	# text
-- ancestors.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- ancestors.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- ancestors.ingest_metadata.metadata.preparation_type	# text
-- ancestors.ingest_metadata.metadata.protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.resolution_x_unit	# text
-- ancestors.ingest_metadata.metadata.resolution_x_value	# text
-- ancestors.ingest_metadata.metadata.resolution_y_unit	# text
-- ancestors.ingest_metadata.metadata.resolution_y_value	# text
-- ancestors.ingest_metadata.metadata.resolution_z_unit	# text
-- ancestors.ingest_metadata.metadata.resolution_z_value	# text
-- ancestors.ingest_metadata.metadata.rnaseq_assay_input	# text
-- ancestors.ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- ancestors.ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- ancestors.ingest_metadata.metadata.rnaseq_assay_method	# text
-- ancestors.ingest_metadata.metadata.roi_description	# text
-- ancestors.ingest_metadata.metadata.roi_id	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_cell_number	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_enrichment	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_entity	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- ancestors.ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- ancestors.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- ancestors.ingest_metadata.metadata.segment_data_format	# text
-- ancestors.ingest_metadata.metadata.sequencing_phix_percent	# text
-- ancestors.ingest_metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- ancestors.ingest_metadata.metadata.sequencing_read_format	# text
-- ancestors.ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- ancestors.ingest_metadata.metadata.sequencing_reagent_kit	# text
-- ancestors.ingest_metadata.metadata.signal_type	# text
-- ancestors.ingest_metadata.metadata.stain	# text
-- ancestors.ingest_metadata.metadata.start_datetime	# text
-- ancestors.ingest_metadata.metadata.tissue_id	# text
-- ancestors.ingest_metadata.metadata.transposition_input	# text
-- ancestors.ingest_metadata.metadata.transposition_kit_number	# text
-- ancestors.ingest_metadata.metadata.transposition_method	# text
-- ancestors.ingest_metadata.metadata.transposition_transposase_source	# text
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
+- ancestors.ingest_metadata.metadata.*
 - ancestors.lab_dataset_id	# text
 - ancestors.lab_donor_id	# text
 - ancestors.lab_name	# text
@@ -158,108 +158,108 @@
 - ancestors.mapped_organ	# text
 - ancestors.mapped_specimen_type	# text
 - ancestors.mapped_status	# text
-- ancestors.metadata.cold_ischemia_time_unit	# text
-- ancestors.metadata.cold_ischemia_time_value	# text
+- ancestors.metadata.*
+- ancestors.metadata.*
 - ancestors.metadata.dag_provenance_list.hash	# text
 - ancestors.metadata.dag_provenance_list.origin	# text
 - ancestors.metadata.extra_metadata.collectiontype	# text
-- ancestors.metadata.health_status	# text
-- ancestors.metadata.metadata.ablation_distance_between_shots_x_units	# text
-- ancestors.metadata.metadata.ablation_distance_between_shots_x_value	# text
-- ancestors.metadata.metadata.ablation_distance_between_shots_y_units	# text
-- ancestors.metadata.metadata.ablation_distance_between_shots_y_value	# text
-- ancestors.metadata.metadata.ablation_frequency_unit	# text
-- ancestors.metadata.metadata.ablation_frequency_value	# text
-- ancestors.metadata.metadata.acquisition_id	# text
-- ancestors.metadata.metadata.acquisition_instrument_model	# text
-- ancestors.metadata.metadata.acquisition_instrument_vendor	# text
-- ancestors.metadata.metadata.analyte_class	# text
-- ancestors.metadata.metadata.assay_category	# text
-- ancestors.metadata.metadata.assay_type	# text
-- ancestors.metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- ancestors.metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- ancestors.metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- ancestors.metadata.metadata.bulk_rna_yield_value	# text
-- ancestors.metadata.metadata.cell_barcode_offset	# text
-- ancestors.metadata.metadata.cell_barcode_read	# text
-- ancestors.metadata.metadata.cell_barcode_size	# text
-- ancestors.metadata.metadata.contributors_path	# text
-- ancestors.metadata.metadata.data_precision_bytes	# text
-- ancestors.metadata.metadata.dual_count_start	# text
-- ancestors.metadata.metadata.end_datetime	# text
-- ancestors.metadata.metadata.execution_datetime	# text
-- ancestors.metadata.metadata.is_targeted	# text
-- ancestors.metadata.metadata.is_technical_replicate	# text
-- ancestors.metadata.metadata.library_adapter_sequence	# text
-- ancestors.metadata.metadata.library_average_fragment_size	# text
-- ancestors.metadata.metadata.library_construction_protocols_io_doi	# text
-- ancestors.metadata.metadata.library_final_yield	# text
-- ancestors.metadata.metadata.library_final_yield_unit	# text
-- ancestors.metadata.metadata.library_final_yield_value	# text
-- ancestors.metadata.metadata.library_id	# text
-- ancestors.metadata.metadata.library_layout	# text
-- ancestors.metadata.metadata.library_pcr_cycles	# text
-- ancestors.metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- ancestors.metadata.metadata.max_x_width_unit	# text
-- ancestors.metadata.metadata.max_x_width_value	# text
-- ancestors.metadata.metadata.max_y_height_unit	# text
-- ancestors.metadata.metadata.max_y_height_value	# text
-- ancestors.metadata.metadata.ms_source	# text
-- ancestors.metadata.metadata.mz_range_high_value	# text
-- ancestors.metadata.metadata.mz_range_low_value	# text
-- ancestors.metadata.metadata.null	# text
-- ancestors.metadata.metadata.number_of_antibodies	# text
-- ancestors.metadata.metadata.number_of_barcode_probes	# text
-- ancestors.metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- ancestors.metadata.metadata.number_of_channels	# text
-- ancestors.metadata.metadata.number_of_cycles	# text
-- ancestors.metadata.metadata.number_of_pseudocolors_per_channel	# text
-- ancestors.metadata.metadata.number_of_readout_probes_per_channel	# text
-- ancestors.metadata.metadata.operator	# text
-- ancestors.metadata.metadata.operator_email	# text
-- ancestors.metadata.metadata.overall_protocols_io_doi	# text
-- ancestors.metadata.metadata.pi	# text
-- ancestors.metadata.metadata.pi_email	# text
-- ancestors.metadata.metadata.polarity	# text
-- ancestors.metadata.metadata.preparation_instrument_model	# text
-- ancestors.metadata.metadata.preparation_instrument_vendor	# text
-- ancestors.metadata.metadata.preparation_maldi_matrix	# text
-- ancestors.metadata.metadata.preparation_type	# text
-- ancestors.metadata.metadata.protocols_io_doi	# text
-- ancestors.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- ancestors.metadata.metadata.resolution_x_unit	# text
-- ancestors.metadata.metadata.resolution_x_value	# text
-- ancestors.metadata.metadata.resolution_y_unit	# text
-- ancestors.metadata.metadata.resolution_y_value	# text
-- ancestors.metadata.metadata.resolution_z_unit	# text
-- ancestors.metadata.metadata.resolution_z_value	# text
-- ancestors.metadata.metadata.rnaseq_assay_input	# text
-- ancestors.metadata.metadata.rnaseq_assay_input_unit	# text
-- ancestors.metadata.metadata.rnaseq_assay_input_value	# text
-- ancestors.metadata.metadata.rnaseq_assay_method	# text
-- ancestors.metadata.metadata.roi_description	# text
-- ancestors.metadata.metadata.roi_id	# text
-- ancestors.metadata.metadata.sc_isolation_cell_number	# text
-- ancestors.metadata.metadata.sc_isolation_enrichment	# text
-- ancestors.metadata.metadata.sc_isolation_entity	# text
-- ancestors.metadata.metadata.sc_isolation_protocols_io_doi	# text
-- ancestors.metadata.metadata.sc_isolation_quality_metric	# text
-- ancestors.metadata.metadata.sc_isolation_tissue_dissociation	# text
-- ancestors.metadata.metadata.section_prep_protocols_io_doi	# text
-- ancestors.metadata.metadata.segment_data_format	# text
-- ancestors.metadata.metadata.sequencing_phix_percent	# text
-- ancestors.metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- ancestors.metadata.metadata.sequencing_read_format	# text
-- ancestors.metadata.metadata.sequencing_read_percent_q30	# text
-- ancestors.metadata.metadata.sequencing_reagent_kit	# text
-- ancestors.metadata.metadata.signal_type	# text
-- ancestors.metadata.metadata.stain	# text
-- ancestors.metadata.metadata.start_datetime	# text
-- ancestors.metadata.metadata.transposition_input	# text
-- ancestors.metadata.metadata.transposition_kit_number	# text
-- ancestors.metadata.metadata.transposition_method	# text
-- ancestors.metadata.metadata.transposition_transposase_source	# text
-- ancestors.metadata.organ_condition	# text
+- ancestors.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.metadata.*
+- ancestors.metadata.*
 - ancestors.metadata.organ_donor_data.code	# text
 - ancestors.metadata.organ_donor_data.concept_id	# text
 - ancestors.metadata.organ_donor_data.data_type	# text
@@ -275,16 +275,16 @@
 - ancestors.metadata.organ_donor_data.sab	# text
 - ancestors.metadata.organ_donor_data.start_datetime	# text
 - ancestors.metadata.organ_donor_data.units	# text
-- ancestors.metadata.pathologist_report	# text
-- ancestors.metadata.perfusion_solution	# text
-- ancestors.metadata.procedure_date	# text
-- ancestors.metadata.specimen_preservation_temperature	# text
-- ancestors.metadata.specimen_quality_criteria	# text
-- ancestors.metadata.specimen_tumor_distance_unit	# text
-- ancestors.metadata.specimen_tumor_distance_value	# text
-- ancestors.metadata.vital_state	# text
-- ancestors.metadata.warm_ischemia_time_unit	# text
-- ancestors.metadata.warm_ischemia_time_value	# text
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
+- ancestors.metadata.*
 - ancestors.organ	# text
 - ancestors.portal_metadata_upload_files.description	# text
 - ancestors.portal_metadata_upload_files.filepath	# text
@@ -334,124 +334,124 @@
 - datasets.index_version	# text
 - datasets.ingest_metadata.dag_provenance_list.hash	# text
 - datasets.ingest_metadata.dag_provenance_list.origin	# text
-- datasets.ingest_metadata.metadata._from_metadatatsv	# boolean
-- datasets.ingest_metadata.metadata.acquisition_instrument_model	# text
-- datasets.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- datasets.ingest_metadata.metadata.analyte_class	# text
-- datasets.ingest_metadata.metadata.assay_category	# text
-- datasets.ingest_metadata.metadata.assay_type	# text
-- datasets.ingest_metadata.metadata.collectiontype	# text
-- datasets.ingest_metadata.metadata.data_collection_mode	# text
-- datasets.ingest_metadata.metadata.data_path	# text
-- datasets.ingest_metadata.metadata.donor_id	# text
-- datasets.ingest_metadata.metadata.execution_datetime	# text
-- datasets.ingest_metadata.metadata.is_targeted	# text
-- datasets.ingest_metadata.metadata.labeling	# text
-- datasets.ingest_metadata.metadata.lc_column_model	# text
-- datasets.ingest_metadata.metadata.lc_column_vendor	# text
-- datasets.ingest_metadata.metadata.lc_flow_rate_unit	# text
-- datasets.ingest_metadata.metadata.lc_flow_rate_value	# text
-- datasets.ingest_metadata.metadata.lc_gradient	# text
-- datasets.ingest_metadata.metadata.lc_id_unit	# text
-- datasets.ingest_metadata.metadata.lc_id_value	# text
-- datasets.ingest_metadata.metadata.lc_instrument_model	# text
-- datasets.ingest_metadata.metadata.lc_instrument_vendor	# text
-- datasets.ingest_metadata.metadata.lc_length_unit	# text
-- datasets.ingest_metadata.metadata.lc_length_value	# text
-- datasets.ingest_metadata.metadata.lc_mobile_phase_a	# text
-- datasets.ingest_metadata.metadata.lc_mobile_phase_b	# text
-- datasets.ingest_metadata.metadata.lc_resin	# text
-- datasets.ingest_metadata.metadata.lc_temp_unit	# text
-- datasets.ingest_metadata.metadata.lc_temp_value	# text
-- datasets.ingest_metadata.metadata.metadata_path	# text
-- datasets.ingest_metadata.metadata.ms_scan_mode	# text
-- datasets.ingest_metadata.metadata.ms_source	# text
-- datasets.ingest_metadata.metadata.mz_range_high_value	# text
-- datasets.ingest_metadata.metadata.mz_range_low_value	# text
-- datasets.ingest_metadata.metadata.number_of_channels	# text
-- datasets.ingest_metadata.metadata.operator	# text
-- datasets.ingest_metadata.metadata.operator_email	# text
-- datasets.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- datasets.ingest_metadata.metadata.pi	# text
-- datasets.ingest_metadata.metadata.pi_email	# text
-- datasets.ingest_metadata.metadata.polarity	# text
-- datasets.ingest_metadata.metadata.preparation_instrument_model	# text
-- datasets.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- datasets.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- datasets.ingest_metadata.metadata.preparation_type	# text
-- datasets.ingest_metadata.metadata.processing_protocols_io_doi	# text
-- datasets.ingest_metadata.metadata.processing_search	# text
-- datasets.ingest_metadata.metadata.protocols_io_doi	# text
-- datasets.ingest_metadata.metadata.resolution_x_unit	# text
-- datasets.ingest_metadata.metadata.resolution_x_value	# text
-- datasets.ingest_metadata.metadata.resolution_y_unit	# text
-- datasets.ingest_metadata.metadata.resolution_y_value	# text
-- datasets.ingest_metadata.metadata.resolution_z_unit	# text
-- datasets.ingest_metadata.metadata.resolution_z_value	# text
-- datasets.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- datasets.ingest_metadata.metadata.stain	# text
-- datasets.ingest_metadata.metadata.tissue_id	# text
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
+- datasets.ingest_metadata.metadata.*
 - datasets.lab_dataset_id	# text
 - datasets.last_modified_timestamp	# long
 - datasets.metadata.dag_provenance_list.hash	# text
 - datasets.metadata.dag_provenance_list.origin	# text
-- datasets.metadata.metadata._from_metadatatsv	# boolean
-- datasets.metadata.metadata.acquisition_instrument_model	# text
-- datasets.metadata.metadata.acquisition_instrument_vendor	# text
-- datasets.metadata.metadata.analyte_class	# text
-- datasets.metadata.metadata.assay_category	# text
-- datasets.metadata.metadata.assay_type	# text
-- datasets.metadata.metadata.collectiontype	# text
-- datasets.metadata.metadata.data_collection_mode	# text
-- datasets.metadata.metadata.data_path	# text
-- datasets.metadata.metadata.donor_id	# text
-- datasets.metadata.metadata.execution_datetime	# text
-- datasets.metadata.metadata.is_targeted	# text
-- datasets.metadata.metadata.labeling	# text
-- datasets.metadata.metadata.lc_column_model	# text
-- datasets.metadata.metadata.lc_column_vendor	# text
-- datasets.metadata.metadata.lc_flow_rate_unit	# text
-- datasets.metadata.metadata.lc_flow_rate_value	# text
-- datasets.metadata.metadata.lc_gradient	# text
-- datasets.metadata.metadata.lc_id_unit	# text
-- datasets.metadata.metadata.lc_id_value	# text
-- datasets.metadata.metadata.lc_instrument_model	# text
-- datasets.metadata.metadata.lc_instrument_vendor	# text
-- datasets.metadata.metadata.lc_length_unit	# text
-- datasets.metadata.metadata.lc_length_value	# text
-- datasets.metadata.metadata.lc_mobile_phase_a	# text
-- datasets.metadata.metadata.lc_mobile_phase_b	# text
-- datasets.metadata.metadata.lc_resin	# text
-- datasets.metadata.metadata.lc_temp_unit	# text
-- datasets.metadata.metadata.lc_temp_value	# text
-- datasets.metadata.metadata.metadata_path	# text
-- datasets.metadata.metadata.ms_scan_mode	# text
-- datasets.metadata.metadata.ms_source	# text
-- datasets.metadata.metadata.mz_range_high_value	# text
-- datasets.metadata.metadata.mz_range_low_value	# text
-- datasets.metadata.metadata.number_of_channels	# text
-- datasets.metadata.metadata.operator	# text
-- datasets.metadata.metadata.operator_email	# text
-- datasets.metadata.metadata.overall_protocols_io_doi	# text
-- datasets.metadata.metadata.pi	# text
-- datasets.metadata.metadata.pi_email	# text
-- datasets.metadata.metadata.polarity	# text
-- datasets.metadata.metadata.preparation_instrument_model	# text
-- datasets.metadata.metadata.preparation_instrument_vendor	# text
-- datasets.metadata.metadata.preparation_maldi_matrix	# text
-- datasets.metadata.metadata.preparation_type	# text
-- datasets.metadata.metadata.processing_protocols_io_doi	# text
-- datasets.metadata.metadata.processing_search	# text
-- datasets.metadata.metadata.protocols_io_doi	# text
-- datasets.metadata.metadata.resolution_x_unit	# text
-- datasets.metadata.metadata.resolution_x_value	# text
-- datasets.metadata.metadata.resolution_y_unit	# text
-- datasets.metadata.metadata.resolution_y_value	# text
-- datasets.metadata.metadata.resolution_z_unit	# text
-- datasets.metadata.metadata.resolution_z_value	# text
-- datasets.metadata.metadata.section_prep_protocols_io_doi	# text
-- datasets.metadata.metadata.stain	# text
-- datasets.metadata.metadata.tissue_id	# text
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
+- datasets.metadata.metadata.*
 - datasets.next_revision_uuid	# text
 - datasets.published_timestamp	# long
 - datasets.status	# text
@@ -486,142 +486,142 @@
 - descendants.ingest_metadata.files.size	# long
 - descendants.ingest_metadata.files.type	# text
 - descendants.ingest_metadata.files_info_alt_path	# text
-- descendants.ingest_metadata.metadata._from_metadatatsv	# boolean
-- descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- descendants.ingest_metadata.metadata.ablation_frequency_unit	# text
-- descendants.ingest_metadata.metadata.ablation_frequency_value	# text
-- descendants.ingest_metadata.metadata.acquisition_id	# text
-- descendants.ingest_metadata.metadata.acquisition_instrument_model	# text
-- descendants.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- descendants.ingest_metadata.metadata.analyte_class	# text
-- descendants.ingest_metadata.metadata.assay_category	# text
-- descendants.ingest_metadata.metadata.assay_type	# text
-- descendants.ingest_metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- descendants.ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- descendants.ingest_metadata.metadata.bulk_rna_yield_value	# text
-- descendants.ingest_metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- descendants.ingest_metadata.metadata.cell_barcode_offset	# text
-- descendants.ingest_metadata.metadata.cell_barcode_read	# text
-- descendants.ingest_metadata.metadata.cell_barcode_size	# text
-- descendants.ingest_metadata.metadata.collectiontype	# text
-- descendants.ingest_metadata.metadata.contributors_path	# text
-- descendants.ingest_metadata.metadata.data_collection_mode	# text
-- descendants.ingest_metadata.metadata.data_path	# text
-- descendants.ingest_metadata.metadata.data_precision_bytes	# text
-- descendants.ingest_metadata.metadata.dna_assay_input_unit	# text
-- descendants.ingest_metadata.metadata.dna_assay_input_value	# text
-- descendants.ingest_metadata.metadata.donor_id	# text
-- descendants.ingest_metadata.metadata.dual_count_start	# text
-- descendants.ingest_metadata.metadata.end_datetime	# text
-- descendants.ingest_metadata.metadata.execution_datetime	# text
-- descendants.ingest_metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- descendants.ingest_metadata.metadata.is_targeted	# text
-- descendants.ingest_metadata.metadata.is_technical_replicate	# text
-- descendants.ingest_metadata.metadata.labeling	# text
-- descendants.ingest_metadata.metadata.lc_column_model	# text
-- descendants.ingest_metadata.metadata.lc_column_vendor	# text
-- descendants.ingest_metadata.metadata.lc_flow_rate_unit	# text
-- descendants.ingest_metadata.metadata.lc_flow_rate_value	# text
-- descendants.ingest_metadata.metadata.lc_gradient	# text
-- descendants.ingest_metadata.metadata.lc_id_unit	# text
-- descendants.ingest_metadata.metadata.lc_id_value	# text
-- descendants.ingest_metadata.metadata.lc_instrument_model	# text
-- descendants.ingest_metadata.metadata.lc_instrument_vendor	# text
-- descendants.ingest_metadata.metadata.lc_length_unit	# text
-- descendants.ingest_metadata.metadata.lc_length_value	# text
-- descendants.ingest_metadata.metadata.lc_mobile_phase_a	# text
-- descendants.ingest_metadata.metadata.lc_mobile_phase_b	# text
-- descendants.ingest_metadata.metadata.lc_resin	# text
-- descendants.ingest_metadata.metadata.lc_temp_unit	# text
-- descendants.ingest_metadata.metadata.lc_temp_value	# text
-- descendants.ingest_metadata.metadata.library_adapter_sequence	# text
-- descendants.ingest_metadata.metadata.library_average_fragment_size	# text
-- descendants.ingest_metadata.metadata.library_concentration_unit	# text
-- descendants.ingest_metadata.metadata.library_concentration_value	# text
-- descendants.ingest_metadata.metadata.library_construction_method	# text
-- descendants.ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.library_creation_date	# text
-- descendants.ingest_metadata.metadata.library_final_yield	# text
-- descendants.ingest_metadata.metadata.library_final_yield_unit	# text
-- descendants.ingest_metadata.metadata.library_final_yield_value	# text
-- descendants.ingest_metadata.metadata.library_id	# text
-- descendants.ingest_metadata.metadata.library_layout	# text
-- descendants.ingest_metadata.metadata.library_pcr_cycles	# text
-- descendants.ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- descendants.ingest_metadata.metadata.library_preparation_kit	# text
-- descendants.ingest_metadata.metadata.max_x_width_unit	# text
-- descendants.ingest_metadata.metadata.max_x_width_value	# text
-- descendants.ingest_metadata.metadata.max_y_height_unit	# text
-- descendants.ingest_metadata.metadata.max_y_height_value	# text
-- descendants.ingest_metadata.metadata.metadata_path	# text
-- descendants.ingest_metadata.metadata.ms_scan_mode	# text
-- descendants.ingest_metadata.metadata.ms_source	# text
-- descendants.ingest_metadata.metadata.mz_range_high_value	# text
-- descendants.ingest_metadata.metadata.mz_range_low_value	# text
-- descendants.ingest_metadata.metadata.number_of_antibodies	# text
-- descendants.ingest_metadata.metadata.number_of_barcode_probes	# text
-- descendants.ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- descendants.ingest_metadata.metadata.number_of_channels	# text
-- descendants.ingest_metadata.metadata.number_of_cycles	# text
-- descendants.ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- descendants.ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- descendants.ingest_metadata.metadata.operator	# text
-- descendants.ingest_metadata.metadata.operator_email	# text
-- descendants.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.pi	# text
-- descendants.ingest_metadata.metadata.pi_email	# text
-- descendants.ingest_metadata.metadata.polarity	# text
-- descendants.ingest_metadata.metadata.preparation_instrument_model	# text
-- descendants.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- descendants.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- descendants.ingest_metadata.metadata.preparation_type	# text
-- descendants.ingest_metadata.metadata.processing_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.processing_search	# text
-- descendants.ingest_metadata.metadata.protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.resolution_x_unit	# text
-- descendants.ingest_metadata.metadata.resolution_x_value	# text
-- descendants.ingest_metadata.metadata.resolution_y_unit	# text
-- descendants.ingest_metadata.metadata.resolution_y_value	# text
-- descendants.ingest_metadata.metadata.resolution_z_unit	# text
-- descendants.ingest_metadata.metadata.resolution_z_value	# text
-- descendants.ingest_metadata.metadata.rnaseq_assay_input	# text
-- descendants.ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- descendants.ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- descendants.ingest_metadata.metadata.rnaseq_assay_method	# text
-- descendants.ingest_metadata.metadata.roi_description	# text
-- descendants.ingest_metadata.metadata.roi_id	# text
-- descendants.ingest_metadata.metadata.sample_quality_metric	# text
-- descendants.ingest_metadata.metadata.sc_isolation_cell_number	# text
-- descendants.ingest_metadata.metadata.sc_isolation_enrichment	# text
-- descendants.ingest_metadata.metadata.sc_isolation_entity	# text
-- descendants.ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- descendants.ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- descendants.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- descendants.ingest_metadata.metadata.segment_data_format	# text
-- descendants.ingest_metadata.metadata.sequencing_phix_percent	# text
-- descendants.ingest_metadata.metadata.sequencing_read_format	# text
-- descendants.ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- descendants.ingest_metadata.metadata.sequencing_reagent_kit	# text
-- descendants.ingest_metadata.metadata.signal_type	# text
-- descendants.ingest_metadata.metadata.stain	# text
-- descendants.ingest_metadata.metadata.start_datetime	# text
-- descendants.ingest_metadata.metadata.tissue_id	# text
-- descendants.ingest_metadata.metadata.transposition_input	# text
-- descendants.ingest_metadata.metadata.transposition_kit_number	# text
-- descendants.ingest_metadata.metadata.transposition_method	# text
-- descendants.ingest_metadata.metadata.transposition_transposase_source	# text
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
+- descendants.ingest_metadata.metadata.*
 - descendants.lab_dataset_id	# text
 - descendants.lab_tissue_sample_id	# text
 - descendants.last_modified_timestamp	# long
-- descendants.metadata.cold_ischemia_time_unit	# text
-- descendants.metadata.cold_ischemia_time_value	# text
+- descendants.metadata.*
+- descendants.metadata.*
 - descendants.metadata.dag_provenance_list.hash	# text
 - descendants.metadata.dag_provenance_list.name	# text
 - descendants.metadata.dag_provenance_list.origin	# text
@@ -632,144 +632,144 @@
 - descendants.metadata.files.rel_path	# text
 - descendants.metadata.files.size	# long
 - descendants.metadata.files.type	# text
-- descendants.metadata.files_info_alt_path	# text
-- descendants.metadata.health_status	# text
-- descendants.metadata.metadata.ablation_distance_between_shots_x_units	# text
-- descendants.metadata.metadata.ablation_distance_between_shots_x_value	# text
-- descendants.metadata.metadata.ablation_distance_between_shots_y_units	# text
-- descendants.metadata.metadata.ablation_distance_between_shots_y_value	# text
-- descendants.metadata.metadata.ablation_frequency_unit	# text
-- descendants.metadata.metadata.ablation_frequency_value	# text
-- descendants.metadata.metadata.acquisition_id	# text
-- descendants.metadata.metadata.acquisition_instrument_model	# text
-- descendants.metadata.metadata.acquisition_instrument_vendor	# text
-- descendants.metadata.metadata.analyte_class	# text
-- descendants.metadata.metadata.assay_category	# text
-- descendants.metadata.metadata.assay_type	# text
-- descendants.metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- descendants.metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- descendants.metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- descendants.metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- descendants.metadata.metadata.bulk_rna_yield_value	# text
-- descendants.metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- descendants.metadata.metadata.cell_barcode_offset	# text
-- descendants.metadata.metadata.cell_barcode_read	# text
-- descendants.metadata.metadata.cell_barcode_size	# text
-- descendants.metadata.metadata.contributors_path	# text
-- descendants.metadata.metadata.data_collection_mode	# text
-- descendants.metadata.metadata.data_precision_bytes	# text
-- descendants.metadata.metadata.dna_assay_input_unit	# text
-- descendants.metadata.metadata.dna_assay_input_value	# text
-- descendants.metadata.metadata.dual_count_start	# text
-- descendants.metadata.metadata.end_datetime	# text
-- descendants.metadata.metadata.execution_datetime	# text
-- descendants.metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- descendants.metadata.metadata.is_targeted	# text
-- descendants.metadata.metadata.is_technical_replicate	# text
-- descendants.metadata.metadata.labeling	# text
-- descendants.metadata.metadata.lc_column_model	# text
-- descendants.metadata.metadata.lc_column_vendor	# text
-- descendants.metadata.metadata.lc_flow_rate_unit	# text
-- descendants.metadata.metadata.lc_flow_rate_value	# text
-- descendants.metadata.metadata.lc_gradient	# text
-- descendants.metadata.metadata.lc_id_unit	# text
-- descendants.metadata.metadata.lc_id_value	# text
-- descendants.metadata.metadata.lc_instrument_model	# text
-- descendants.metadata.metadata.lc_instrument_vendor	# text
-- descendants.metadata.metadata.lc_length_unit	# text
-- descendants.metadata.metadata.lc_length_value	# text
-- descendants.metadata.metadata.lc_mobile_phase_a	# text
-- descendants.metadata.metadata.lc_mobile_phase_b	# text
-- descendants.metadata.metadata.lc_resin	# text
-- descendants.metadata.metadata.lc_temp_unit	# text
-- descendants.metadata.metadata.lc_temp_value	# text
-- descendants.metadata.metadata.library_adapter_sequence	# text
-- descendants.metadata.metadata.library_average_fragment_size	# text
-- descendants.metadata.metadata.library_concentration_unit	# text
-- descendants.metadata.metadata.library_concentration_value	# text
-- descendants.metadata.metadata.library_construction_method	# text
-- descendants.metadata.metadata.library_construction_protocols_io_doi	# text
-- descendants.metadata.metadata.library_creation_date	# text
-- descendants.metadata.metadata.library_final_yield	# text
-- descendants.metadata.metadata.library_final_yield_unit	# text
-- descendants.metadata.metadata.library_final_yield_value	# text
-- descendants.metadata.metadata.library_id	# text
-- descendants.metadata.metadata.library_layout	# text
-- descendants.metadata.metadata.library_pcr_cycles	# text
-- descendants.metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- descendants.metadata.metadata.library_preparation_kit	# text
-- descendants.metadata.metadata.max_x_width_unit	# text
-- descendants.metadata.metadata.max_x_width_value	# text
-- descendants.metadata.metadata.max_y_height_unit	# text
-- descendants.metadata.metadata.max_y_height_value	# text
-- descendants.metadata.metadata.ms_scan_mode	# text
-- descendants.metadata.metadata.ms_source	# text
-- descendants.metadata.metadata.mz_range_high_value	# text
-- descendants.metadata.metadata.mz_range_low_value	# text
-- descendants.metadata.metadata.number_of_antibodies	# text
-- descendants.metadata.metadata.number_of_barcode_probes	# text
-- descendants.metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- descendants.metadata.metadata.number_of_channels	# text
-- descendants.metadata.metadata.number_of_cycles	# text
-- descendants.metadata.metadata.number_of_pseudocolors_per_channel	# text
-- descendants.metadata.metadata.number_of_readout_probes_per_channel	# text
-- descendants.metadata.metadata.operator	# text
-- descendants.metadata.metadata.operator_email	# text
-- descendants.metadata.metadata.overall_protocols_io_doi	# text
-- descendants.metadata.metadata.pi	# text
-- descendants.metadata.metadata.pi_email	# text
-- descendants.metadata.metadata.polarity	# text
-- descendants.metadata.metadata.preparation_instrument_model	# text
-- descendants.metadata.metadata.preparation_instrument_vendor	# text
-- descendants.metadata.metadata.preparation_maldi_matrix	# text
-- descendants.metadata.metadata.preparation_type	# text
-- descendants.metadata.metadata.processing_protocols_io_doi	# text
-- descendants.metadata.metadata.processing_search	# text
-- descendants.metadata.metadata.protocols_io_doi	# text
-- descendants.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- descendants.metadata.metadata.resolution_x_unit	# text
-- descendants.metadata.metadata.resolution_x_value	# text
-- descendants.metadata.metadata.resolution_y_unit	# text
-- descendants.metadata.metadata.resolution_y_value	# text
-- descendants.metadata.metadata.resolution_z_unit	# text
-- descendants.metadata.metadata.resolution_z_value	# text
-- descendants.metadata.metadata.rnaseq_assay_input	# text
-- descendants.metadata.metadata.rnaseq_assay_input_unit	# text
-- descendants.metadata.metadata.rnaseq_assay_input_value	# text
-- descendants.metadata.metadata.rnaseq_assay_method	# text
-- descendants.metadata.metadata.roi_description	# text
-- descendants.metadata.metadata.roi_id	# text
-- descendants.metadata.metadata.sample_quality_metric	# text
-- descendants.metadata.metadata.sc_isolation_cell_number	# text
-- descendants.metadata.metadata.sc_isolation_enrichment	# text
-- descendants.metadata.metadata.sc_isolation_entity	# text
-- descendants.metadata.metadata.sc_isolation_protocols_io_doi	# text
-- descendants.metadata.metadata.sc_isolation_quality_metric	# text
-- descendants.metadata.metadata.sc_isolation_tissue_dissociation	# text
-- descendants.metadata.metadata.section_prep_protocols_io_doi	# text
-- descendants.metadata.metadata.segment_data_format	# text
-- descendants.metadata.metadata.sequencing_phix_percent	# text
-- descendants.metadata.metadata.sequencing_read_format	# text
-- descendants.metadata.metadata.sequencing_read_percent_q30	# text
-- descendants.metadata.metadata.sequencing_reagent_kit	# text
-- descendants.metadata.metadata.signal_type	# text
-- descendants.metadata.metadata.stain	# text
-- descendants.metadata.metadata.start_datetime	# text
-- descendants.metadata.metadata.transposition_input	# text
-- descendants.metadata.metadata.transposition_kit_number	# text
-- descendants.metadata.metadata.transposition_method	# text
-- descendants.metadata.metadata.transposition_transposase_source	# text
-- descendants.metadata.organ_condition	# text
-- descendants.metadata.pathologist_report	# text
-- descendants.metadata.perfusion_solution	# text
-- descendants.metadata.procedure_date	# text
-- descendants.metadata.specimen_preservation_temperature	# text
-- descendants.metadata.specimen_quality_criteria	# text
-- descendants.metadata.specimen_tumor_distance_unit	# text
-- descendants.metadata.specimen_tumor_distance_value	# text
-- descendants.metadata.vital_state	# text
-- descendants.metadata.warm_ischemia_time_unit	# text
-- descendants.metadata.warm_ischemia_time_value	# text
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
+- descendants.metadata.*
 - descendants.organ	# text
 - descendants.portal_metadata_upload_files.description	# text
 - descendants.portal_metadata_upload_files.filepath	# text
@@ -875,215 +875,215 @@
 - immediate_ancestors.ingest_metadata.dag_provenance_list.hash	# text
 - immediate_ancestors.ingest_metadata.dag_provenance_list.origin	# text
 - immediate_ancestors.ingest_metadata.extra_metadata.collectiontype	# text
-- immediate_ancestors.ingest_metadata.metadata._from_metadatatsv	# boolean
-- immediate_ancestors.ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- immediate_ancestors.ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- immediate_ancestors.ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- immediate_ancestors.ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- immediate_ancestors.ingest_metadata.metadata.ablation_frequency_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.ablation_frequency_value	# text
-- immediate_ancestors.ingest_metadata.metadata.acquisition_id	# text
-- immediate_ancestors.ingest_metadata.metadata.acquisition_instrument_model	# text
-- immediate_ancestors.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- immediate_ancestors.ingest_metadata.metadata.analyte_class	# text
-- immediate_ancestors.ingest_metadata.metadata.assay_category	# text
-- immediate_ancestors.ingest_metadata.metadata.assay_type	# text
-- immediate_ancestors.ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- immediate_ancestors.ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.bulk_rna_yield_value	# text
-- immediate_ancestors.ingest_metadata.metadata.cell_barcode_offset	# text
-- immediate_ancestors.ingest_metadata.metadata.cell_barcode_read	# text
-- immediate_ancestors.ingest_metadata.metadata.cell_barcode_size	# text
-- immediate_ancestors.ingest_metadata.metadata.collectiontype	# text
-- immediate_ancestors.ingest_metadata.metadata.contributors_path	# text
-- immediate_ancestors.ingest_metadata.metadata.data_path	# text
-- immediate_ancestors.ingest_metadata.metadata.data_precision_bytes	# text
-- immediate_ancestors.ingest_metadata.metadata.donor_id	# text
-- immediate_ancestors.ingest_metadata.metadata.dual_count_start	# text
-- immediate_ancestors.ingest_metadata.metadata.end_datetime	# text
-- immediate_ancestors.ingest_metadata.metadata.execution_datetime	# text
-- immediate_ancestors.ingest_metadata.metadata.is_targeted	# text
-- immediate_ancestors.ingest_metadata.metadata.is_technical_replicate	# text
-- immediate_ancestors.ingest_metadata.metadata.library_adapter_sequence	# text
-- immediate_ancestors.ingest_metadata.metadata.library_average_fragment_size	# text
-- immediate_ancestors.ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.library_final_yield	# text
-- immediate_ancestors.ingest_metadata.metadata.library_final_yield_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.library_final_yield_value	# text
-- immediate_ancestors.ingest_metadata.metadata.library_id	# text
-- immediate_ancestors.ingest_metadata.metadata.library_layout	# text
-- immediate_ancestors.ingest_metadata.metadata.library_pcr_cycles	# text
-- immediate_ancestors.ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- immediate_ancestors.ingest_metadata.metadata.max_x_width_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.max_x_width_value	# text
-- immediate_ancestors.ingest_metadata.metadata.max_y_height_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.max_y_height_value	# text
-- immediate_ancestors.ingest_metadata.metadata.metadata_path	# text
-- immediate_ancestors.ingest_metadata.metadata.ms_source	# text
-- immediate_ancestors.ingest_metadata.metadata.mz_range_high_value	# text
-- immediate_ancestors.ingest_metadata.metadata.mz_range_low_value	# text
-- immediate_ancestors.ingest_metadata.metadata.null	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_antibodies	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_barcode_probes	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_channels	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_cycles	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- immediate_ancestors.ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- immediate_ancestors.ingest_metadata.metadata.operator	# text
-- immediate_ancestors.ingest_metadata.metadata.operator_email	# text
-- immediate_ancestors.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.pi	# text
-- immediate_ancestors.ingest_metadata.metadata.pi_email	# text
-- immediate_ancestors.ingest_metadata.metadata.polarity	# text
-- immediate_ancestors.ingest_metadata.metadata.preparation_instrument_model	# text
-- immediate_ancestors.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- immediate_ancestors.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- immediate_ancestors.ingest_metadata.metadata.preparation_type	# text
-- immediate_ancestors.ingest_metadata.metadata.protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_x_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_x_value	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_y_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_y_value	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_z_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.resolution_z_value	# text
-- immediate_ancestors.ingest_metadata.metadata.rnaseq_assay_input	# text
-- immediate_ancestors.ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- immediate_ancestors.ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- immediate_ancestors.ingest_metadata.metadata.rnaseq_assay_method	# text
-- immediate_ancestors.ingest_metadata.metadata.roi_description	# text
-- immediate_ancestors.ingest_metadata.metadata.roi_id	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_cell_number	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_enrichment	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_entity	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- immediate_ancestors.ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- immediate_ancestors.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- immediate_ancestors.ingest_metadata.metadata.segment_data_format	# text
-- immediate_ancestors.ingest_metadata.metadata.sequencing_phix_percent	# text
-- immediate_ancestors.ingest_metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- immediate_ancestors.ingest_metadata.metadata.sequencing_read_format	# text
-- immediate_ancestors.ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- immediate_ancestors.ingest_metadata.metadata.sequencing_reagent_kit	# text
-- immediate_ancestors.ingest_metadata.metadata.signal_type	# text
-- immediate_ancestors.ingest_metadata.metadata.stain	# text
-- immediate_ancestors.ingest_metadata.metadata.start_datetime	# text
-- immediate_ancestors.ingest_metadata.metadata.tissue_id	# text
-- immediate_ancestors.ingest_metadata.metadata.transposition_input	# text
-- immediate_ancestors.ingest_metadata.metadata.transposition_kit_number	# text
-- immediate_ancestors.ingest_metadata.metadata.transposition_method	# text
-- immediate_ancestors.ingest_metadata.metadata.transposition_transposase_source	# text
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
+- immediate_ancestors.ingest_metadata.metadata.*
 - immediate_ancestors.lab_dataset_id	# text
 - immediate_ancestors.lab_donor_id	# text
 - immediate_ancestors.lab_name	# text
 - immediate_ancestors.lab_tissue_sample_id	# text
 - immediate_ancestors.label	# text
 - immediate_ancestors.last_modified_timestamp	# long
-- immediate_ancestors.metadata.cold_ischemia_time_unit	# text
-- immediate_ancestors.metadata.cold_ischemia_time_value	# text
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
 - immediate_ancestors.metadata.dag_provenance_list.hash	# text
 - immediate_ancestors.metadata.dag_provenance_list.origin	# text
 - immediate_ancestors.metadata.extra_metadata.collectiontype	# text
-- immediate_ancestors.metadata.health_status	# text
-- immediate_ancestors.metadata.metadata.ablation_distance_between_shots_x_units	# text
-- immediate_ancestors.metadata.metadata.ablation_distance_between_shots_x_value	# text
-- immediate_ancestors.metadata.metadata.ablation_distance_between_shots_y_units	# text
-- immediate_ancestors.metadata.metadata.ablation_distance_between_shots_y_value	# text
-- immediate_ancestors.metadata.metadata.ablation_frequency_unit	# text
-- immediate_ancestors.metadata.metadata.ablation_frequency_value	# text
-- immediate_ancestors.metadata.metadata.acquisition_id	# text
-- immediate_ancestors.metadata.metadata.acquisition_instrument_model	# text
-- immediate_ancestors.metadata.metadata.acquisition_instrument_vendor	# text
-- immediate_ancestors.metadata.metadata.analyte_class	# text
-- immediate_ancestors.metadata.metadata.assay_category	# text
-- immediate_ancestors.metadata.metadata.assay_type	# text
-- immediate_ancestors.metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- immediate_ancestors.metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- immediate_ancestors.metadata.metadata.bulk_rna_yield_value	# text
-- immediate_ancestors.metadata.metadata.cell_barcode_offset	# text
-- immediate_ancestors.metadata.metadata.cell_barcode_read	# text
-- immediate_ancestors.metadata.metadata.cell_barcode_size	# text
-- immediate_ancestors.metadata.metadata.contributors_path	# text
-- immediate_ancestors.metadata.metadata.data_precision_bytes	# text
-- immediate_ancestors.metadata.metadata.dual_count_start	# text
-- immediate_ancestors.metadata.metadata.end_datetime	# text
-- immediate_ancestors.metadata.metadata.execution_datetime	# text
-- immediate_ancestors.metadata.metadata.is_targeted	# text
-- immediate_ancestors.metadata.metadata.is_technical_replicate	# text
-- immediate_ancestors.metadata.metadata.library_adapter_sequence	# text
-- immediate_ancestors.metadata.metadata.library_average_fragment_size	# text
-- immediate_ancestors.metadata.metadata.library_construction_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.library_final_yield	# text
-- immediate_ancestors.metadata.metadata.library_final_yield_unit	# text
-- immediate_ancestors.metadata.metadata.library_final_yield_value	# text
-- immediate_ancestors.metadata.metadata.library_id	# text
-- immediate_ancestors.metadata.metadata.library_layout	# text
-- immediate_ancestors.metadata.metadata.library_pcr_cycles	# text
-- immediate_ancestors.metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- immediate_ancestors.metadata.metadata.max_x_width_unit	# text
-- immediate_ancestors.metadata.metadata.max_x_width_value	# text
-- immediate_ancestors.metadata.metadata.max_y_height_unit	# text
-- immediate_ancestors.metadata.metadata.max_y_height_value	# text
-- immediate_ancestors.metadata.metadata.ms_source	# text
-- immediate_ancestors.metadata.metadata.mz_range_high_value	# text
-- immediate_ancestors.metadata.metadata.mz_range_low_value	# text
-- immediate_ancestors.metadata.metadata.null	# text
-- immediate_ancestors.metadata.metadata.number_of_antibodies	# text
-- immediate_ancestors.metadata.metadata.number_of_barcode_probes	# text
-- immediate_ancestors.metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- immediate_ancestors.metadata.metadata.number_of_channels	# text
-- immediate_ancestors.metadata.metadata.number_of_cycles	# text
-- immediate_ancestors.metadata.metadata.number_of_pseudocolors_per_channel	# text
-- immediate_ancestors.metadata.metadata.number_of_readout_probes_per_channel	# text
-- immediate_ancestors.metadata.metadata.operator	# text
-- immediate_ancestors.metadata.metadata.operator_email	# text
-- immediate_ancestors.metadata.metadata.overall_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.pi	# text
-- immediate_ancestors.metadata.metadata.pi_email	# text
-- immediate_ancestors.metadata.metadata.polarity	# text
-- immediate_ancestors.metadata.metadata.preparation_instrument_model	# text
-- immediate_ancestors.metadata.metadata.preparation_instrument_vendor	# text
-- immediate_ancestors.metadata.metadata.preparation_maldi_matrix	# text
-- immediate_ancestors.metadata.metadata.preparation_type	# text
-- immediate_ancestors.metadata.metadata.protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.resolution_x_unit	# text
-- immediate_ancestors.metadata.metadata.resolution_x_value	# text
-- immediate_ancestors.metadata.metadata.resolution_y_unit	# text
-- immediate_ancestors.metadata.metadata.resolution_y_value	# text
-- immediate_ancestors.metadata.metadata.resolution_z_unit	# text
-- immediate_ancestors.metadata.metadata.resolution_z_value	# text
-- immediate_ancestors.metadata.metadata.rnaseq_assay_input	# text
-- immediate_ancestors.metadata.metadata.rnaseq_assay_input_unit	# text
-- immediate_ancestors.metadata.metadata.rnaseq_assay_input_value	# text
-- immediate_ancestors.metadata.metadata.rnaseq_assay_method	# text
-- immediate_ancestors.metadata.metadata.roi_description	# text
-- immediate_ancestors.metadata.metadata.roi_id	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_cell_number	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_enrichment	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_entity	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_quality_metric	# text
-- immediate_ancestors.metadata.metadata.sc_isolation_tissue_dissociation	# text
-- immediate_ancestors.metadata.metadata.section_prep_protocols_io_doi	# text
-- immediate_ancestors.metadata.metadata.segment_data_format	# text
-- immediate_ancestors.metadata.metadata.sequencing_phix_percent	# text
-- immediate_ancestors.metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- immediate_ancestors.metadata.metadata.sequencing_read_format	# text
-- immediate_ancestors.metadata.metadata.sequencing_read_percent_q30	# text
-- immediate_ancestors.metadata.metadata.sequencing_reagent_kit	# text
-- immediate_ancestors.metadata.metadata.signal_type	# text
-- immediate_ancestors.metadata.metadata.stain	# text
-- immediate_ancestors.metadata.metadata.start_datetime	# text
-- immediate_ancestors.metadata.metadata.transposition_input	# text
-- immediate_ancestors.metadata.metadata.transposition_kit_number	# text
-- immediate_ancestors.metadata.metadata.transposition_method	# text
-- immediate_ancestors.metadata.metadata.transposition_transposase_source	# text
-- immediate_ancestors.metadata.organ_condition	# text
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.metadata.*
+- immediate_ancestors.metadata.*
 - immediate_ancestors.metadata.organ_donor_data.code	# text
 - immediate_ancestors.metadata.organ_donor_data.concept_id	# text
 - immediate_ancestors.metadata.organ_donor_data.data_type	# text
@@ -1099,16 +1099,16 @@
 - immediate_ancestors.metadata.organ_donor_data.sab	# text
 - immediate_ancestors.metadata.organ_donor_data.start_datetime	# text
 - immediate_ancestors.metadata.organ_donor_data.units	# text
-- immediate_ancestors.metadata.pathologist_report	# text
-- immediate_ancestors.metadata.perfusion_solution	# text
-- immediate_ancestors.metadata.procedure_date	# text
-- immediate_ancestors.metadata.specimen_preservation_temperature	# text
-- immediate_ancestors.metadata.specimen_quality_criteria	# text
-- immediate_ancestors.metadata.specimen_tumor_distance_unit	# text
-- immediate_ancestors.metadata.specimen_tumor_distance_value	# text
-- immediate_ancestors.metadata.vital_state	# text
-- immediate_ancestors.metadata.warm_ischemia_time_unit	# text
-- immediate_ancestors.metadata.warm_ischemia_time_value	# text
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
+- immediate_ancestors.metadata.*
 - immediate_ancestors.organ	# text
 - immediate_ancestors.portal_metadata_upload_files.description	# text
 - immediate_ancestors.portal_metadata_upload_files.filepath	# text
@@ -1148,142 +1148,142 @@
 - immediate_descendants.ingest_metadata.files.size	# long
 - immediate_descendants.ingest_metadata.files.type	# text
 - immediate_descendants.ingest_metadata.files_info_alt_path	# text
-- immediate_descendants.ingest_metadata.metadata._from_metadatatsv	# boolean
-- immediate_descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- immediate_descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- immediate_descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- immediate_descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- immediate_descendants.ingest_metadata.metadata.ablation_frequency_unit	# text
-- immediate_descendants.ingest_metadata.metadata.ablation_frequency_value	# text
-- immediate_descendants.ingest_metadata.metadata.acquisition_id	# text
-- immediate_descendants.ingest_metadata.metadata.acquisition_instrument_model	# text
-- immediate_descendants.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- immediate_descendants.ingest_metadata.metadata.analyte_class	# text
-- immediate_descendants.ingest_metadata.metadata.assay_category	# text
-- immediate_descendants.ingest_metadata.metadata.assay_type	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_rna_yield_value	# text
-- immediate_descendants.ingest_metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- immediate_descendants.ingest_metadata.metadata.cell_barcode_offset	# text
-- immediate_descendants.ingest_metadata.metadata.cell_barcode_read	# text
-- immediate_descendants.ingest_metadata.metadata.cell_barcode_size	# text
-- immediate_descendants.ingest_metadata.metadata.collectiontype	# text
-- immediate_descendants.ingest_metadata.metadata.contributors_path	# text
-- immediate_descendants.ingest_metadata.metadata.data_collection_mode	# text
-- immediate_descendants.ingest_metadata.metadata.data_path	# text
-- immediate_descendants.ingest_metadata.metadata.data_precision_bytes	# text
-- immediate_descendants.ingest_metadata.metadata.dna_assay_input_unit	# text
-- immediate_descendants.ingest_metadata.metadata.dna_assay_input_value	# text
-- immediate_descendants.ingest_metadata.metadata.donor_id	# text
-- immediate_descendants.ingest_metadata.metadata.dual_count_start	# text
-- immediate_descendants.ingest_metadata.metadata.end_datetime	# text
-- immediate_descendants.ingest_metadata.metadata.execution_datetime	# text
-- immediate_descendants.ingest_metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- immediate_descendants.ingest_metadata.metadata.is_targeted	# text
-- immediate_descendants.ingest_metadata.metadata.is_technical_replicate	# text
-- immediate_descendants.ingest_metadata.metadata.labeling	# text
-- immediate_descendants.ingest_metadata.metadata.lc_column_model	# text
-- immediate_descendants.ingest_metadata.metadata.lc_column_vendor	# text
-- immediate_descendants.ingest_metadata.metadata.lc_flow_rate_unit	# text
-- immediate_descendants.ingest_metadata.metadata.lc_flow_rate_value	# text
-- immediate_descendants.ingest_metadata.metadata.lc_gradient	# text
-- immediate_descendants.ingest_metadata.metadata.lc_id_unit	# text
-- immediate_descendants.ingest_metadata.metadata.lc_id_value	# text
-- immediate_descendants.ingest_metadata.metadata.lc_instrument_model	# text
-- immediate_descendants.ingest_metadata.metadata.lc_instrument_vendor	# text
-- immediate_descendants.ingest_metadata.metadata.lc_length_unit	# text
-- immediate_descendants.ingest_metadata.metadata.lc_length_value	# text
-- immediate_descendants.ingest_metadata.metadata.lc_mobile_phase_a	# text
-- immediate_descendants.ingest_metadata.metadata.lc_mobile_phase_b	# text
-- immediate_descendants.ingest_metadata.metadata.lc_resin	# text
-- immediate_descendants.ingest_metadata.metadata.lc_temp_unit	# text
-- immediate_descendants.ingest_metadata.metadata.lc_temp_value	# text
-- immediate_descendants.ingest_metadata.metadata.library_adapter_sequence	# text
-- immediate_descendants.ingest_metadata.metadata.library_average_fragment_size	# text
-- immediate_descendants.ingest_metadata.metadata.library_concentration_unit	# text
-- immediate_descendants.ingest_metadata.metadata.library_concentration_value	# text
-- immediate_descendants.ingest_metadata.metadata.library_construction_method	# text
-- immediate_descendants.ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.library_creation_date	# text
-- immediate_descendants.ingest_metadata.metadata.library_final_yield	# text
-- immediate_descendants.ingest_metadata.metadata.library_final_yield_unit	# text
-- immediate_descendants.ingest_metadata.metadata.library_final_yield_value	# text
-- immediate_descendants.ingest_metadata.metadata.library_id	# text
-- immediate_descendants.ingest_metadata.metadata.library_layout	# text
-- immediate_descendants.ingest_metadata.metadata.library_pcr_cycles	# text
-- immediate_descendants.ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- immediate_descendants.ingest_metadata.metadata.library_preparation_kit	# text
-- immediate_descendants.ingest_metadata.metadata.max_x_width_unit	# text
-- immediate_descendants.ingest_metadata.metadata.max_x_width_value	# text
-- immediate_descendants.ingest_metadata.metadata.max_y_height_unit	# text
-- immediate_descendants.ingest_metadata.metadata.max_y_height_value	# text
-- immediate_descendants.ingest_metadata.metadata.metadata_path	# text
-- immediate_descendants.ingest_metadata.metadata.ms_scan_mode	# text
-- immediate_descendants.ingest_metadata.metadata.ms_source	# text
-- immediate_descendants.ingest_metadata.metadata.mz_range_high_value	# text
-- immediate_descendants.ingest_metadata.metadata.mz_range_low_value	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_antibodies	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_barcode_probes	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_channels	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_cycles	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- immediate_descendants.ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- immediate_descendants.ingest_metadata.metadata.operator	# text
-- immediate_descendants.ingest_metadata.metadata.operator_email	# text
-- immediate_descendants.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.pi	# text
-- immediate_descendants.ingest_metadata.metadata.pi_email	# text
-- immediate_descendants.ingest_metadata.metadata.polarity	# text
-- immediate_descendants.ingest_metadata.metadata.preparation_instrument_model	# text
-- immediate_descendants.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- immediate_descendants.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- immediate_descendants.ingest_metadata.metadata.preparation_type	# text
-- immediate_descendants.ingest_metadata.metadata.processing_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.processing_search	# text
-- immediate_descendants.ingest_metadata.metadata.protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_x_unit	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_x_value	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_y_unit	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_y_value	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_z_unit	# text
-- immediate_descendants.ingest_metadata.metadata.resolution_z_value	# text
-- immediate_descendants.ingest_metadata.metadata.rnaseq_assay_input	# text
-- immediate_descendants.ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- immediate_descendants.ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- immediate_descendants.ingest_metadata.metadata.rnaseq_assay_method	# text
-- immediate_descendants.ingest_metadata.metadata.roi_description	# text
-- immediate_descendants.ingest_metadata.metadata.roi_id	# text
-- immediate_descendants.ingest_metadata.metadata.sample_quality_metric	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_cell_number	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_enrichment	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_entity	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- immediate_descendants.ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- immediate_descendants.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- immediate_descendants.ingest_metadata.metadata.segment_data_format	# text
-- immediate_descendants.ingest_metadata.metadata.sequencing_phix_percent	# text
-- immediate_descendants.ingest_metadata.metadata.sequencing_read_format	# text
-- immediate_descendants.ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- immediate_descendants.ingest_metadata.metadata.sequencing_reagent_kit	# text
-- immediate_descendants.ingest_metadata.metadata.signal_type	# text
-- immediate_descendants.ingest_metadata.metadata.stain	# text
-- immediate_descendants.ingest_metadata.metadata.start_datetime	# text
-- immediate_descendants.ingest_metadata.metadata.tissue_id	# text
-- immediate_descendants.ingest_metadata.metadata.transposition_input	# text
-- immediate_descendants.ingest_metadata.metadata.transposition_kit_number	# text
-- immediate_descendants.ingest_metadata.metadata.transposition_method	# text
-- immediate_descendants.ingest_metadata.metadata.transposition_transposase_source	# text
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
+- immediate_descendants.ingest_metadata.metadata.*
 - immediate_descendants.lab_dataset_id	# text
 - immediate_descendants.lab_tissue_sample_id	# text
 - immediate_descendants.last_modified_timestamp	# long
-- immediate_descendants.metadata.cold_ischemia_time_unit	# text
-- immediate_descendants.metadata.cold_ischemia_time_value	# text
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
 - immediate_descendants.metadata.dag_provenance_list.hash	# text
 - immediate_descendants.metadata.dag_provenance_list.name	# text
 - immediate_descendants.metadata.dag_provenance_list.origin	# text
@@ -1294,144 +1294,144 @@
 - immediate_descendants.metadata.files.rel_path	# text
 - immediate_descendants.metadata.files.size	# long
 - immediate_descendants.metadata.files.type	# text
-- immediate_descendants.metadata.files_info_alt_path	# text
-- immediate_descendants.metadata.health_status	# text
-- immediate_descendants.metadata.metadata.ablation_distance_between_shots_x_units	# text
-- immediate_descendants.metadata.metadata.ablation_distance_between_shots_x_value	# text
-- immediate_descendants.metadata.metadata.ablation_distance_between_shots_y_units	# text
-- immediate_descendants.metadata.metadata.ablation_distance_between_shots_y_value	# text
-- immediate_descendants.metadata.metadata.ablation_frequency_unit	# text
-- immediate_descendants.metadata.metadata.ablation_frequency_value	# text
-- immediate_descendants.metadata.metadata.acquisition_id	# text
-- immediate_descendants.metadata.metadata.acquisition_instrument_model	# text
-- immediate_descendants.metadata.metadata.acquisition_instrument_vendor	# text
-- immediate_descendants.metadata.metadata.analyte_class	# text
-- immediate_descendants.metadata.metadata.assay_category	# text
-- immediate_descendants.metadata.metadata.assay_type	# text
-- immediate_descendants.metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- immediate_descendants.metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- immediate_descendants.metadata.metadata.bulk_rna_yield_value	# text
-- immediate_descendants.metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- immediate_descendants.metadata.metadata.cell_barcode_offset	# text
-- immediate_descendants.metadata.metadata.cell_barcode_read	# text
-- immediate_descendants.metadata.metadata.cell_barcode_size	# text
-- immediate_descendants.metadata.metadata.contributors_path	# text
-- immediate_descendants.metadata.metadata.data_collection_mode	# text
-- immediate_descendants.metadata.metadata.data_precision_bytes	# text
-- immediate_descendants.metadata.metadata.dna_assay_input_unit	# text
-- immediate_descendants.metadata.metadata.dna_assay_input_value	# text
-- immediate_descendants.metadata.metadata.dual_count_start	# text
-- immediate_descendants.metadata.metadata.end_datetime	# text
-- immediate_descendants.metadata.metadata.execution_datetime	# text
-- immediate_descendants.metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- immediate_descendants.metadata.metadata.is_targeted	# text
-- immediate_descendants.metadata.metadata.is_technical_replicate	# text
-- immediate_descendants.metadata.metadata.labeling	# text
-- immediate_descendants.metadata.metadata.lc_column_model	# text
-- immediate_descendants.metadata.metadata.lc_column_vendor	# text
-- immediate_descendants.metadata.metadata.lc_flow_rate_unit	# text
-- immediate_descendants.metadata.metadata.lc_flow_rate_value	# text
-- immediate_descendants.metadata.metadata.lc_gradient	# text
-- immediate_descendants.metadata.metadata.lc_id_unit	# text
-- immediate_descendants.metadata.metadata.lc_id_value	# text
-- immediate_descendants.metadata.metadata.lc_instrument_model	# text
-- immediate_descendants.metadata.metadata.lc_instrument_vendor	# text
-- immediate_descendants.metadata.metadata.lc_length_unit	# text
-- immediate_descendants.metadata.metadata.lc_length_value	# text
-- immediate_descendants.metadata.metadata.lc_mobile_phase_a	# text
-- immediate_descendants.metadata.metadata.lc_mobile_phase_b	# text
-- immediate_descendants.metadata.metadata.lc_resin	# text
-- immediate_descendants.metadata.metadata.lc_temp_unit	# text
-- immediate_descendants.metadata.metadata.lc_temp_value	# text
-- immediate_descendants.metadata.metadata.library_adapter_sequence	# text
-- immediate_descendants.metadata.metadata.library_average_fragment_size	# text
-- immediate_descendants.metadata.metadata.library_concentration_unit	# text
-- immediate_descendants.metadata.metadata.library_concentration_value	# text
-- immediate_descendants.metadata.metadata.library_construction_method	# text
-- immediate_descendants.metadata.metadata.library_construction_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.library_creation_date	# text
-- immediate_descendants.metadata.metadata.library_final_yield	# text
-- immediate_descendants.metadata.metadata.library_final_yield_unit	# text
-- immediate_descendants.metadata.metadata.library_final_yield_value	# text
-- immediate_descendants.metadata.metadata.library_id	# text
-- immediate_descendants.metadata.metadata.library_layout	# text
-- immediate_descendants.metadata.metadata.library_pcr_cycles	# text
-- immediate_descendants.metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- immediate_descendants.metadata.metadata.library_preparation_kit	# text
-- immediate_descendants.metadata.metadata.max_x_width_unit	# text
-- immediate_descendants.metadata.metadata.max_x_width_value	# text
-- immediate_descendants.metadata.metadata.max_y_height_unit	# text
-- immediate_descendants.metadata.metadata.max_y_height_value	# text
-- immediate_descendants.metadata.metadata.ms_scan_mode	# text
-- immediate_descendants.metadata.metadata.ms_source	# text
-- immediate_descendants.metadata.metadata.mz_range_high_value	# text
-- immediate_descendants.metadata.metadata.mz_range_low_value	# text
-- immediate_descendants.metadata.metadata.number_of_antibodies	# text
-- immediate_descendants.metadata.metadata.number_of_barcode_probes	# text
-- immediate_descendants.metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- immediate_descendants.metadata.metadata.number_of_channels	# text
-- immediate_descendants.metadata.metadata.number_of_cycles	# text
-- immediate_descendants.metadata.metadata.number_of_pseudocolors_per_channel	# text
-- immediate_descendants.metadata.metadata.number_of_readout_probes_per_channel	# text
-- immediate_descendants.metadata.metadata.operator	# text
-- immediate_descendants.metadata.metadata.operator_email	# text
-- immediate_descendants.metadata.metadata.overall_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.pi	# text
-- immediate_descendants.metadata.metadata.pi_email	# text
-- immediate_descendants.metadata.metadata.polarity	# text
-- immediate_descendants.metadata.metadata.preparation_instrument_model	# text
-- immediate_descendants.metadata.metadata.preparation_instrument_vendor	# text
-- immediate_descendants.metadata.metadata.preparation_maldi_matrix	# text
-- immediate_descendants.metadata.metadata.preparation_type	# text
-- immediate_descendants.metadata.metadata.processing_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.processing_search	# text
-- immediate_descendants.metadata.metadata.protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.resolution_x_unit	# text
-- immediate_descendants.metadata.metadata.resolution_x_value	# text
-- immediate_descendants.metadata.metadata.resolution_y_unit	# text
-- immediate_descendants.metadata.metadata.resolution_y_value	# text
-- immediate_descendants.metadata.metadata.resolution_z_unit	# text
-- immediate_descendants.metadata.metadata.resolution_z_value	# text
-- immediate_descendants.metadata.metadata.rnaseq_assay_input	# text
-- immediate_descendants.metadata.metadata.rnaseq_assay_input_unit	# text
-- immediate_descendants.metadata.metadata.rnaseq_assay_input_value	# text
-- immediate_descendants.metadata.metadata.rnaseq_assay_method	# text
-- immediate_descendants.metadata.metadata.roi_description	# text
-- immediate_descendants.metadata.metadata.roi_id	# text
-- immediate_descendants.metadata.metadata.sample_quality_metric	# text
-- immediate_descendants.metadata.metadata.sc_isolation_cell_number	# text
-- immediate_descendants.metadata.metadata.sc_isolation_enrichment	# text
-- immediate_descendants.metadata.metadata.sc_isolation_entity	# text
-- immediate_descendants.metadata.metadata.sc_isolation_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.sc_isolation_quality_metric	# text
-- immediate_descendants.metadata.metadata.sc_isolation_tissue_dissociation	# text
-- immediate_descendants.metadata.metadata.section_prep_protocols_io_doi	# text
-- immediate_descendants.metadata.metadata.segment_data_format	# text
-- immediate_descendants.metadata.metadata.sequencing_phix_percent	# text
-- immediate_descendants.metadata.metadata.sequencing_read_format	# text
-- immediate_descendants.metadata.metadata.sequencing_read_percent_q30	# text
-- immediate_descendants.metadata.metadata.sequencing_reagent_kit	# text
-- immediate_descendants.metadata.metadata.signal_type	# text
-- immediate_descendants.metadata.metadata.stain	# text
-- immediate_descendants.metadata.metadata.start_datetime	# text
-- immediate_descendants.metadata.metadata.transposition_input	# text
-- immediate_descendants.metadata.metadata.transposition_kit_number	# text
-- immediate_descendants.metadata.metadata.transposition_method	# text
-- immediate_descendants.metadata.metadata.transposition_transposase_source	# text
-- immediate_descendants.metadata.organ_condition	# text
-- immediate_descendants.metadata.pathologist_report	# text
-- immediate_descendants.metadata.perfusion_solution	# text
-- immediate_descendants.metadata.procedure_date	# text
-- immediate_descendants.metadata.specimen_preservation_temperature	# text
-- immediate_descendants.metadata.specimen_quality_criteria	# text
-- immediate_descendants.metadata.specimen_tumor_distance_unit	# text
-- immediate_descendants.metadata.specimen_tumor_distance_value	# text
-- immediate_descendants.metadata.vital_state	# text
-- immediate_descendants.metadata.warm_ischemia_time_unit	# text
-- immediate_descendants.metadata.warm_ischemia_time_value	# text
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
+- immediate_descendants.metadata.*
 - immediate_descendants.organ	# text
 - immediate_descendants.portal_metadata_upload_files.description	# text
 - immediate_descendants.portal_metadata_upload_files.filepath	# text
@@ -1451,137 +1451,137 @@
 - ingest_metadata.dag_provenance_list.origin	# text
 - ingest_metadata.extra_metadata.collectiontype	# text
 - ingest_metadata.files_info_alt_path	# text
-- ingest_metadata.metadata._from_metadatatsv	# boolean
-- ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- ingest_metadata.metadata.ablation_frequency_unit	# text
-- ingest_metadata.metadata.ablation_frequency_value	# text
-- ingest_metadata.metadata.acquisition_id	# text
-- ingest_metadata.metadata.acquisition_instrument_model	# text
-- ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- ingest_metadata.metadata.analyte_class	# text
-- ingest_metadata.metadata.assay_category	# text
-- ingest_metadata.metadata.assay_type	# text
-- ingest_metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- ingest_metadata.metadata.bulk_rna_yield_value	# text
-- ingest_metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- ingest_metadata.metadata.cell_barcode_offset	# text
-- ingest_metadata.metadata.cell_barcode_read	# text
-- ingest_metadata.metadata.cell_barcode_size	# text
-- ingest_metadata.metadata.collectiontype	# text
-- ingest_metadata.metadata.contributors_path	# text
-- ingest_metadata.metadata.data_collection_mode	# text
-- ingest_metadata.metadata.data_path	# text
-- ingest_metadata.metadata.data_precision_bytes	# text
-- ingest_metadata.metadata.dna_assay_input_unit	# text
-- ingest_metadata.metadata.dna_assay_input_value	# text
-- ingest_metadata.metadata.donor_id	# text
-- ingest_metadata.metadata.dual_count_start	# text
-- ingest_metadata.metadata.end_datetime	# text
-- ingest_metadata.metadata.execution_datetime	# text
-- ingest_metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- ingest_metadata.metadata.is_targeted	# text
-- ingest_metadata.metadata.is_technical_replicate	# text
-- ingest_metadata.metadata.labeling	# text
-- ingest_metadata.metadata.lc_column_model	# text
-- ingest_metadata.metadata.lc_column_vendor	# text
-- ingest_metadata.metadata.lc_flow_rate_unit	# text
-- ingest_metadata.metadata.lc_flow_rate_value	# text
-- ingest_metadata.metadata.lc_gradient	# text
-- ingest_metadata.metadata.lc_id_unit	# text
-- ingest_metadata.metadata.lc_id_value	# text
-- ingest_metadata.metadata.lc_instrument_model	# text
-- ingest_metadata.metadata.lc_instrument_vendor	# text
-- ingest_metadata.metadata.lc_length_unit	# text
-- ingest_metadata.metadata.lc_length_value	# text
-- ingest_metadata.metadata.lc_mobile_phase_a	# text
-- ingest_metadata.metadata.lc_mobile_phase_b	# text
-- ingest_metadata.metadata.lc_resin	# text
-- ingest_metadata.metadata.lc_temp_unit	# text
-- ingest_metadata.metadata.lc_temp_value	# text
-- ingest_metadata.metadata.library_adapter_sequence	# text
-- ingest_metadata.metadata.library_average_fragment_size	# text
-- ingest_metadata.metadata.library_concentration_unit	# text
-- ingest_metadata.metadata.library_concentration_value	# text
-- ingest_metadata.metadata.library_construction_method	# text
-- ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- ingest_metadata.metadata.library_creation_date	# text
-- ingest_metadata.metadata.library_final_yield	# text
-- ingest_metadata.metadata.library_final_yield_unit	# text
-- ingest_metadata.metadata.library_final_yield_value	# text
-- ingest_metadata.metadata.library_id	# text
-- ingest_metadata.metadata.library_layout	# text
-- ingest_metadata.metadata.library_pcr_cycles	# text
-- ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- ingest_metadata.metadata.library_preparation_kit	# text
-- ingest_metadata.metadata.max_x_width_unit	# text
-- ingest_metadata.metadata.max_x_width_value	# text
-- ingest_metadata.metadata.max_y_height_unit	# text
-- ingest_metadata.metadata.max_y_height_value	# text
-- ingest_metadata.metadata.metadata_path	# text
-- ingest_metadata.metadata.ms_scan_mode	# text
-- ingest_metadata.metadata.ms_source	# text
-- ingest_metadata.metadata.mz_range_high_value	# text
-- ingest_metadata.metadata.mz_range_low_value	# text
-- ingest_metadata.metadata.number_of_antibodies	# text
-- ingest_metadata.metadata.number_of_barcode_probes	# text
-- ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- ingest_metadata.metadata.number_of_channels	# text
-- ingest_metadata.metadata.number_of_cycles	# text
-- ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- ingest_metadata.metadata.operator	# text
-- ingest_metadata.metadata.operator_email	# text
-- ingest_metadata.metadata.overall_protocols_io_doi	# text
-- ingest_metadata.metadata.pi	# text
-- ingest_metadata.metadata.pi_email	# text
-- ingest_metadata.metadata.polarity	# text
-- ingest_metadata.metadata.preparation_instrument_model	# text
-- ingest_metadata.metadata.preparation_instrument_vendor	# text
-- ingest_metadata.metadata.preparation_maldi_matrix	# text
-- ingest_metadata.metadata.preparation_type	# text
-- ingest_metadata.metadata.processing_protocols_io_doi	# text
-- ingest_metadata.metadata.processing_search	# text
-- ingest_metadata.metadata.protocols_io_doi	# text
-- ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- ingest_metadata.metadata.resolution_x_unit	# text
-- ingest_metadata.metadata.resolution_x_value	# text
-- ingest_metadata.metadata.resolution_y_unit	# text
-- ingest_metadata.metadata.resolution_y_value	# text
-- ingest_metadata.metadata.resolution_z_unit	# text
-- ingest_metadata.metadata.resolution_z_value	# text
-- ingest_metadata.metadata.rnaseq_assay_input	# text
-- ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- ingest_metadata.metadata.rnaseq_assay_method	# text
-- ingest_metadata.metadata.roi_description	# text
-- ingest_metadata.metadata.roi_id	# text
-- ingest_metadata.metadata.sample_quality_metric	# text
-- ingest_metadata.metadata.sc_isolation_cell_number	# text
-- ingest_metadata.metadata.sc_isolation_enrichment	# text
-- ingest_metadata.metadata.sc_isolation_entity	# text
-- ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- ingest_metadata.metadata.segment_data_format	# text
-- ingest_metadata.metadata.sequencing_phix_percent	# text
-- ingest_metadata.metadata.sequencing_read_format	# text
-- ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- ingest_metadata.metadata.sequencing_reagent_kit	# text
-- ingest_metadata.metadata.signal_type	# text
-- ingest_metadata.metadata.stain	# text
-- ingest_metadata.metadata.start_datetime	# text
-- ingest_metadata.metadata.tissue_id	# text
-- ingest_metadata.metadata.transposition_input	# text
-- ingest_metadata.metadata.transposition_kit_number	# text
-- ingest_metadata.metadata.transposition_method	# text
-- ingest_metadata.metadata.transposition_transposase_source	# text
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
+- ingest_metadata.metadata.*
 - lab_dataset_id	# text
 - lab_donor_id	# text
 - lab_name	# text
@@ -1628,132 +1628,132 @@
 - metadata.extra_metadata.collectiontype	# text
 - metadata.files_info_alt_path	# text
 - metadata.health_status	# text
-- metadata.metadata.ablation_distance_between_shots_x_units	# text
-- metadata.metadata.ablation_distance_between_shots_x_value	# text
-- metadata.metadata.ablation_distance_between_shots_y_units	# text
-- metadata.metadata.ablation_distance_between_shots_y_value	# text
-- metadata.metadata.ablation_frequency_unit	# text
-- metadata.metadata.ablation_frequency_value	# text
-- metadata.metadata.acquisition_id	# text
-- metadata.metadata.acquisition_instrument_model	# text
-- metadata.metadata.acquisition_instrument_vendor	# text
-- metadata.metadata.analyte_class	# text
-- metadata.metadata.assay_category	# text
-- metadata.metadata.assay_type	# text
-- metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- metadata.metadata.bulk_rna_yield_value	# text
-- metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- metadata.metadata.cell_barcode_offset	# text
-- metadata.metadata.cell_barcode_read	# text
-- metadata.metadata.cell_barcode_size	# text
-- metadata.metadata.contributors_path	# text
-- metadata.metadata.data_collection_mode	# text
-- metadata.metadata.data_precision_bytes	# text
-- metadata.metadata.dna_assay_input_unit	# text
-- metadata.metadata.dna_assay_input_value	# text
-- metadata.metadata.dual_count_start	# text
-- metadata.metadata.end_datetime	# text
-- metadata.metadata.execution_datetime	# text
-- metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- metadata.metadata.has_metadata	# boolean
-- metadata.metadata.is_targeted	# text
-- metadata.metadata.is_technical_replicate	# text
-- metadata.metadata.labeling	# text
-- metadata.metadata.lc_column_model	# text
-- metadata.metadata.lc_column_vendor	# text
-- metadata.metadata.lc_flow_rate_unit	# text
-- metadata.metadata.lc_flow_rate_value	# text
-- metadata.metadata.lc_gradient	# text
-- metadata.metadata.lc_id_unit	# text
-- metadata.metadata.lc_id_value	# text
-- metadata.metadata.lc_instrument_model	# text
-- metadata.metadata.lc_instrument_vendor	# text
-- metadata.metadata.lc_length_unit	# text
-- metadata.metadata.lc_length_value	# text
-- metadata.metadata.lc_mobile_phase_a	# text
-- metadata.metadata.lc_mobile_phase_b	# text
-- metadata.metadata.lc_resin	# text
-- metadata.metadata.lc_temp_unit	# text
-- metadata.metadata.lc_temp_value	# text
-- metadata.metadata.library_adapter_sequence	# text
-- metadata.metadata.library_average_fragment_size	# text
-- metadata.metadata.library_concentration_unit	# text
-- metadata.metadata.library_concentration_value	# text
-- metadata.metadata.library_construction_method	# text
-- metadata.metadata.library_construction_protocols_io_doi	# text
-- metadata.metadata.library_creation_date	# text
-- metadata.metadata.library_final_yield	# text
-- metadata.metadata.library_final_yield_unit	# text
-- metadata.metadata.library_final_yield_value	# text
-- metadata.metadata.library_id	# text
-- metadata.metadata.library_layout	# text
-- metadata.metadata.library_pcr_cycles	# text
-- metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- metadata.metadata.library_preparation_kit	# text
-- metadata.metadata.max_x_width_unit	# text
-- metadata.metadata.max_x_width_value	# text
-- metadata.metadata.max_y_height_unit	# text
-- metadata.metadata.max_y_height_value	# text
-- metadata.metadata.ms_scan_mode	# text
-- metadata.metadata.ms_source	# text
-- metadata.metadata.mz_range_high_value	# text
-- metadata.metadata.mz_range_low_value	# text
-- metadata.metadata.number_of_antibodies	# text
-- metadata.metadata.number_of_barcode_probes	# text
-- metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- metadata.metadata.number_of_channels	# text
-- metadata.metadata.number_of_cycles	# text
-- metadata.metadata.number_of_pseudocolors_per_channel	# text
-- metadata.metadata.number_of_readout_probes_per_channel	# text
-- metadata.metadata.operator	# text
-- metadata.metadata.operator_email	# text
-- metadata.metadata.overall_protocols_io_doi	# text
-- metadata.metadata.pi	# text
-- metadata.metadata.pi_email	# text
-- metadata.metadata.polarity	# text
-- metadata.metadata.preparation_instrument_model	# text
-- metadata.metadata.preparation_instrument_vendor	# text
-- metadata.metadata.preparation_maldi_matrix	# text
-- metadata.metadata.preparation_type	# text
-- metadata.metadata.processing_protocols_io_doi	# text
-- metadata.metadata.processing_search	# text
-- metadata.metadata.protocols_io_doi	# text
-- metadata.metadata.reagent_prep_protocols_io_doi	# text
-- metadata.metadata.resolution_x_unit	# text
-- metadata.metadata.resolution_x_value	# text
-- metadata.metadata.resolution_y_unit	# text
-- metadata.metadata.resolution_y_value	# text
-- metadata.metadata.resolution_z_unit	# text
-- metadata.metadata.resolution_z_value	# text
-- metadata.metadata.rnaseq_assay_input	# text
-- metadata.metadata.rnaseq_assay_input_unit	# text
-- metadata.metadata.rnaseq_assay_input_value	# text
-- metadata.metadata.rnaseq_assay_method	# text
-- metadata.metadata.roi_description	# text
-- metadata.metadata.roi_id	# text
-- metadata.metadata.sample_quality_metric	# text
-- metadata.metadata.sc_isolation_cell_number	# text
-- metadata.metadata.sc_isolation_enrichment	# text
-- metadata.metadata.sc_isolation_entity	# text
-- metadata.metadata.sc_isolation_protocols_io_doi	# text
-- metadata.metadata.sc_isolation_quality_metric	# text
-- metadata.metadata.sc_isolation_tissue_dissociation	# text
-- metadata.metadata.section_prep_protocols_io_doi	# text
-- metadata.metadata.segment_data_format	# text
-- metadata.metadata.sequencing_phix_percent	# text
-- metadata.metadata.sequencing_read_format	# text
-- metadata.metadata.sequencing_read_percent_q30	# text
-- metadata.metadata.sequencing_reagent_kit	# text
-- metadata.metadata.signal_type	# text
-- metadata.metadata.stain	# text
-- metadata.metadata.start_datetime	# text
-- metadata.metadata.transposition_input	# text
-- metadata.metadata.transposition_kit_number	# text
-- metadata.metadata.transposition_method	# text
-- metadata.metadata.transposition_transposase_source	# text
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
+- metadata.metadata.*
 - metadata.organ_condition	# text
 - metadata.organ_donor_data.code	# text
 - metadata.organ_donor_data.concept_id	# text
@@ -1871,145 +1871,145 @@
 - origin_sample.descendants.ingest_metadata.files.size	# long
 - origin_sample.descendants.ingest_metadata.files.type	# text
 - origin_sample.descendants.ingest_metadata.files_info_alt_path	# text
-- origin_sample.descendants.ingest_metadata.metadata._from_metadatatsv	# boolean
-- origin_sample.descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_units	# text
-- origin_sample.descendants.ingest_metadata.metadata.ablation_distance_between_shots_x_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_units	# text
-- origin_sample.descendants.ingest_metadata.metadata.ablation_distance_between_shots_y_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.ablation_frequency_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.ablation_frequency_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.acquisition_id	# text
-- origin_sample.descendants.ingest_metadata.metadata.acquisition_instrument_model	# text
-- origin_sample.descendants.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- origin_sample.descendants.ingest_metadata.metadata.analyte_class	# text
-- origin_sample.descendants.ingest_metadata.metadata.antibodies_path	# text
-- origin_sample.descendants.ingest_metadata.metadata.assay_category	# text
-- origin_sample.descendants.ingest_metadata.metadata.assay_type	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_rna_yield_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- origin_sample.descendants.ingest_metadata.metadata.cell_barcode_offset	# text
-- origin_sample.descendants.ingest_metadata.metadata.cell_barcode_read	# text
-- origin_sample.descendants.ingest_metadata.metadata.cell_barcode_size	# text
-- origin_sample.descendants.ingest_metadata.metadata.collectiontype	# text
-- origin_sample.descendants.ingest_metadata.metadata.contributors_path	# text
-- origin_sample.descendants.ingest_metadata.metadata.data_collection_mode	# text
-- origin_sample.descendants.ingest_metadata.metadata.data_path	# text
-- origin_sample.descendants.ingest_metadata.metadata.data_precision_bytes	# text
-- origin_sample.descendants.ingest_metadata.metadata.dna_assay_input_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.dna_assay_input_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.donor_id	# text
-- origin_sample.descendants.ingest_metadata.metadata.dual_count_start	# text
-- origin_sample.descendants.ingest_metadata.metadata.end_datetime	# text
-- origin_sample.descendants.ingest_metadata.metadata.execution_datetime	# text
-- origin_sample.descendants.ingest_metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- origin_sample.descendants.ingest_metadata.metadata.is_targeted	# text
-- origin_sample.descendants.ingest_metadata.metadata.is_technical_replicate	# text
-- origin_sample.descendants.ingest_metadata.metadata.labeling	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_column_model	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_column_vendor	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_flow_rate_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_flow_rate_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_gradient	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_id_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_id_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_instrument_model	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_instrument_vendor	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_length_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_length_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_mobile_phase_a	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_mobile_phase_b	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_resin	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_temp_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.lc_temp_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_adapter_sequence	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_average_fragment_size	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_concentration_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_concentration_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_construction_method	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_construction_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_creation_date	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_final_yield	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_final_yield_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_final_yield_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_id	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_layout	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_pcr_cycles	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- origin_sample.descendants.ingest_metadata.metadata.library_preparation_kit	# text
-- origin_sample.descendants.ingest_metadata.metadata.max_x_width_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.max_x_width_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.max_y_height_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.max_y_height_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.metadata_path	# text
-- origin_sample.descendants.ingest_metadata.metadata.ms_scan_mode	# text
-- origin_sample.descendants.ingest_metadata.metadata.ms_source	# text
-- origin_sample.descendants.ingest_metadata.metadata.mz_range_high_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.mz_range_low_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.null	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_antibodies	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_barcode_probes	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_channels	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_cycles	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_pseudocolors_per_channel	# text
-- origin_sample.descendants.ingest_metadata.metadata.number_of_readout_probes_per_channel	# text
-- origin_sample.descendants.ingest_metadata.metadata.operator	# text
-- origin_sample.descendants.ingest_metadata.metadata.operator_email	# text
-- origin_sample.descendants.ingest_metadata.metadata.overall_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.pi	# text
-- origin_sample.descendants.ingest_metadata.metadata.pi_email	# text
-- origin_sample.descendants.ingest_metadata.metadata.polarity	# text
-- origin_sample.descendants.ingest_metadata.metadata.preparation_instrument_model	# text
-- origin_sample.descendants.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- origin_sample.descendants.ingest_metadata.metadata.preparation_maldi_matrix	# text
-- origin_sample.descendants.ingest_metadata.metadata.preparation_type	# text
-- origin_sample.descendants.ingest_metadata.metadata.processing_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.processing_search	# text
-- origin_sample.descendants.ingest_metadata.metadata.protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_x_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_x_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_y_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_y_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_z_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.resolution_z_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.rnaseq_assay_input	# text
-- origin_sample.descendants.ingest_metadata.metadata.rnaseq_assay_input_unit	# text
-- origin_sample.descendants.ingest_metadata.metadata.rnaseq_assay_input_value	# text
-- origin_sample.descendants.ingest_metadata.metadata.rnaseq_assay_method	# text
-- origin_sample.descendants.ingest_metadata.metadata.roi_description	# text
-- origin_sample.descendants.ingest_metadata.metadata.roi_id	# text
-- origin_sample.descendants.ingest_metadata.metadata.sample_quality_metric	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_cell_number	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_enrichment	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_entity	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_quality_metric	# text
-- origin_sample.descendants.ingest_metadata.metadata.sc_isolation_tissue_dissociation	# text
-- origin_sample.descendants.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- origin_sample.descendants.ingest_metadata.metadata.segment_data_format	# text
-- origin_sample.descendants.ingest_metadata.metadata.sequencing_phix_percent	# text
-- origin_sample.descendants.ingest_metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- origin_sample.descendants.ingest_metadata.metadata.sequencing_read_format	# text
-- origin_sample.descendants.ingest_metadata.metadata.sequencing_read_percent_q30	# text
-- origin_sample.descendants.ingest_metadata.metadata.sequencing_reagent_kit	# text
-- origin_sample.descendants.ingest_metadata.metadata.signal_type	# text
-- origin_sample.descendants.ingest_metadata.metadata.stain	# text
-- origin_sample.descendants.ingest_metadata.metadata.start_datetime	# text
-- origin_sample.descendants.ingest_metadata.metadata.tissue_id	# text
-- origin_sample.descendants.ingest_metadata.metadata.transposition_input	# text
-- origin_sample.descendants.ingest_metadata.metadata.transposition_kit_number	# text
-- origin_sample.descendants.ingest_metadata.metadata.transposition_method	# text
-- origin_sample.descendants.ingest_metadata.metadata.transposition_transposase_source	# text
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
+- origin_sample.descendants.ingest_metadata.metadata.*
 - origin_sample.descendants.lab_dataset_id	# text
 - origin_sample.descendants.lab_tissue_sample_id	# text
 - origin_sample.descendants.last_modified_timestamp	# long
-- origin_sample.descendants.metadata.cold_ischemia_time_unit	# text
-- origin_sample.descendants.metadata.cold_ischemia_time_value	# text
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
 - origin_sample.descendants.metadata.dag_provenance_list.hash	# text
 - origin_sample.descendants.metadata.dag_provenance_list.name	# text
 - origin_sample.descendants.metadata.dag_provenance_list.origin	# text
@@ -2020,147 +2020,147 @@
 - origin_sample.descendants.metadata.files.rel_path	# text
 - origin_sample.descendants.metadata.files.size	# long
 - origin_sample.descendants.metadata.files.type	# text
-- origin_sample.descendants.metadata.files_info_alt_path	# text
-- origin_sample.descendants.metadata.health_status	# text
-- origin_sample.descendants.metadata.metadata.ablation_distance_between_shots_x_units	# text
-- origin_sample.descendants.metadata.metadata.ablation_distance_between_shots_x_value	# text
-- origin_sample.descendants.metadata.metadata.ablation_distance_between_shots_y_units	# text
-- origin_sample.descendants.metadata.metadata.ablation_distance_between_shots_y_value	# text
-- origin_sample.descendants.metadata.metadata.ablation_frequency_unit	# text
-- origin_sample.descendants.metadata.metadata.ablation_frequency_value	# text
-- origin_sample.descendants.metadata.metadata.acquisition_id	# text
-- origin_sample.descendants.metadata.metadata.acquisition_instrument_model	# text
-- origin_sample.descendants.metadata.metadata.acquisition_instrument_vendor	# text
-- origin_sample.descendants.metadata.metadata.analyte_class	# text
-- origin_sample.descendants.metadata.metadata.antibodies_path	# text
-- origin_sample.descendants.metadata.metadata.assay_category	# text
-- origin_sample.descendants.metadata.metadata.assay_type	# text
-- origin_sample.descendants.metadata.metadata.bulk_atac_cell_isolation_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.bulk_rna_isolation_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.bulk_rna_isolation_quality_metric_value	# text
-- origin_sample.descendants.metadata.metadata.bulk_rna_yield_units_per_tissue_unit	# text
-- origin_sample.descendants.metadata.metadata.bulk_rna_yield_value	# text
-- origin_sample.descendants.metadata.metadata.bulk_transposition_input_number_nuclei	# text
-- origin_sample.descendants.metadata.metadata.cell_barcode_offset	# text
-- origin_sample.descendants.metadata.metadata.cell_barcode_read	# text
-- origin_sample.descendants.metadata.metadata.cell_barcode_size	# text
-- origin_sample.descendants.metadata.metadata.contributors_path	# text
-- origin_sample.descendants.metadata.metadata.data_collection_mode	# text
-- origin_sample.descendants.metadata.metadata.data_precision_bytes	# text
-- origin_sample.descendants.metadata.metadata.dna_assay_input_unit	# text
-- origin_sample.descendants.metadata.metadata.dna_assay_input_value	# text
-- origin_sample.descendants.metadata.metadata.dual_count_start	# text
-- origin_sample.descendants.metadata.metadata.end_datetime	# text
-- origin_sample.descendants.metadata.metadata.execution_datetime	# text
-- origin_sample.descendants.metadata.metadata.gdna_fragmentation_quality_assurance	# text
-- origin_sample.descendants.metadata.metadata.is_targeted	# text
-- origin_sample.descendants.metadata.metadata.is_technical_replicate	# text
-- origin_sample.descendants.metadata.metadata.labeling	# text
-- origin_sample.descendants.metadata.metadata.lc_column_model	# text
-- origin_sample.descendants.metadata.metadata.lc_column_vendor	# text
-- origin_sample.descendants.metadata.metadata.lc_flow_rate_unit	# text
-- origin_sample.descendants.metadata.metadata.lc_flow_rate_value	# text
-- origin_sample.descendants.metadata.metadata.lc_gradient	# text
-- origin_sample.descendants.metadata.metadata.lc_id_unit	# text
-- origin_sample.descendants.metadata.metadata.lc_id_value	# text
-- origin_sample.descendants.metadata.metadata.lc_instrument_model	# text
-- origin_sample.descendants.metadata.metadata.lc_instrument_vendor	# text
-- origin_sample.descendants.metadata.metadata.lc_length_unit	# text
-- origin_sample.descendants.metadata.metadata.lc_length_value	# text
-- origin_sample.descendants.metadata.metadata.lc_mobile_phase_a	# text
-- origin_sample.descendants.metadata.metadata.lc_mobile_phase_b	# text
-- origin_sample.descendants.metadata.metadata.lc_resin	# text
-- origin_sample.descendants.metadata.metadata.lc_temp_unit	# text
-- origin_sample.descendants.metadata.metadata.lc_temp_value	# text
-- origin_sample.descendants.metadata.metadata.library_adapter_sequence	# text
-- origin_sample.descendants.metadata.metadata.library_average_fragment_size	# text
-- origin_sample.descendants.metadata.metadata.library_concentration_unit	# text
-- origin_sample.descendants.metadata.metadata.library_concentration_value	# text
-- origin_sample.descendants.metadata.metadata.library_construction_method	# text
-- origin_sample.descendants.metadata.metadata.library_construction_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.library_creation_date	# text
-- origin_sample.descendants.metadata.metadata.library_final_yield	# text
-- origin_sample.descendants.metadata.metadata.library_final_yield_unit	# text
-- origin_sample.descendants.metadata.metadata.library_final_yield_value	# text
-- origin_sample.descendants.metadata.metadata.library_id	# text
-- origin_sample.descendants.metadata.metadata.library_layout	# text
-- origin_sample.descendants.metadata.metadata.library_pcr_cycles	# text
-- origin_sample.descendants.metadata.metadata.library_pcr_cycles_for_sample_index	# text
-- origin_sample.descendants.metadata.metadata.library_preparation_kit	# text
-- origin_sample.descendants.metadata.metadata.max_x_width_unit	# text
-- origin_sample.descendants.metadata.metadata.max_x_width_value	# text
-- origin_sample.descendants.metadata.metadata.max_y_height_unit	# text
-- origin_sample.descendants.metadata.metadata.max_y_height_value	# text
-- origin_sample.descendants.metadata.metadata.ms_scan_mode	# text
-- origin_sample.descendants.metadata.metadata.ms_source	# text
-- origin_sample.descendants.metadata.metadata.mz_range_high_value	# text
-- origin_sample.descendants.metadata.metadata.mz_range_low_value	# text
-- origin_sample.descendants.metadata.metadata.null	# text
-- origin_sample.descendants.metadata.metadata.number_of_antibodies	# text
-- origin_sample.descendants.metadata.metadata.number_of_barcode_probes	# text
-- origin_sample.descendants.metadata.metadata.number_of_barcode_regions_per_barcode_probe	# text
-- origin_sample.descendants.metadata.metadata.number_of_channels	# text
-- origin_sample.descendants.metadata.metadata.number_of_cycles	# text
-- origin_sample.descendants.metadata.metadata.number_of_pseudocolors_per_channel	# text
-- origin_sample.descendants.metadata.metadata.number_of_readout_probes_per_channel	# text
-- origin_sample.descendants.metadata.metadata.operator	# text
-- origin_sample.descendants.metadata.metadata.operator_email	# text
-- origin_sample.descendants.metadata.metadata.overall_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.pi	# text
-- origin_sample.descendants.metadata.metadata.pi_email	# text
-- origin_sample.descendants.metadata.metadata.polarity	# text
-- origin_sample.descendants.metadata.metadata.preparation_instrument_model	# text
-- origin_sample.descendants.metadata.metadata.preparation_instrument_vendor	# text
-- origin_sample.descendants.metadata.metadata.preparation_maldi_matrix	# text
-- origin_sample.descendants.metadata.metadata.preparation_type	# text
-- origin_sample.descendants.metadata.metadata.processing_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.processing_search	# text
-- origin_sample.descendants.metadata.metadata.protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.resolution_x_unit	# text
-- origin_sample.descendants.metadata.metadata.resolution_x_value	# text
-- origin_sample.descendants.metadata.metadata.resolution_y_unit	# text
-- origin_sample.descendants.metadata.metadata.resolution_y_value	# text
-- origin_sample.descendants.metadata.metadata.resolution_z_unit	# text
-- origin_sample.descendants.metadata.metadata.resolution_z_value	# text
-- origin_sample.descendants.metadata.metadata.rnaseq_assay_input	# text
-- origin_sample.descendants.metadata.metadata.rnaseq_assay_input_unit	# text
-- origin_sample.descendants.metadata.metadata.rnaseq_assay_input_value	# text
-- origin_sample.descendants.metadata.metadata.rnaseq_assay_method	# text
-- origin_sample.descendants.metadata.metadata.roi_description	# text
-- origin_sample.descendants.metadata.metadata.roi_id	# text
-- origin_sample.descendants.metadata.metadata.sample_quality_metric	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_cell_number	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_enrichment	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_entity	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_quality_metric	# text
-- origin_sample.descendants.metadata.metadata.sc_isolation_tissue_dissociation	# text
-- origin_sample.descendants.metadata.metadata.section_prep_protocols_io_doi	# text
-- origin_sample.descendants.metadata.metadata.segment_data_format	# text
-- origin_sample.descendants.metadata.metadata.sequencing_phix_percent	# text
-- origin_sample.descendants.metadata.metadata.sequencing_phix_percentmetadata_path	# text
-- origin_sample.descendants.metadata.metadata.sequencing_read_format	# text
-- origin_sample.descendants.metadata.metadata.sequencing_read_percent_q30	# text
-- origin_sample.descendants.metadata.metadata.sequencing_reagent_kit	# text
-- origin_sample.descendants.metadata.metadata.signal_type	# text
-- origin_sample.descendants.metadata.metadata.stain	# text
-- origin_sample.descendants.metadata.metadata.start_datetime	# text
-- origin_sample.descendants.metadata.metadata.transposition_input	# text
-- origin_sample.descendants.metadata.metadata.transposition_kit_number	# text
-- origin_sample.descendants.metadata.metadata.transposition_method	# text
-- origin_sample.descendants.metadata.metadata.transposition_transposase_source	# text
-- origin_sample.descendants.metadata.organ_condition	# text
-- origin_sample.descendants.metadata.pathologist_report	# text
-- origin_sample.descendants.metadata.perfusion_solution	# text
-- origin_sample.descendants.metadata.procedure_date	# text
-- origin_sample.descendants.metadata.specimen_preservation_temperature	# text
-- origin_sample.descendants.metadata.specimen_quality_criteria	# text
-- origin_sample.descendants.metadata.specimen_tumor_distance_unit	# text
-- origin_sample.descendants.metadata.specimen_tumor_distance_value	# text
-- origin_sample.descendants.metadata.vital_state	# text
-- origin_sample.descendants.metadata.warm_ischemia_time_unit	# text
-- origin_sample.descendants.metadata.warm_ischemia_time_value	# text
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
+- origin_sample.descendants.metadata.*
 - origin_sample.descendants.portal_metadata_upload_files.description	# text
 - origin_sample.descendants.portal_metadata_upload_files.filepath	# text
 - origin_sample.descendants.portal_uploaded_image_files.description	# text
@@ -2291,81 +2291,81 @@
 - origin_sample.immediate_descendants.image_file_metadata.filepath	# text
 - origin_sample.immediate_descendants.ingest_metadata.dag_provenance_list.hash	# text
 - origin_sample.immediate_descendants.ingest_metadata.dag_provenance_list.origin	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata._from_metadatatsv	# boolean
-- origin_sample.immediate_descendants.ingest_metadata.metadata.acquisition_instrument_model	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.acquisition_instrument_vendor	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.analyte_class	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.assay_category	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.assay_type	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.collectiontype	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.data_path	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.donor_id	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.execution_datetime	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.is_targeted	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.metadata_path	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.number_of_antibodies	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.number_of_channels	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.number_of_cycles	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.operator	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.operator_email	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.pi	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.pi_email	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.preparation_instrument_model	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.preparation_instrument_vendor	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.protocols_io_doi	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.reagent_prep_protocols_io_doi	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_x_unit	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_x_value	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_y_unit	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_y_value	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_z_unit	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.resolution_z_value	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.section_prep_protocols_io_doi	# text
-- origin_sample.immediate_descendants.ingest_metadata.metadata.tissue_id	# text
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
+- origin_sample.immediate_descendants.ingest_metadata.metadata.*
 - origin_sample.immediate_descendants.lab_dataset_id	# text
 - origin_sample.immediate_descendants.lab_tissue_sample_id	# text
 - origin_sample.immediate_descendants.last_modified_timestamp	# long
-- origin_sample.immediate_descendants.metadata.cold_ischemia_time_unit	# text
-- origin_sample.immediate_descendants.metadata.cold_ischemia_time_value	# text
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
 - origin_sample.immediate_descendants.metadata.dag_provenance_list.hash	# text
 - origin_sample.immediate_descendants.metadata.dag_provenance_list.origin	# text
-- origin_sample.immediate_descendants.metadata.health_status	# text
-- origin_sample.immediate_descendants.metadata.metadata.acquisition_instrument_model	# text
-- origin_sample.immediate_descendants.metadata.metadata.acquisition_instrument_vendor	# text
-- origin_sample.immediate_descendants.metadata.metadata.analyte_class	# text
-- origin_sample.immediate_descendants.metadata.metadata.assay_category	# text
-- origin_sample.immediate_descendants.metadata.metadata.assay_type	# text
-- origin_sample.immediate_descendants.metadata.metadata.execution_datetime	# text
-- origin_sample.immediate_descendants.metadata.metadata.is_targeted	# text
-- origin_sample.immediate_descendants.metadata.metadata.number_of_antibodies	# text
-- origin_sample.immediate_descendants.metadata.metadata.number_of_channels	# text
-- origin_sample.immediate_descendants.metadata.metadata.number_of_cycles	# text
-- origin_sample.immediate_descendants.metadata.metadata.operator	# text
-- origin_sample.immediate_descendants.metadata.metadata.operator_email	# text
-- origin_sample.immediate_descendants.metadata.metadata.pi	# text
-- origin_sample.immediate_descendants.metadata.metadata.pi_email	# text
-- origin_sample.immediate_descendants.metadata.metadata.preparation_instrument_model	# text
-- origin_sample.immediate_descendants.metadata.metadata.preparation_instrument_vendor	# text
-- origin_sample.immediate_descendants.metadata.metadata.protocols_io_doi	# text
-- origin_sample.immediate_descendants.metadata.metadata.reagent_prep_protocols_io_doi	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_x_unit	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_x_value	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_y_unit	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_y_value	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_z_unit	# text
-- origin_sample.immediate_descendants.metadata.metadata.resolution_z_value	# text
-- origin_sample.immediate_descendants.metadata.metadata.section_prep_protocols_io_doi	# text
-- origin_sample.immediate_descendants.metadata.organ_condition	# text
-- origin_sample.immediate_descendants.metadata.pathologist_report	# text
-- origin_sample.immediate_descendants.metadata.perfusion_solution	# text
-- origin_sample.immediate_descendants.metadata.procedure_date	# text
-- origin_sample.immediate_descendants.metadata.specimen_preservation_temperature	# text
-- origin_sample.immediate_descendants.metadata.specimen_quality_criteria	# text
-- origin_sample.immediate_descendants.metadata.specimen_tumor_distance_unit	# text
-- origin_sample.immediate_descendants.metadata.specimen_tumor_distance_value	# text
-- origin_sample.immediate_descendants.metadata.vital_state	# text
-- origin_sample.immediate_descendants.metadata.warm_ischemia_time_unit	# text
-- origin_sample.immediate_descendants.metadata.warm_ischemia_time_value	# text
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
+- origin_sample.immediate_descendants.metadata.*
 - origin_sample.immediate_descendants.portal_metadata_upload_files.description	# text
 - origin_sample.immediate_descendants.portal_metadata_upload_files.filepath	# text
 - origin_sample.immediate_descendants.portal_uploaded_image_files.description	# text
@@ -2386,20 +2386,20 @@
 - origin_sample.mapped_metadata	# object
 - origin_sample.mapped_organ	# text
 - origin_sample.mapped_specimen_type	# text
-- origin_sample.metadata.cold_ischemia_time_unit	# text
-- origin_sample.metadata.cold_ischemia_time_value	# text
-- origin_sample.metadata.health_status	# text
-- origin_sample.metadata.organ_condition	# text
-- origin_sample.metadata.pathologist_report	# text
-- origin_sample.metadata.perfusion_solution	# text
-- origin_sample.metadata.procedure_date	# text
-- origin_sample.metadata.specimen_preservation_temperature	# text
-- origin_sample.metadata.specimen_quality_criteria	# text
-- origin_sample.metadata.specimen_tumor_distance_unit	# text
-- origin_sample.metadata.specimen_tumor_distance_value	# text
-- origin_sample.metadata.vital_state	# text
-- origin_sample.metadata.warm_ischemia_time_unit	# text
-- origin_sample.metadata.warm_ischemia_time_value	# text
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
+- origin_sample.metadata.*
 - origin_sample.organ	# text
 - origin_sample.portal_metadata_upload_files.description	# text
 - origin_sample.portal_metadata_upload_files.filepath	# text
@@ -2436,20 +2436,20 @@
 - source_sample.mapped_metadata	# object
 - source_sample.mapped_organ	# text
 - source_sample.mapped_specimen_type	# text
-- source_sample.metadata.cold_ischemia_time_unit	# text
-- source_sample.metadata.cold_ischemia_time_value	# text
-- source_sample.metadata.health_status	# text
-- source_sample.metadata.organ_condition	# text
-- source_sample.metadata.pathologist_report	# text
-- source_sample.metadata.perfusion_solution	# text
-- source_sample.metadata.procedure_date	# text
-- source_sample.metadata.specimen_preservation_temperature	# text
-- source_sample.metadata.specimen_quality_criteria	# text
-- source_sample.metadata.specimen_tumor_distance_unit	# text
-- source_sample.metadata.specimen_tumor_distance_value	# text
-- source_sample.metadata.vital_state	# text
-- source_sample.metadata.warm_ischemia_time_unit	# text
-- source_sample.metadata.warm_ischemia_time_value	# text
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
+- source_sample.metadata.*
 - source_sample.organ	# text
 - source_sample.portal_metadata_upload_files.description	# text
 - source_sample.portal_metadata_upload_files.filepath	# text
