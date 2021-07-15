@@ -5,6 +5,8 @@ from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
+from libs.assay_type import AssayType
+
 
 class TranslationException(Exception):
     pass
@@ -214,6 +216,10 @@ def _translate_data_type(doc):
     >>> _translate_data_type(doc); doc
     {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
 
+    >>> doc = {'data_types': ['salmon_rnaseq_10x_sn']}
+    >>> _translate_data_type(doc); doc
+    {'data_types': ['salmon_rnaseq_10x_sn'], 'mapped_data_types': ['snRNA-seq [Salmon]']}
+
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
     {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "abc" / No translation for "xyz" [Image Pyramid]']}
@@ -223,21 +229,16 @@ def _translate_data_type(doc):
 
 
 def _data_types_map(ks):
-    pyramid_key = 'image_pyramid'
-    types = ' / '.join(sorted([
-        _data_types_dict[k] if k in _data_types_dict else _unexpected(k)
-        for k in ks if k != pyramid_key
-    ]))
-    if pyramid_key in ks:
-        types = f'{types} [{_data_types_dict[pyramid_key]}]'
-    return [types]  # Downstream code expects to see an array.
-
-
-_data_types_dict = {
-    k: v['description']
-    for k, v in _enums['assay_types'].items()
-    # NOTE: Field name ("data_types") and enum name ("assay_types") do not match!
-}
+    assert len(ks) == 1 or (len(ks) == 2 and 'image_pyramid' in ks)
+    single_key = ks[0] if len(ks) == 1 else ks
+    try:
+        r = AssayType(single_key).description
+    except RuntimeError:
+        if isinstance(single_key, list):
+            r = _unexpected(' / '.join(single_key))
+        else:
+            r = _unexpected(single_key)
+    return [r]
 
 
 # Donor metadata:
