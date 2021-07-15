@@ -135,7 +135,7 @@ class Indexer:
             #original_index_config = safe_load((Path(__file__).absolute().parent / 'search-default-config.yaml').read_text())
                         # will bump this limit back down once the duplicated fields removed
                         # noted by Zhou 6/28/2021
-                        "mapping.total_fields.limit": 6000,
+                        #"mapping.total_fields.limit": 6000,
 
             # Settings and mappings definition for creating the 
             # portal indices (hm_consortium_portal and hm_public_portal) 
