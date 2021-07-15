@@ -2,6 +2,9 @@ BUILD
 
 **/.vscode/
 
+**/*.bak
+**/*-local*
+
 # Docker stuff
 docker/data
 docker/search-api/src
@@ -10,6 +13,7 @@ docker/search-api/BUILD
 
 # Configuration
 src/instance/app.cfg
+src/instance/search-config.yaml
 
 # Copied files for localhost and dev
 src/BUILD

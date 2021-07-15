@@ -34,8 +34,11 @@ app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname
 app.config.from_pyfile('app.cfg')
 
 # load the index configurations and set the default
-INDICES = safe_load((Path(__file__).absolute().parent / 'search-config.yaml').read_text())
+INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
 DEFAULT_INDEX_WITHOUT_PREFIX = INDICES['default_index']
+
+logger.debug("############ INDICES config LOADED")
+logger.debug(INDICES)
 
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
@@ -191,13 +194,13 @@ def count():
     
     # Determine the target real index in Elasticsearch to be searched against
     # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
-    target_index = get_target_index(request, DEFAULT_INDEX_WITHOUT_PREFIX) #app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
+    #target_index = get_target_index(request, DEFAULT_INDEX_WITHOUT_PREFIX) #app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
 
-    logger.info("======target_index======")
-    logger.info(target_index)
+    #logger.info("======target_index======")
+    #logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_count', request, target_index)
+    return execute_query('_count', request, DEFAULT_INDEX_WITHOUT_PREFIX)
 
 # HTTP GET can be used to execute search with body against ElasticSearch REST API.
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
@@ -213,13 +216,13 @@ def count_by_index(index_without_prefix):
     logger.info(index_without_prefix)
 
     # Determine the target real index in Elasticsearch to be searched against
-    target_index = get_target_index(request, index_without_prefix)
+    ##target_index = get_target_index(request, index_without_prefix)
 
-    logger.info("======target_index======")
-    logger.info(target_index)
+    #logger.info("======target_index======")
+    #logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_count', request, target_index)
+    return execute_query('_count', request, index_without_prefix)
 
 
 # Get a list of indices
@@ -258,7 +261,7 @@ def status():
     return jsonify(response_data)
 
 @app.route('/<index_without_prefix>/status', methods = ['GET'])
-def statusindex(index_without_prefix):
+def indexstatus(index_without_prefix):
 
     # get the ES url from the specified index
     es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
@@ -652,18 +655,26 @@ def get_uuids_from_es(index):
 
     return uuids
 
+# def init_indexer(token):
+#     return Indexer(
+#         app.config['INDICES'],
+#         app.config['ORIGINAL_DOC_TYPE'],  # NOT USED
+#         app.config['PORTAL_DOC_TYPE'],
+#         app.config['ELASTICSEARCH_URL'],   
+#         app.config['ENTITY_API_URL'],
+#         app.config['APP_CLIENT_ID'],
+#         app.config['APP_CLIENT_SECRET'],
+#         token
+#     )
+
 def init_indexer(token):
     return Indexer(
-        app.config['INDICES'],
-        app.config['ORIGINAL_DOC_TYPE'],
-        app.config['PORTAL_DOC_TYPE'],
-        app.config['ELASTICSEARCH_URL'],
-        app.config['ENTITY_API_URL'],
+        INDICES,
+        app.config['PORTAL_DOC_TYPE'],   # this is temp, should change this
         app.config['APP_CLIENT_ID'],
         app.config['APP_CLIENT_SECRET'],
         token
     )
-
 
 def reindex_all_uuids(indexer, token):
     with app.app_context():
@@ -684,7 +695,8 @@ def reindex_all_uuids(indexer, token):
 
             # 1. Remove entities that are not found in neo4j
             es_uuids = []
-            for index in ast.literal_eval(app.config['INDICES']).keys():
+            #for index in ast.literal_eval(app.config['INDICES']).keys():
+            for index in ast.literal_eval(INDICES['indices']).keys():
                 es_uuids.extend(get_uuids_from_es(index))
             es_uuids = set(es_uuids)
 
