@@ -131,6 +131,9 @@
     },
     "previous_revision_uuid": {
       "es_name": "previous_revision_uuid"
+    },
+    "thumbnail_file": {
+      "es_name": "thumbnail_file"
     }
   }
 }
