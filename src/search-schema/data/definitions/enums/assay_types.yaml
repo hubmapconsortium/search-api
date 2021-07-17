@@ -65,7 +65,7 @@ image_pyramid:
     vitessce-hints: ['is_image', 'pyramid']
     
 IMC2D:
-    description: 2D Imaging Mass Cytometry
+    description: Imaging Mass Cytometry (2D)
     alt-names: ['IMC', '2D-IMC']
     primary: true
     contains-pii: false
