@@ -79,7 +79,7 @@ IMC3D:
     vitessce-hints: []
 
 IMC2D_pyramid:
-    description: 2D Imaging Mass Cytometry [Image Pyramid]
+    description: Imaging Mass Cytometry (2D) [Image Pyramid]
     alt-names:
       - 'IMC_pyramid'
       - ['IMC', 'Image Pyramid']
