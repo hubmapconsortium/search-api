@@ -222,14 +222,14 @@ def _translate_data_type(doc):
 
     >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "abc" / No translation for "xyz" [Image Pyramid]']}
+    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "xyz / abc / image_pyramid"']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
 
 
 def _data_types_map(ks):
-    assert len(ks) == 1 or (len(ks) == 2 and 'image_pyramid' in ks)
+    assert len(ks) == 1 or ('image_pyramid' in ks or 'Image Pyramid' in ks), f"{ks}"
     single_key = ks[0] if len(ks) == 1 else ks
     try:
         r = AssayType(single_key).description
