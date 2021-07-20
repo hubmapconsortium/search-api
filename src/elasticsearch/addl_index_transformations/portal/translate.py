@@ -229,7 +229,8 @@ def _translate_data_type(doc):
 
 
 def _data_types_map(ks):
-    assert len(ks) == 1 or ('image_pyramid' in ks or 'Image Pyramid' in ks), f"{ks}"
+    assert len(ks) == 1 or (len(ks) == 2 and ('image_pyramid' in ks or 'Image Pyramid' in ks)), \
+        f"If there are 2 types, one should be image pyramid: {ks}"
     single_key = ks[0] if len(ks) == 1 else ks
     try:
         r = AssayType(single_key).description
