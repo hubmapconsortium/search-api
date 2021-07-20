@@ -235,10 +235,7 @@ def _data_types_map(ks):
     try:
         r = AssayType(single_key).description
     except RuntimeError:
-        if isinstance(single_key, list):
-            r = _unexpected(' / '.join(single_key))
-        else:
-            r = _unexpected(single_key)
+        r = _unexpected(single_key)
     return [r]
 
 
