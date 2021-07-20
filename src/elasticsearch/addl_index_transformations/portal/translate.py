@@ -220,9 +220,9 @@ def _translate_data_type(doc):
     >>> _translate_data_type(doc); doc
     {'data_types': ['salmon_rnaseq_10x_sn'], 'mapped_data_types': ['snRNA-seq [Salmon]']}
 
-    >>> doc = {'data_types': ['xyz', 'abc', 'image_pyramid']}
+    >>> doc = {'data_types': ['xyz', 'image_pyramid']}
     >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'abc', 'image_pyramid'], 'mapped_data_types': ['No translation for "xyz / abc / image_pyramid"']}
+    {'data_types': ['xyz', 'image_pyramid'], 'mapped_data_types': ['No translation for "[\\'xyz\\', \\'image_pyramid\\']"']}
 
     '''
     _map(doc, 'data_types', _data_types_map)
@@ -230,7 +230,7 @@ def _translate_data_type(doc):
 
 def _data_types_map(ks):
     assert len(ks) == 1 or (len(ks) == 2 and ('image_pyramid' in ks or 'Image Pyramid' in ks)), \
-        f"If there are 2 types, one should be image pyramid: {ks}"
+        f"Maximum 2 types, and one should be image pyramid: {ks}"
     single_key = ks[0] if len(ks) == 1 else ks
     try:
         r = AssayType(single_key).description
