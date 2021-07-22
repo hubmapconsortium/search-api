@@ -694,7 +694,6 @@ class Indexer:
                 | hubmap_id                  | display_doi                 |
                 | submission_id              | hubmap_display_id           |
                 | (Dataset) ingest_metadata  | metadata                    |
-                | (Sample) specimen_metadata | metadata                    |
                 | image_file_metadata        | portal_uploaded_image_files |
                 | (Donor) label              | lab_name                    |
                 | created_timestamp          | create_timestamp            |
@@ -706,7 +705,6 @@ class Indexer:
                     'hubmap_id', 
                     'submission_id',
                     'ingest_metadata',
-                    'specimen_metadata',
                     'image_file_metadata',
                     'label',
                     'created_timestamp'
