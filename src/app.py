@@ -298,7 +298,7 @@ def reindex(uuid):
     try:
         indexer = init_indexer(token)
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
-        # indexer.reindex(uuid)
+        # indexer.reindex(uuid)  # for non-thread
 
         logger.info(f"Started to reindex uuid: {uuid}")
     except Exception as e:

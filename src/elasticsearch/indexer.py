@@ -198,6 +198,9 @@ class Indexer:
                 sys.exit(msg)
             
             donors = response.json()
+            tot = len(donors)
+
+            logger.info(f"Donor TOTAL: {tot}")
 
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -221,26 +224,35 @@ class Indexer:
 
         logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
 
-        url = self.entity_api_url + "/descendants/" + donor_uuid
-        response = requests.get(url, headers = self.request_headers, verify = False)
+        reindex(donor_uuid)      
+          
+    # def index_tree(self, donor):
+    #     # logger.info(f"Total threads count: {threading.active_count()}")
 
-        if response.status_code != 200:
-            msg = f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}"
-            logger.error(msg)
-            sys.exit(msg)
+    #     donor_uuid = donor['uuid']
+
+    #     logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
+
+    #     url = self.entity_api_url + "/descendants/" + donor_uuid
+    #     response = requests.get(url, headers = self.request_headers, verify = False)
+
+    #     if response.status_code != 200:
+    #         msg = f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}"
+    #         logger.error(msg)
+    #         sys.exit(msg)
         
-        descendants = response.json()
+    #     descendants = response.json()
 
-        for node in ([donor] + descendants):
-            # hubamp_identifier renamed to submission_id 
-            # disploy_doi renamed to hubmap_id
-            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+    #     for node in ([donor] + descendants):
+    #         # hubamp_identifier renamed to submission_id 
+    #         # disploy_doi renamed to hubmap_id
+    #         logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
  
-            self.update_index(node)
+    #         self.update_index(node)
 
-        msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
-        logger.info(msg)
-        return msg
+    #     msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
+    #     logger.info(msg)
+    #     return msg
 
     def index_public_collections(self, reindex = False):
         # The entity-api only returns public collections, for either 
@@ -890,11 +902,9 @@ class Indexer:
                     public_index = self.INDICES['indices'][index]['public']
                     self.eswriter.delete_document(public_index, node['uuid'])
 
-                target_doc = doc
-
                 # write entity into indices
                 for index in self.indices.keys():
-
+               
                     public_index = self.INDICES['indices'][index]['public']
                     private_index = self.INDICES['indices'][index]['private']
 
@@ -912,12 +922,14 @@ class Indexer:
                             target_doc = public_doc
                     
                         self.eswriter.write_or_update_document(index_name=public_index, doc=target_doc, uuid=node['uuid'])
-                    else:
 
-                        if transformer is not None:
-                            private_transformed = transformer.transform(json.loads(doc))
-                            target_doc = json.dumps(private_transformed)
-                            
+                    # add it to private
+                    if transformer is not None:
+                        private_transformed = transformer.transform(json.loads(doc))
+                        target_doc = json.dumps(private_transformed)
+                    else:
+                        target_doc = doc
+       
                     self.eswriter.write_or_update_document(index_name=private_index, doc=target_doc, uuid=node['uuid'])
         
         except Exception:
