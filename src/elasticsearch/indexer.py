@@ -224,7 +224,7 @@ class Indexer:
 
         logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
 
-        reindex(donor_uuid)      
+        self.reindex(donor_uuid)      
           
     # def index_tree(self, donor):
     #     # logger.info(f"Total threads count: {threading.active_count()}")
