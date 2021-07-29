@@ -64,23 +64,41 @@ image_pyramid:
     contains-pii: false
     vitessce-hints: ['is_image', 'pyramid']
     
-IMC:
-    description: Imaging Mass Cytometry
-    alt-names: []
+IMC2D:
+    description: Imaging Mass Cytometry (2D)
+    alt-names: ['IMC', '2D-IMC']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
-3D-IMC:
+IMC3D:
     description: 3D Imaging Mass Cytometry
-    alt-names: []
+    alt-names: ['3D-IMC']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
-IMC_pyramid:
-    description: Imaging Mass Cytometry [Image Pyramid]
-    alt-names: []
+IMC2D_pyramid:
+    description: Imaging Mass Cytometry (2D) [Image Pyramid]
+    alt-names:
+      - 'IMC_pyramid'
+      - ['IMC', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC']
+      - ['IMC2D', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC2D']
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
+
+IMC3D_pyramid:
+    description: 3D Imaging Mass Cytometry [Image Pyramid]
+    alt-names:
+      - '3D-IMC_pyramid'
+      - ['IMC3D', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC3D']
+      - ['3D-IMC', 'Image Pyramid']
+      - ['Image Pyramid', '3D-IMC']
     primary: false
     vis-only: true
     contains-pii: false
