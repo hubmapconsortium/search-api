@@ -7,7 +7,7 @@ AF:
  
 AF_pyramid:
     description: Autofluorescence Microscopy [Image Pyramid]
-    alt-names: [["AF", "Image Pyramid"], ["Image Pyramid", "AF"]]
+    alt-names: [["AF", "Image Pyramid"], ["AF", "image_pyramid"]]
     primary: false
     vis-only: true
     contains-pii: false
@@ -58,7 +58,7 @@ DART-FISH:
 
 image_pyramid:
     description: Image Pyramid
-    alt-names: []
+    alt-names: ["Image Pyramid"]
     primary: false
     vis-only: true
     contains-pii: false
@@ -154,7 +154,7 @@ MALDI-IMS-neg:
 
 MALDI-IMS-neg_pyramid:
     description: MALDI IMS negative [Image Pyramid]
-    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-neg"]]
+    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
     primary: false
     vis-only: true
     contains-pii: false
@@ -169,7 +169,7 @@ MALDI-IMS-pos:
 
 MALDI-IMS-pos_pyramid:
     description: MALDI IMS positive [Image Pyramid]
-    alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-pos"]]
+    alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
     primary: false
     vis-only: true
     contains-pii: false
@@ -184,7 +184,7 @@ MxIF:
 
 MxIF_pyramid:
     description: Multiplexed IF Microscopy [Image Pyramid]
-    alt-names: [["MxIF", "Image Pyramid"], ["Image Pyramid", "MxIF"]]
+    alt-names: [["MxIF", "Image Pyramid"], ["MxIF", "image_pyramid"]]
     primary: false
     vis-only: true
     contains-pii: false
@@ -199,7 +199,7 @@ PAS:
     
 PAS_pyramid:
     description: PAS Stained Microscopy [Image Pyramid]
-    alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
+    alt-names: [["PAS", "Image Pyramid"], ["PAS", "image_pyramid"]]
     primary: false    
     contains-pii: false
     vis-only: true

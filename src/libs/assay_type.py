@@ -64,6 +64,10 @@ class AssayType(object):
     >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
     ['image_pyramid', 'Image Pyramid', True, False]
 
+    >>> a_t = AssayType('Image Pyramid')  # simple vis-only alt name
+    >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
+    ['image_pyramid', 'Image Pyramid', True, False]
+
     >>> a_t = AssayType(['Image Pyramid', 'foo'])  # invalid complex alt name
     Traceback (most recent call last):
     ...
@@ -72,6 +76,11 @@ class AssayType(object):
     >>> a_t = AssayType('salmon_rnaseq_10x_sn')  # simple valid alt name
     >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
     ['salmon_sn_rnaseq_10x', 'snRNA-seq [Salmon]', False, False]
+
+    >>> a_t = AssayType(['xyz', 'abc', 'image_pyramid'])  # too long complex alt name
+    Traceback (most recent call last):
+    ...
+    RuntimeError: No such assay_type ['xyz', 'abc', 'image_pyramid'], even as alternate name
 
     """
     definitions = None  # lazy load
@@ -88,9 +97,11 @@ class AssayType(object):
                 assert_json_matches_schema(cls.definitions, SCHEMA_PATH)
                 for k, v in cls.definitions.items():
                     for alt_k in v['alt-names']:
-                        safe_alt_k = (tuple(alt_k) if isinstance(alt_k, list)
-                                      else alt_k)
-                        cls.alt_name_map[safe_alt_k] = k
+                        if isinstance(alt_k, list):
+                            safe_alt_k = tuple(sorted(alt_k))
+                            cls.alt_name_map[safe_alt_k] = k
+                        else:
+                            cls.alt_name_map[alt_k] = k
             except IOError as e:
                 LOGGER.error(f'io error {e} reading assay type table')
                 raise
@@ -110,7 +121,13 @@ class AssayType(object):
         simple strings, e.g. ['IMC', 'image_pyramid'].
         """
         self._maybe_load_defs()
-        safe_name = name if isinstance(name, str) else tuple(name)
+        if isinstance(name, str):
+            safe_name = name
+        elif isinstance(name, list):
+            try:
+                safe_name = tuple(sorted(name))
+            except TypeError:
+                raise RuntimeError("type name is not a string or string list")
         if safe_name in self.definitions:
             self.name = safe_name
         elif safe_name in self.alt_name_map:
@@ -174,7 +191,6 @@ class AssayType(object):
 def main() -> None:
     import doctest
     doctest.testmod()
-    
     
 if __name__ == '__main__':
     main()
