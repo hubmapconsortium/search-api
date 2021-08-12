@@ -19,6 +19,11 @@ python3 -m venv venv-hm-search-api
 source venv-hm-search-api/bin/activate
 ````
 
+Upgrade pip:
+````
+python3 -m pip install --upgrade pip
+````
+
 Then install the dependencies:
 
 ````
