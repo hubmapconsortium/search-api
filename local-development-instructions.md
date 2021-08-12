@@ -84,7 +84,7 @@ python3 app.py
 cd src
 export FLASK_APP=app.py
 export FLASK_ENV=development
-flask run -p 5005
+python3 -m flask run -p 5005
 ````
 
 
