@@ -2,18 +2,22 @@ AF:
     description: Autofluorescence Microscopy
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
  
-# AF_pyramid:
-#     description: Autofluorescence Microscopy [Image Pyramid]
-#     alt-names: [["AF", "Image Pyramid"], ["Image Pyramid", "AF"]]
-#     primary: false
-#     vitessce-hints: ['pyramid']
+AF_pyramid:
+    description: Autofluorescence Microscopy [Image Pyramid]
+    alt-names: [["AF", "Image Pyramid"], ["AF", "image_pyramid"]]
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 ATACseq-bulk:
     description: Bulk ATAC-seq
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 bulk_atacseq:
@@ -22,23 +26,27 @@ bulk_atacseq:
 #    alt-names: [bulk-atacseq]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
 cell-dive:
     description: Cell DIVE
     alt-names: []
     primary: true
+    contains-pii: false
 
 CODEX:
     description: CODEX
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
 codex_cytokit:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
 
 DART-FISH:
@@ -46,48 +54,76 @@ DART-FISH:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 image_pyramid:
     description: Image Pyramid
-    alt-names: []
+    alt-names: ["Image Pyramid"]
     primary: false
+    vis-only: true
+    contains-pii: false
     vitessce-hints: ['is_image', 'pyramid']
     
-IMC:
-    description: Imaging Mass Cytometry
-    alt-names: []
+IMC2D:
+    description: Imaging Mass Cytometry (2D)
+    alt-names: ['IMC', '2D-IMC']
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
-3D-IMC:
+IMC3D:
     description: 3D Imaging Mass Cytometry
-    alt-names: []
+    alt-names: ['3D-IMC']
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
-# IMC_pyramid:
-#     description: Imaging Mass Cytometry [Image Pyramid]
-#     alt-names: []
-#     primary: false
-#     vitessce-hints: ['pyramid']
+IMC2D_pyramid:
+    description: Imaging Mass Cytometry (2D) [Image Pyramid]
+    alt-names:
+      - 'IMC_pyramid'
+      - ['IMC', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC']
+      - ['IMC2D', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC2D']
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
+
+IMC3D_pyramid:
+    description: 3D Imaging Mass Cytometry [Image Pyramid]
+    alt-names:
+      - '3D-IMC_pyramid'
+      - ['IMC3D', 'Image Pyramid']
+      - ['Image Pyramid', 'IMC3D']
+      - ['3D-IMC', 'Image Pyramid']
+      - ['Image Pyramid', '3D-IMC']
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 lc-ms_label-free:
     description: Label-free LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms_labeled:
     description: Labeled LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms-ms_label-free:
     description: Label-free LC-MS/MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 lc-ms-ms_labeled:
     description: Labeled LC-MS/MS
@@ -100,60 +136,74 @@ LC-MS-untargeted:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 Lightsheet:
     description: Lightsheet Microscopy
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
 MALDI-IMS-neg:
     description: MALDI IMS negative
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
-#MALDI-IMS-neg_pyramid:
-#    description: MALDI IMS negative [Image Pyramid]
-#    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-neg"]]
-#    primary: false
-#    vitessce-hints: ['pyramid']
+MALDI-IMS-neg_pyramid:
+    description: MALDI IMS negative [Image Pyramid]
+    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 MALDI-IMS-pos:
     description: MALDI IMS positive
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
-# MALDI-IMS-pos_pyramid:
-#     description: MALDI IMS positive [Image Pyramid]
-#     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["Image Pyramid", "MALDI-IMS-pos"]]
-#     primary: false
-#     vitessce-hints: ['pyramid']
+MALDI-IMS-pos_pyramid:
+    description: MALDI IMS positive [Image Pyramid]
+    alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 MxIF:
     description: Multiplexed IF Microscopy
     alt-names: []
     primary: true
+    contains-pii: false
     vitessce-hints: []
 
-# MxIF_pyramid:
-#     description: Multiplexed IF Microscopy [Image Pyramid]
-#     alt-names: [["MxIF", "Image Pyramid"], ["Image Pyramid", "MxIF"]]
-#     primary: false
-#     vitessce-hints: ['pyramid']
+MxIF_pyramid:
+    description: Multiplexed IF Microscopy [Image Pyramid]
+    alt-names: [["MxIF", "Image Pyramid"], ["MxIF", "image_pyramid"]]
+    primary: false
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 PAS:
     description: PAS Stained Microscopy
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
     
-# PAS_pyramid:
-#     description: PAS Stained Microscopy [Image Pyramid]
-#     alt-names: [["PAS", "Image Pyramid"], ["Image Pyramid", "PAS"]]
-#     primary: false    
-#     vitessce-hints: ['pyramid']
+PAS_pyramid:
+    description: PAS Stained Microscopy [Image Pyramid]
+    alt-names: [["PAS", "Image Pyramid"], ["PAS", "image_pyramid"]]
+    primary: false    
+    contains-pii: false
+    vis-only: true
+    vitessce-hints: ['pyramid']
 
 bulk-RNA:
 #RNAseq-bulk:
@@ -161,6 +211,7 @@ bulk-RNA:
 #    alt-names: [bulk-RNA]
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 salmon_rnaseq_bulk:
@@ -169,34 +220,56 @@ salmon_rnaseq_bulk:
 #    alt-names: [salmon_rnaseq_bulk]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
-SNAREseq:
-    description: SNARE-seq
-    alt-names: []
+SNARE-ATACseq2:
+    description: snATACseq (SNARE-seq2)
+    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
     primary: true
+    contains-pii: true
+    vitessce-hints: []
+
+SNARE-RNAseq2:
+    description: snRNAseq (SNARE-seq2)
+    alt-names: ['SNARE2-RNAseq']
+    primary: true
+    contains-pii: true
     vitessce-hints: []
 
 sc_atac_seq_snare_lab:
-#SNAREseq_lab:
-    description: scATAC-seq (SNARE-seq) [Lab Processed]
-#    alt-names: [sc_atac_seq_snare_lab]
+    description: snATAC-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: []
 
-sc_atac_seq_snare:
-#SNAREseq_snapATAC:
-    description: scATAC-seq (SNARE-seq) [SnapATAC]
-#    alt-names: [sc_atac_seq_snare]
+sc_rna_seq_snare_lab:
+    description: snRNA-seq (SNARE-seq2) [Lab Processed]
     alt-names: []
     primary: false
+    contains-pii: false
+    vitessce-hints: []
+
+salmon_rnaseq_snareseq:
+    description: snRNA-seq (SNARE-seq2) [Salmon]
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: ['is_sc', 'rna']
+
+sc_atac_seq_snare:
+    description: snATAC-seq (SNARE-seq2) [SnapATAC]
+    alt-names: []
+    primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 salmon_rnaseq_10x:
@@ -205,42 +278,35 @@ salmon_rnaseq_10x:
 #    alt-names: [salmon_rnaseq_10x]
     alt-names: []
     primary: false
-    vitessce-hints: ['is_sc', 'rna']
-
-sc_rna_seq_snare_lab:
-    description: snRNA-seq (SNARE-seq) [Lab Processed]
-    alt-names: []
-    primary: false
-    vitessce-hints: []
-
-salmon_rnaseq_snareseq:
-    description: snRNA-seq (SNARE-seq) [Salmon]
-    alt-names: []
-    primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'rna']
 
 sciATACseq:
     description: sciATAC-seq
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 sc_atac_seq_sci:
     description: sciATAC-seq [SnapATAC]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
 sciRNAseq:
     description: sciRNA-seq
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 salmon_rnaseq_sciseq:
     description: sciRNA-seq [Salmon]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'rna']
 
 seqFish:
@@ -248,23 +314,28 @@ seqFish:
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
-# seqFish_pyramid:
-#     description: seqFISH [Image Pyramid]
-#     alt-names: []
-#     primary: true
-#     vitessce-hints: ['pyramid']
+seqFish_pyramid:
+    description: seqFISH [Image Pyramid]
+    alt-names: []
+    primary: true
+    vis-only: true
+    contains-pii: false
+    vitessce-hints: ['pyramid']
 
 seqFish_lab_processed:
     description: seqFISH [Lab Processed]
     alt-names: []
     primary: false
     vitessce-hints: []
+    contains-pii: false
 
 snATACseq:
     description: snATAC-seq
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 sn_atac_seq:
@@ -273,18 +344,21 @@ sn_atac_seq:
 #    alt-names: [sn_atac_seq]
     alt-names: []
     primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
 snRNAseq:
     description: snRNA-seq
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
 salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]
     alt-names: ['salmon_rnaseq_10x_sn']
     primary: false
+    contains-pii: false
     vitessce-hints: ['is_sc', 'rna']
 
 Slide-seq:
@@ -292,23 +366,28 @@ Slide-seq:
     alt-names: []
     primary: true
     vitesse-hints: ['rna']
+    contains-pii: true
+
 
 Targeted-Shotgun-LC-MS:
     description: Targeted Shotgun / Flow-injection LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 TMT-LC-MS:
     description: TMT LC-MS
     alt-names: []
     primary: true
     vitessce-hints: []
+    contains-pii: false
 
 WGS:
     description: Whole Genome Sequencing
     alt-names: []
     primary: true
+    contains-pii: true
     vitessce-hints: []
 
     

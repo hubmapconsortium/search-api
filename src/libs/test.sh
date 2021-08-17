@@ -11,6 +11,5 @@ reldir=`realpath --relative-to $topdir .` \
 
 start libs/assay_type
 CMD="python ./assay_type.py"
-diff ${topdir}/examples/libs/assay_type_out.txt <( eval $CMD ) \
-  || die "Try: python ${reldir}/assay_type.py > examples/libs/assay_type_out.txt"
+eval $CMD || die "The doctest entries in ${reldir}/assay_type.py need to be updated"
 end libs/assay_type

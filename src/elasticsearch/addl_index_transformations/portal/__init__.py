@@ -66,7 +66,7 @@ def transform(doc, batch_id='unspecified'):
     ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
     ...    'data_access_level': 'consortium',
-    ...    'data_types': ['codex_cytokit', 'seqFish'],
+    ...    'data_types': ['salmon_rnaseq_10x_sn'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
     ...    'donor': {
     ...        "metadata": {
@@ -105,7 +105,7 @@ def transform(doc, batch_id='unspecified'):
                     'specimen_type': 'fresh_frozen_tissue_section'}],
      'create_timestamp': 1575489509656,
      'data_access_level': 'consortium',
-     'data_types': ['codex_cytokit', 'seqFish'],
+     'data_types': ['salmon_rnaseq_10x_sn'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
      'donor': {'mapped_metadata': {'sex': ['Male']},
@@ -115,7 +115,7 @@ def transform(doc, batch_id='unspecified'):
      'entity_type': 'dataset',
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
-     'mapped_data_types': ['CODEX [Cytokit + SPRM] / seqFISH'],
+     'mapped_data_types': ['snRNA-seq [Salmon]'],
      'mapped_metadata': {},
      'mapped_status': 'New',
      'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
