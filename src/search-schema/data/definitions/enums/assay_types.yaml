@@ -83,9 +83,11 @@ IMC2D_pyramid:
     alt-names:
       - 'IMC_pyramid'
       - ['IMC', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC']
+      - ['IMC', 'image_pyramid']
       - ['IMC2D', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC2D']
+      - ['IMC2D', 'image_pyramid']
+      - ['2D-IMC', 'Image Pyramid']
+      - ['2D-IMC', 'image_pyramid']
     primary: false
     vis-only: true
     contains-pii: false
@@ -96,9 +98,9 @@ IMC3D_pyramid:
     alt-names:
       - '3D-IMC_pyramid'
       - ['IMC3D', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC3D']
+      - ['IMC3D', 'image_pyramid']
       - ['3D-IMC', 'Image Pyramid']
-      - ['Image Pyramid', '3D-IMC']
+      - ['3D-IMC', 'image_pyramid']
     primary: false
     vis-only: true
     contains-pii: false
