@@ -19,6 +19,11 @@ python3 -m venv venv-hm-search-api
 source venv-hm-search-api/bin/activate
 ````
 
+Upgrade pip:
+````
+python3 -m pip install --upgrade pip
+````
+
 Then install the dependencies:
 
 ````
@@ -84,7 +89,7 @@ python3 app.py
 cd src
 export FLASK_APP=app.py
 export FLASK_ENV=development
-flask run -p 5005
+python3 -m flask run -p 5005
 ````
 
 
