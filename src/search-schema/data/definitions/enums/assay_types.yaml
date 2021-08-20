@@ -31,7 +31,7 @@ bulk_atacseq:
 
 cell-dive:
     description: Cell DIVE
-    alt-names: []
+    alt-names: ["cell DIVE", "Cell DIVE"]
     primary: true
     contains-pii: false
 
