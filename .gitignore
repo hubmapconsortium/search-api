@@ -10,6 +10,7 @@ docker/search-api/BUILD
 
 # Configuration
 src/instance/app.cfg
+src/instance/search-config.yaml
 
 # Copied files for localhost and dev
 src/BUILD
