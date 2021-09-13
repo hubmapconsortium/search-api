@@ -1,13 +1,13 @@
 {
   "ENTITY": {
     "hubmap_id": {
-      "es_name": "display_doi"
+      "es_name": "hubmap_id"
     },
     "entity_type": {
       "es_name": "entity_type"
     },
     "submission_id": {
-      "es_name": "hubmap_display_id"
+      "es_name": "submission_id"
     },
     "lab_dataset_id": {
       "es_name": "lab_dataset_id"
@@ -16,7 +16,7 @@
       "es_name": "lab_tissue_sample_id"
     },
     "created_timestamp": {
-      "es_name": "create_timestamp"
+      "es_name": "created_timestamp"
     },
     "uuid": {
       "es_name": "uuid"
@@ -73,7 +73,7 @@
       "es_name": "description"
     },
     "ingest_metadata": {
-      "es_name": "metadata"
+      "es_name": "ingest_metadata"
     },
     "metadata": {
       "es_name": "metadata"
@@ -82,13 +82,13 @@
       "es_name": "metadata"
     },
     "image_file_metadata": {
-      "es_name": "portal_uploaded_image_files"
+      "es_name": "image_file_metadata"
     },
     "lab_donor_id": {
       "es_name": "lab_donor_id"
     },
     "label": {
-      "es_name": "lab_name"
+      "es_name": "label"
     },
     "portal_metadata_upload_files": {
       "es_name": "portal_metadata_upload_files"

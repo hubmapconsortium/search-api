@@ -687,33 +687,6 @@ class Indexer:
 
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
-                # Add normalized fields to ES
-                '''
-                | Neo4j field                | Existing ES field           |
-                | -------------------------- | --------------------------- |
-                | hubmap_id                  | display_doi                 |
-                | submission_id              | hubmap_display_id           |
-                | (Dataset) ingest_metadata  | metadata                    |
-                | image_file_metadata        | portal_uploaded_image_files |
-                | (Donor) label              | lab_name                    |
-                | created_timestamp          | create_timestamp            |
-                '''
-                # Leave the existing ES attributes in place now. 
-                # We will deprecate these existing ES attributes and remove 
-                # once others dependent on them have switched to the new attributes.
-                normalized_attributes = [
-                    'hubmap_id', 
-                    'submission_id',
-                    'ingest_metadata',
-                    'image_file_metadata',
-                    'label',
-                    'created_timestamp'
-                ]
-
-                if key in normalized_attributes:
-                    temp[key] = temp_val
-
-
         properties_list = [
             'metadata', 
             'donor', 
