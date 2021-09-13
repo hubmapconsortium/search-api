@@ -76,10 +76,7 @@ class Indexer:
             original_index_config = {
                 "settings": {
                     "index" : {
-                        # Increased from 5000 to 6000 to cater the duplicated fields
-                        # will bump this limit back down once the duplicated fields removed
-                        # noted by Zhou 6/28/2021
-                        "mapping.total_fields.limit": 6000,
+                        "mapping.total_fields.limit": 5000,
                         "query.default_field": 2048
                     }
                 },
