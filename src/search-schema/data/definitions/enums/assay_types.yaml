@@ -31,7 +31,7 @@ bulk_atacseq:
 
 cell-dive:
     description: Cell DIVE
-    alt-names: []
+    alt-names: ["cell DIVE", "Cell DIVE"]
     primary: true
     contains-pii: false
 
@@ -72,7 +72,7 @@ IMC2D:
     vitessce-hints: []
 
 IMC3D:
-    description: 3D Imaging Mass Cytometry
+    description: Imaging Mass Cytometry (3D)
     alt-names: ['3D-IMC']
     primary: true
     contains-pii: false
@@ -83,22 +83,24 @@ IMC2D_pyramid:
     alt-names:
       - 'IMC_pyramid'
       - ['IMC', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC']
+      - ['IMC', 'image_pyramid']
       - ['IMC2D', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC2D']
+      - ['IMC2D', 'image_pyramid']
+      - ['2D-IMC', 'Image Pyramid']
+      - ['2D-IMC', 'image_pyramid']
     primary: false
     vis-only: true
     contains-pii: false
     vitessce-hints: ['pyramid']
 
 IMC3D_pyramid:
-    description: 3D Imaging Mass Cytometry [Image Pyramid]
+    description: Imaging Mass Cytometry (3D) [Image Pyramid]
     alt-names:
       - '3D-IMC_pyramid'
       - ['IMC3D', 'Image Pyramid']
-      - ['Image Pyramid', 'IMC3D']
+      - ['IMC3D', 'image_pyramid']
       - ['3D-IMC', 'Image Pyramid']
-      - ['Image Pyramid', '3D-IMC']
+      - ['3D-IMC', 'image_pyramid']
     primary: false
     vis-only: true
     contains-pii: false
