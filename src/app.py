@@ -17,8 +17,6 @@ from elasticsearch.indexer import Indexer
 
 from libs.assay_type import AssayType
 
-from libs.assay_type import AssayType
-
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
@@ -111,7 +109,6 @@ def assaytypes():
     primary = None
     simple = False
     for key, val in request.args.items():
-        print(f'{key}:{val}')
         if key == 'primary':
             primary = val.lower() == "true"
         elif key == 'simple':
