@@ -817,20 +817,6 @@ class Indexer:
 
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
-                # Add normalized fields to ES
-                '''
-                | Neo4j field                | Existing ES field           |
-                | -------------------------- | --------------------------- |
-                | (Dataset) ingest_metadata  | metadata                    |
-                '''
-                # Leave the existing ES attribute `metadata` in place now
-                # Otherwise it'll break the portal-ui rendering
-                normalized_attributes = [
-                    'ingest_metadata'
-                ]
-
-                if key in normalized_attributes:
-                    temp[key] = temp_val
 
         properties_list = [
             'metadata', 
