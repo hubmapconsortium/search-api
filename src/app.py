@@ -10,6 +10,7 @@ import ast
 from urllib.parse import urlparse
 from flask import current_app as app
 from urllib3.exceptions import InsecureRequestWarning
+from yaml import safe_load
 
 # Local modules
 from elasticsearch.indexer import Indexer
@@ -30,9 +31,21 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
+# load the index configurations and set the default
+INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
+DEFAULT_INDEX_WITHOUT_PREFIX = INDICES['default_index']
+
+logger.debug("############ INDICES config LOADED")
+logger.debug(INDICES)
+
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
-app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
-app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
+DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
+DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+
+#app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
+#app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
+
+
 
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
@@ -133,22 +146,21 @@ def assayname(name=None):
 ####################################################################################################
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+# general search uses the DEFAULT_INDEX
 @app.route('/search', methods = ['GET', 'POST'])
 def search():
     # Always expect a json body
     request_json_required(request)
 
     logger.info("======search with no index provided======")
+    logger.info ("default_index: " + DEFAULT_INDEX_WITHOUT_PREFIX)
     
     # Determine the target real index in Elasticsearch to be searched against
     # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
-    target_index = get_target_index(request, app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
-
-    logger.info("======target_index======")
-    logger.info(target_index)
+    #target_index = get_target_index(request, DEFAULT_INDEX_WITHOUT_PREFIX) #  app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
 
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_search', request, target_index)
+    return execute_query('_search', request, DEFAULT_INDEX_WITHOUT_PREFIX)
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
@@ -164,13 +176,9 @@ def search_by_index(index_without_prefix):
     logger.info(index_without_prefix)
 
     # Determine the target real index in Elasticsearch to be searched against
-    target_index = get_target_index(request, index_without_prefix)
-
-    logger.info("======target_index======")
-    logger.info(target_index)
-
+    #target_index = get_target_index(request, index_without_prefix)
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_search', request, target_index)
+    return execute_query('_search', request, index_without_prefix)
 
 
 # HTTP GET can be used to execute search with body against ElasticSearch REST API. 
@@ -183,13 +191,13 @@ def count():
     
     # Determine the target real index in Elasticsearch to be searched against
     # Use the app.config['DEFAULT_INDEX_WITHOUT_PREFIX'] since /search doesn't take any index
-    target_index = get_target_index(request, app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
+    #target_index = get_target_index(request, DEFAULT_INDEX_WITHOUT_PREFIX) #app.config['DEFAULT_INDEX_WITHOUT_PREFIX'])
 
-    logger.info("======target_index======")
-    logger.info(target_index)
+    #logger.info("======target_index======")
+    #logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_count', request, target_index)
+    return execute_query('_count', request, DEFAULT_INDEX_WITHOUT_PREFIX)
 
 # HTTP GET can be used to execute search with body against ElasticSearch REST API.
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
@@ -205,24 +213,24 @@ def count_by_index(index_without_prefix):
     logger.info(index_without_prefix)
 
     # Determine the target real index in Elasticsearch to be searched against
-    target_index = get_target_index(request, index_without_prefix)
+    ##target_index = get_target_index(request, index_without_prefix)
 
-    logger.info("======target_index======")
-    logger.info(target_index)
+    #logger.info("======target_index======")
+    #logger.info(target_index)
 
     # Return the elasticsearch resulting json data as json string
-    return execute_query('_count', request, target_index)
+    return execute_query('_count', request, index_without_prefix)
 
 
 # Get a list of indices
 @app.route('/indices', methods = ['GET'])
 def indices():
     # Return the resulting json data as json string
-    result = {
-        "indices": get_filtered_indices()
-    }
+    #result = {
+    #    "indices": get_filtered_indices()
+    #}
 
-    return jsonify(result)
+    return jsonify(INDICES)
 
 # Get the status of Elasticsearch cluster by calling the health API
 # This shows the connection status and the cluster health status (if connected)
@@ -235,7 +243,36 @@ def status():
         'elasticsearch_connection': False
     }
     
-    target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
+    target_url = DEFAULT_ELASTICSEARCH_URL + '/_cluster/health'
+    #target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
+    resp = requests.get(url = target_url)
+    
+    if resp.status_code == 200:
+        response_data['elasticsearch_connection'] = True
+        
+        # If connected, we also get the cluster health status
+        status_dict = resp.json()
+        # Add new key
+        response_data['elasticsearch_status'] = status_dict['status']
+
+    return jsonify(response_data)
+
+@app.route('/<index_without_prefix>/status', methods = ['GET'])
+def indexstatus(index_without_prefix):
+
+    # get the ES url from the specified index
+    es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
+
+    response_data = {
+        # Use strip() to remove leading and trailing spaces, newlines, and tabs
+        'version': ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip(),
+        'build': ((Path(__file__).absolute().parent.parent / 'BUILD').read_text()).strip(),
+        'elasticsearch_connection': False,
+        'url': es_url
+    }
+    
+    target_url = es_url + '/_cluster/health'
+    #target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
     resp = requests.get(url = target_url)
     
     if resp.status_code == 200:
@@ -258,7 +295,7 @@ def reindex(uuid):
     try:
         indexer = init_indexer(token)
         threading.Thread(target=indexer.reindex, args=[uuid]).start()
-        # indexer.reindex(uuid)
+        # indexer.reindex(uuid)  # for non-thread
 
         logger.info(f"Started to reindex uuid: {uuid}")
     except Exception as e:
@@ -446,7 +483,9 @@ def request_json_required(request):
 # We'll need to verify the requested index in URL is valid
 def validate_index(index_without_prefix):
     separator = ','
-    indices = get_filtered_indices()
+    #indices = get_filtered_indices()
+    indices = INDICES['indices'].keys()
+
     if index_without_prefix not in indices:
         bad_request_error(f"Invalid index name. Use one of the following: {separator.join(indices)}")
 
@@ -458,38 +497,49 @@ def validate_index(index_without_prefix):
 # Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_<index_without_prefix>`. 
 def get_target_index(request, index_without_prefix):
     # Case #1 and #2
-    target_index = app.config['PUBLIC_INDEX_PREFIX'] + index_without_prefix
+    #target_index = app.config['PUBLIC_INDEX_PREFIX'] + index_without_prefix
 
-    # Keys in request.headers are case insensitive 
-    if 'Authorization' in request.headers:
-        # user_info is a dict
-        user_info = get_user_info_for_access_check(request, True)
+    # default is a public index unless this is an authorized user, see below
+    target_index = INDICES['indices'][index_without_prefix]['public']
+    logger.info("======THE REQUEST======")
+    print(request)
+    # Keys in request.headers are case insensitive
+    # user_info is a dict
+    user_info = get_user_info_for_access_check(request, True)
 
-        logger.info("======user_info======")
-        logger.info(user_info)
+    logger.info("======user_info======")
+    logger.info(user_info)
 
-        # Case #3
-        if isinstance(user_info, Response):
-            # Notify the client with 401 error message
-            unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
-        # Otherwise, we check user_info['hmgroupids'] list
-        # Key 'hmgroupids' presents only when group_required is True
-        else:
-            # Case #4
-            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
-                target_index = app.config['PRIVATE_INDEX_PREFIX'] + index_without_prefix
+    # Case #3
+    if isinstance(user_info, Response):
+        # Notify the client with 401 error message
+        unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
+    # Otherwise, we check user_info['hmgroupids'] list
+    # Key 'hmgroupids' presents only when group_required is True
+    else:
+        # Case #4
+        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+            #target_index = app.config['PRIVATE_INDEX_PREFIX'] + index_without_prefix
+            target_index = INDICES['indices'][index_without_prefix]['private']
     
     return target_index
 
 # Make a call to Elasticsearch
-def execute_query(query_against, request, target_index, query=None):
+def execute_query(query_against, request, index_without_prefix, query=None):
     supported_query_against = ['_search', '_count']
     separator = ','
 
     if query_against not in supported_query_against:
         bad_request_error(f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
 
-    target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
+    # Determine the target real index in Elasticsearch to be searched against
+    index = get_target_index(request, index_without_prefix)
+
+    #target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
+    es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
+
+    # use the index es connection
+    target_url =  es_url + '/' + index + '/' + query_against
 
     if query is None:
         # Parse incoming json string into json data(python dict object)
@@ -505,41 +555,14 @@ def execute_query(query_against, request, target_index, query=None):
         json_data = query
  
     resp = requests.post(url=target_url, json=json_data)
-
+    logger.debug("==========response==========")
+    logger.debug(resp)
+    try:
+        return jsonify(resp.json())
+    except Exception as e:
+        raise e
     # Return the elasticsearch resulting json data as json string
-    return jsonify(resp.json())
-
-# Get a list of filtered Elasticsearch indices to expose to end users without the prefix
-def get_filtered_indices():
-    # The final list of indices to return
-    indices = []
-
-    public_indices_without_prefix = []
-    private_indices_without_prefix = []
-
-    # Get a list of all indices and their aliases
-    target_url = app.config['ELASTICSEARCH_URL'] + '/_aliases'
-    resp = requests.get(url = target_url)
-    
-    # The JSON that contains all indices and aliases
-    indices_and_aliases_dict = resp.json()
-    
-    # Filter the final list
-    # Only return the indices based on prefix naming convention
-    for key in indices_and_aliases_dict:
-        if key.startswith(app.config['PUBLIC_INDEX_PREFIX']):
-            index_without_prefix = key[len(app.config['PUBLIC_INDEX_PREFIX']):]
-            public_indices_without_prefix.append(index_without_prefix)
-
-        if key.startswith(app.config['PRIVATE_INDEX_PREFIX']):
-            index_without_prefix = key[len(app.config['PRIVATE_INDEX_PREFIX']):]
-            private_indices_without_prefix.append(index_without_prefix)
-
-    # Ensure the index pair
-    # Basically get intersection of two lists
-    indices = list(set(public_indices_without_prefix) & set(private_indices_without_prefix))
-
-    return indices
+    return jsonify(resp)
 
 # Get the query string from orignal request
 def get_query_string(url):
@@ -565,9 +588,11 @@ def get_uuids_by_entity_type(entity_type, token):
 
     # Use different entity-api endpoint for Collection
     if entity_type == 'collection':
-        url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
+        #url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
+        url = DEFAULT_ENTITY_API_URL + "/collections?property=uuid"
     else:
-        url = app.config['ENTITY_API_URL'] + "/" + entity_type + "/entities?property=uuid"
+        #url = app.config['ENTITY_API_URL'] + "/" + entity_type + "/entities?property=uuid"
+        url = DEFAULT_ENTITY_API_URL + "/" + entity_type + "/entities?property=uuid"
 
     response = requests.get(url, headers = request_headers, verify = False)
     
@@ -626,18 +651,26 @@ def get_uuids_from_es(index):
 
     return uuids
 
+# def init_indexer(token):
+#     return Indexer(
+#         app.config['INDICES'],
+#         app.config['ORIGINAL_DOC_TYPE'],  # NOT USED
+#         app.config['PORTAL_DOC_TYPE'],
+#         app.config['ELASTICSEARCH_URL'],   
+#         app.config['ENTITY_API_URL'],
+#         app.config['APP_CLIENT_ID'],
+#         app.config['APP_CLIENT_SECRET'],
+#         token
+#     )
+
 def init_indexer(token):
     return Indexer(
-        app.config['INDICES'],
-        app.config['ORIGINAL_DOC_TYPE'],
-        app.config['PORTAL_DOC_TYPE'],
-        app.config['ELASTICSEARCH_URL'],
-        app.config['ENTITY_API_URL'],
+        INDICES,
+        app.config['PORTAL_DOC_TYPE'],   # this is temp, should change this
         app.config['APP_CLIENT_ID'],
         app.config['APP_CLIENT_SECRET'],
         token
     )
-
 
 def reindex_all_uuids(indexer, token):
     with app.app_context():
@@ -658,7 +691,8 @@ def reindex_all_uuids(indexer, token):
 
             # 1. Remove entities that are not found in neo4j
             es_uuids = []
-            for index in ast.literal_eval(app.config['INDICES']).keys():
+            #for index in ast.literal_eval(app.config['INDICES']).keys():
+            for index in ast.literal_eval(INDICES['indices']).keys():
                 es_uuids.extend(get_uuids_from_es(index))
             es_uuids = set(es_uuids)
 
