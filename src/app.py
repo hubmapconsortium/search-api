@@ -499,8 +499,6 @@ def get_target_index(request, index_without_prefix):
     # Case #1 and #2
     #target_index = app.config['PUBLIC_INDEX_PREFIX'] + index_without_prefix
 
-    # default is a public index unless this is an authorized user, see below
-    target_index = INDICES['indices'][index_without_prefix]['public']
     logger.info("======THE REQUEST======")
     print(request)
     # Keys in request.headers are case insensitive
@@ -512,8 +510,10 @@ def get_target_index(request, index_without_prefix):
 
     # Case #3
     if isinstance(user_info, Response):
+        # default is a public index unless this is an authorized user, see below
+        target_index = INDICES['indices'][index_without_prefix]['public']
         # Notify the client with 401 error message
-        unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
+        # unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
     # Otherwise, we check user_info['hmgroupids'] list
     # Key 'hmgroupids' presents only when group_required is True
     else:
