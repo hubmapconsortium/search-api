@@ -226,11 +226,11 @@ def count_by_index(index_without_prefix):
 @app.route('/indices', methods = ['GET'])
 def indices():
     # Return the resulting json data as json string
-    #result = {
-    #    "indices": get_filtered_indices()
-    #}
+    result = {
+        "indices": get_filtered_indices()
+    }
 
-    return jsonify(INDICES)
+    return jsonify(result)
 
 # Get the status of Elasticsearch cluster by calling the health API
 # This shows the connection status and the cluster health status (if connected)
@@ -497,30 +497,28 @@ def validate_index(index_without_prefix):
 # Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_<index_without_prefix>`. 
 def get_target_index(request, index_without_prefix):
     # Case #1 and #2
-    #target_index = app.config['PUBLIC_INDEX_PREFIX'] + index_without_prefix
-
-    # default is a public index unless this is an authorized user, see below
+    
     target_index = INDICES['indices'][index_without_prefix]['public']
-    logger.info("======THE REQUEST======")
-    print(request)
+   
     # Keys in request.headers are case insensitive
-    # user_info is a dict
-    user_info = get_user_info_for_access_check(request, True)
+    if 'Authorization' in request.headers:
+        # user_info is a dict
+        user_info = get_user_info_for_access_check(request, True)
 
-    logger.info("======user_info======")
-    logger.info(user_info)
+        logger.info("======user_info======")
+        logger.info(user_info)
 
-    # Case #3
-    if isinstance(user_info, Response):
-        # Notify the client with 401 error message
-        unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
-    # Otherwise, we check user_info['hmgroupids'] list
-    # Key 'hmgroupids' presents only when group_required is True
-    else:
-        # Case #4
-        if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
-            #target_index = app.config['PRIVATE_INDEX_PREFIX'] + index_without_prefix
-            target_index = INDICES['indices'][index_without_prefix]['private']
+        # Case #3
+        if isinstance(user_info, Response):       
+            # Notify the client with 401 error message
+            unauthorized_error("The globus token in the HTTP 'Authorization: Bearer <globus-token>' header is either invalid or expired.")
+        # Otherwise, we check user_info['hmgroupids'] list
+        # Key 'hmgroupids' presents only when group_required is True
+        else:
+            # Case #4
+            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+                #target_index = app.config['PRIVATE_INDEX_PREFIX'] + index_without_prefix
+                target_index = INDICES['indices'][index_without_prefix]['private']
     
     return target_index
 
@@ -715,6 +713,12 @@ def reindex_all_uuids(indexer, token):
             logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
         except Exception as e:
             logger.error(e)
+
+# Get a list of filtered Elasticsearch indices to expose to end users without the prefix
+def get_filtered_indices():
+    # just get all the defined index keys from the yml file
+    indices = INDICES['indices'].keys()
+    return list(indices)
 
 
 # For local development/testing
