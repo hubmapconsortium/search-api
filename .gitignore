@@ -2,6 +2,10 @@ BUILD
 
 **/.vscode/
 
+#eclipse project files
+.project
+.pydevproject
+
 # Docker stuff
 docker/data
 docker/search-api/src
