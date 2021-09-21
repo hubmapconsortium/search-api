@@ -5,6 +5,8 @@ BUILD
 **/*.bak
 **/*-local*
 
+**/*.orig
+
 # Docker stuff
 docker/data
 docker/search-api/src
