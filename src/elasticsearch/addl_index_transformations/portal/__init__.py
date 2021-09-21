@@ -57,7 +57,7 @@ def transform(doc, batch_id='unspecified'):
     ...    'entity_type': 'dataset',
     ...    'status': 'New',
     ...    'origin_sample': {
-    ...        'organ': 'LY01'
+    ...        'organ': 'LY'
     ...    },
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
@@ -119,7 +119,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_metadata': {},
      'mapped_status': 'New',
      'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
-     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
+     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
      'status': 'New'}
