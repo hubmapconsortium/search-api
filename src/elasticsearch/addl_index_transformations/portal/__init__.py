@@ -95,9 +95,8 @@ def transform(doc, batch_id='unspecified'):
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
     {'anatomy_0': 'body',
-     'anatomy_1': 'abdominal cavity',
-     'anatomy_2': 'colon',
-     'anatomy_3': 'transverse colon',
+     'anatomy_1': 'large intestine',
+     'anatomy_2': 'transverse colon',
      'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
