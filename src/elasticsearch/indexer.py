@@ -684,6 +684,7 @@ class Indexer:
 
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
+
         properties_list = [
             'metadata', 
             'donor', 

@@ -2,7 +2,7 @@
     "entity_type": "dataset",
     "status": "New",
     "origin_sample": {
-        "organ": "LY01"
+        "organ": "LY"
     },
     "create_timestamp": 1575489509656,
     "ancestor_ids": ["1234", "5678"],

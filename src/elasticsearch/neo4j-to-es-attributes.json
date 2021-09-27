@@ -73,7 +73,7 @@
       "es_name": "description"
     },
     "ingest_metadata": {
-      "es_name": "ingest_metadata"
+      "es_name": "metadata"
     },
     "metadata": {
       "es_name": "metadata"
