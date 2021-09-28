@@ -135,8 +135,8 @@
     "thumbnail_file": {
       "es_name": "thumbnail_file"
     },
-    "retracted_reason": {
-      "es_name": "retracted_reason"
+    "retraction_reason": {
+      "es_name": "retraction_reason"
     },
     "sub_status": {
       "es_name": "sub_status"
