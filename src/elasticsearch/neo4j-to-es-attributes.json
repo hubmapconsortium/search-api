@@ -134,6 +134,15 @@
     },
     "thumbnail_file": {
       "es_name": "thumbnail_file"
+    },
+    "retraction_reason": {
+      "es_name": "retraction_reason"
+    },
+    "sub_status": {
+      "es_name": "sub_status"
+    },
+    "provider_info": {
+      "es_name": "provider_info"
     }
   }
 }
