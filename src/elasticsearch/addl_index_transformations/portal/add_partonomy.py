@@ -18,7 +18,7 @@ def add_partonomy(doc):
     >>> add_partonomy(doc)
     >>> del doc['rui_location']
     >>> doc
-    {'anatomy_0': 'body', 'anatomy_1': 'abdominal cavity', 'anatomy_2': 'colon', 'anatomy_3': 'transverse colon'}
+    {'anatomy_0': 'body', 'anatomy_1': 'large intestine', 'anatomy_2': 'transverse colon'}
 
     '''
     if 'rui_location' not in doc:
@@ -57,10 +57,37 @@ def _build_tree_index():
     Returns a tuple:
         - A tree, where each node has value, parent_id, and children.
         - A dict indexing into every node of the tree by id.
+
+    >>> tree, index = _build_tree_index()
+    >>> from pprint import pprint
+    >>> pprint(tree, depth=1)
+    {'children': [...], 'parent_id': None, 'value': 'body'}
+    >>> pprint(sorted([child['value'] for child in tree['children']]))
+    ['blood',
+     'bone marrow',
+     'brain',
+     'heart',
+     'kidney',
+     'kidney vasculature',
+     'large intestine',
+     'lymph node',
+     'pelvis',
+     'respiratory system',
+     'retromandibular vein',
+     'skin',
+     'spleen',
+     'spleen',
+     'spleen',
+     'telencephalic ventricle',
+     'thymus']
+    >>> pprint(index['http://purl.obolibrary.org/obo/UBERON_0000029'], depth=1)
+    {'children': [...],
+     'parent_id': 'http://purl.obolibrary.org/obo/UBERON_0013702',
+     'value': 'lymph node'}
     '''
-    partonomy_path = Path(__file__).parent / 'cache/partonomy.jsonld'
+    partonomy_path = Path(__file__).parent / 'cache/partonomy-1.6.0.jsonld'
     if not partonomy_path.exists():
-        partonomy_url = 'https://cdn.jsdelivr.net/gh/hubmapconsortium/hubmap-ontology@1.0.0/ccf-partonomy.jsonld'
+        partonomy_url = 'https://cdn.jsdelivr.net/gh/hubmapconsortium/hubmap-ontology@1.6.0/ccf-partonomy.jsonld'
         partonomy_path.write_text(requests.get(partonomy_url).text)
 
     partonomy_ld = loads(partonomy_path.read_text())
