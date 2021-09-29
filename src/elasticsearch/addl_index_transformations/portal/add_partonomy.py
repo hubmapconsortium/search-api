@@ -85,9 +85,11 @@ def _build_tree_index():
      'parent_id': 'http://purl.obolibrary.org/obo/UBERON_0013702',
      'value': 'lymph node'}
     '''
-    partonomy_path = Path(__file__).parent / 'cache/partonomy-1.6.0.jsonld'
+    parent_path = Path(__file__).parent
+    version = (parent_path / 'partonomy-version.txt').read_text().strip()
+    partonomy_path = parent_path / f'cache/partonomy-{version}.jsonld'
     if not partonomy_path.exists():
-        partonomy_url = 'https://cdn.jsdelivr.net/gh/hubmapconsortium/hubmap-ontology@1.6.0/ccf-partonomy.jsonld'
+        partonomy_url = f'https://cdn.jsdelivr.net/gh/hubmapconsortium/hubmap-ontology@{version}/ccf-partonomy.jsonld'
         partonomy_path.write_text(requests.get(partonomy_url).text)
 
     partonomy_ld = loads(partonomy_path.read_text())
