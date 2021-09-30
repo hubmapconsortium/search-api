@@ -2,6 +2,30 @@ import requests
 from pathlib import Path
 from json import loads
 
+ORGAN_IRI = {
+    'BL': 'http://purl.obolibrary.org/obo/UBERON_0001255',
+    'RK': 'http://purl.obolibrary.org/obo/UBERON_0004539',
+    'LK': 'http://purl.obolibrary.org/obo/UBERON_0004538',
+    'HT': 'http://purl.obolibrary.org/obo/UBERON_0000948',
+    'LI': 'http://purl.obolibrary.org/obo/UBERON_0001155',
+    'LL': 'http://purl.obolibrary.org/obo/UBERON_0002168',
+    'RL': 'http://purl.obolibrary.org/obo/UBERON_0002167',
+    'LY': 'http://purl.obolibrary.org/obo/UBERON_0000029',
+    'SP': 'http://purl.obolibrary.org/obo/UBERON_0002106',
+    'TH': 'http://purl.obolibrary.org/obo/UBERON_0002370',
+    'UR': 'http://purl.obolibrary.org/obo/UBERON_0000056',
+    'LV': 'http://purl.obolibrary.org/obo/UBERON_0002107',
+    'OT': 'http://purl.obolibrary.org/obo/UBERON_0013702'
+}
+
+
+def get_organ_iri(doc):
+    if 'origin_sample' in doc and 'organ' in doc['origin_sample']:
+        organ_code = doc['origin_sample']['organ']
+        if organ_code in ORGAN_IRI:
+            return ORGAN_IRI[organ_code]
+    return None
+
 
 def add_partonomy(doc):
     '''
@@ -13,23 +37,31 @@ def add_partonomy(doc):
     ... }
     >>> from json import dumps
     >>> doc = {
+    ...     'origin_sample': {
+    ...         'organ': 'LI'
+    ...     },
     ...     'rui_location': dumps(rui_location)
     ... }
     >>> add_partonomy(doc)
     >>> del doc['rui_location']
+    >>> del doc['origin_sample']
     >>> doc
     {'anatomy_0': 'body', 'anatomy_1': 'abdominal cavity', 'anatomy_2': 'colon', 'anatomy_3': 'transverse colon'}
 
     '''
-    if 'rui_location' not in doc:
-        return
-    rui_location = loads(doc['rui_location'])
+    annotations = []
+    
+    organ_iri = get_organ_iri(doc)
+    if organ_iri:
+        annotations.append(organ_iri)
 
-    if 'ccf_annotations' not in rui_location:
-        return
-    ccf_annotations = rui_location['ccf_annotations']
+    if 'rui_location' in doc:
+        rui_location = loads(doc['rui_location'])
 
-    for uri in ccf_annotations:
+        if 'ccf_annotations' in rui_location:
+            annotations += rui_location['ccf_annotations']
+
+    for uri in annotations:
         ancestor_list = _get_ancestors_of(uri, index)
         dict_to_merge = _make_dict_from_ancestors(ancestor_list)
         doc.update(dict_to_merge)
