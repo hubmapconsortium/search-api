@@ -58,8 +58,7 @@ def add_partonomy(doc):
     if 'rui_location' in doc:
         rui_location = loads(doc['rui_location'])
 
-        if 'ccf_annotations' in rui_location:
-            annotations += rui_location['ccf_annotations']
+        annotations += rui_location.get('ccf_annotations', [])
 
     for uri in annotations:
         ancestor_list = _get_ancestors_of(uri, index)
