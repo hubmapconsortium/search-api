@@ -148,10 +148,6 @@ def _status_map(status):
 
 def _translate_organ(doc):
     '''
-    >>> doc = {'organ': 'LY01'}
-    >>> _translate_organ(doc); doc
-    {'organ': 'LY01', 'mapped_organ': 'Lymph Node'}
-
     >>> doc = {'origin_sample': {'organ': 'RK'}}
     >>> _translate_organ(doc); doc
     {'origin_sample': {'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}}
@@ -171,7 +167,7 @@ def _organ_map(k):
 
 
 _organ_dict = {
-    k: re.sub(r'\s+\d+$', '', v['description'])
+    k: v['description']
     for k, v in _enums['organ_types'].items()
 }
 
