@@ -50,7 +50,7 @@ def add_partonomy(doc):
 
     '''
     annotations = []
-    
+
     organ_iri = get_organ_iri(doc)
     if organ_iri:
         annotations.append(organ_iri)
