@@ -57,6 +57,23 @@ def add_partonomy(doc):
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['kidney', 'large intestine'], 'anatomy_2': ['right kidney', 'transverse colon']}
 
+    New organ code: No error.
+
+    >>> doc = {
+    ...     'origin_sample': {'organ': 'ZZ'},
+    ... }
+    >>> add_partonomy(doc)
+    >>> del doc['origin_sample']
+    >>> doc
+    {}
+
+    What if everything is missing?
+
+    >>> doc = {}
+    >>> add_partonomy(doc)
+    >>> doc
+    {}
+
     '''
     annotations = []
 
