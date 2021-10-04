@@ -1,3 +1,14 @@
+# TODO: Organ ID mappings should, eventually, be pulled from hubmap-commons:
+# https://github.com/hubmapconsortium/commons/issues/61
+#
+# Following the convention of the organ pages, we are focussing on the 
+# higher level entity which subsumes the left and right instances, ie, 
+# for both "RK" and "LK" we just give the IRI for "Kidney".
+# The IRIs used here should match those at
+# https://github.com/hubmapconsortium/portal-ui/blob/main/organ-utils/descriptions.yaml
+
+# TODO: Add IRIs for all organs. 
+
 AO:
   description: Aorta
 BL:
@@ -8,26 +19,32 @@ BM:
   description: Bone Marrow
 BR:
   description: Brain
+  iri: http://purl.obolibrary.org/obo/UBERON_0000955
 LF:
   description: Fallopian Tube (Left)
 RF:
   description: Fallopian Tube (Right)
 HT:
   description: Heart
+  iri: http://purl.obolibrary.org/obo/UBERON_0000948
 LB:
   description: Bronchus (Left)
 LE:
   description: Eye (Left)
 LI:
   description: Large Intestine
+  iri: http://purl.obolibrary.org/obo/UBERON_0000059
 LK:
   description: Kidney (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002113
 LL:
   description: Lung (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002048
 LV:
   description: Liver
 LY:
   description: Lymph Node
+  iri: http://purl.obolibrary.org/obo/UBERON_0000029
 LO:
   description: Ovary (Left)
 RO:
@@ -36,6 +53,7 @@ OT:
   description: Other
 PA:
   description: Pancreas
+  iri: http://purl.obolibrary.org/obo/UBERON_0001264
 PL:
   description: Placenta
 RB:
@@ -44,18 +62,23 @@ RE:
   description: Eye (Right)
 RK:
   description: Kidney (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002113
 RL:
   description: Lung (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002048
 SI:
   description: Small Intestine
 SK:
   description: Skin
+  iri: http://purl.obolibrary.org/obo/UBERON_0002097
 SP:
   description: Spleen
+  iri: http://purl.obolibrary.org/obo/UBERON_0002106
 ST:
   description: Sternum
 TH:
   description: Thymus
+  iri: http://purl.obolibrary.org/obo/UBERON_0002370
 TR:
   description: Trachea
 UR:

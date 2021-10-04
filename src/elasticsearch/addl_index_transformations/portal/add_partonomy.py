@@ -1,30 +1,22 @@
 import requests
 from pathlib import Path
 from json import loads
+from yaml import safe_load
 
-ORGAN_IRI = {
-    'BL': 'http://purl.obolibrary.org/obo/UBERON_0001255',
-    'RK': 'http://purl.obolibrary.org/obo/UBERON_0004539',
-    'LK': 'http://purl.obolibrary.org/obo/UBERON_0004538',
-    'HT': 'http://purl.obolibrary.org/obo/UBERON_0000948',
-    'LI': 'http://purl.obolibrary.org/obo/UBERON_0001155',
-    'LL': 'http://purl.obolibrary.org/obo/UBERON_0002168',
-    'RL': 'http://purl.obolibrary.org/obo/UBERON_0002167',
-    'LY': 'http://purl.obolibrary.org/obo/UBERON_0000029',
-    'SP': 'http://purl.obolibrary.org/obo/UBERON_0002106',
-    'TH': 'http://purl.obolibrary.org/obo/UBERON_0002370',
-    'UR': 'http://purl.obolibrary.org/obo/UBERON_0000056',
-    'LV': 'http://purl.obolibrary.org/obo/UBERON_0002107',
-    'OT': 'http://purl.obolibrary.org/obo/UBERON_0013702'
+
+_two_letter_to_iri = {
+    two_letter: organ.get('iri')
+    for two_letter, organ
+    in safe_load(Path(
+        __file__.parent.parent.parent.parent /
+        'search-schema/data/definitions/enums/organ_types.yaml'
+    )).items()
 }
 
 
-def get_organ_iri(doc):
-    if 'origin_sample' in doc and 'organ' in doc['origin_sample']:
-        organ_code = doc['origin_sample']['organ']
-        if organ_code in ORGAN_IRI:
-            return ORGAN_IRI[organ_code]
-    return None
+def _get_organ_iri(doc):
+    two_letter_code = doc.get('origin_sample', {}).get('organ')
+    return _two_letter_to_iri.get(two_letter_code)
 
 
 def add_partonomy(doc):
@@ -51,7 +43,7 @@ def add_partonomy(doc):
     '''
     annotations = []
 
-    organ_iri = get_organ_iri(doc)
+    organ_iri = _get_organ_iri(doc)
     if organ_iri:
         annotations.append(organ_iri)
 
