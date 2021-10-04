@@ -1,3 +1,4 @@
+from collections import defaultdict
 import requests
 from pathlib import Path
 from json import loads
@@ -7,10 +8,10 @@ from yaml import safe_load
 _two_letter_to_iri = {
     two_letter: organ.get('iri')
     for two_letter, organ
-    in safe_load(Path(
-        __file__.parent.parent.parent.parent /
-        'search-schema/data/definitions/enums/organ_types.yaml'
-    )).items()
+    in safe_load(
+        (Path(__file__).parent.parent.parent.parent
+         / 'search-schema/data/definitions/enums/organ_types.yaml').read_text()
+    ).items()
 }
 
 
@@ -29,16 +30,32 @@ def add_partonomy(doc):
     ... }
     >>> from json import dumps
     >>> doc = {
-    ...     'origin_sample': {
-    ...         'organ': 'LI'
-    ...     },
     ...     'rui_location': dumps(rui_location)
     ... }
     >>> add_partonomy(doc)
     >>> del doc['rui_location']
+    >>> doc
+    {'anatomy_0': ['body'], 'anatomy_1': ['large intestine'], 'anatomy_2': ['transverse colon']}
+
+    >>> doc = {
+    ...     'origin_sample': {'organ': 'RK'},
+    ... }
+    >>> add_partonomy(doc)
     >>> del doc['origin_sample']
     >>> doc
-    {'anatomy_0': 'body', 'anatomy_1': 'large intestine', 'anatomy_2': 'transverse colon'}
+    {'anatomy_0': ['body'], 'anatomy_1': ['kidney'], 'anatomy_2': ['right kidney']}
+
+    If there are both:
+
+    >>> doc = {
+    ...     'origin_sample': {'organ': 'RK'},
+    ...     'rui_location': dumps(rui_location)
+    ... }
+    >>> add_partonomy(doc)
+    >>> del doc['origin_sample']
+    >>> del doc['rui_location']
+    >>> doc
+    {'anatomy_0': ['body'], 'anatomy_1': ['kidney', 'large intestine'], 'anatomy_2': ['right kidney', 'transverse colon']}
 
     '''
     annotations = []
@@ -49,13 +66,17 @@ def add_partonomy(doc):
 
     if 'rui_location' in doc:
         rui_location = loads(doc['rui_location'])
-
         annotations += rui_location.get('ccf_annotations', [])
 
+    partonomy_sets_doc = defaultdict(set)
     for uri in annotations:
         ancestor_list = _get_ancestors_of(uri, index)
-        dict_to_merge = _make_dict_from_ancestors(ancestor_list)
-        doc.update(dict_to_merge)
+        ancestor_facets = _make_dict_from_ancestors(ancestor_list)
+        for facet, term_set in ancestor_facets.items():
+            partonomy_sets_doc[facet] |= term_set
+
+    partonomy_lists_doc = {k: sorted(v) for k, v in partonomy_sets_doc.items()}
+    doc.update(partonomy_lists_doc)
 
 
 def _get_ancestors_of(node_id, index):
@@ -70,7 +91,7 @@ def _get_ancestors_of(node_id, index):
 def _make_dict_from_ancestors(ancestors):
     numbered = enumerate(ancestors)
     return {
-        f'anatomy_{i}': term
+        f'anatomy_{i}': set([term])
         for i, term in numbered
     }
 
