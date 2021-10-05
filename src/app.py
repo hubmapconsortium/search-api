@@ -690,7 +690,7 @@ def reindex_all_uuids(indexer, token):
             # 1. Remove entities that are not found in neo4j
             es_uuids = []
             #for index in ast.literal_eval(app.config['INDICES']).keys():
-            for index in ast.literal_eval(INDICES['indices']).keys():
+            for index in INDICES['indices'].keys():
                 es_uuids.extend(get_uuids_from_es(index))
             es_uuids = set(es_uuids)
 
