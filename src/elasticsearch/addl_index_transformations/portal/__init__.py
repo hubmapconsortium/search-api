@@ -57,7 +57,7 @@ def transform(doc, batch_id='unspecified'):
     ...    'entity_type': 'dataset',
     ...    'status': 'New',
     ...    'origin_sample': {
-    ...        'organ': 'LY01'
+    ...        'organ': 'LY'
     ...    },
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
@@ -94,10 +94,9 @@ def transform(doc, batch_id='unspecified'):
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
-    {'anatomy_0': 'body',
-     'anatomy_1': 'abdominal cavity',
-     'anatomy_2': 'colon',
-     'anatomy_3': 'transverse colon',
+    {'anatomy_0': ['body'],
+     'anatomy_1': ['large intestine', 'lymph node'],
+     'anatomy_2': ['transverse colon'],
      'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
@@ -119,7 +118,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_metadata': {},
      'mapped_status': 'New',
      'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
-     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY01'},
+     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
      'status': 'New'}
