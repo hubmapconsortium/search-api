@@ -106,6 +106,8 @@ IMC3D_pyramid:
     contains-pii: false
     vitessce-hints: ['pyramid']
 
+##### Add 6 new lc-ms assay_types
+
 lc-ms_label-free:
     description: Label-free LC-MS
     alt-names: []
