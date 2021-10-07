@@ -262,34 +262,6 @@ def status():
 
     return jsonify(response_data)
 
-@app.route('/<index_without_prefix>/status', methods = ['GET'])
-def indexstatus(index_without_prefix):
-
-    # get the ES url from the specified index
-    es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
-
-    response_data = {
-        # Use strip() to remove leading and trailing spaces, newlines, and tabs
-        'version': ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip(),
-        'build': ((Path(__file__).absolute().parent.parent / 'BUILD').read_text()).strip(),
-        'elasticsearch_connection': False,
-        'url': es_url
-    }
-    
-    target_url = es_url + '/_cluster/health'
-    #target_url = app.config['ELASTICSEARCH_URL'] + '/_cluster/health'
-    resp = requests.get(url = target_url)
-    
-    if resp.status_code == 200:
-        response_data['elasticsearch_connection'] = True
-        
-        # If connected, we also get the cluster health status
-        status_dict = resp.json()
-        # Add new key
-        response_data['elasticsearch_status'] = status_dict['status']
-
-    return jsonify(response_data)
-
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     # Reindex individual document doesn't require the token to belong
