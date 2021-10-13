@@ -156,7 +156,7 @@ class Indexer:
         descendants = response.json()
 
         # Index the donor entity itself separately
-        donor = get_entity(donor_uuid)
+        donor = self.get_entity(donor_uuid)
 
         logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
@@ -165,7 +165,7 @@ class Indexer:
         # Index all the descendants of this donor
         for descendant_uuid in descendants:
             # Retrieve the entity details
-            node = get_entity(descendant_uuid)
+            node = self.get_entity(descendant_uuid)
 
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
@@ -251,7 +251,7 @@ class Indexer:
 
             for upload_uuid in upload_uuids_list:
                 # Retrieve the upload entity details
-                upload = get_entity(upload_uuid)
+                upload = self.get_entity(upload_uuid)
 
                 self.add_datasets_to_upload(upload)
                 self.entity_keys_rename(upload)
@@ -280,7 +280,7 @@ class Indexer:
     def reindex(self, uuid):
         try:
             # Retrieve the entity details
-            entity = get_entity(uuid)
+            entity = self.get_entity(uuid)
             
             # Check if entity is empty
             if bool(entity):
@@ -338,7 +338,7 @@ class Indexer:
                     # Reindex all others
                     for entity_uuid in uuids:
                         # Retrieve the entity details
-                        node = get_entity(entity_uuid)
+                        node = self.get_entity(entity_uuid)
 
                         # hubmap_identifier renamed to submission_id
                         # display_doi renamed to hubmap_id
@@ -833,7 +833,7 @@ class Indexer:
         if 'datasets' in collection_detail_dict:
             for dataset in collection_detail_dict['datasets']:
                 # Retrieve the entity details
-                dataset = get_entity(dataset['uuid'])
+                dataset = self.get_entity(dataset['uuid'])
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
@@ -853,13 +853,13 @@ class Indexer:
 
     def add_datasets_to_upload(self, upload):
         # First get the detail of this upload
-        upload_detail_dict = get_entity(upload['uuid'])
+        upload_detail_dict = self.get_entity(upload['uuid'])
 
         datasets = []
         if 'datasets' in upload_detail_dict:
             for dataset in upload_detail_dict['datasets']:
                 # Retrieve the entity details
-                dataset = get_entity(dataset['uuid'])
+                dataset = self.get_entity(dataset['uuid'])
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
