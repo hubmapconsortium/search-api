@@ -158,7 +158,7 @@ class Indexer:
         # Index the donor entity itself separately
         donor = self.get_entity(donor_uuid)
 
-        logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
+        logger.info(f"reindex() for uuid: {donor_uuid}, entity_type: {entity['entity_type']}")
 
         self.update_index(donor)
 
