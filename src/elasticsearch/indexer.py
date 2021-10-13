@@ -897,35 +897,16 @@ class Indexer:
 ## Run indexer.py as script
 ####################################################################################################
 
-# Get the user infomation dict based on the token
 # To be used by the full index to ensure the nexus token 
 # belongs to HuBMAP-Data-Admin group
-def token_belongs_to_data_admin_group(token, data_admin_group_uuid):
-    request_headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + token
-    }
-
-    url='https://nexus.api.globusonline.org/groups?fields=id,name,description,group_type,has_subgroups,identity_set_properties&for_all_identities=false&include_identaaaaay_set_properties=false&my_statuses=active'
-    
-    response = requests.get(url, headers = request_headers)
-    
-    if response.status_code != 200:
-        msg = (f"Unable to get groups information for token: {token}"
-               f"{response.text}")
-
-        logger.error(msg)
-        sys.exit(msg)
-
-    groups_info_list = response.json()
-
-    for group_info in groups_info_list:
-        if ('id' in group_info) and (group_info['id'] == data_admin_group_uuid):
+def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
+    for group_id in user_group_ids:
+        if group_id == data_admin_group_uuid:
             return True
 
     # By now, no match
     return False
+
 
 # Running indexer.py as a script in command line
 # This approach is different from the live reindex via HTTP request
@@ -937,13 +918,6 @@ if __name__ == "__main__":
 
     try:
         token = sys.argv[1]
-
-        # Ensure the token belongs to the HuBMAP-Data-Admin group
-        if not token_belongs_to_data_admin_group(token, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
-            msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
-            # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
-            sys.exit(msg)
     except IndexError as e:
         msg = "Missing admin nexus token argument"
         logger.exception(msg)
@@ -960,6 +934,19 @@ if __name__ == "__main__":
         app.config['APP_CLIENT_SECRET'],
         token
     )
+
+    # The second argument indicates to get the groups information
+    user_info_dict = indexer.auth_helper.getUserInfo(token, True)
+
+    # Use the new key rather than the 'hmgroupids' which will be deprecated
+    group_ids = user_info_dict['group_membership_ids']
+
+    # Ensure the user belongs to the HuBMAP-Data-Admin group
+    if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
+        msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+        sys.exit(msg)
 
     start = time.time()
     logger.info("############# Full index via script started #############")
