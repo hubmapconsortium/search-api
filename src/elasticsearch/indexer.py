@@ -16,7 +16,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from globus_sdk import AccessTokenAuthorizer, AuthClient
 
 # For reusing the app.cfg configuration when running indexer.py as script
-from flask import Flask
+from flask import Flask, Response
 
 # Local modules
 from libs.es_writer import ESWriter
@@ -919,7 +919,7 @@ if __name__ == "__main__":
     try:
         token = sys.argv[1]
     except IndexError as e:
-        msg = "Missing admin nexus token argument"
+        msg = "Missing admin group token argument"
         logger.exception(msg)
         sys.exit(msg)
 
@@ -935,8 +935,16 @@ if __name__ == "__main__":
         token
     )
 
+    auth_helper = indexer.init_auth_helper()
+
     # The second argument indicates to get the groups information
-    user_info_dict = indexer.auth_helper.getUserInfo(token, True)
+    user_info_dict = auth_helper.getUserInfo(token, True)
+
+    if isinstance(user_info_dict, Response):
+        msg = "The given token is expired or invalid"
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+        sys.exit(msg)
 
     # Use the new key rather than the 'hmgroupids' which will be deprecated
     group_ids = user_info_dict['group_membership_ids']
