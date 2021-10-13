@@ -115,7 +115,7 @@ class Indexer:
             self.index_uploads(self.token)
 
             # Then, get a list of donor dictionaries and index the tree from the root node - donor
-            url = self.entity_api_url + "/donor/entities"
+            url = self.entity_api_url + "/donor/entities?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
@@ -123,11 +123,11 @@ class Indexer:
                 logger.error(msg)
                 sys.exit(msg)
             
-            donors = response.json()
+            donor_uuids = response.json()
 
             # Multi-thread
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(self.index_tree, donor) for donor in donors]
+                results = [executor.submit(self.index_tree, donor_uuid) for donor_uuid in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
             
@@ -140,14 +140,12 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    def index_tree(self, donor):
+    def index_tree(self, donor_uuid):
         # logger.info(f"Total threads count: {threading.active_count()}")
-
-        donor_uuid = donor['uuid']
 
         logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
 
-        url = self.entity_api_url + "/descendants/" + donor_uuid
+        url = self.entity_api_url + "/descendants/" + donor_uuid + '?property=uuid'
         response = requests.get(url, headers = self.request_headers, verify = False)
 
         if response.status_code != 200:
@@ -157,7 +155,18 @@ class Indexer:
         
         descendants = response.json()
 
-        for node in ([donor] + descendants):
+        # Index the donor entity itself separately
+        donor = get_entity(donor_uuid)
+
+        logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
+
+        self.update_index(donor)
+
+        # Index all the descendants of this donor
+        for descendant_uuid in descendants:
+            # Retrieve the entity details
+            node = get_entity(descendant_uuid)
+
             # hubamp_identifier renamed to submission_id 
             # disploy_doi renamed to hubmap_id
             logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
@@ -225,7 +234,7 @@ class Indexer:
         for index, configs in self.indices.items():
             configs = IndexConfig(*configs)
 
-            url = self.entity_api_url + "/upload/entities"
+            url = self.entity_api_url + "/upload/entities?property=uuid"
 
             # Only add uploads to the hm_consortium_entities index (original)
             if (configs.access_level == self.ACCESS_LEVEL_CONSORTIUM and configs.doc_type == 'original'):
@@ -238,9 +247,12 @@ class Indexer:
                 logger.error(msg)
                 sys.exit(msg)
         
-            uploads_list = response.json()
+            upload_uuids_list = response.json()
 
-            for upload in uploads_list:
+            for upload_uuid in upload_uuids_list:
+                # Retrieve the upload entity details
+                upload = get_entity(upload_uuid)
+
                 self.add_datasets_to_upload(upload)
                 self.entity_keys_rename(upload)
 
@@ -249,7 +261,7 @@ class Indexer:
        
                 # Add doc to hm_consortium_entities index
                 # Do NOT tranform the doc and add to hm_consortium_portal index
-                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(upload), uuid=upload['uuid'])
+                self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(upload), uuid=upload_uuid)
 
 
     # These caculated fields are not stored in neo4j but will be generated
@@ -267,15 +279,8 @@ class Indexer:
     # Use index_public_collections(reindex = True) for reindexing Collection
     def reindex(self, uuid):
         try:
-            url = self.entity_api_url + "/entities/" + uuid
-            response = requests.get(url, headers = self.request_headers, verify = False)
-
-            if response.status_code != 200:
-                msg = f"indexer.reindex() failed to get entity via entity-api for uuid: {uuid}"
-                logger.error(msg)
-                sys.exit(msg)
-            
-            entity = response.json()
+            # Retrieve the entity details
+            entity = get_entity(uuid)
             
             # Check if entity is empty
             if bool(entity):
@@ -286,7 +291,7 @@ class Indexer:
                     
                     self.update_index(entity)
                 else:
-                    url = self.entity_api_url + "/ancestors/" + uuid
+                    url = self.entity_api_url + "/ancestors/" + uuid + '?property=uuid'
                     ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
                     if ancestors_response.status_code != 200:
                         msg = f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}"
@@ -295,7 +300,7 @@ class Indexer:
                     
                     ancestors = ancestors_response.json()
 
-                    url = self.entity_api_url + "/descendants/" + uuid
+                    url = self.entity_api_url + "/descendants/" + uuid + '?property=uuid'
                     descendants_response = requests.get(url, headers = self.request_headers, verify = False)
                     if descendants_response.status_code != 200:
                         msg = f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}"
@@ -304,7 +309,7 @@ class Indexer:
                     
                     descendants = descendants_response.json()
 
-                    url = self.entity_api_url + "/previous_revisions/" + uuid
+                    url = self.entity_api_url + "/previous_revisions/" + uuid + '?property=uuid'
                     previous_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
                     if previous_revisions_response.status_code != 200:
                         msg = f"indexer.reindex() failed to get previous revisions via entity-api for uuid: {uuid}"
@@ -313,7 +318,7 @@ class Indexer:
                     
                     previous_revisions = previous_revisions_response.json()
 
-                    url = self.entity_api_url + "/next_revisions/" + uuid
+                    url = self.entity_api_url + "/next_revisions/" + uuid + '?property=uuid'
                     next_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
                     if next_revisions_response.status_code != 200:
                         msg = f"indexer.reindex() failed to get next revisions via entity-api for uuid: {uuid}"
@@ -322,10 +327,19 @@ class Indexer:
                     
                     next_revisions = next_revisions_response.json()
 
-                    # All nodes in the path including the entity itself
-                    nodes = [entity] + ancestors + descendants + previous_revisions + next_revisions
+ 
+                    # All uuids in the path excluding the entity itself
+                    uuids = ancestors + descendants + previous_revisions + next_revisions
 
-                    for node in nodes:
+                    # Reindex the entity itself separately
+                    logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
+                    self.update_index(entity)
+
+                    # Reindex all others
+                    for entity_uuid in uuids:
+                        # Retrieve the entity details
+                        node = get_entity(entity_uuid)
+
                         # hubmap_identifier renamed to submission_id
                         # display_doi renamed to hubmap_id
                         logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, submission_id: {node.get('submission_id', None)}, hubmap_id: {node.get('hubmap_id', None)}")
@@ -818,15 +832,8 @@ class Indexer:
         datasets = []
         if 'datasets' in collection_detail_dict:
             for dataset in collection_detail_dict['datasets']:
-                dataset_uuid = dataset['uuid']
-                url = self.entity_api_url + "/entities/" + dataset_uuid
-                response = requests.get(url, headers = self.request_headers, verify = False)
-                if response.status_code != 200:
-                    msg = f"indexer.add_datasets_to_collection() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for collection uuid: {collection_uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-
-                dataset = response.json()
+                # Retrieve the entity details
+                dataset = get_entity(dataset['uuid'])
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
@@ -846,28 +853,13 @@ class Indexer:
 
     def add_datasets_to_upload(self, upload):
         # First get the detail of this upload
-        upload_uuid = upload['uuid']
-        url = self.entity_api_url + "/entities/" + upload_uuid
-        response = requests.get(url, headers = self.request_headers, verify = False)
-        if response.status_code != 200:
-            msg = f"indexer.add_datasets_to_upload() failed to get upload detail via entity-api for upload uuid: {upload_uuid}"
-            logger.error(msg)
-            sys.exit(msg)
-
-        upload_detail_dict = response.json()
+        upload_detail_dict = get_entity(upload['uuid'])
 
         datasets = []
         if 'datasets' in upload_detail_dict:
             for dataset in upload_detail_dict['datasets']:
-                dataset_uuid = dataset['uuid']
-                url = self.entity_api_url + "/entities/" + dataset_uuid
-                response = requests.get(url, headers = self.request_headers, verify = False)
-                if response.status_code != 200:
-                    msg = f"indexer.add_datasets_to_upload() failed to get dataset via entity-api for dataset uuid: {dataset_uuid} for upload uuid: {upload_uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-
-                dataset = response.json()
+                # Retrieve the entity details
+                dataset = get_entity(dataset['uuid'])
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
@@ -883,6 +875,20 @@ class Indexer:
                 datasets.append(dataset_doc)
 
         upload['datasets'] = datasets
+
+
+    def get_entity(self, uuid):
+        url = self.entity_api_url + "/entities/" + uuid
+        response = requests.get(url, headers = self.request_headers, verify = False)
+
+        if response.status_code != 200:
+            msg = f"indexer.get_entity() failed to get entity via entity-api for uuid: {uuid}"
+            logger.error(msg)
+            sys.exit(msg)
+        
+        entity_dict = response.json()
+
+        return entity_dict
 
 
 ####################################################################################################
