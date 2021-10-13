@@ -119,7 +119,7 @@ class Indexer:
             response = requests.get(url, headers = self.request_headers, verify = False)
             
             if response.status_code != 200:
-                msg = "indexer.main() failed to get all the Donors via entity-api"
+                msg = "indexer.main() failed to get all the Donor uuids via entity-api"
                 logger.error(msg)
                 sys.exit(msg)
             
@@ -149,11 +149,11 @@ class Indexer:
         response = requests.get(url, headers = self.request_headers, verify = False)
 
         if response.status_code != 200:
-            msg = f"indexer.index_tree() failed to get descendants via entity-api for donor of uuid: {donor_uuid}"
+            msg = f"indexer.index_tree() failed to get descendant uuids via entity-api for donor of uuid: {donor_uuid}"
             logger.error(msg)
             sys.exit(msg)
         
-        descendants = response.json()
+        descendant_uuids = response.json()
 
         # Index the donor entity itself separately
         donor = self.get_entity(donor_uuid)
@@ -163,7 +163,7 @@ class Indexer:
         self.update_index(donor)
 
         # Index all the descendants of this donor
-        for descendant_uuid in descendants:
+        for descendant_uuid in descendant_uuids:
             # Retrieve the entity details
             node = self.get_entity(descendant_uuid)
 
@@ -291,58 +291,62 @@ class Indexer:
                     
                     self.update_index(entity)
                 else:
+                    ancestor_uuids = []
+                    descendant_uuids = []
+                    previous_revision_uuids = []
+                    next_revision_uuids = []
+
                     url = self.entity_api_url + "/ancestors/" + uuid + '?property=uuid'
-                    ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
-                    if ancestors_response.status_code != 200:
-                        msg = f"indexer.reindex() failed to get ancestors via entity-api for uuid: {uuid}"
+                    ancestor_uuids_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if ancestor_uuids_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get ancestor uuids via entity-api for target uuid: {uuid}"
                         logger.error(msg)
                         sys.exit(msg)
                     
-                    ancestors = ancestors_response.json()
+                    ancestor_uuids = ancestor_uuids_response.json()
 
                     url = self.entity_api_url + "/descendants/" + uuid + '?property=uuid'
-                    descendants_response = requests.get(url, headers = self.request_headers, verify = False)
-                    if descendants_response.status_code != 200:
-                        msg = f"indexer.reindex() failed to get descendants via entity-api for uuid: {uuid}"
+                    descendant_uuids_response = requests.get(url, headers = self.request_headers, verify = False)
+                    if descendant_uuids_response.status_code != 200:
+                        msg = f"indexer.reindex() failed to get descendant uuids via entity-api for target uuid: {uuid}"
                         logger.error()
                         sys.exit(msg)
                     
-                    descendants = descendants_response.json()
+                    descendant_uuids = descendant_uuids_response.json()
 
-                    url = self.entity_api_url + "/previous_revisions/" + uuid + '?property=uuid'
-                    previous_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
-                    if previous_revisions_response.status_code != 200:
-                        msg = f"indexer.reindex() failed to get previous revisions via entity-api for uuid: {uuid}"
-                        logger.error(msg)
-                        sys.exit(msg)
-                    
-                    previous_revisions = previous_revisions_response.json()
+                    # Only Dataset entities may have previous/next revisions
+                    if entity['entity_type'] == 'Dataset':
+                        url = self.entity_api_url + "/previous_revisions/" + uuid + '?property=uuid'
+                        previous_revision_uuids_response = requests.get(url, headers = self.request_headers, verify = False)
+                        if previous_revision_uuids_response.status_code != 200:
+                            msg = f"indexer.reindex() failed to get previous revision uuids via entity-api for target uuid: {uuid}"
+                            logger.error(msg)
+                            sys.exit(msg)
+                        
+                        previous_revision_uuids = previous_revision_uuids_response.json()
 
-                    url = self.entity_api_url + "/next_revisions/" + uuid + '?property=uuid'
-                    next_revisions_response = requests.get(url, headers = self.request_headers, verify = False)
-                    if next_revisions_response.status_code != 200:
-                        msg = f"indexer.reindex() failed to get next revisions via entity-api for uuid: {uuid}"
-                        logger.error(msg)
-                        sys.exit(msg)
-                    
-                    next_revisions = next_revisions_response.json()
+                        url = self.entity_api_url + "/next_revisions/" + uuid + '?property=uuid'
+                        next_revision_uuids_response = requests.get(url, headers = self.request_headers, verify = False)
+                        if next_revisions_response.status_code != 200:
+                            msg = f"indexer.reindex() failed to get next revision uuids via entity-api for target uuid: {uuid}"
+                            logger.error(msg)
+                            sys.exit(msg)
+                        
+                        next_revision_uuids = next_revision_uuids_response.json()
 
- 
                     # All uuids in the path excluding the entity itself
-                    uuids = ancestors + descendants + previous_revisions + next_revisions
+                    uuids = ancestor_uuids + descendant_uuids + previous_revision_uuids + next_revision_uuids
 
-                    # Reindex the entity itself separately
+                    # Reindex the entity itself
                     logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
                     self.update_index(entity)
 
-                    # Reindex all others
+                    # Reindex the rest of the entities in the list
                     for entity_uuid in uuids:
                         # Retrieve the entity details
                         node = self.get_entity(entity_uuid)
 
-                        # hubmap_identifier renamed to submission_id
-                        # display_doi renamed to hubmap_id
-                        logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, submission_id: {node.get('submission_id', None)}, hubmap_id: {node.get('hubmap_id', None)}")
+                        logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, uuid: {node.get('uuid', None)}")
                         
                         self.update_index(node)
                 
@@ -570,7 +574,6 @@ class Indexer:
                         if 'files' in ingest_metadata:
                             entity['files'] = ingest_metadata['files']
 
-
             self.entity_keys_rename(entity)
 
             # Is group_uuid always set?
@@ -698,7 +701,6 @@ class Indexer:
 
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
-
         properties_list = [
             'metadata', 
             'donor', 
@@ -784,7 +786,7 @@ class Indexer:
                         self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
         
         except Exception:
-            msg = f"Exception encountered during executing indexer.update_index() for uuid: {org_node['uuid']}"
+            msg = f"Exception encountered during executing indexer.update_index() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
