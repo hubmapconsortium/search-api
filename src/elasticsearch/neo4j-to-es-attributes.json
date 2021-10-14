@@ -143,6 +143,9 @@
     },
     "provider_info": {
       "es_name": "provider_info"
+    },
+    "dataset_info": {
+      "es_name": "dataset_info"
     }
   }
 }

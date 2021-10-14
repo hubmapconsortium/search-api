@@ -477,7 +477,14 @@ class Indexer:
     def delete(self, uuid):
         try:
             for index, _ in self.indices.items():
-                self.eswriter.delete_document(index, uuid)
+                # each index should have a public/private index
+                public_index = self.INDICES['indices'][index]['public']
+                self.eswriter.delete_document(public_index, uuid)
+
+                private_index = self.INDICES['indices'][index]['private']
+                if public_index != private_index:
+                    self.eswriter.delete_document(private_index, uuid)
+               
         except Exception:
             msg = "Exceptions during executing indexer.delete()"
             # Log the full stack trace, prepend a line with our message
