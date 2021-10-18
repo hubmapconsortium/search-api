@@ -342,7 +342,7 @@ class Indexer:
 
                         url = self.entity_api_url + "/next_revisions/" + uuid + '?property=uuid'
                         next_revision_uuids_response = requests.get(url, headers = self.request_headers, verify = False)
-                        if next_revisions_response.status_code != 200:
+                        if next_revision_uuids_response.status_code != 200:
                             msg = f"indexer.reindex() failed to get next revision uuids via entity-api for target uuid: {uuid}"
                             logger.error(msg)
                             sys.exit(msg)
