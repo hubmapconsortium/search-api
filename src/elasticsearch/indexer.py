@@ -78,13 +78,17 @@ class Indexer:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
             self.attr_map = json.load(json_file)
 
-    # preload all the transformers if the index has one
-    def init_transformer(self, index):
-        try:
-            xform_module = self.INDICES['indices'][index]['transform']['module']
-            m = importlib.import_module(xform_module)
-            self.TRANSFORMERS[index] = m
+        # Preload all the transformers
+        self.init_transformers()
 
+
+    # Preload all the transformers if the index has one
+    def init_transformers(self, index):
+        try:
+            for index in self.indices.keys():
+                xform_module = self.INDICES['indices'][index]['transform']['module']
+                m = importlib.import_module(xform_module)
+                self.TRANSFORMERS[index] = m
         except Exception as e:
             msg = f"Transformer missing or not specified {index}"
             logger.info(msg)
@@ -146,9 +150,6 @@ class Indexer:
             #for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
                 #configs = IndexConfig(*configs)
-
-                # pre load all the transformers if index has one
-                self.init_transformer(index)
 
                 # each index should have a public/private index
                 public_index = self.INDICES['indices'][index]['public']
