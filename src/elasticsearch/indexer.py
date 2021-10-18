@@ -83,7 +83,7 @@ class Indexer:
 
 
     # Preload all the transformers if the index has one
-    def init_transformers(self, index):
+    def init_transformers(self):
         try:
             for index in self.indices.keys():
                 xform_module = self.INDICES['indices'][index]['transform']['module']
