@@ -88,15 +88,12 @@ class Indexer:
                 xform_module = self.INDICES['indices'][index]['transform']['module']
                 m = importlib.import_module(xform_module)
                 self.TRANSFORMERS[index] = m
+
+            logger.debug("========Preloaded transformers===========")
+            logger.debug(self.TRANSFORMERS)
         except Exception as e:
             msg = f"Transformer missing or not specified {index}"
             logger.info(msg)
-
-    def get_transformer(self, index):
-        if self.TRANSFORMERS.get(index):
-            return self.TRANSFORMERS[index]
-        else:
-            return None
 
 
     def main(self):
@@ -785,8 +782,8 @@ class Indexer:
                     public_index = self.INDICES['indices'][index]['public']
                     private_index = self.INDICES['indices'][index]['private']
 
-                    # check to see if the index has a transformer
-                    transformer = self.get_transformer(index)
+                    # check to see if the index has a transformer, default to None if not found
+                    transformer = self.TRANSFORMERS.get(index, None)
 
                     if (self.entity_is_public(org_node)):
                         public_doc = self.generate_public_doc(node)
