@@ -108,23 +108,9 @@ class Indexer:
             DEFAULT_ELASTICSEARCH_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
             DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
-            # Settings and mappings definition for creating 
-            # the original indices (hm_consortium_entities and hm_public_entities)
-            #original_index_config = safe_load((Path(__file__).absolute().parent / 'search-default-config.yaml').read_text())
-                        #"mapping.total_fields.limit": 6000,
-
-            # Settings and mappings definition for creating the 
-            # portal indices (hm_consortium_portal and hm_public_portal) 
-            # is specified in the yaml config file
-            #portal_index_config = safe_load((Path(__file__).absolute().parent / 'addl_index_transformations/portal/config.yaml').read_text())
-            
-            IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-
             # Delete and recreate target indices
             #for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
-                #configs = IndexConfig(*configs)
-
                 # each index should have a public/private index
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
@@ -238,8 +224,6 @@ class Indexer:
     
         collections_list = response.json()
 
-        IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-
         # Write doc to indices
         for collection in collections_list:
             self.add_datasets_to_collection(collection)
@@ -250,8 +234,6 @@ class Indexer:
    
             # write doc into indices
             for index in self.indices.keys():
-                #configs = IndexConfig(*configs)
-
                 # each index should have a public index
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
