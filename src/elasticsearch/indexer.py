@@ -83,17 +83,17 @@ class Indexer:
 
     # Preload all the transformers if the index has one
     def init_transformers(self):
-        try:
-            for index in self.indices.keys():
+        for index in self.indices.keys():
+            try:
                 xform_module = self.INDICES['indices'][index]['transform']['module']
                 m = importlib.import_module(xform_module)
                 self.TRANSFORMERS[index] = m
+            except Exception as e:
+                msg = f"Transformer missing or not specified for index: {index}"
+                logger.info(msg)
 
-            logger.debug("========Preloaded transformers===========")
-            logger.debug(self.TRANSFORMERS)
-        except Exception as e:
-            msg = f"Transformer missing or not specified {index}"
-            logger.info(msg)
+        logger.debug("========Preloaded transformers===========")
+        logger.debug(self.TRANSFORMERS)
 
 
     def main(self):
