@@ -49,7 +49,7 @@ class Indexer:
     TRANSFORMERS = {}
 
     # Constructor method with instance variables to be passed in
-    def __init__(self, indices, portal_doc_type, app_client_id, app_client_secret, token):
+    def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
             self.indices = indices['indices']
             self.DEFAULT_INDEX_WITHOUT_PREFIX = indices['default_index']
@@ -59,7 +59,6 @@ class Indexer:
         except:
             raise ValueError("Invalid indices config")
 
-        self.portal_doc_type = portal_doc_type
         self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
 
         self.app_client_id = app_client_id
@@ -99,31 +98,6 @@ class Indexer:
         else:
             return None
 
-    # # Constructor method with instance variables to be passed in
-    # def __init__(self, indices, original_doc_type, portal_doc_type, elasticsearch_url, entity_api_url, app_client_id, app_client_secret, token):
-    #     try:
-    #         self.indices = ast.literal_eval(indices)
-    #     except:
-    #         raise ValueError("Invalid indices config")
-
-    #     self.original_doc_type = original_doc_type
-    #     self.portal_doc_type = portal_doc_type
-    #     self.elasticsearch_url = elasticsearch_url
-    #     self.app_client_id = app_client_id
-    #     self.app_client_secret = app_client_secret
-    #     self.token = token
-
-    #     auth_helper = self.init_auth_helper()
-    #     self.request_headers = self.create_request_headers_for_auth(token)
-
-    #     self.eswriter = ESWriter(elasticsearch_url)
-    #     self.entity_api_url = entity_api_url
-
-    #     # Add index_version by parsing the VERSION file
-    #     self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
-
-    #     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'neo4j-to-es-attributes.json'), 'r') as json_file:
-    #         self.attr_map = json.load(json_file)
 
     def main(self):
         try:
@@ -248,7 +222,7 @@ class Indexer:
         msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
         logger.info(msg)
         return msg
-        
+
     def index_public_collections(self, reindex = False):
         # The entity-api only returns public collections, for either 
         # - a valid token in HuBMAP-Read group, 
@@ -282,7 +256,7 @@ class Indexer:
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
                 
-
+                # Delete old doc for reindex
                 if reindex:
                     self.eswriter.delete_document(public_index, collection['uuid'])
                     self.eswriter.delete_document(private_index, collection['uuid'])
@@ -298,28 +272,7 @@ class Indexer:
 
                 self.eswriter.write_or_update_document(index_name=public_index, doc=json_data, uuid=collection['uuid'])
                 self.eswriter.write_or_update_document(index_name=private_index, doc=json_data, uuid=collection['uuid'])
-               
-
-                # if index == 'entities':
-                #     # Delete old doc for reindex
-                #     if reindex:
-                #         self.eswriter.delete_document(index, collection['uuid'])
-                         
-                #     # Add public collection doc to the original index
-                #     self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(collection), uuid=collection['uuid'])
-                # elif configs.doc_type == 'portal':
-                #     # Delete old doc for reindex
-                #     if reindex:
-                #         self.eswriter.delete_document(index, collection['uuid'])
-                         
-                #     # Add the tranformed doc to the portal index
-                #     transformed = json.dumps(transform(collection))
-                #     self.eswriter.write_or_update_document(index_name=index, doc=transformed, uuid=collection['uuid'])
-                # else:
-                #     msg = "indexer.index_public_collections() failed to add doc to indices due to invalid INDICES configuration"
-                #     logger.error(msg)
-                #     sys.exit(msg)
-
+ 
 
     # When indexing Uploads WILL NEVER BE PUBLIC
     def index_uploads(self, token):
@@ -879,59 +832,6 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    # def update_index(self, node):
-    #     try:
-    #         org_node = copy.deepcopy(node)
-
-    #         doc = self.generate_doc(node, 'json')
-
-    #         # Handle Upload differently by only updating it in the hm_consortium_entities index
-    #         if node['entity_type'] == 'Upload':
-    #             target_index = 'hm_consortium_entities'
-
-    #             # Delete old doc and write with new one
-    #             self.eswriter.delete_document(target_index, node['uuid'])
-    #             self.eswriter.write_or_update_document(index_name=target_index, doc=doc, uuid=node['uuid'])
-    #         else:
-    #             transformed = json.dumps(transform(json.loads(doc)))
-    #             if (transformed is None or transformed == 'null' or transformed == ""):
-    #                 logger.error(f"{node['uuid']} Document is empty")
-    #                 logger.error(f"Node: {node}")
-    #                 return
-
-    #             result = None
-    #             IndexConfig = collections.namedtuple('IndexConfig', ['access_level', 'doc_type'])
-    #             # delete entity from published indices
-    #             for index, configs in self.indices.items():
-    #                 configs = IndexConfig(*configs)
-    #                 if configs.access_level == self.ACCESS_LEVEL_PUBLIC:
-    #                     self.eswriter.delete_document(index, node['uuid'])
-
-    #             # write enitty into indices
-    #             for index, configs in self.indices.items():
-    #                 configs = IndexConfig(*configs)
-    #                 if (configs.access_level == self.ACCESS_LEVEL_PUBLIC and self.entity_is_public(org_node)):
-    #                     public_doc = self.generate_public_doc(node)
-    #                     public_transformed = transform(json.loads(public_doc))
-    #                     public_transformed_doc = json.dumps(public_transformed)
-                        
-    #                     target_doc = public_doc
-    #                     if configs.doc_type == self.portal_doc_type:
-    #                         target_doc = public_transformed_doc
-
-    #                     self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
-    #                 elif configs.access_level == self.ACCESS_LEVEL_CONSORTIUM:
-    #                     target_doc = doc
-    #                     if configs.doc_type == self.portal_doc_type:
-    #                         target_doc = transformed
-
-    #                     self.eswriter.write_or_update_document(index_name=index, doc=target_doc, uuid=node['uuid'])
-        
-    #     except Exception:
-    #         msg = f"Exception encountered during executing indexer.update_index() for uuid: {org_node['uuid']}"
-    #         # Log the full stack trace, prepend a line with our message
-    #         logger.exception(msg)
-
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
@@ -1070,7 +970,6 @@ if __name__ == "__main__":
     # Create an instance of the indexer
     indexer = Indexer(
         INDICES,
-        app.config['PORTAL_DOC_TYPE'],   # this is temp, should change this
         app.config['APP_CLIENT_ID'],
         app.config['APP_CLIENT_SECRET'],
         token

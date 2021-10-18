@@ -638,22 +638,9 @@ def get_uuids_from_es(index, es_url):
 
     return uuids
 
-# def init_indexer(token):
-#     return Indexer(
-#         app.config['INDICES'],
-#         app.config['ORIGINAL_DOC_TYPE'],  # NOT USED
-#         app.config['PORTAL_DOC_TYPE'],
-#         app.config['ELASTICSEARCH_URL'],   
-#         app.config['ENTITY_API_URL'],
-#         app.config['APP_CLIENT_ID'],
-#         app.config['APP_CLIENT_SECRET'],
-#         token
-#     )
-
 def init_indexer(token):
     return Indexer(
         INDICES,
-        app.config['PORTAL_DOC_TYPE'],   # this is temp, should change this
         app.config['APP_CLIENT_ID'],
         app.config['APP_CLIENT_SECRET'],
         token
