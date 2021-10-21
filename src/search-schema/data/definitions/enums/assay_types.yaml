@@ -35,13 +35,6 @@ cell-dive:
     primary: true
     contains-pii: false
 
-celldive_deepcell:
-    description: CellDIVE [DeepCell + SPRM]
-    alt-names: []
-    primary: false
-    contains-pii: false
-    vitessce-hints: ['codex', 'is_image', 'is_tiled']
-
 CODEX:
     description: CODEX
     alt-names: []
