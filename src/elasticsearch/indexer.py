@@ -307,7 +307,7 @@ class Indexer:
         self.entity_keys_rename(upload)
 
         # Add additional calculated fields if any applies to Upload
-        self.add_calculated_fields(collection)
+        self.add_calculated_fields(upload)
 
         # Only add doc to hm_consortium_entities index
         # Do NOT tranform the doc and add to other indices
