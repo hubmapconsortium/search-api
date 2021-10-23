@@ -179,25 +179,23 @@ class Indexer:
 
             logger.debug("Starting multi-thread reindexing ...")
 
-            # First, reindex each public collection separately in multi-treading mode
+            executors_list = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(self.index_public_collection, uuid) for uuid in public_collection_uuids]
-                for f in concurrent.futures.as_completed(results):
+                # Index each public collection in multi-treading mode
+                public_collection_executors = [executor.submit(indexer.index_public_collection, uuid) for uuid in public_collection_uuids]
+                
+                # Index uploads in multi-treading mode
+                # Only add uploads to the hm_consortium_entities index (private index of the default)
+                upload_executors = [executor.submit(indexer.index_upload, uuid) for uuid in upload_uuids]
+                
+                # Index each donor and its descendants in the tree in multi-treading mode
+                donor_executors = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids]
+
+                executors_list = public_collection_executors + upload_executors + donor_executors
+                
+                for f in concurrent.futures.as_completed(executors_list):
                     logger.debug(f.result())
 
-            # Next, reindex uploads separately in multi-treading mode
-            # Only add uploads to the hm_consortium_entities index (private index of the default)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(self.index_upload, uuid) for uuid in upload_uuids]
-                for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
-
-            # Then index each donor and its descendants in the tree in multi-treading mode
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(self.index_tree, donor_uuid) for donor_uuid in donor_uuids]
-                for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
-            
             #for debugging: comment out the Multi-thread above and comment in Signle-thread below
             #Single-thread
             #for donor in donors:
