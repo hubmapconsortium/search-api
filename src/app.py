@@ -695,23 +695,21 @@ def reindex_all_uuids(indexer, token):
 
             logger.debug("Starting multi-thread reindexing ...")
 
-            # First, reindex each public collection separately in multi-treading mode
+            executors_list = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.index_public_collection, uuid, True) for uuid in public_collection_uuids_list]
-                for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
+                # Reindex each public collection separately in multi-treading mode
+                reindex_public_collection_executors = [executor.submit(indexer.index_public_collection, uuid, reindex = True) for uuid in public_collection_uuids_list]
+                
+                # Reindex uploads separately in multi-treading mode
+                # Only add uploads to the hm_consortium_entities index (private index of the default)
+                reindex_upload_executors = [executor.submit(indexer.index_upload, uuid, reindex = True) for uuid in upload_uuids_list]
+                
+                # Reindex each donor and its descendants in the tree in multi-treading mode
+                reindex_donor_executors = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
 
-            # Next, reindex uploads separately in multi-treading mode
-            # Only add uploads to the hm_consortium_entities index (private index of the default)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.index_upload, uuid, True) for uuid in upload_uuids_list]
-                for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
-
-            # Then reindex each donor and its descendants in the tree in multi-treading mode
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
-                for f in concurrent.futures.as_completed(results):
+                executors_list = reindex_public_collection_executors + reindex_upload_executors + reindex_donor_executors
+                
+                for f in concurrent.futures.as_completed(executors_list):
                     logger.debug(f.result())
 
             end = time.time()
