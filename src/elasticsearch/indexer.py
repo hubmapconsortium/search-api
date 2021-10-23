@@ -138,13 +138,33 @@ class Indexer:
                 print('*********************************************')
                 self.eswriter.create_index(private_index, index_mapping_settings)
 
-            # First, index public collections separately
-            self.index_public_collections()
+            # Get a list of public Collection uuids
+            url = self.entity_api_url + "/collections?property=uuid"
+            response = requests.get(url, headers = self.request_headers, verify = False)
+            
+            if response.status_code != 200:
+                msg = "indexer.main() failed to get all the public Collection uuids via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
 
-            # Next, index uploads separately
-            self.index_uploads(self.token)
+            public_collection_uuids = response.json()
 
-            # Then, get a list of donor dictionaries and index the tree from the root node - donor
+            logger.info(f"Public Collection TOTAL: {len(public_collection_uuids)}")
+
+            # Get a list of Upload uuids
+            url = self.entity_api_url + "/upload/entities?property=uuid"
+            response = requests.get(url, headers = self.request_headers, verify = False)
+            
+            if response.status_code != 200:
+                msg = "indexer.main() failed to get all the Upload uuids via entity-api"
+                logger.error(msg)
+                sys.exit(msg)
+
+            upload_uuids = response.json()
+
+            logger.info(f"Upload TOTAL: {len(upload_uuids)}")
+
+            # Get a list of Donor uuids
             url = self.entity_api_url + "/donor/entities?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
             
@@ -154,9 +174,25 @@ class Indexer:
                 sys.exit(msg)
 
             donor_uuids = response.json()
+
             logger.info(f"Donor TOTAL: {len(donor_uuids)}")
 
-            # Multi-thread
+            logger.debug("Starting multi-thread reindexing ...")
+
+            # First, reindex each public collection separately in multi-treading mode
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                results = [executor.submit(self.index_public_collection, uuid) for uuid in public_collection_uuids]
+                for f in concurrent.futures.as_completed(results):
+                    logger.debug(f.result())
+
+            # Next, reindex uploads separately in multi-treading mode
+            # Only add uploads to the hm_consortium_entities index (private index of the default)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                results = [executor.submit(self.index_upload, uuid) for uuid in upload_uuids]
+                for f in concurrent.futures.as_completed(results):
+                    logger.debug(f.result())
+
+            # Then index each donor and its descendants in the tree in multi-treading mode
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 results = [executor.submit(self.index_tree, donor_uuid) for donor_uuid in donor_uuids]
                 for f in concurrent.futures.as_completed(results):
@@ -189,7 +225,7 @@ class Indexer:
         # Index the donor entity itself separately
         donor = self.get_entity(donor_uuid)
 
-        logger.info(f"reindex() for uuid: {donor_uuid}, entity_type: {donor['entity_type']}")
+        logger.info(f"indexer.index_tree() for uuid: {donor_uuid}, entity_type: {donor['entity_type']}")
 
         self.update_index(donor)
 
@@ -206,74 +242,76 @@ class Indexer:
         logger.info(msg)
         return msg
 
-    def index_public_collections(self, reindex = False):
-        # The entity-api only returns public collections, for either 
-        # - a valid token in HuBMAP-Read group, 
-        # - a valid token with no HuBMAP-Read group or 
+    def index_public_collection(self, uuid, reindex = False):
+        logger.debug(f"Reindex public Collection with uuid: {uuid}")
+
+        # The entity-api returns public collection with a list of connected public/published datasets, for either 
+        # - a valid token but not in HuBMAP-Read group or 
         # - no token at all
-        url = self.entity_api_url + "/collections"
+        # Here we do NOT send over the token
+        url = self.entity_api_url + "/collections/" + uuid
         response = requests.get(url, verify = False)
 
         if response.status_code != 200:
-            msg = "indexer.index_public_collections() failed to get public collections via entity-api"
+            msg = "indexer.index_public_collection() failed to get public collection of uuid: {uuid} via entity-api"
             logger.error(msg)
             sys.exit(msg)
     
-        collections_list = response.json()
+        collection = response.json()
 
-        # Write doc to indices
-        for collection in collections_list:
-            self.add_datasets_to_collection(collection)
-            self.entity_keys_rename(collection)
+        self.add_datasets_to_collection(collection)
+        self.entity_keys_rename(collection)
 
-            # Add additional calculated fields
-            self.add_calculated_fields(collection)
-   
-            # write doc into indices
-            for index in self.indices.keys():
-                # each index should have a public index
-                public_index = self.INDICES['indices'][index]['public']
-                private_index = self.INDICES['indices'][index]['private']
-                
-                # Delete old doc for reindex
-                if reindex:
-                    self.eswriter.delete_document(public_index, collection['uuid'])
-                    self.eswriter.delete_document(private_index, collection['uuid'])
+        # Add additional calculated fields if any applies to Collection
+        self.add_calculated_fields(collection)
 
-                # Add the tranformed doc to the portal index
-                json_data = ""
+        # write doc into indices
+        for index in self.indices.keys():
+            # each index should have a public index
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+            
+            # Delete old doc for reindex
+            if reindex:
+                self.eswriter.delete_document(public_index, uuid)
+                self.eswriter.delete_document(private_index, uuid)
 
-                # if the index has a transformer use that else do a now load
-                if self.TRANSFORMERS.get(index):
-                    json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
-                else:
-                    json_data = json.dumps(collection)
+            # Add the tranformed doc to the portal index
+            json_data = ""
 
-                self.eswriter.write_or_update_document(index_name=public_index, doc=json_data, uuid=collection['uuid'])
-                self.eswriter.write_or_update_document(index_name=private_index, doc=json_data, uuid=collection['uuid'])
- 
+            # if the index has a transformer use that else do a now load
+            if self.TRANSFORMERS.get(index):
+                json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
+            else:
+                json_data = json.dumps(collection)
 
-    # When indexing Uploads WILL NEVER BE PUBLIC
-    def index_uploads(self, token):
-        url = self.entity_api_url + "/upload/entities?property=uuid"
+            self.eswriter.write_or_update_document(index_name=public_index, doc=json_data, uuid=uuid)
+            self.eswriter.write_or_update_document(index_name=private_index, doc=json_data, uuid=uuid)
 
-        # Only add uploads to the hm_consortium_entities index (original)
-        index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
-        response = requests.get(url, headers = self.request_headers, verify = False)
-        
-        upload_uuids_list = response.json()
+    # When indexing, Upload WILL NEVER BE PUBLIC
+    def index_upload(self, uuid, reindex = False):
+        logger.debug(f"Reindex Upload with uuid: {uuid}")
 
-        for upload_uuid in upload_uuids_list:
-            # Retrieve the upload entity details
-            upload = self.get_entity(upload_uuid)
+        # Only add uploads to the hm_consortium_entities index (private index of the default)
+        default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
-            self.add_datasets_to_upload(upload)
-            self.entity_keys_rename(upload)
+        # Delete old doc for reindex
+        if reindex:
+            self.eswriter.delete_document(default_private_index, uuid)
 
-            # Add doc to hm_consortium_entities index
-            # Do NOT tranform the doc and add to hm_consortium_portal index
-            self.eswriter.write_or_update_document(index_name=index, doc=json.dumps(upload), uuid=upload_uuid)
+        # Retrieve the upload entity details
+        upload = self.get_entity(uuid)
+
+        self.add_datasets_to_upload(upload)
+        self.entity_keys_rename(upload)
+
+        # Add additional calculated fields if any applies to Upload
+        self.add_calculated_fields(collection)
+
+        # Only add doc to hm_consortium_entities index
+        # Do NOT tranform the doc and add to other indices
+        self.eswriter.write_or_update_document(index_name=default_private_index, doc=json.dumps(upload), uuid=uuid)
 
 
     # These calculated fields are not stored in neo4j but will be generated
@@ -287,8 +325,6 @@ class Indexer:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
 
-    # By design, reindex() doesn't work on Collection reindex
-    # Use index_public_collections(reindex = True) for reindexing Collection
     def reindex(self, uuid):
         try:
             # Retrieve the entity details
@@ -296,12 +332,12 @@ class Indexer:
             
             # Check if entity is empty
             if bool(entity):
-                logger.info(f"reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
+                logger.info(f"Executing reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
-                if entity['entity_type'] == 'Upload':
-                    logger.debug(f"reindex Upload with uuid: {uuid}")
-                    
-                    self.update_index(entity)
+                if entity['entity_type'] == 'Collection':
+                    self.index_public_collection(entity, reindex = True)
+                elif entity['entity_type'] == 'Upload':
+                    self.index_upload(entity, reindex = True)
                 else:
                     ancestor_uuids = []
                     descendant_uuids = []
@@ -840,21 +876,11 @@ class Indexer:
         
         return is_public
 
+
     def add_datasets_to_collection(self, collection):
-        # First get the detail of this collection
-        collection_uuid = collection['uuid']
-        url = self.entity_api_url + "/collections/" + collection_uuid
-        response = requests.get(url, headers = self.request_headers, verify = False)
-        if response.status_code != 200:
-            msg = f"indexer.add_datasets_to_collection() failed to get collection detail via entity-api for collection uuid: {collection_uuid}"
-            logger.error(msg)
-            sys.exit(msg)
-
-        collection_detail_dict = response.json()
-
         datasets = []
-        if 'datasets' in collection_detail_dict:
-            for dataset in collection_detail_dict['datasets']:
+        if 'datasets' in collection:
+            for dataset in collection['datasets']:
                 # Retrieve the entity details
                 dataset = self.get_entity(dataset['uuid'])
 
@@ -873,14 +899,11 @@ class Indexer:
 
         collection['datasets'] = datasets
     
-
+    # Currently the handling is same as add_datasets_to_collection()
     def add_datasets_to_upload(self, upload):
-        # First get the detail of this upload
-        upload_detail_dict = self.get_entity(upload['uuid'])
-
         datasets = []
-        if 'datasets' in upload_detail_dict:
-            for dataset in upload_detail_dict['datasets']:
+        if 'datasets' in upload:
+            for dataset in upload['datasets']:
                 # Retrieve the entity details
                 dataset = self.get_entity(dataset['uuid'])
 
