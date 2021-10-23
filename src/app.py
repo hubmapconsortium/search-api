@@ -697,14 +697,14 @@ def reindex_all_uuids(indexer, token):
 
             # First, reindex each public collection separately in multi-treading mode
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.index_public_collection, uuid, reindex = True) for uuid in public_collection_uuids_list]
+                results = [executor.submit(indexer.index_public_collection, uuid, True) for uuid in public_collection_uuids_list]
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
 
             # Next, reindex uploads separately in multi-treading mode
             # Only add uploads to the hm_consortium_entities index (private index of the default)
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.index_upload, uuid, reindex = True) for uuid in upload_uuids_list]
+                results = [executor.submit(indexer.index_upload, uuid, True) for uuid in upload_uuids_list]
                 for f in concurrent.futures.as_completed(results):
                     logger.debug(f.result())
 
