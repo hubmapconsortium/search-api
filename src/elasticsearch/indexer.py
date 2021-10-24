@@ -504,14 +504,22 @@ class Indexer:
                 immediate_ancestors = []
                 immediate_descendants = []
 
-                url = self.entity_api_url + "/ancestors/" + uuid
-                ancestors_response = requests.get(url, headers = self.request_headers, verify = False)
-                if ancestors_response.status_code != 200:
-                    msg = f"indexer.generate_doc() failed to get ancestors via entity-api for uuid: {uuid}"
+                # Do not call /ancestors/<id> directly to avoid performance/timeout issue
+                url = self.entity_api_url + "/ancestors/" + uuid + "?property=uuid"
+                ancestor_ids_response = requests.get(url, headers = self.request_headers, verify = False)
+                if ancestor_ids_response.status_code != 200:
+                    msg = f"indexer.generate_doc() failed to get ancestor uuids via entity-api for target uuid: {uuid}"
                     logger.error(msg)
                     sys.exit(msg)
 
-                ancestors = ancestors_response.json()
+                ancestor_ids = ancestor_ids_response.json()
+
+                for ancestor_uuid in ancestor_ids:
+                    # Retrieve the entity details
+                    ancestor_dict = self.get_entity(ancestor_uuid)
+
+                    # Add to the list
+                    ancestors.append(ancestor_dict)
 
                 # Find the Donor?
                 donor = None
@@ -520,33 +528,23 @@ class Indexer:
                         donor = copy.copy(a)
                         break
 
-                url = self.entity_api_url + "/ancestors/" + uuid + "?property=uuid"
-                ancestor_ids_response = requests.get(url, headers = self.request_headers, verify = False)
-                if ancestor_ids_response.status_code != 200:
-                    msg = f"indexer.generate_doc() failed to get ancestors ids list via entity-api for uuid: {uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-
-                ancestor_ids = ancestor_ids_response.json()
-
-                url = self.entity_api_url + "/descendants/" + uuid
-                descendants_response = requests.get(url, headers = self.request_headers, verify = False)
-                if descendants_response.status_code != 200:
-                    msg = f"indexer.generate_doc() failed to get descendants via entity-api for uuid: {uuid}"
-                    logger.error(msg)
-                    sys.exit(msg)
-
-                descendants = descendants_response.json()
-
                 url = self.entity_api_url + "/descendants/" + uuid + "?property=uuid"
                 descendant_ids_response = requests.get(url, headers = self.request_headers, verify = False)
                 if descendant_ids_response.status_code != 200:
-                    msg = f"indexer.generate_doc() failed to get descendants ids list via entity-api for uuid: {uuid}"
+                    msg = f"indexer.generate_doc() failed to get descendant uuids via entity-api for target uuid: {uuid}"
                     logger.error(msg)
                     sys.exit(msg)
 
                 descendant_ids = descendant_ids_response.json()
 
+                for descendant_uuid in descendant_ids:
+                    # Retrieve the entity details
+                    descendant_dict = self.get_entity(descendant_uuid)
+
+                    # Add to the list
+                    descendants.append(descendant_dict)
+
+                # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
                 url = self.entity_api_url + "/parents/" + uuid
                 parents_response = requests.get(url, headers = self.request_headers, verify = False)
                 if parents_response.status_code != 200:
