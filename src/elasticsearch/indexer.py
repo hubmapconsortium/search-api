@@ -179,27 +179,22 @@ class Indexer:
 
             logger.debug("Starting multi-thread reindexing ...")
 
-            executors_list = []
+            # Iintial index in multi-treading mode for:
+            # - each public collection
+            # - each upload, only add to the hm_consortium_entities index (private index of the default)
+            # - each donor and its descendants in the tree
+            futures_list = []
+            results = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Index each public collection in multi-treading mode
-                public_collection_executors = [executor.submit(indexer.index_public_collection, uuid) for uuid in public_collection_uuids]
-                
-                # Index uploads in multi-treading mode
-                # Only add uploads to the hm_consortium_entities index (private index of the default)
-                upload_executors = [executor.submit(indexer.index_upload, uuid) for uuid in upload_uuids]
-                
-                # Index each donor and its descendants in the tree in multi-treading mode
-                donor_executors = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids]
+                public_collection_futures_list = [executor.submit(indexer.index_public_collection, uuid) for uuid in public_collection_uuids]
+                upload_futures_list = [executor.submit(indexer.index_upload, uuid) for uuid in upload_uuids]
+                donor_futures_list = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids]
 
-                executors_list = public_collection_executors + upload_executors + donor_executors
+                # Append the above three lists into one
+                futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
                 
-                for f in concurrent.futures.as_completed(executors_list):
+                for f in concurrent.futures.as_completed(futures_list):
                     logger.debug(f.result())
-
-            #for debugging: comment out the Multi-thread above and comment in Signle-thread below
-            #Single-thread
-            #for donor in donors:
-            #    self.index_tree(donor)
         except Exception:
             msg = "Exception encountered during executing indexer.main()"
             # Log the full stack trace, prepend a line with our message
@@ -230,11 +225,11 @@ class Indexer:
         # Index all the descendants of this donor
         for descendant_uuid in descendant_uuids:
             # Retrieve the entity details
-            node = self.get_entity(descendant_uuid)
+            descendant = self.get_entity(descendant_uuid)
 
-            # hubamp_identifier renamed to submission_id 
-            # disploy_doi renamed to hubmap_id
-            logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')} submission_id: {node.get('submission_id', None)} hubmap_id: {node.get('hubmap_id', None)}")
+            logger.info(f"indexer.index_tree() for donor descendant uuid: {descendant_uuid}, entity_type: {descendant['entity_type']}")
+
+            self.update_index(descendant)
 
         msg = f"indexer.index_tree() finished executing for donor of uuid: {donor_uuid}"
         logger.info(msg)

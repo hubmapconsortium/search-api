@@ -695,21 +695,21 @@ def reindex_all_uuids(indexer, token):
 
             logger.debug("Starting multi-thread reindexing ...")
 
-            executors_list = []
+            # Reindex in multi-treading mode for:
+            # - each public collection
+            # - each upload, only add to the hm_consortium_entities index (private index of the default)
+            # - each donor and its descendants in the tree
+            futures_list = []
+            results = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Reindex each public collection in multi-treading mode
-                public_collection_executors = [executor.submit(indexer.index_public_collection, uuid, reindex = True) for uuid in public_collection_uuids_list]
-                
-                # Reindex uploads in multi-treading mode
-                # Only add uploads to the hm_consortium_entities index (private index of the default)
-                upload_executors = [executor.submit(indexer.index_upload, uuid, reindex = True) for uuid in upload_uuids_list]
-                
-                # Reindex each donor and its descendants in the tree in multi-treading mode
-                donor_executors = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
+                public_collection_futures_list = [executor.submit(indexer.index_public_collection, uuid, reindex = True) for uuid in public_collection_uuids_list]
+                upload_futures_list = [executor.submit(indexer.index_upload, uuid, reindex = True) for uuid in upload_uuids_list]
+                donor_futures_list = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
 
-                executors_list = public_collection_executors + upload_executors + donor_executors
+                # Append the above three lists into one
+                futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
                 
-                for f in concurrent.futures.as_completed(executors_list):
+                for f in concurrent.futures.as_completed(futures_list):
                     logger.debug(f.result())
 
             end = time.time()
