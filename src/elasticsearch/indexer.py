@@ -328,9 +328,9 @@ class Indexer:
                 logger.info(f"Executing reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
 
                 if entity['entity_type'] == 'Collection':
-                    self.index_public_collection(entity, reindex = True)
+                    self.index_public_collection(uuid, reindex = True)
                 elif entity['entity_type'] == 'Upload':
-                    self.index_upload(entity, reindex = True)
+                    self.index_upload(uuid, reindex = True)
                 else:
                     ancestor_uuids = []
                     descendant_uuids = []
