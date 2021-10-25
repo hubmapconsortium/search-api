@@ -42,11 +42,6 @@ logger.debug(INDICES)
 DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
 DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
-#app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
-#app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
-
-
-
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
 

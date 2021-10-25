@@ -56,7 +56,7 @@ class Indexer:
             self.INDICES = indices
             logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
             logger.debug(self.INDICES)
-        except:
+        except Exception:
             raise ValueError("Invalid indices config")
 
         self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
@@ -242,16 +242,16 @@ class Indexer:
         # - a valid token but not in HuBMAP-Read group or 
         # - no token at all
         # Here we do NOT send over the token
-        url = self.entity_api_url + "/collections/" + uuid
-        response = requests.get(url, verify = False)
+        try:
+            collection = self.get_public_collection(uuid)
+        except requests.exceptions.RequestException as e:
+            logger.exception(e)
 
-        if response.status_code != 200:
+            # Stop running
             msg = "indexer.index_public_collection() failed to get public collection of uuid: {uuid} via entity-api"
             logger.error(msg)
             sys.exit(msg)
-    
-        collection = response.json()
-
+  
         self.add_datasets_to_collection(collection)
         self.entity_keys_rename(collection)
 
@@ -919,13 +919,41 @@ class Indexer:
         response = requests.get(url, headers = self.request_headers, verify = False)
 
         if response.status_code != 200:
-            msg = f"indexer.get_entity() failed to get entity via entity-api for uuid: {uuid}"
-            logger.error(msg)
-            sys.exit(msg)
-        
-        entity_dict = response.json()
+            # See if this uuid is a public Collection instead before exiting
+            try:
+                entity_dict = self.get_public_collection(uuid)
+            except requests.exceptions.RequestException as e:
+                logger.exception(e)
+                
+                # Stop running
+                msg = f"indexer.get_entity() failed to get entity via entity-api for uuid: {uuid}"
+                logger.error(msg)
+                sys.exit(msg)
+        else:
+            entity_dict = response.json()
 
         return entity_dict
+
+
+    def get_public_collection(self, uuid):
+        # The entity-api returns public collection with a list of connected public/published datasets, for either 
+        # - a valid token but not in HuBMAP-Read group or 
+        # - no token at all
+        # Here we do NOT send over the token
+        url = self.entity_api_url + "/collections/" + uuid
+        response = requests.get(url, verify = False)
+
+        if response.status_code != 200:
+            msg = "indexer.get_collection() failed to get public collection of uuid: {uuid} via entity-api"
+            logger.exception(msg)
+
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            raise requests.exceptions.RequestException(response.text)
+    
+        collection_dict = response.json()
+
+        return collection_dict
 
 
 ####################################################################################################
