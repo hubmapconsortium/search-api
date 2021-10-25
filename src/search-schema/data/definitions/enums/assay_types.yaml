@@ -168,13 +168,18 @@ MALDI-IMS_pyramid:
     contains-pii: false
     vitessce-hints: ['pyramid']
 
+#
+# The following block of definitions is in the process of being replaced by the
+# 'MALDI-IMS' and 'MALDI-IMS_pyramid' blocks above, but the original version is
+# being preserved here in comments pending full testing of the replacement.
+#
 # MALDI-IMS-neg:
 #     description: MALDI IMS negative
 #     alt-names: []
 #     primary: true
 #     contains-pii: false
 #     vitessce-hints: []
-
+#
 # MALDI-IMS-neg_pyramid:
 #     description: MALDI IMS negative [Image Pyramid]
 #     alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
@@ -182,14 +187,14 @@ MALDI-IMS_pyramid:
 #     vis-only: true
 #     contains-pii: false
 #     vitessce-hints: ['pyramid']
-
+#
 # MALDI-IMS-pos:
 #     description: MALDI IMS positive
 #     alt-names: []
 #     primary: true
 #     contains-pii: false
 #     vitessce-hints: []
-
+#
 # MALDI-IMS-pos_pyramid:
 #     description: MALDI IMS positive [Image Pyramid]
 #     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
@@ -197,6 +202,9 @@ MALDI-IMS_pyramid:
 #     vis-only: true
 #     contains-pii: false
 #     vitessce-hints: ['pyramid']
+#
+# End block of earlier MALDI-IMS code being preserved during testing
+#
 
 MxIF:
     description: Multiplexed IF Microscopy
