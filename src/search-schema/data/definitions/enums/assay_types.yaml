@@ -113,6 +113,49 @@ IMC3D_pyramid:
     contains-pii: false
     vitessce-hints: ['pyramid']
 
+LC-MS:
+  description: LC-MS
+  alt-names: []
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+MS:
+  description: MS
+  alt-names: []
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+LC-MS_bottom_up:
+  description: LC-MS Bottom-Up
+  alt-names: ['LC-MS Bottom-Up']
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+MS_bottom_up:
+  description: MS Bottom-Up
+  alt-names: ['MS Bottom-Up']
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+LC-MS_top_down:
+  description: LC-MS Top-Down
+  alt-names: ['LC-MS Top-Down']
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+MS_top_down:
+  description: MS Top-Down
+  alt-names: ['MS Top-Down']
+  primary: true
+  vis-only: false
+  contains-pii: false
+
+
 lc-ms_label-free:
     description: Label-free LC-MS
     alt-names: []
@@ -139,13 +182,6 @@ lc-ms-ms_labeled:
     alt-names: []
     primary: true
     vitessce-hints: []
-
-LC-MS-untargeted:
-    description: Untargeted LC-MS
-    alt-names: []
-    primary: true
-    vitessce-hints: []
-    contains-pii: false
 
 Lightsheet:
     description: Lightsheet Microscopy
@@ -412,19 +448,35 @@ salmon_rnaseq_slideseq:
     contains-pii: false
     vitessce-hints: ['is_sc', 'rna']
 
-Targeted-Shotgun-LC-MS:
-    description: Targeted Shotgun / Flow-injection LC-MS
-    alt-names: []
-    primary: true
-    vitessce-hints: []
-    contains-pii: false
-
-TMT-LC-MS:
-    description: TMT LC-MS
-    alt-names: []
-    primary: true
-    vitessce-hints: []
-    contains-pii: false
+#
+# This block of assay type information is being invalidated and replaced
+# with LC-MS and MS with and without Bottom-Up and Top-Down variants.
+# Preserved here temporarily until the necessary database edits are proven
+# to work.
+#
+#Targeted-Shotgun-LC-MS:
+#    description: Targeted Shotgun / Flow-injection LC-MS
+#    alt-names: []
+#    primary: true
+#    vitessce-hints: []
+#    contains-pii: false
+#
+#LC-MS-untargeted:
+#    description: Untargeted LC-MS
+#    alt-names: []
+#    primary: true
+#    vitessce-hints: []
+#    contains-pii: false
+#
+#TMT-LC-MS:
+#    description: TMT LC-MS
+#    alt-names: []
+#    primary: true
+#    vitessce-hints: []
+#    contains-pii: false
+#
+# End of block of deletions dealing with MS and LC-MS variants
+#
 
 WGS:
     description: Whole Genome Sequencing
