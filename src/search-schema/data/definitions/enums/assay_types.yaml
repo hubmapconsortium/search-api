@@ -15,7 +15,7 @@ AF_pyramid:
 
 ATACseq-bulk:
     description: Bulk ATAC-seq
-    alt-names: []
+    alt-names: ['bulkATACseq']
     primary: true
     contains-pii: true
     vitessce-hints: []
@@ -73,14 +73,14 @@ image_pyramid:
     
 IMC2D:
     description: Imaging Mass Cytometry (2D)
-    alt-names: ['IMC', '2D-IMC']
+    alt-names: ['IMC', '2D-IMC', 'Imaging Mass Cytometry']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
 IMC3D:
     description: Imaging Mass Cytometry (3D)
-    alt-names: ['3D-IMC']
+    alt-names: ['3D-IMC', '3D Imaging Mass Cytometry']
     primary: true
     contains-pii: false
     vitessce-hints: []
@@ -129,7 +129,7 @@ lc-ms_labeled:
 
 lc-ms-ms_label-free:
     description: Label-free LC-MS/MS
-    alt-names: []
+    alt-names: ['LC-MS/MS (label-free proteomics)']
     primary: true
     vitessce-hints: []
     contains-pii: false
@@ -149,40 +149,69 @@ LC-MS-untargeted:
 
 Lightsheet:
     description: Lightsheet Microscopy
-    alt-names: []
+    alt-names: ['Light Sheet']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
-MALDI-IMS-neg:
-    description: MALDI IMS negative
-    alt-names: []
+MALDI-IMS:
+    description: MALDI IMS
+    alt-names: ['MALDI-IMS-neg', 'MALDI-IMS-pos']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
-MALDI-IMS-neg_pyramid:
-    description: MALDI IMS negative [Image Pyramid]
-    alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
+MALDI-IMS_pyramid:
+    description: MALDI IMS [Image Pyramid]
+    alt-names:
+      - ["MALDI-IMS-neg", "Image Pyramid"]
+      - ["MALDI-IMS-neg", "image_pyramid"]
+      - ["MALDI-IMS-pos", "Image Pyramid"]
+      - ["MALDI-IMS-pos", "image_pyramid"]
+      - MALDI-IMS-neg_pyramid
+      - MALDI-IMS-pos_pyramid
     primary: false
     vis-only: true
     contains-pii: false
     vitessce-hints: ['pyramid']
 
-MALDI-IMS-pos:
-    description: MALDI IMS positive
-    alt-names: []
-    primary: true
-    contains-pii: false
-    vitessce-hints: []
-
-MALDI-IMS-pos_pyramid:
-    description: MALDI IMS positive [Image Pyramid]
-    alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
-    primary: false
-    vis-only: true
-    contains-pii: false
-    vitessce-hints: ['pyramid']
+#
+# The following block of definitions is in the process of being replaced by the
+# 'MALDI-IMS' and 'MALDI-IMS_pyramid' blocks above, but the original version is
+# being preserved here in comments pending full testing of the replacement.
+#
+# MALDI-IMS-neg:
+#     description: MALDI IMS negative
+#     alt-names: []
+#     primary: true
+#     contains-pii: false
+#     vitessce-hints: []
+#
+# MALDI-IMS-neg_pyramid:
+#     description: MALDI IMS negative [Image Pyramid]
+#     alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
+#     primary: false
+#     vis-only: true
+#     contains-pii: false
+#     vitessce-hints: ['pyramid']
+#
+# MALDI-IMS-pos:
+#     description: MALDI IMS positive
+#     alt-names: []
+#     primary: true
+#     contains-pii: false
+#     vitessce-hints: []
+#
+# MALDI-IMS-pos_pyramid:
+#     description: MALDI IMS positive [Image Pyramid]
+#     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
+#     primary: false
+#     vis-only: true
+#     contains-pii: false
+#     vitessce-hints: ['pyramid']
+#
+# End block of earlier MALDI-IMS code being preserved during testing
+#
 
 MxIF:
     description: Multiplexed IF Microscopy
@@ -201,7 +230,7 @@ MxIF_pyramid:
 
 PAS:
     description: PAS Stained Microscopy
-    alt-names: []
+    alt-names: ['PAS microscopy']
     primary: true
     vitessce-hints: []
     contains-pii: false
@@ -215,9 +244,8 @@ PAS_pyramid:
     vitessce-hints: ['pyramid']
 
 bulk-RNA:
-#RNAseq-bulk:
     description: Bulk RNA-seq
-#    alt-names: [bulk-RNA]
+    alt-names: ['bulk RNA']
     alt-names: []
     primary: true
     contains-pii: true
@@ -276,7 +304,7 @@ sc_atac_seq_snare:
 
 scRNA-Seq-10x:
     description: scRNA-seq (10x Genomics)
-    alt-names: []
+    alt-names: ['scRNA-Seq(10xGenomics)']
     primary: true
     contains-pii: true
     vitessce-hints: []
@@ -320,7 +348,7 @@ salmon_rnaseq_sciseq:
 
 seqFish:
     description: seqFISH
-    alt-names: []
+    alt-names: ['seqFISH']
     primary: true
     vitessce-hints: []
     contains-pii: false
