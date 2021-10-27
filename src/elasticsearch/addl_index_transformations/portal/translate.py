@@ -25,6 +25,7 @@ def translate(doc):
     _translate_data_type(doc)
     _translate_timestamp(doc)
     _translate_access_level(doc)
+    _translate_external_consortium(doc)
 
 
 # Utils:
@@ -93,6 +94,25 @@ def _access_level_map(access_level):
     if access_level not in _enums['data_access_levels'].keys():
         return _unexpected(access_level)
     return access_level.title()
+
+
+# External consortium:
+
+def _translate_external_consortium(doc):
+    '''
+    >>> doc = {'group_name': 'Inside HuBMAP'}
+    >>> _translate_external_consortium(doc); doc
+    {'group_name': 'Inside HuBMAP'}
+    >>> doc = {'group_name': 'EXT - Outside HuBMAP'}
+    >>> _translate_external_consortium(doc); doc
+    {'group_name': 'EXT - Outside HuBMAP', 'mapped_external_group_name': 'Outside HuBMAP'}
+
+    '''
+    group_name = doc.get('group_name')
+    if group_name is None:
+        return
+    if 'EXT' in group_name:
+        doc['mapped_external_group_name'] = group_name.replace('EXT - ', '')
 
 
 # Timestamp:
