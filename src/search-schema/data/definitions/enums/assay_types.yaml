@@ -394,16 +394,9 @@ sn_atac_seq:
     contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
-snRNAseq-v2:
-    description: 'snRNA-seq (v2)'
+snRNAseq:
+    description: snRNA-seq
     alt-names: []
-    primary: true
-    contains-pii: true
-    vitessce-hints: []
-
-snRNAseq-v3:
-    description: 'snRNA-seq (v3)'
-    alt-names: ['snRNAseq']
     primary: true
     contains-pii: true
     vitessce-hints: []
