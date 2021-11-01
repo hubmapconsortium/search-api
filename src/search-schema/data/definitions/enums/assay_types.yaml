@@ -230,10 +230,19 @@ sn_atac_seq:
     alt-names: []
     primary: false
 
-snRNAseq:
-    description: snRNA-seq
-    alt-names: []
+snRNAseq-10xGenomics-v2:
+    description: 'snRNA-seq (10x Genomics v2)'
+    alt-names: ['snRNAseq-v2']
     primary: true
+    contains-pii: true
+    vitessce-hints: []
+
+snRNAseq-10xGenomics-v3:
+    description: 'snRNA-seq (10x Genomics v3)'
+    alt-names: ['snRNAseq', 'snRNAseq-v3']
+    primary: true
+    contains-pii: true
+    vitessce-hints: []
 
 salmon_sn_rnaseq_10x:
     description: snRNA-seq [Salmon]
