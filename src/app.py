@@ -257,7 +257,8 @@ def status():
 
     return jsonify(response_data)
 
-# This reindex function will not reindex Collection nor Upload
+# This reindex function will also reindex Collection and Upload 
+# in addition to the Dataset, Donor, Sample entities
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     # Reindex individual document doesn't require the token to belong
