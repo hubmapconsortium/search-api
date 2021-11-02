@@ -302,9 +302,19 @@ sc_atac_seq_snare:
     contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
 
-scRNA-Seq-10x:
-    description: scRNA-seq (10x Genomics)
-    alt-names: ['scRNA-Seq(10xGenomics)']
+scRNAseq-10xGenomics-v2:
+    description: scRNA-seq (10x Genomics v2)
+    alt-names: []
+    primary: true
+    contains-pii: true
+    vitessce-hints: []
+
+scRNAseq-10xGenomics-v3:
+    description: scRNA-seq (10x Genomics v3)
+    alt-names:
+      - scRNA-Seq(10xGenomics)
+      - scRNA-Seq-10x
+      - scRNAseq-10xGenomics
     primary: true
     contains-pii: true
     vitessce-hints: []
