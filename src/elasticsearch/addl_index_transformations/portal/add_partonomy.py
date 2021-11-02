@@ -1,7 +1,8 @@
+import argparse
 from collections import defaultdict
 import requests
 from pathlib import Path
-from json import loads
+from json import loads, dumps
 from yaml import safe_load
 
 
@@ -174,3 +175,16 @@ def _build_tree_index():
 
 
 tree, index = _build_tree_index()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Given RUI-JSON, return the anatomy facets that will be generated.'
+    )
+
+    parser.add_argument('rui_json', help='RUI-JSON as string.')
+    args = parser.parse_args()
+    doc = {'rui_location': args.rui_json}
+    add_partonomy(doc)
+    del doc['rui_location']
+    print(dumps(doc, sort_keys=True, indent=2))

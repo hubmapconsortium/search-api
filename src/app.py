@@ -42,11 +42,6 @@ logger.debug(INDICES)
 DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
 DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
-#app.config['ELASTICSEARCH_URL'] = app.config['ELASTICSEARCH_URL'].strip('/')
-#app.config['ENTITY_API_URL'] = app.config['ENTITY_API_URL'].strip('/')
-
-
-
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
 
@@ -262,6 +257,7 @@ def status():
 
     return jsonify(response_data)
 
+# This reindex function will not reindex Collection nor Upload
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     # Reindex individual document doesn't require the token to belong
@@ -282,7 +278,8 @@ def reindex(uuid):
 
     return f"Request of reindexing {uuid} accepted", 202
 
-# Live reindex without deleting and recreating the indices
+# Live reindex without first deleting and recreating the indices
+# This just deletes the old document and add the latest document of each entity (if still available)
 @app.route('/reindex-all', methods=['PUT'])
 def reindex_all():
 	# The token needs to belong to the HuBMAP-Data-Admin group 
@@ -658,13 +655,12 @@ def reindex_all_uuids(indexer, token):
             sample_uuids_list = get_uuids_by_entity_type("sample", token)
             dataset_uuids_list = get_uuids_by_entity_type("dataset", token)
             upload_uuids_list = get_uuids_by_entity_type("upload", token)
-            collection_uuids_list = get_uuids_by_entity_type("collection", token)
+            public_collection_uuids_list = get_uuids_by_entity_type("collection", token)
 
             logger.debug("merging sets into a one list...")
             # Merge into a big list that with no duplicates
-            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + collection_uuids_list)
+            all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
 
-            # 1. Remove entities that are not found in neo4j
             es_uuids = []
             #for index in ast.literal_eval(app.config['INDICES']).keys():
             logger.debug("looping through the indices...")
@@ -685,24 +681,35 @@ def reindex_all_uuids(indexer, token):
             es_uuids = set(es_uuids)
 
             logger.debug("looping through the UUIDs...")
+
+            # Remove entities found in Elasticserach but no longer in neo4j
             for uuid in es_uuids:
                 if uuid not in all_entities_uuids:
-                    logger.debug(f"""The uuid: {uuid} not in neo4j. Delete it from Elasticserach.""")
+                    logger.debug(f"Entity of uuid: {uuid} found in Elasticserach but no longer in neo4j. Delete it from Elasticserach.")
                     indexer.delete(uuid)
 
-            logger.debug("Starting multi-thread ...")
-            # 2. Multi-thread index entitiies
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                results = [executor.submit(indexer.reindex, uuid) for uuid in donor_uuids_list]
-                for f in concurrent.futures.as_completed(results):
-                    logger.debug(f.result())
+            logger.debug("Starting multi-thread reindexing ...")
 
-            # 3. Reindex public collections separately
-            indexer.index_public_collections(reindex = True)
+            # Reindex in multi-treading mode for:
+            # - each public collection
+            # - each upload, only add to the hm_consortium_entities index (private index of the default)
+            # - each donor and its descendants in the tree
+            futures_list = []
+            results = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                public_collection_futures_list = [executor.submit(indexer.index_public_collection, uuid, reindex = True) for uuid in public_collection_uuids_list]
+                upload_futures_list = [executor.submit(indexer.index_upload, uuid, reindex = True) for uuid in upload_uuids_list]
+                donor_futures_list = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
+
+                # Append the above three lists into one
+                futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
+                
+                for f in concurrent.futures.as_completed(futures_list):
+                    logger.debug(f.result())
 
             end = time.time()
 
-            logger.info(f"############# Reindex Live Completed. Total time used: {end - start} seconds. #############")
+            logger.info(f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
         except Exception as e:
             logger.error(e)
 
