@@ -2,7 +2,7 @@
 openapi: 3.0.0
 info:
   description: The HuBMAP Search API is a thin wrapper of the Elasticsearch API. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
-  version: 1.5.4
+  version: 2.2.0
   title: HuBMAP Search API
   termsOfService: 'https://hubmapconsortium.org'
   contact:
