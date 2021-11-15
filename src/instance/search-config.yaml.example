@@ -1,0 +1,28 @@
+# this file allows multiple Elasticsearch indices to be configured and accessible
+# via the search endpoints
+
+# default index name for endpoints that don't specify an index
+default_index: entities
+
+# specify multiple indices
+indices:
+  entities: 
+    active: true
+    public: hm_public_entities 
+    private: hm_consortium_entities
+    document_source_endpoint: <Server URL for source documents>
+    elasticsearch:
+      url: <ES URL>
+      mappings: "search-default-config.yaml"
+
+  portal: 
+    active: true
+    public: hm_public_portal
+    private: hm_consortium_portal
+    document_source_endpoint: <Server URL for source documents>
+    elasticsearch:
+      url: <ES URL>
+      mappings: "addl_index_transformations/portal/config.yaml"
+    transform:
+      module: elasticsearch.addl_index_transformations.portal
+

@@ -261,7 +261,53 @@ You can also stop the running container and remove it by:
 ./search-api-docker.sh dev down
 ````
 
+### Configuring a Single or Multiple Indices
+
+All configuration options reside within the **src/instance/search-config.yaml** file which will allow you to specify configuration options for each index, that will be available via the **search-api**. This file will support any number of index configurations.  
+
+To get started, copy the **src/instance/search-config.yaml.example**.  Use this as a template to further defined your index. Here's a sample of a defined index, see that options explained in further detail below: 
+
+
+```
+default_index: my-index
+indices:
+  my-index: 
+    active: true
+    public: my-index-public 
+    private: my-index-private
+    document_source_endpoint: https://my-document-base
+    elasticsearch:
+      url: https://localhost:9200
+      mappings: "default-config.yaml"
+```
+
+**Options**
+
+**default_index: [index name]**
+
+If you have multiple indices you need to specify which of these is the default.  By specifying this, a call to the base **/search** endpoint, without specifying an index name, will use this index as the default.  This should be specified even for single index definitions 
+
+**indices:**  All indices definitions start after this declaration
+
+**active: [true or false]** - designated if the index should be active (true) or inactive
+
+**public: [index name]** - this will allow you to specify an index that contains data only viewable by non-authenticated users or usage for public facing endpoints
+
+**private: [index name]** - this will allow you to specify an index that contains private data viewable only by a certain group, consortium or more specifically,  authenticated users.  
+
+*Note: the public and private indices should be the same index name if you only have a single index*
+
+**document_source_endpoint: [url]** (optional) - this will allow you to configure a document source (i.e., entities) which will be used by the indexer to populate your index from an alternate document store
+
+**elasticsearch:** configurations specific to elasticsearch after this declaration 
+
+**url: [url]** - url to the server hosting Elasticsearch
+
+**mappings: [file]** - used to specify a file which contains index settings or mappings (i.e., mapping.total_fields.limit: 5000) specific to Elasticsearch. see [index settings](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html).  Also, the default settings are located in **elasticsearch/search-default-config.yaml**.  This file is used during the index creation process before data is ingested by the indexer.
+
+
 ### Updating API Documentation
 
 The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI. SmartAPI allows users to register API documents. The documentation is associated with this github account: api-developers@hubmapconsortium.org.
+
 
