@@ -159,7 +159,7 @@ MALDI-IMS:
     alt-names: ['MALDI-IMS-neg', 'MALDI-IMS-pos']
     primary: true
     contains-pii: false
-    vitessce-hints: []
+    vitessce-hints: ['maldi']
 
 MALDI-IMS_pyramid:
     description: MALDI IMS [Image Pyramid]
