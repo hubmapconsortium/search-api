@@ -173,7 +173,7 @@ MALDI-IMS_pyramid:
     primary: false
     vis-only: true
     contains-pii: false
-    vitessce-hints: ['pyramid']
+    vitessce-hints: ['pyramid', 'maldi']
 
 #
 # The following block of definitions is in the process of being replaced by the
