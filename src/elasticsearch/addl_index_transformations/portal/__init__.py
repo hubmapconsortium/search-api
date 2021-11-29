@@ -56,6 +56,7 @@ def transform(doc, batch_id='unspecified'):
     >>> transformed = transform({
     ...    'entity_type': 'dataset',
     ...    'status': 'New',
+    ...    'group_name': 'EXT - Outside HuBMAP',
     ...    'origin_sample': {
     ...        'organ': 'LY'
     ...    },
@@ -112,9 +113,11 @@ def transform(doc, batch_id='unspecified'):
                                                   'grouping_concept_preferred_term': 'Sex',
                                                   'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
+     'group_name': 'EXT - Outside HuBMAP',
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['snRNA-seq [Salmon]'],
+     'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
      'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
