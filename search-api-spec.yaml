@@ -6,7 +6,48 @@ info:
   title: HuBMAP Search API
   termsOfService: 'https://hubmapconsortium.org'
   contact:
-    email: apiteam@hubmap.org
+    name: HuBMAP Help Desk
+    email: help@hubmapconsortium.org
+  license:
+    name: MIT License
+    url: 'https://github.com/hubmapconsortium/entity-api/blob/master/license.txt'
+servers:
+  - url: "https://search.api.hubmapconsortium.org"
+components:
+  securitySchemes:
+    globus_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: "https://auth.globus.org/v2/oauth2/authorize"
+          scopes:
+            "write:entities": modify entities
+            "read:entities": read entities
+    JWTBearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+  schemas:
+    requestJsonBody:
+      type: object
+    AssayTypeQueryDict:
+      type: object
+      properties:
+        name:
+          type: string
+    AssayTypeReturnDict:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        primary:
+          type: boolean
+        vitessce-hints:
+          type: array
+          items:
+            type: string
 tags:
   - name: 'Search API, Elasticsearch'
     description: Operations pertaining to datasets indexed in Elasticsearch
@@ -268,40 +309,4 @@ paths:
         '202':
           description: The request has been accepted and reindex is in process
 
-servers:
-  - url: "https://search.api.hubmapconsortium.org"
-components:
-  securitySchemes:
-    globus_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: "https://auth.globus.org/v2/oauth2/authorize"
-          scopes:
-            "write:entities": modify entities
-            "read:entities": read entities
-    JWTBearerAuth:
-      bearerFormat: JWT
-      scheme: bearer
-      type: http
-  schemas:
-    requestJsonBody:
-      type: object
-    AssayTypeQueryDict:
-      type: object
-      properties:
-        name:
-          type: string
-    AssayTypeReturnDict:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        primary:
-          type: boolean
-        vitessce-hints:
-          type: array
-            items:
-              type: string
+
