@@ -121,7 +121,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'keep_this_field': 'Yes!', 'is_boolean': 'TRUE'}},
+     'metadata': {'metadata': {'is_boolean': 'TRUE', 'keep_this_field': 'Yes!'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
@@ -185,6 +185,8 @@ def _map(doc, clean):
 def _simple_clean(doc):
     # We shouldn't get messy data in the first place...
     # but it's just not feasible to make the fixes upstream.
+    if not isinstance(doc, dict):
+        return
 
     # Clean up names conservatively,
     # based only on the problems we actually see:
@@ -203,13 +205,14 @@ def _simple_clean(doc):
             'donor_id', 'tissue_id'  # For internal use only.
         ]
 
-        # With the items() call outside the loop,
-        # we can remove keys from the metadata dict:
-        items = metadata.items()
-        for k, v in items:
+        # Explicitly convert items to list,
+        # so we can remove keys from the metadata dict:
+        for k, v in list(metadata.items()):
             if k in bad_fields or k.startswith('_'):
                 del metadata[k]
-            # Normalize booleans to all-caps, the Excel default:
+            # Normalize booleans to all-caps, the Excel default.
+            # (There is no guaratee that boolean fields with be prefixed this way,
+            # but at the moment it is the case.)
             if k.startswith('is_'):
                 if v in ['0', 'false', 'False']:
                     metadata[k] = 'FALSE'
