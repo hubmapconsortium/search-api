@@ -184,7 +184,7 @@ NanoDESI:
 
 NanoDESI_pyramid:
   description: NanoDESI [Image Pyramid]
-  alt-names: [["NanoDesi", "Image Pyramid"], ["NanoDesi", "image_pyramid"]]
+  alt-names: [["NanoDESI", "Image Pyramid"], ["NanoDESI", "image_pyramid"]]
   primary: false
   vis-only: true
   contains-pii: false
@@ -197,6 +197,14 @@ NanoPOTS:
   contains-pii: false
   vitessce-hints: []
 
+NanoPOTS_pyramid:
+  description: NanoPOTS [Image Pyramid]
+  alt-names: [["NanoPOTS", "Image Pyramid"], ["NanoPOTS", "image_pyramid"]]
+  primary: false
+  vis-only: true
+  contains-pii: false
+  vitessce-hints: ['pyramid']
+  
 MxIF:
     description: Multiplexed IF Microscopy
     alt-names: []
