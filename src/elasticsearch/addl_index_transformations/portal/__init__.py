@@ -191,19 +191,19 @@ def _simple_clean(doc):
     if 'metadata' in doc and 'metadata' in doc['metadata']:
         metadata = doc['metadata']['metadata']
 
-        # Drop internal-use-only fields:
         bad_fields = [
             'collectiontype',  # Inserted by IEC.
             'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
             'donor_id', 'tissue_id'  # For internal use only.
         ]
-        metadata = {
-            k: v for k, v
-            in metadata.items()
-            if k not in bad_fields and not k.startswith('_')
-        }
 
-        for k, v in metadata.items():
+        # With the items() call outside the loop,
+        # we can remove keys from the metadata dict:
+        items = metadata.items()
+        for k, v in items:
+            if k in bad_fields or k.startswith('_'):
+                del metadata[k]
+            # Normalize booleans to all-caps, the Excel default:
             if k.startswith('is_'):
                 if v in ['0', 'false', 'False']:
                     metadata[k] = 'FALSE'
