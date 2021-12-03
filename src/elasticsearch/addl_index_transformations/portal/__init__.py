@@ -189,16 +189,27 @@ def _simple_clean(doc):
         doc[field] = 'Amir Bahmani'
 
     if 'metadata' in doc and 'metadata' in doc['metadata']:
+        metadata = doc['metadata']['metadata']
+
+        # Drop internal-use-only fields:
         bad_fields = [
             'collectiontype',  # Inserted by IEC.
-            'data_path', 'metadata_path',  # Only meaningful at submission time.
+            'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
             'donor_id', 'tissue_id'  # For internal use only.
         ]
         metadata = {
             k: v for k, v
-            in doc['metadata']['metadata'].items()
+            in metadata.items()
             if k not in bad_fields and not k.startswith('_')
         }
+
+        for k, v in metadata.items():
+            if k.startswith('is_'):
+                if v in ['0', 'false', 'False']:
+                    metadata[k] = 'FALSE'
+                if v in ['1', 'true', 'True']:
+                    metadata[k] = 'TRUE'
+
         doc['metadata']['metadata'] = metadata
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
