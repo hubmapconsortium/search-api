@@ -88,7 +88,8 @@ def transform(doc, batch_id='unspecified'):
     ...            'metadata_path': 'No!',
     ...            'tissue_id': 'No!',
     ...            'donor_id': 'No!',
-    ...            'keep_this_field': 'Yes!'
+    ...            'keep_this_field': 'Yes!',
+    ...            'is_boolean': '1'
     ...        }
     ...    },
     ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
@@ -120,7 +121,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'keep_this_field': 'Yes!'}},
+     'metadata': {'metadata': {'is_boolean': 'TRUE', 'keep_this_field': 'Yes!'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
@@ -182,23 +183,42 @@ def _map(doc, clean):
 
 
 def _simple_clean(doc):
-    field = 'created_by_user_displayname'
-    if field in doc and doc[field] == 'daniel Cotter':
-        doc[field] = 'Daniel Cotter'
-    if field in doc and doc[field] == 'amir Bahmani':
-        doc[field] = 'Amir Bahmani'
+    # We shouldn't get messy data in the first place...
+    # but it's just not feasible to make the fixes upstream.
+    if not isinstance(doc, dict):
+        return
 
+    # Clean up names conservatively,
+    # based only on the problems we actually see:
+    name_field = 'created_by_user_displayname'
+    if doc.get(name_field, '').lower() in [
+            'daniel cotter', 'amir bahmani', 'adam kagel', 'gloria pryhuber']:
+        doc[name_field] = doc[name_field].title()
+
+    # Clean up metadata:
     if 'metadata' in doc and 'metadata' in doc['metadata']:
+        metadata = doc['metadata']['metadata']
+
         bad_fields = [
             'collectiontype',  # Inserted by IEC.
-            'data_path', 'metadata_path',  # Only meaningful at submission time.
+            'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
             'donor_id', 'tissue_id'  # For internal use only.
         ]
-        metadata = {
-            k: v for k, v
-            in doc['metadata']['metadata'].items()
-            if k not in bad_fields and not k.startswith('_')
-        }
+
+        # Explicitly convert items to list,
+        # so we can remove keys from the metadata dict:
+        for k, v in list(metadata.items()):
+            if k in bad_fields or k.startswith('_'):
+                del metadata[k]
+            # Normalize booleans to all-caps, the Excel default.
+            # (There is no guaratee that boolean fields with be prefixed this way,
+            # but at the moment it is the case.)
+            if k.startswith('is_'):
+                if v in ['0', 'false', 'False']:
+                    metadata[k] = 'FALSE'
+                if v in ['1', 'true', 'True']:
+                    metadata[k] = 'TRUE'
+
         doc['metadata']['metadata'] = metadata
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
