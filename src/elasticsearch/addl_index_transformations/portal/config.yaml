@@ -5,6 +5,7 @@ settings:
 
 mappings:
   date_detection: False
+  numeric_detection: True
   dynamic_templates:
     -
       map_every_string:
