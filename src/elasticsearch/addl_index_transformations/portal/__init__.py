@@ -219,8 +219,6 @@ def _simple_clean(doc):
                 if v in ['1', 'true', 'True']:
                     metadata[k] = 'TRUE'
 
-        doc['metadata']['metadata'] = metadata
-
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
 #     schema = _get_schema(doc)
