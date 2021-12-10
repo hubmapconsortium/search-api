@@ -15,7 +15,7 @@ services:
     hostname: search-api
     container_name: search-api
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:4444"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8080"]
       interval: 1m30s
       timeout: 10s
       retries: 3
