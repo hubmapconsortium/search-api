@@ -121,7 +121,7 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'is_boolean': True, 'keep_this_field': 'Yes!'}},
+     'metadata': {'metadata': {'is_boolean': 'TRUE', 'keep_this_field': 'Yes!'}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
@@ -215,9 +215,9 @@ def _simple_clean(doc):
             # but at the moment it is the case.)
             if k.startswith('is_'):
                 if v in ['0', 'false', 'False']:
-                    metadata[k] = False
+                    metadata[k] = 'FALSE'
                 if v in ['1', 'true', 'True']:
-                    metadata[k] = True
+                    metadata[k] = 'TRUE'
         # Other converstions are handled by ES numeric detection.
         # See: portal/config.yaml
         # https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-field-mapping.html
