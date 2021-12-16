@@ -175,44 +175,36 @@ MALDI-IMS_pyramid:
     contains-pii: false
     vitessce-hints: ['pyramid', 'maldi']
 
-#
-# The following block of definitions is in the process of being replaced by the
-# 'MALDI-IMS' and 'MALDI-IMS_pyramid' blocks above, but the original version is
-# being preserved here in comments pending full testing of the replacement.
-#
-# MALDI-IMS-neg:
-#     description: MALDI IMS negative
-#     alt-names: []
-#     primary: true
-#     contains-pii: false
-#     vitessce-hints: []
-#
-# MALDI-IMS-neg_pyramid:
-#     description: MALDI IMS negative [Image Pyramid]
-#     alt-names: [["MALDI-IMS-neg", "Image Pyramid"], ["MALDI-IMS-neg", "image_pyramid"]]
-#     primary: false
-#     vis-only: true
-#     contains-pii: false
-#     vitessce-hints: ['pyramid']
-#
-# MALDI-IMS-pos:
-#     description: MALDI IMS positive
-#     alt-names: []
-#     primary: true
-#     contains-pii: false
-#     vitessce-hints: []
-#
-# MALDI-IMS-pos_pyramid:
-#     description: MALDI IMS positive [Image Pyramid]
-#     alt-names: [["MALDI-IMS-pos", "Image Pyramid"], ["MALDI-IMS-pos", "image_pyramid"]]
-#     primary: false
-#     vis-only: true
-#     contains-pii: false
-#     vitessce-hints: ['pyramid']
-#
-# End block of earlier MALDI-IMS code being preserved during testing
-#
+NanoDESI:
+  description: NanoDESI
+  alt-names: []
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
 
+NanoDESI_pyramid:
+  description: NanoDESI [Image Pyramid]
+  alt-names: [["NanoDESI", "Image Pyramid"], ["NanoDESI", "image_pyramid"]]
+  primary: false
+  vis-only: true
+  contains-pii: false
+  vitessce-hints: ['pyramid']
+  
+NanoPOTS:
+  description: NanoPOTS
+  alt-names: []
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
+NanoPOTS_pyramid:
+  description: NanoPOTS [Image Pyramid]
+  alt-names: [["NanoPOTS", "Image Pyramid"], ["NanoPOTS", "image_pyramid"]]
+  primary: false
+  vis-only: true
+  contains-pii: false
+  vitessce-hints: ['pyramid']
+  
 MxIF:
     description: Multiplexed IF Microscopy
     alt-names: []
@@ -262,7 +254,7 @@ salmon_rnaseq_bulk:
 
 SNARE-ATACseq2:
     description: snATACseq (SNARE-seq2)
-    alt-names: ['SNAREseq', 'SNARE2-ATACseq']
+    alt-names: ['SNAREseq', 'SNARE-seq2', 'SNARE2-ATACseq']
     primary: true
     contains-pii: true
     vitessce-hints: []
@@ -450,4 +442,46 @@ WGS:
     contains-pii: true
     vitessce-hints: []
 
-    
+LC-MS:
+    description: LC-MS
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+MS:
+    description: MS
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+LC-MS_bottom_up:
+    description: 'LC-MS Bottom Up'
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+MS_bottom_up:
+    description: 'MS Bottom Up'
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+LC-MS_top_down:
+    description: 'LC-MS Top Down'
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+MS_top_down:
+    description: 'MS Top Down'
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
+
