@@ -238,7 +238,6 @@ PAS_pyramid:
 bulk-RNA:
     description: Bulk RNA-seq
     alt-names: ['bulk RNA']
-    alt-names: []
     primary: true
     contains-pii: true
     vitessce-hints: []
