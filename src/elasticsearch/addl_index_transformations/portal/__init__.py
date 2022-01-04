@@ -118,6 +118,7 @@ def transform(doc, batch_id='unspecified'):
                                                   'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
      'group_name': 'EXT - Outside HuBMAP',
+     'mapped_consortium': 'Outside HuBMAP',
      'mapped_create_timestamp': '2019-12-04 19:58:29',
      'mapped_data_access_level': 'Consortium',
      'mapped_data_types': ['snRNA-seq [Salmon]'],
