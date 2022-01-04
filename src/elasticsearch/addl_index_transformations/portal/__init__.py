@@ -88,6 +88,9 @@ def transform(doc, batch_id='unspecified'):
     ...            'metadata_path': 'No!',
     ...            'tissue_id': 'No!',
     ...            'donor_id': 'No!',
+    ...            'cell_barcode_size': '123',
+    ...            'should_be_int': '123',
+    ...            'should_be_float': '123.456',
     ...            'keep_this_field': 'Yes!',
     ...            'is_boolean': '1'
     ...        }
@@ -121,7 +124,11 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'is_boolean': 'TRUE', 'keep_this_field': 'Yes!'}},
+     'metadata': {'metadata': {'cell_barcode_size': '123',
+                               'is_boolean': 'TRUE',
+                               'keep_this_field': 'Yes!',
+                               'should_be_float': 123.456,
+                               'should_be_int': 123}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
@@ -205,6 +212,11 @@ def _simple_clean(doc):
             'donor_id', 'tissue_id'  # For internal use only.
         ]
 
+        # Ideally, we'd pull from https://github.com/hubmapconsortium/ingest-validation-tools/blob/main/docs/field-types.yaml
+        # here, or make the TSV parsing upstream schema aware,
+        # instead of trying to guess, but I think the number of special cases will be relatively small.
+        not_really_a_number = ['cell_barcode_size', 'cell_barcode_offset']
+
         # Explicitly convert items to list,
         # so we can remove keys from the metadata dict:
         for k, v in list(metadata.items()):
@@ -218,9 +230,19 @@ def _simple_clean(doc):
                     metadata[k] = 'FALSE'
                 if v in ['1', 'true', 'True']:
                     metadata[k] = 'TRUE'
-        # Other converstions are handled by ES numeric detection.
-        # See: portal/config.yaml
-        # https://www.elastic.co/guide/en/elasticsearch/reference/current/dynamic-field-mapping.html
+                continue
+
+            if k not in not_really_a_number:
+                try:
+                    as_number = int(v)
+                except ValueError:
+                    try:
+                        as_number = float(v)
+                    except ValueError:
+                        as_number = None
+                if as_number is not None:
+                    metadata[k] = as_number
+
 
 # TODO: Reenable this when we have time, and can make sure we don't need these fields.
 #
