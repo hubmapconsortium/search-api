@@ -208,7 +208,7 @@ def _simple_clean(doc):
         metadata = doc['metadata']['metadata']
 
         bad_fields = [
-            'collectiontype',  # Inserted by IEC.
+            'collectiontype', 'null',  # Inserted by IEC.
             'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
             'donor_id', 'tissue_id'  # For internal use only.
         ]
@@ -223,6 +223,8 @@ def _simple_clean(doc):
         for k, v in list(metadata.items()):
             if k in bad_fields or k.startswith('_'):
                 del metadata[k]
+                continue
+
             # Normalize booleans to all-caps, the Excel default.
             # (There is no guaratee that boolean fields with be prefixed this way,
             # but at the moment it is the case.)
