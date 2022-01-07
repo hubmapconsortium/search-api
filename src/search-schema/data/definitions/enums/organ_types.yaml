@@ -39,6 +39,8 @@ LK:
 LL:
   description: Lung (Left)
   iri: http://purl.obolibrary.org/obo/UBERON_0002168
+LN:
+  description: Knee (Left)
 LV:
   description: Liver
 LY:
@@ -65,6 +67,8 @@ RK:
 RL:
   description: Lung (Right)
   iri: http://purl.obolibrary.org/obo/UBERON_0002167
+RN:
+  description: Knee (Right)
 SI:
   description: Small Intestine
 SK:
