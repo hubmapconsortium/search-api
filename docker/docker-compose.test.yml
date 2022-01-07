@@ -13,4 +13,7 @@ services:
       - HOST_UID=${HOST_UID:-1000}
     init: true
     restart: always
+    volumes:
+      # Mount conf.d on host machine to the nginx conf.d on container
+      - "./search-api/nginx/conf.d:/etc/nginx/conf.d"
 
