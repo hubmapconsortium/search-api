@@ -100,19 +100,26 @@ def _access_level_map(access_level):
 
 def _translate_external_consortium(doc):
     '''
+    >>> doc = {}
+    >>> _translate_external_consortium(doc); doc
+    {'mapped_consortium': 'HuBMAP'}
+
     >>> doc = {'group_name': 'Inside HuBMAP'}
     >>> _translate_external_consortium(doc); doc
-    {'group_name': 'Inside HuBMAP'}
+    {'group_name': 'Inside HuBMAP', 'mapped_consortium': 'HuBMAP'}
+
     >>> doc = {'group_name': 'EXT - Outside HuBMAP'}
     >>> _translate_external_consortium(doc); doc
-    {'group_name': 'EXT - Outside HuBMAP', 'mapped_external_group_name': 'Outside HuBMAP'}
+    {'group_name': 'EXT - Outside HuBMAP', 'mapped_external_group_name': 'Outside HuBMAP', 'mapped_consortium': 'Outside HuBMAP'}
 
     '''
     group_name = doc.get('group_name')
-    if group_name is None:
-        return
-    if 'EXT' in group_name:
-        doc['mapped_external_group_name'] = group_name.replace('EXT - ', '')
+    if group_name is not None and 'EXT' in group_name:
+        mapped_consortium = group_name.replace('EXT - ', '')
+        doc['mapped_external_group_name'] = mapped_consortium
+    else:
+        mapped_consortium = 'HuBMAP'
+    doc['mapped_consortium'] = mapped_consortium
 
 
 # Timestamp:
