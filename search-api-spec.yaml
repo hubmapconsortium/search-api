@@ -1,4 +1,3 @@
-# https://github.com/SmartAPI/smartAPI-Specification/blob/OpenAPI.next/versions/3.0.0.md#specification
 openapi: 3.0.0
 info:
   description: The HuBMAP Search API is a thin wrapper of the Elasticsearch API. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
@@ -14,19 +13,6 @@ info:
 servers:
   - url: "https://search.api.hubmapconsortium.org"
 components:
-  securitySchemes:
-    globus_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: "https://auth.globus.org/v2/oauth2/authorize"
-          scopes:
-            "write:entities": modify entities
-            "read:entities": read entities
-    JWTBearerAuth:
-      bearerFormat: JWT
-      scheme: bearer
-      type: http
   schemas:
     requestJsonBody:
       type: object
@@ -58,10 +44,6 @@ externalDocs:
   description: Elasticsearch API Documentation
   url: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html
       
-# Apply the security globally to all operations
-security:
-  - JWTBearerAuth: [] 
-  
 paths:
 
   '/assaytype':
@@ -94,13 +76,9 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  result:
-                    type: array
-                    items:
-                       oneOf:
-                          - type: string
-                          - $ref: '#/components/schemas/AssayTypeReturnDict'
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssayTypeReturnDict'
         "400":
           description: The user sent a bad parameter (e.g. a nonexistent group name) or there was a system error
         "401":
