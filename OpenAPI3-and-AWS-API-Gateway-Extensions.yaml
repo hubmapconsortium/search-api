@@ -1,0 +1,951 @@
+openapi: "3.0.1"
+info:
+  title: "HuBMAP Search API"
+  description: "The HuBMAP Search API is a thin wrapper of the Elasticsearch API.\
+    \ It handles data indexing and reindexing into the backend Elasticsearch. It also\
+    \ accepts the search query and passes through to the Elasticsearch with data access\
+    \ security check."
+  termsOfService: "https://hubmapconsortium.org"
+  contact:
+    name: "HuBMAP Help Desk"
+    email: "help@hubmapconsortium.org"
+  license:
+    name: "MIT License"
+    url: "https://github.com/hubmapconsortium/entity-api/blob/master/license.txt"
+  version: "2.2.3"
+externalDocs:
+  description: "Elasticsearch API Documentation"
+  url: "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html"
+servers:
+- url: "https://search-api.dev.hubmapconsortium.org"
+tags:
+- name: "Search API, Elasticsearch"
+  description: "Operations pertaining to datasets indexed in Elasticsearch"
+- name: "assaytype"
+  description: "Operations pertaining to assay types"
+paths:
+  /{index}/search:
+    get:
+      parameters:
+      - name: "index"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/{index}/search"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.index: "method.request.path.index"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http"
+    post:
+      parameters:
+      - name: "index"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "POST"
+        uri: "http://${stageVariables.VPCNLB}/{index}/search"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.index: "method.request.path.index"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      parameters:
+      - name: "index"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/{index}/search"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.index: "method.request.path.index"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /reindex/{identifier}:
+    put:
+      tags:
+      - "reindex"
+      summary: "Reindex for a given UUID of dataset"
+      operationId: "reindex"
+      parameters:
+      - name: "identifier"
+        in: "path"
+        description: "The unique identifier of collection.  This must be a UUID."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "202":
+          description: "The request has been accepted and reindex is in process"
+          content: {}
+      security:
+      - HuBMAP-API-Gateway-Read-Group-Authorizer: []
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "PUT"
+        uri: "http://${stageVariables.VPCNLB}/reindex/{identifier}"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.identifier: "method.request.path.identifier"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      parameters:
+      - name: "identifier"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/reindex/{identifier}"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.identifier: "method.request.path.identifier"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /status:
+    get:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/status"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/status"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /assayname:
+    post:
+      tags:
+      - "assaytype"
+      summary: "Get a descriptive dict for a single assay type"
+      operationId: "postAssayName"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssayTypeQueryDict"
+        required: true
+      responses:
+        "400":
+          description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+            \ or there was a system error"
+          content: {}
+        "401":
+          description: "User's token is not valid"
+          content: {}
+        "200":
+          description: "successful operation"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssayTypeReturnDict"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "POST"
+        uri: "http://${stageVariables.VPCNLB}/assayname"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/assayname"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /indices:
+    get:
+      tags:
+      - "indices"
+      summary: "Reindex for a given UUID of dataset.  Use this method to obtain a\
+        \ list of valid indices within the search-api endpoint.  These index names\
+        \ are used in some of the subseqeunt calls made to the endpoint."
+      operationId: "get-indices"
+      responses:
+        "200":
+          description: "successful operation"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MODEL701706"
+        "400":
+          description: "Bad request. A JSON body and appropriate Content-Type header\
+            \ are required in request"
+          content: {}
+        "401":
+          description: "A valid globus token in the `Authorization` header (Bearer\
+            \ scheme) is required in request"
+          content: {}
+        "403":
+          description: "The globus token used in the `Authorization` header doesn't\
+            \ have the right group access permission"
+          content: {}
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/indices"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/indices"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /assaytype/{name}:
+    get:
+      tags:
+      - "assaytype"
+      summary: "Get a descriptive dict for a single assay type"
+      operationId: "getAssayType"
+      parameters:
+      - name: "simple"
+        in: "query"
+        description: "If present and true, list only assay type names.  Otherwise\
+          \ return a list of descriptive dicts.\n"
+        schema:
+          type: "string"
+      - name: "name"
+        in: "path"
+        description: "An assay type name or single-word alternate name"
+        required: true
+        schema:
+          type: "string"
+      - name: "primary"
+        in: "query"
+        description: "If present and true, restrict list to primary datasets. A primary\
+          \ dataset is one for which no parent is a dataset. If present and false,\
+          \ restrict list to datasets which are not primary.\n"
+        schema:
+          type: "string"
+      responses:
+        "400":
+          description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+            \ or there was a system error"
+          content: {}
+        "401":
+          description: "User's token is not valid"
+          content: {}
+        "200":
+          description: "successful operation"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssayTypeReturnDict"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/assaytype/{name}"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        requestParameters:
+          integration.request.path.name: "method.request.path.name"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      parameters:
+      - name: "name"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/assaytype/{name}"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.path.name: "method.request.path.name"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /assaytype:
+    get:
+      tags:
+      - "assaytype"
+      summary: "Get a list of HuBMAP assay type names or descriptive dicts"
+      operationId: "listAssayType"
+      parameters:
+      - name: "simple"
+        in: "query"
+        description: "If present and true, list only assay type names.  Otherwise\
+          \ return a list of descriptive dicts.\n"
+        schema:
+          type: "string"
+      - name: "primary"
+        in: "query"
+        description: "If present and true, restrict list to primary datasets. A primary\
+          \ dataset is one for which no parent is a dataset. If present and false,\
+          \ restrict list to datasets which are not primary.\n"
+        schema:
+          type: "string"
+      responses:
+        "400":
+          description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+            \ or there was a system error"
+          content: {}
+        "401":
+          description: "User's token is not valid"
+          content: {}
+        "200":
+          description: "successful operation"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArrayOfAssayTypeReturnDict"
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/assaytype"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/assaytype"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /search:
+    get:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/search"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    post:
+      tags:
+      - "search"
+      summary: "Execute an Elasticsearch query JSON via HTTP POST and get back search\
+        \ hits that match the query."
+      description: "<strong>NOTE  This method also accepts a GET call using the same\
+        \ parameters.</strong> To query using a POST or GET, you must supply a query\
+        \ according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search)\
+        \ rules."
+      operationId: "search-post"
+      requestBody:
+        description: "Request JSON of Elasticsearch query"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestJsonBody"
+        required: true
+      responses:
+        "200":
+          description: "Returns search hits from backend Elasticsearch that match\
+            \ the query defined in the request JSON"
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: "string"
+          content: {}
+        "400":
+          description: "Bad request. A JSON body and appropriate Content-Type header\
+            \ are required in request"
+          content: {}
+        "401":
+          description: "A valid globus token in the `Authorization` header (Bearer\
+            \ scheme) is required in request"
+          content: {}
+        "403":
+          description: "The globus token used in the `Authorization` header doesn't\
+            \ have the right group access permission"
+          content: {}
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "POST"
+        uri: "http://${stageVariables.VPCNLB}/search"
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/search"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /reindex-all:
+    put:
+      security:
+      - HuBMAP-API-Gateway-Data-Admin-Group-Authorizer: []
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "PUT"
+        uri: "http://${stageVariables.VPCNLB}/reindex-all"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "PUT"
+        uri: "http://${stageVariables.VPCNLB}/reindex-all"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+  /:
+    get:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "GET"
+        uri: "http://${stageVariables.VPCNLB}/"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    options:
+      x-amazon-apigateway-integration:
+        connectionId: "${stageVariables.VPCLINK}"
+        httpMethod: "OPTIONS"
+        uri: "http://${stageVariables.VPCNLB}/"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        connectionType: "VPC_LINK"
+        type: "http_proxy"
+    x-amazon-apigateway-any-method:
+      x-amazon-apigateway-integration:
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:450834107946:function:HuBMAP-API-Gateway-404/invocations"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
+components:
+  schemas:
+    ArrayOfAssayTypeReturnDict:
+      type: "array"
+      items:
+        $ref: "#/components/schemas/AssayTypeReturnDict"
+    AssayTypeReturnDict:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        description:
+          type: "string"
+        primary:
+          type: "boolean"
+        vitessce-hints:
+          type: "array"
+          items:
+            type: "string"
+    AssayTypeQueryDict:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+    requestJsonBody:
+      type: "object"
+    MODEL701706:
+      type: "object"
+      properties:
+        indices:
+          type: "array"
+          items:
+            type: "string"
+  securitySchemes:
+    HuBMAP-API-Gateway-Read-Group-Authorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authtype: "custom"
+      x-amazon-apigateway-authorizer:
+        authorizerUri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:450834107946:function:HuBMAP-API-Gateway-Read-Group-Authorizer/invocations"
+        authorizerResultTtlInSeconds: 0
+        type: "token"
+    HuBMAP-API-Gateway-Data-Admin-Group-Authorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authtype: "custom"
+      x-amazon-apigateway-authorizer:
+        authorizerUri: "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:450834107946:function:HuBMAP-API-Gateway-Data-Admin-Group-Authorizer/invocations"
+        authorizerResultTtlInSeconds: 0
+        type: "token"
+x-amazon-apigateway-documentation:
+  version: "2.2.2"
+  createdDate: "2022-01-10T17:47:41Z"
+  documentationParts:
+  - location:
+      type: "API"
+    properties:
+      info:
+        description: "The HuBMAP Search API is a thin wrapper of the Elasticsearch\
+          \ API. It handles data indexing and reindexing into the backend Elasticsearch.\
+          \ It also accepts the search query and passes through to the Elasticsearch\
+          \ with data access security check."
+        termsOfService: "https://hubmapconsortium.org"
+        contact:
+          name: "HuBMAP Help Desk"
+          email: "help@hubmapconsortium.org"
+        license:
+          name: "MIT License"
+          url: "https://github.com/hubmapconsortium/entity-api/blob/master/license.txt"
+      externalDocs:
+        description: "Elasticsearch API Documentation"
+        url: "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html"
+      tags:
+      - name: "Search API, Elasticsearch"
+        description: "Operations pertaining to datasets indexed in Elasticsearch"
+      - name: "assaytype"
+        description: "Operations pertaining to assay types"
+  - location:
+      type: "METHOD"
+      path: "/assayname"
+      method: "POST"
+    properties:
+      tags:
+      - "assaytype"
+      summary: "Get a descriptive dict for a single assay type"
+  - location:
+      type: "METHOD"
+      path: "/assaytype/{name}"
+      method: "GET"
+    properties:
+      tags:
+      - "assaytype"
+      summary: "Get a descriptive dict for a single assay type"
+  - location:
+      type: "METHOD"
+      path: "/assaytype"
+      method: "GET"
+    properties:
+      tags:
+      - "assaytype"
+      summary: "Get a list of HuBMAP assay type names or descriptive dicts"
+  - location:
+      type: "METHOD"
+      path: "/indices"
+      method: "GET"
+    properties:
+      tags:
+      - "indices"
+      summary: "Reindex for a given UUID of dataset.  Use this method to obtain a\
+        \ list of valid indices within the search-api endpoint.  These index names\
+        \ are used in some of the subseqeunt calls made to the endpoint."
+  - location:
+      type: "METHOD"
+      path: "/reindex/{identifier}"
+      method: "PUT"
+    properties:
+      tags:
+      - "reindex"
+      summary: "Reindex for a given UUID of dataset"
+  - location:
+      type: "METHOD"
+      path: "/search"
+      method: "POST"
+    properties:
+      tags:
+      - "search"
+      summary: "Execute an Elasticsearch query JSON via HTTP POST and get back search\
+        \ hits that match the query."
+      description: "<strong>NOTE  This method also accepts a GET call using the same\
+        \ parameters.</strong> To query using a POST or GET, you must supply a query\
+        \ according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search)\
+        \ rules."
+  - location:
+      type: "METHOD"
+      path: "/{index_name}/search"
+      method: "POST"
+    properties:
+      tags:
+      - "search_by_index"
+      summary: "Execute an Elasticsearch query JSON via HTTP POST and get back search\
+        \ hits that match the query.  This call contraints the results to the specified\
+        \ index_name parameter.  Other than that, this call is identical to the /search\
+        \ method."
+      description: "<strong>NOTE  This method also accepts a GET call using the same\
+        \ parameters.</strong> To query using a POST or GET, you must supply a query\
+        \ according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search)\
+        \ rules."
+  - location:
+      type: "PATH_PARAMETER"
+      path: "/reindex/{identifier}"
+      method: "PUT"
+      name: "identifier"
+    properties:
+      description: "The unique identifier of collection.  This must be a UUID."
+  - location:
+      type: "PATH_PARAMETER"
+      path: "/{index_name}/search"
+      method: "POST"
+      name: "index_name"
+    properties:
+      description: "the name of an existing Elasticsearch index (see the /indices\
+        \ web service call)"
+  - location:
+      type: "PATH_PARAMETER"
+      path: "/assaytype/{name}"
+      method: "GET"
+      name: "name"
+    properties:
+      description: "An assay type name or single-word alternate name"
+  - location:
+      type: "QUERY_PARAMETER"
+      path: "/assaytype/{name}"
+      method: "GET"
+      name: "primary"
+    properties:
+      description: "If present and true, restrict list to primary datasets. A primary\
+        \ dataset is one for which no parent is a dataset. If present and false, restrict\
+        \ list to datasets which are not primary.\n"
+  - location:
+      type: "QUERY_PARAMETER"
+      path: "/assaytype"
+      method: "GET"
+      name: "primary"
+    properties:
+      description: "If present and true, restrict list to primary datasets. A primary\
+        \ dataset is one for which no parent is a dataset. If present and false, restrict\
+        \ list to datasets which are not primary.\n"
+  - location:
+      type: "QUERY_PARAMETER"
+      path: "/assaytype/{name}"
+      method: "GET"
+      name: "simple"
+    properties:
+      description: "If present and true, list only assay type names.  Otherwise return\
+        \ a list of descriptive dicts.\n"
+  - location:
+      type: "QUERY_PARAMETER"
+      path: "/assaytype"
+      method: "GET"
+      name: "simple"
+    properties:
+      description: "If present and true, list only assay type names.  Otherwise return\
+        \ a list of descriptive dicts.\n"
+  - location:
+      type: "REQUEST_BODY"
+      path: "/search"
+      method: "POST"
+    properties:
+      description: "Request JSON of Elasticsearch query"
+  - location:
+      type: "REQUEST_BODY"
+      path: "/{index_name}/search"
+      method: "POST"
+    properties:
+      description: "Request JSON of Elasticsearch query"
+  - location:
+      type: "RESPONSE"
+      path: "/assayname"
+      method: "POST"
+      statusCode: "200"
+    properties:
+      description: "successful operation"
+  - location:
+      type: "RESPONSE"
+      path: "/assayname"
+      method: "POST"
+      statusCode: "400"
+    properties:
+      description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+        \ or there was a system error"
+  - location:
+      type: "RESPONSE"
+      path: "/assayname"
+      method: "POST"
+      statusCode: "401"
+    properties:
+      description: "User's token is not valid"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype/{name}"
+      method: "GET"
+      statusCode: "200"
+    properties:
+      description: "successful operation"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype/{name}"
+      method: "GET"
+      statusCode: "400"
+    properties:
+      description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+        \ or there was a system error"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype/{name}"
+      method: "GET"
+      statusCode: "401"
+    properties:
+      description: "User's token is not valid"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype"
+      method: "GET"
+      statusCode: "200"
+    properties:
+      description: "successful operation"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype"
+      method: "GET"
+      statusCode: "400"
+    properties:
+      description: "The user sent a bad parameter (e.g. a nonexistent group name)\
+        \ or there was a system error"
+  - location:
+      type: "RESPONSE"
+      path: "/assaytype"
+      method: "GET"
+      statusCode: "401"
+    properties:
+      description: "User's token is not valid"
+  - location:
+      type: "RESPONSE"
+      path: "/indices"
+      method: "GET"
+      statusCode: "200"
+    properties:
+      description: "successful operation"
+  - location:
+      type: "RESPONSE"
+      path: "/indices"
+      method: "GET"
+      statusCode: "400"
+    properties:
+      description: "Bad request. A JSON body and appropriate Content-Type header are\
+        \ required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/indices"
+      method: "GET"
+      statusCode: "401"
+    properties:
+      description: "A valid globus token in the `Authorization` header (Bearer scheme)\
+        \ is required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/indices"
+      method: "GET"
+      statusCode: "403"
+    properties:
+      description: "The globus token used in the `Authorization` header doesn't have\
+        \ the right group access permission"
+  - location:
+      type: "RESPONSE"
+      path: "/reindex/{identifier}"
+      method: "PUT"
+      statusCode: "202"
+    properties:
+      description: "The request has been accepted and reindex is in process"
+  - location:
+      type: "RESPONSE"
+      path: "/search"
+      method: "POST"
+      statusCode: "200"
+    properties:
+      description: "Returns search hits from backend Elasticsearch that match the\
+        \ query defined in the request JSON"
+  - location:
+      type: "RESPONSE"
+      path: "/search"
+      method: "POST"
+      statusCode: "400"
+    properties:
+      description: "Bad request. A JSON body and appropriate Content-Type header are\
+        \ required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/search"
+      method: "POST"
+      statusCode: "401"
+    properties:
+      description: "A valid globus token in the `Authorization` header (Bearer scheme)\
+        \ is required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/search"
+      method: "POST"
+      statusCode: "403"
+    properties:
+      description: "The globus token used in the `Authorization` header doesn't have\
+        \ the right group access permission"
+  - location:
+      type: "RESPONSE"
+      path: "/{index_name}/search"
+      method: "POST"
+      statusCode: "200"
+    properties:
+      description: "Returns search hits from backend Elasticsearch that match the\
+        \ query defined in the request JSON"
+  - location:
+      type: "RESPONSE"
+      path: "/{index_name}/search"
+      method: "POST"
+      statusCode: "400"
+    properties:
+      description: "Bad request. A JSON body and appropriate Content-Type header are\
+        \ required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/{index_name}/search"
+      method: "POST"
+      statusCode: "401"
+    properties:
+      description: "A valid globus token in the `Authorization` header (Bearer scheme)\
+        \ is required in request"
+  - location:
+      type: "RESPONSE"
+      path: "/{index_name}/search"
+      method: "POST"
+      statusCode: "403"
+    properties:
+      description: "The globus token used in the `Authorization` header doesn't have\
+        \ the right group access permission"
+x-amazon-apigateway-gateway-responses:
+  DEFAULT_4XX:
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+  UNAUTHORIZED:
+    statusCode: 401
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    responseTemplates:
+      application/json: "{ \"message\": \"$context.error.message\", \"hint\": \"$context.authorizer.key\"\
+        , \"http_method\": \"$context.httpMethod\"}"
+  RESOURCE_NOT_FOUND:
+    statusCode: 404
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    responseTemplates:
+      application/json: "{\"message\":$context.error.messageString,\n\"http_method\"\
+        : \"$context.httpMethod\"}"
+  ACCESS_DENIED:
+    statusCode: 403
+    responseParameters:
+      gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+      gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+      gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    responseTemplates:
+      application/json: "{ \"message\": \"$context.error.message\", \"hint\": \"$context.authorizer.key\"\
+        , \"http_method\": \"$context.httpMethod\"}"
