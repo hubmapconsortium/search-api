@@ -184,10 +184,10 @@ MIBI:
 
 mibi_deepcell:
   description: Multiplex Ion Beam Imaging [DeepCell + SPRM]
-    alt-names: []
-    primary: false
-    contains-pii: false
-    vitessce-hints: ['is_image', 'is_tiled']
+  alt-names: []
+  primary: false
+  contains-pii: false
+  vitessce-hints: ['is_image', 'is_tiled']
 
 NanoDESI:
   description: NanoDESI
