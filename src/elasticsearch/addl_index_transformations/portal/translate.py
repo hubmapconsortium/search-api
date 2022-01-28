@@ -18,6 +18,7 @@ def _unexpected(s):
 
 def translate(doc):
     _add_metadata_metadata_placeholder(doc)
+    _translate_file_description(doc)
     _translate_status(doc)
     _translate_organ(doc)
     _translate_donor_metadata(doc)
@@ -73,6 +74,34 @@ def _add_metadata_metadata_placeholder(doc):
     '''
     if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
         doc['metadata']['metadata'] = {'has_metadata': True}
+
+
+# File description:
+
+def _translate_file_description(doc):
+    '''
+    >>> doc = {'files': [{
+    ...     "description": "OME-TIFF pyramid file",
+    ...     "edam_term": "EDAM_1.24.format_3727",
+    ...     "is_qa_qc": False,
+    ...     "rel_path": "ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif",
+    ...     "size": 123456789,
+    ...     "type": "unknown"
+    ... }]}
+    >>> _translate_file_description(doc)
+    >>> from pprint import pprint
+    >>> pprint(doc)
+    {'files': [{'description': 'OME-TIFF pyramid file',
+                'edam_term': 'EDAM_1.24.format_3727',
+                'is_qa_qc': False,
+                'mapped_description': 'OME-TIFF pyramid file (TIF file)',
+                'rel_path': 'ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif',
+                'size': 123456789,
+                'type': 'unknown'}]}
+    '''
+    for file in doc.get('files', []):
+        extension = file['rel_path'].split('.')[-1].upper()
+        file['mapped_description'] = file['description'] + f' ({extension} file)'
 
 
 # Data access level:
