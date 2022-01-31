@@ -80,6 +80,14 @@ def transform(doc, batch_id='unspecified'):
     ...            ]
     ...        }
     ...    },
+    ...    'files': [{
+    ...        "description": "OME-TIFF pyramid file",
+    ...        "edam_term": "EDAM_1.24.format_3727",
+    ...        "is_qa_qc": False,
+    ...        "rel_path": "ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif",
+    ...        "size": 123456789,
+    ...        "type": "unknown"
+    ...    }],
     ...    'metadata': {
     ...        'metadata': {
     ...            '_random_stuff_that_should_not_be_ui': 'No!',
@@ -117,6 +125,13 @@ def transform(doc, batch_id='unspecified'):
                                                   'grouping_concept_preferred_term': 'Sex',
                                                   'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
+     'files': [{'description': 'OME-TIFF pyramid file',
+                'edam_term': 'EDAM_1.24.format_3727',
+                'is_qa_qc': False,
+                'mapped_description': 'OME-TIFF pyramid file (TIF file)',
+                'rel_path': 'ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif',
+                'size': 123456789,
+                'type': 'unknown'}],
      'group_name': 'EXT - Outside HuBMAP',
      'mapped_consortium': 'Outside HuBMAP',
      'mapped_create_timestamp': '2019-12-04 19:58:29',

@@ -175,6 +175,20 @@ MALDI-IMS_pyramid:
     contains-pii: false
     vitessce-hints: ['pyramid', 'maldi']
 
+MIBI:
+  description: Multiplex Ion Beam Imaging
+  alt-names: ["Multiplex Ion Beam Imaging", "mibi"]
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
+mibi_deepcell:
+  description: Multiplex Ion Beam Imaging [DeepCell + SPRM]
+  alt-names: []
+  primary: false
+  contains-pii: false
+  vitessce-hints: ['is_image', 'is_tiled']
+
 NanoDESI:
   description: NanoDESI
   alt-names: []
