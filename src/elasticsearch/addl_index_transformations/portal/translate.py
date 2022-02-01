@@ -7,6 +7,8 @@ from yaml import safe_load as load_yaml
 
 from libs.assay_type import AssayType
 
+from .vitessce_conf_builder.builder_factory import get_view_config_builder
+
 
 class TranslationException(Exception):
     pass
@@ -27,6 +29,7 @@ def translate(doc):
     _translate_timestamp(doc)
     _translate_access_level(doc)
     _translate_external_consortium(doc)
+    _add_vitessce_conf(doc)
 
 
 # Utils:
@@ -360,3 +363,11 @@ def _donor_metadata_map(metadata):
         mapped_metadata[f'{key}_unit'].append(kv['units'])
 
     return dict(mapped_metadata)
+
+
+# Vitessce conf
+
+def _add_vitessce_conf(doc):
+    Builder = get_view_config_builder(entity=doc)
+    builder = Builder(doc, 'REPLACE_WITH_GROUPS_TOKEN')
+    doc['vitessce'] = builder.get_conf_cells().conf
