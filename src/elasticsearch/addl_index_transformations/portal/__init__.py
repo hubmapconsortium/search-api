@@ -81,14 +81,14 @@ def transform(doc, batch_id='unspecified'):
     ...            ]
     ...        }
     ...    },
-    ...    'files': [{
-    ...        "description": "OME-TIFF pyramid file",
-    ...        "edam_term": "EDAM_1.24.format_3727",
-    ...        "is_qa_qc": False,
-    ...        "rel_path": "ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif",
-    ...        "size": 123456789,
-    ...        "type": "unknown"
-    ...    }],
+    ...    'files': [
+    ...        {
+    ...            "rel_path": "cluster-marker-genes/output/cluster_marker_genes.cells.json"
+    ...        },
+    ...        {
+    ...            "rel_path": "cluster-marker-genes/output/cluster_marker_genes.cell-sets.json"
+    ...        }
+    ...    ],
     ...    'metadata': {
     ...        'dag_provenance_list': [],
     ...        'metadata': {
