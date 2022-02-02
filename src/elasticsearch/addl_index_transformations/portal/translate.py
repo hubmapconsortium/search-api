@@ -371,5 +371,5 @@ def _add_vitessce_conf(doc):
     def get_assay(name):
         return AssayType(name)
     Builder = get_view_config_builder(entity=doc, get_assay=get_assay)
-    builder = Builder(doc, 'REPLACE_WITH_GROUPS_TOKEN')
+    builder = Builder(doc, 'REPLACE_WITH_GROUPS_TOKEN', 'http://example.com/fake-assets/')
     doc['vitessce'] = builder.get_conf_cells().conf
