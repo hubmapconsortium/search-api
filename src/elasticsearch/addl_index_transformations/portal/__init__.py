@@ -54,6 +54,7 @@ def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
     >>> transformed = transform({
+    ...    'uuid': '0123456789abcdef0123456789abcdef',
     ...    'entity_type': 'dataset',
     ...    'status': 'New',
     ...    'group_name': 'EXT - Outside HuBMAP',
