@@ -151,7 +151,8 @@ def transform(doc, batch_id='unspecified'):
                                'should_be_int': 123}},
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
-                     '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',  'status': 'New',
+                     '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
+     'status': 'New',
      'uuid': '0123456789abcdef0123456789abcdef',
      'vitessce': {'coordinationSpace': {'dataset': {'A': 'A'},
                                         'embeddingType': {'A': 'UMAP'}},
