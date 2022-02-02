@@ -83,9 +83,11 @@ def transform(doc, batch_id='unspecified'):
     ...    },
     ...    'files': [
     ...        {
+    ...            "description": "Cells JSON",    
     ...            "rel_path": "cluster-marker-genes/output/cluster_marker_genes.cells.json"
     ...        },
     ...        {
+    ...            "description": "Cells Sets JSON",  
     ...            "rel_path": "cluster-marker-genes/output/cluster_marker_genes.cell-sets.json"
     ...        }
     ...    ],
