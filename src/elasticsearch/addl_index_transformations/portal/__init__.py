@@ -89,6 +89,7 @@ def transform(doc, batch_id='unspecified'):
     ...        "type": "unknown"
     ...    }],
     ...    'metadata': {
+    ...        'dag_provenance_list': [],
     ...        'metadata': {
     ...            '_random_stuff_that_should_not_be_ui': 'No!',
     ...            'collectiontype': 'No!',
@@ -140,7 +141,8 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'cell_barcode_size': '123',
+     'metadata': {'dag_provenance_list': [],
+                  'metadata': {'cell_barcode_size': '123',
                                'is_boolean': 'TRUE',
                                'keep_this_field': 'Yes!',
                                'should_be_float': 123.456,
