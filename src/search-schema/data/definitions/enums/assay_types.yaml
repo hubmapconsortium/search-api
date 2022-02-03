@@ -49,12 +49,19 @@ CODEX:
     contains-pii: false
     vitessce-hints: []
 
-codex_cytokit:
+codex_cytokit_v1:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
     primary: false
     contains-pii: false
     vitessce-hints: ['codex', 'is_image', 'is_tiled']
+
+codex_cytokit:
+    description: CODEX [Cytokit + SPRM]
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: ['sprm', 'anndata', 'is_image', 'is_tiled']
 
 DART-FISH:
     description: DART-FISH
