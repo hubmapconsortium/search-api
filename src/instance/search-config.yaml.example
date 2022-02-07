@@ -32,7 +32,5 @@ indices:
     active: true
     public: hm_antibodies
     private: hm_antibodies
-    document_source_endpoint: 'Does not use this'
     elasticsearch:
       url: <ES URL>
-      mappings: "search-default-config.yaml"
