@@ -28,3 +28,13 @@ indices:
     transform:
       module: elasticsearch.addl_index_transformations.portal
 
+  hm_antibodies:
+    active: true
+    public: hm_antibodies
+    private: hm_antibodies
+    document_source_endpoint: 'Doesn''t use this'
+    elasticsearch:
+      url: <ES URL>
+      mappings: "addl_index_transformations/portal/config.yaml"
+    transform:
+      module: elasticsearch.addl_index_transformations.portal
