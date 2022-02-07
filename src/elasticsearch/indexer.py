@@ -108,6 +108,11 @@ class Indexer:
             # Delete and recreate target indices
             #for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
+
+                if not 'document_source_endpoint' in self.INDICES['indices'][index]:
+                    # In this case the index is self-managed, and so we skip the reindexing...
+                    continue
+
                 # each index should have a public/private index
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
