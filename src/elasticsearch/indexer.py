@@ -109,7 +109,7 @@ class Indexer:
             #for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
 
-                if not 'document_source_endpoint' in self.INDICES['indices'][index]:
+                if 'document_source_endpoint' not in self.INDICES['indices'][index]:
                     # In this case the index is self-managed, and so we skip the reindexing...
                     continue
 
