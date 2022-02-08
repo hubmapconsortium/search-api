@@ -54,10 +54,10 @@ class Indexer:
             self.indices: dict = {}
             # Do not include the indexes that are self managed...
             for key, value in indices['indices'].items():
-                if 'reindex_enabled' in value and value['reindex_enabled'] == 'true':
+                if 'reindex_enabled' in value and value['reindex_enabled'] is True:
                     self.indices[key] = value
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
-            self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, indices: self.indices}
+            self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
             logger.debug(self.INDICES)
         except Exception:
