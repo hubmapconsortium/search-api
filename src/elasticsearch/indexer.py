@@ -51,9 +51,13 @@ class Indexer:
     # Constructor method with instance variables to be passed in
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
-            self.indices = indices['indices']
-            self.DEFAULT_INDEX_WITHOUT_PREFIX = indices['default_index']
-            self.INDICES = indices
+            self.indices: dict = {}
+            # Do not include the indexes that are self managed...
+            for key, value in indices['indices'].items():
+                if 'reindex_enabled' in value and value['reindex_enabled'] == 'true':
+                    self.indices[key] = value
+            self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
+            self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, indices: self.indices}
             logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
             logger.debug(self.INDICES)
         except Exception:
@@ -108,11 +112,6 @@ class Indexer:
             # Delete and recreate target indices
             #for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
-
-                if 'document_source_endpoint' not in self.INDICES['indices'][index]:
-                    # In this case the index is self-managed, and so we skip the reindexing...
-                    continue
-
                 # each index should have a public/private index
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']

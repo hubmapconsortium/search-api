@@ -8,6 +8,7 @@ default_index: entities
 indices:
   entities: 
     active: true
+    reindex_enabled: true
     public: hm_public_entities 
     private: hm_consortium_entities
     # Use `http://entity-api:8080` for non-localhost docker deployment
@@ -18,6 +19,7 @@ indices:
 
   portal: 
     active: true
+    reindex_enabled: true
     public: hm_public_portal
     private: hm_consortium_portal
     # Use `http://entity-api:8080` for non-localhost docker deployment
@@ -32,6 +34,7 @@ indices:
   # The indexer.py doesn't use this index
   hm_antibodies:
     active: true
+    reindex_enabled: false
     public: hm_antibodies
     private: hm_antibodies
     elasticsearch:
