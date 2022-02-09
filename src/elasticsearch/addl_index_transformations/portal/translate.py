@@ -6,7 +6,25 @@ from collections import defaultdict
 from yaml import safe_load as load_yaml
 
 from libs.assay_type import AssayType
+from flask import Flask
+import os
 
+app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'instance')),
+            instance_relative_config=True)
+app.config.from_pyfile('app.cfg')
+
+donor_source = entity_type_donor_source = organ_donor_source_data = living_donor_source_data = None
+if app.config['API_TYPE'] == 'HUBMAP':
+    donor_source = 'donor'
+    entity_type_donor_source = 'Donor'
+    organ_donor_source_data = 'organ_donor_data'
+    living_donor_source_data = 'living_donor_data'
+
+elif app.config['API_TYPE'] == 'SENNET':
+    donor_source = 'source'
+    entity_type_donor_source = 'Source'
+    organ_donor_source_data = 'organ_source_data'
+    living_donor_source_data = 'living_source_data'
 
 class TranslationException(Exception):
     pass
@@ -40,8 +58,8 @@ def _map(doc, key, map):
     # but better to do it everywhere than to miss one case.
     if key in doc:
         doc[f'mapped_{key}'] = map(doc[key])
-    if 'donor' in doc:
-        _map(doc['donor'], key, map)
+    if donor_source in doc:
+        _map(doc[donor_source], key, map)
     if 'origin_sample' in doc:
         _map(doc['origin_sample'], key, map)
     if 'source_sample' in doc:
@@ -59,11 +77,11 @@ def _add_metadata_metadata_placeholder(doc):
     that looks for this path. Samples and Donors don't follow this pattern,
     but to enable the boolean facet, we add a placeholder.
 
-    >>> doc = {'entity_type': 'Donor', 'metadata': {}}
+    >>> doc = {'entity_type': entity_type_donor_source, 'metadata': {}}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' in doc['metadata']
 
-    >>> doc = {'entity_type': 'Donor'}
+    >>> doc = {'entity_type': entity_type_donor_source}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' not in doc
 
@@ -72,7 +90,7 @@ def _add_metadata_metadata_placeholder(doc):
     >>> assert 'metadata' not in doc['metadata']
 
     '''
-    if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
+    if doc['entity_type'] in [entity_type_donor_source, 'Sample'] and 'metadata' in doc:
         doc['metadata']['metadata'] = {'has_metadata': True}
 
 
@@ -341,7 +359,7 @@ def _translate_donor_metadata(doc):
 def _donor_metadata_map(metadata):
     if metadata is None:
         return {}
-    donor_metadata = metadata.get('organ_donor_data') or metadata.get('living_donor_data') or {}
+    donor_metadata = metadata.get(organ_donor_source_data) or metadata.get(living_donor_source_data) or {}
     mapped_metadata = defaultdict(list)
 
     for kv in donor_metadata:

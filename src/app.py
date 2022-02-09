@@ -31,6 +31,13 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
+donor_source = None
+if app.config['API_TYPE'] == 'HUBMAP':
+    donor_source = 'donor'
+
+elif app.config['API_TYPE'] == 'SENNET':
+    donor_source = 'source'
+
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
 DEFAULT_INDEX_WITHOUT_PREFIX = INDICES['default_index']
@@ -652,7 +659,7 @@ def reindex_all_uuids(indexer, token):
             start = time.time()
 
             # Make calls to entity-api to get a list of uuids for each entity type
-            donor_uuids_list = get_uuids_by_entity_type("donor", token)
+            donor_uuids_list = get_uuids_by_entity_type(donor_source, token)
             sample_uuids_list = get_uuids_by_entity_type("sample", token)
             dataset_uuids_list = get_uuids_by_entity_type("dataset", token)
             upload_uuids_list = get_uuids_by_entity_type("upload", token)
