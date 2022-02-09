@@ -36,3 +36,5 @@ Pipfile.lock
 #Eclipse project files
 .project
 .pydevproject
+
+.idea
