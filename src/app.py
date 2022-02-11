@@ -31,12 +31,17 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'), instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
-donor_source = None
+donor_source = group_name = group_id = None
 if app.config['API_TYPE'] == 'HUBMAP':
     donor_source = 'donor'
+    group_name = 'HuBMAP'
+    group_id = 'hmgroupids'
 
 elif app.config['API_TYPE'] == 'SENNET':
     donor_source = 'source'
+    # TODO: need to add new group name to auth library as well as group id
+    group_name = 'HuBMAP'
+    group_id = 'hmgroupids'
 
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
@@ -100,7 +105,7 @@ except Exception:
 
 @app.route('/', methods = ['GET'])
 def index():
-    return "Hello! This is HuBMAP Search API service :)"
+    return "Hello! This is " + group_name + " Search API service :)"
 
 ####################################################################################################
 ## Assay type API
@@ -396,7 +401,7 @@ def user_in_hubmap_data_admin_group(request):
         # The property 'hmgroupids' is ALWASYS in the output with using get_user_info()
         # when the token in request is a nexus_token
         user_info = get_user_info(request)
-        hubmap_data_admin_group_uuid = auth_helper_instance.groupNameToId('HuBMAP-Data-Admin')['uuid']
+        hubmap_data_admin_group_uuid = auth_helper_instance.groupNameToId(group_name + '-Data-Admin')['uuid']
     except Exception as e:
         # Log the full stack trace, prepend a line with our message
         logger.exception(e)
@@ -406,7 +411,7 @@ def user_in_hubmap_data_admin_group(request):
         # We treat such cases as the user not in the HuBMAP-Data-Admin group
         return False
         
-    return (hubmap_data_admin_group_uuid in user_info['hmgroupids'])
+    return (hubmap_data_admin_group_uuid in user_info[group_id])
 
 """
 Get user infomation dict based on the http request(headers)
@@ -501,7 +506,7 @@ def get_target_index(request, index_without_prefix):
         # Key 'hmgroupids' presents only when group_required is True
         else:
             # Case #4
-            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info['hmgroupids']:
+            if app.config['GLOBUS_HUBMAP_READ_GROUP_UUID'] in user_info[group_id]:
                 #target_index = app.config['PRIVATE_INDEX_PREFIX'] + index_without_prefix
                 target_index = INDICES['indices'][index_without_prefix]['private']
     
