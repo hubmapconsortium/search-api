@@ -37,5 +37,4 @@ Pipfile.lock
 .project
 .pydevproject
 
-.idea/
-
+.idea
