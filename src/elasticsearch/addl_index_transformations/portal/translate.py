@@ -9,7 +9,7 @@ from libs.assay_type import AssayType
 from flask import Flask
 import os
 
-app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'instance')),
+app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'instance')),
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
