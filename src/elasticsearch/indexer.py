@@ -41,15 +41,6 @@ app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
-consortium_entities = public_entities = None
-if app.config['API_TYPE'] == 'HUBMAP':
-    consortium_entities = 'hm_consortium_entities'
-    public_entities = 'hm_public_entities'
-
-elif app.config['API_TYPE'] == 'SENNET':
-    consortium_entities = 'sn_consortium_entities'
-    public_entities = 'sn_public_entities'
-
 class Indexer:
     # Class variables/constants
     # All lowercase for easy comparision
@@ -807,7 +798,7 @@ class Indexer:
 
             # Handle Upload differently by only updating it in the hm_consortium_entities index
             if node['entity_type'] == 'Upload':
-                target_index = consortium_entities
+                target_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
                 # Delete old doc and write with new one
                 self.eswriter.delete_document(target_index, node['uuid'])
