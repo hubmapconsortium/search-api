@@ -42,6 +42,10 @@ elif app.config['API_TYPE'] == 'SENNET':
     # TODO: need to add new group name to auth library as well as group id
     group_name = 'HuBMAP'
     group_id = 'hmgroupids'
+else:
+    raise ValueError(
+        "Required configuration parameter API_TYPE not found in application configuration. Must be set to 'HUBMAP' or 'SENNET'.")
+
 
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())

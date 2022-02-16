@@ -26,6 +26,10 @@ elif app.config['API_TYPE'] == 'SENNET':
     organ_donor_source_data = 'organ_source_data'
     living_donor_source_data = 'living_source_data'
 
+else:
+    raise ValueError(
+        "Required configuration parameter API_TYPE not found in application configuration. Must be set to 'HUBMAP' or 'SENNET'.")
+
 
 class TranslationException(Exception):
     pass
