@@ -26,6 +26,7 @@ elif app.config['API_TYPE'] == 'SENNET':
     organ_donor_source_data = 'organ_source_data'
     living_donor_source_data = 'living_source_data'
 
+
 class TranslationException(Exception):
     pass
 
