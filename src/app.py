@@ -330,6 +330,29 @@ def get_user_info_for_access_check(request, group_required):
     return auth_helper_instance.getUserInfoUsingRequest(request, group_required)
 
 """
+Send back useful error message instead of AWS API Gateway's default 500 message
+when the response payload size is over 10MB (10485760 bytes)
+
+Parameters
+----------
+response_text: str
+    The http response body string
+
+Returns
+-------
+flask.Response
+    500 response with error message if over the hard limit
+"""
+def check_response_payload_size(response_text):
+    search_result_payload = len(response_text.encode('utf-8'))
+    aws_api_gateway_payload_max = 10485760
+
+    if search_result_payload > aws_api_gateway_payload_max:
+        msg = f'Search result length {search_result_payload} is larger than allowed maximum of {aws_api_gateway_payload_max} bytes'
+        logger.debug(msg)
+        internal_server_error(msg)
+	
+"""
 Parase the token from Authorization header
 
 Parameters
@@ -536,16 +559,16 @@ def execute_query(query_against, request, index, es_url, query=None):
 
     logger.debug(json_data)
 
-    resp = requests.post(url=target_url, json=json_data)
-    logger.debug("==========response==========")
-    logger.debug(resp)
-    try:
-        return jsonify(resp.json())
-    except Exception as e:
-        logger.debug(e)
-        raise e
-    # Return the elasticsearch resulting json data as json string
-    return jsonify(resp)
+    response = requests.post(url=target_url, json=json_data)
+
+    logger.debug(f"==========response status code: {response.status_code} ==========")
+
+    # Handling response over 10MB with a more useful message instead of AWS API Gateway's default 500 message
+    # Note Content-length header is not always provided, we have to calculate 
+    check_response_payload_size(response.text)
+
+    # Return the elasticsearch resulting json data 
+    return jsonify(response.json())
 
 # Get the query string from orignal request
 def get_query_string(url):
