@@ -71,7 +71,7 @@ GET /indices
 The Authorization header with globus token is optional
 
 ````
-GET/POST /search
+POST /search
 ````
 
 ### Search against a specified index
@@ -79,7 +79,7 @@ GET/POST /search
 The Authorization header with globus token is optional
 
 ````
-GET/POST /<index>/search
+POST /<index>/search
 ````
 Due to data access restriction, indexed entries are protected and calls to the above endpoints require the `Authorization` header with the Bearer token (globus nexus token) along with the search query JSON body. There are three cases when making a search call:
 
