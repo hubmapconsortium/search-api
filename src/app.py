@@ -141,8 +141,9 @@ def assayname(name=None):
 ####################################################################################################
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+# BUT AWS API Gateway only supports POST with request body
 # general search uses the DEFAULT_INDEX
-@app.route('/search', methods = ['GET', 'POST'])
+@app.route('/search', methods = ['POST'])
 def search():
     # Always expect a json body
     request_json_required(request)
@@ -161,8 +162,9 @@ def search():
     return execute_query('_search', request, target_index, es_url)
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+# BUT AWS API Gateway only supports POST with request body
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
-@app.route('/<index_without_prefix>/search', methods = ['GET', 'POST'])
+@app.route('/<index_without_prefix>/search', methods = ['POST'])
 def search_by_index(index_without_prefix):
     # Always expect a json body
     request_json_required(request)
