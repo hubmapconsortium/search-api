@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -92,6 +93,84 @@ class SenNetTranslator(TranslatorInterface):
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+    def delete(self, entity_id):
+        for index, _ in self.indices.items():
+            # each index should have a public/private index
+            public_index = self.INDICES['indices'][index]['public']
+            Indexer.delete(entity_id, public_index)
+
+            private_index = self.INDICES['indices'][index]['private']
+            if public_index != private_index:
+                Indexer.delete(entity_id, private_index)
+
+    # When indexing, Upload WILL NEVER BE PUBLIC
+    def translate_upload(self, entity, reindex=False):
+        default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
+
+        # Retrieve the upload entity details
+        upload = self.call_entity_api(entity['uuid'], 'entities')
+
+        self.add_datasets_to_entity(upload)
+        self.entity_keys_rename(upload)
+
+        # Add additional calculated fields if any applies to Upload
+        self.add_calculated_fields(upload)
+
+        self.call_indexer(entity, reindex, json.dumps(upload), default_private_index)
+
+    def translate_public_collection(self, entity, reindex=False):
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
+        # - no token at all
+        # Here we do NOT send over the token
+        collection = self.call_entity_api(entity['uuid'], 'collections')
+
+        self.add_datasets_to_entity(collection)
+        self.entity_keys_rename(collection)
+
+        # Add additional calculated fields if any applies to Collection
+        self.add_calculated_fields(collection)
+
+        for index in self.indices.keys():
+            # each index should have a public index
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+
+            # Add the tranformed doc to the portal index
+            json_data = ""
+
+            # if the index has a transformer use that else do a now load
+            if self.TRANSFORMERS.get(index):
+                json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
+            else:
+                json_data = json.dumps(collection)
+
+            self.call_indexer(entity, reindex, json_data, public_index)
+            self.call_indexer(entity, reindex, json_data, private_index)
+
+    def translate_tree(self, entity_id):
+        # logger.info(f"Total threads count: {threading.active_count()}")
+
+        logger.info(f"Executing index_tree() for source of uuid: {entity_id}")
+
+        descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+
+        # Index the source entity itself separately
+        source = self.call_entity_api(entity_id, 'entities')
+
+        self.call_indexer(source)
+
+        # Index all the descendants of this source
+        for descendant_uuid in descendant_uuids:
+            # Retrieve the entity details
+            descendant = self.call_entity_api(descendant_uuid, 'entities')
+
+            self.call_indexer(descendant)
+
+        msg = f"indexer.index_tree() finished executing for source of uuid: {entity_id}"
+        logger.info(msg)
+        return msg
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
@@ -183,7 +262,7 @@ class SenNetTranslator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if (self.entity_is_public(org_node)):
+                    if self.entity_is_public(org_node):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -220,51 +299,6 @@ class SenNetTranslator(TranslatorInterface):
             sys.exit(msg)
 
         return response.json()
-
-    # When indexing, Upload WILL NEVER BE PUBLIC
-    def translate_upload(self, entity, reindex=False):
-        default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
-
-        # Retrieve the upload entity details
-        upload = self.call_entity_api(entity['uuid'], 'entities')
-
-        self.add_datasets_to_entity(upload)
-        self.entity_keys_rename(upload)
-
-        # Add additional calculated fields if any applies to Upload
-        self.add_calculated_fields(upload)
-
-        self.call_indexer(entity, reindex, json.dumps(upload), default_private_index)
-
-    def translate_public_collection(self, entity, reindex=False):
-        # The entity-api returns public collection with a list of connected public/published datasets, for either
-        # - a valid token but not in HuBMAP-Read group or
-        # - no token at all
-        # Here we do NOT send over the token
-        collection = self.call_entity_api(entity['uuid'], 'collections')
-
-        self.add_datasets_to_entity(collection)
-        self.entity_keys_rename(collection)
-
-        # Add additional calculated fields if any applies to Collection
-        self.add_calculated_fields(collection)
-
-        for index in self.indices.keys():
-            # each index should have a public index
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
-
-            # Add the tranformed doc to the portal index
-            json_data = ""
-
-            # if the index has a transformer use that else do a now load
-            if self.TRANSFORMERS.get(index):
-                json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
-            else:
-                json_data = json.dumps(collection)
-
-            self.call_indexer(entity, reindex, json_data, public_index)
-            self.call_indexer(entity, reindex, json_data, private_index)
 
     def add_datasets_to_entity(self, entity):
         datasets = []
@@ -361,7 +395,7 @@ class SenNetTranslator(TranslatorInterface):
         else:
             # Do nothing
             logger.error(
-                f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
+                f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Source/Sample/Dataset")
 
         return display_subtype
 
