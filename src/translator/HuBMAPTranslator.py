@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 
 entity_properties_list = [
     'metadata',
-    'source',
+    'donor',
     'origin_sample',
-    'source_sample',
+    'donor_sample',
     'ancestor_ids',
     'descendant_ids',
     'ancestors',
@@ -35,10 +35,10 @@ entity_properties_list = [
     'immediate_descendants',
     'datasets'
 ]
-entity_types = ['Upload', 'Source', 'Sample', 'Dataset']
+entity_types = ['Upload', 'Donor', 'Sample', 'Dataset']
 
 
-class SenNetTranslator(TranslatorInterface):
+class HuBMAPTranslator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_STATUS_PUBLISHED = 'published'
@@ -57,7 +57,7 @@ class SenNetTranslator(TranslatorInterface):
                 start = time.time()
 
                 # Make calls to entity-api to get a list of uuids for each entity type
-                source_uuids_list = get_uuids_by_entity_type("source", token, self.DEFAULT_ENTITY_API_URL)
+                donor_uuids_list = get_uuids_by_entity_type("donor", token, self.DEFAULT_ENTITY_API_URL)
                 sample_uuids_list = get_uuids_by_entity_type("sample", token, self.DEFAULT_ENTITY_API_URL)
                 dataset_uuids_list = get_uuids_by_entity_type("dataset", token, self.DEFAULT_ENTITY_API_URL)
                 upload_uuids_list = get_uuids_by_entity_type("upload", token, self.DEFAULT_ENTITY_API_URL)
@@ -67,7 +67,7 @@ class SenNetTranslator(TranslatorInterface):
                 logger.debug("merging sets into a one list...")
                 # Merge into a big list that with no duplicates
                 all_entities_uuids = set(
-                    source_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
+                    donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
 
                 es_uuids = []
                 # for index in ast.literal_eval(app.config['INDICES']).keys():
@@ -101,7 +101,7 @@ class SenNetTranslator(TranslatorInterface):
                 # Reindex in multi-treading mode for:
                 # - each public collection
                 # - each upload, only add to the hm_consortium_entities index (private index of the default)
-                # - each source and its descendants in the tree
+                # - each donor and its descendants in the tree
                 futures_list = []
                 results = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -110,10 +110,10 @@ class SenNetTranslator(TranslatorInterface):
                         for uuid in public_collection_uuids_list]
                     upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
                                            upload_uuids_list]
-                    source_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in source_uuids_list]
+                    donor_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in donor_uuids_list]
 
                     # Append the above three lists into one
-                    futures_list = public_collection_futures_list + upload_futures_list + source_futures_list
+                    futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
 
                     for f in concurrent.futures.as_completed(futures_list):
                         logger.debug(f.result())
@@ -232,23 +232,23 @@ class SenNetTranslator(TranslatorInterface):
     def translate_tree(self, entity_id):
         # logger.info(f"Total threads count: {threading.active_count()}")
 
-        logger.info(f"Executing index_tree() for source of uuid: {entity_id}")
+        logger.info(f"Executing index_tree() for donor of uuid: {entity_id}")
 
         descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
-        # Index the source entity itself separately
-        source = self.call_entity_api(entity_id, 'entities')
+        # Index the donor entity itself separately
+        donor = self.call_entity_api(entity_id, 'entities')
 
-        self.call_indexer(source)
+        self.call_indexer(donor)
 
-        # Index all the descendants of this source
+        # Index all the descendants of this donor
         for descendant_uuid in descendant_uuids:
             # Retrieve the entity details
             descendant = self.call_entity_api(descendant_uuid, 'entities')
 
             self.call_indexer(descendant)
 
-        msg = f"indexer.index_tree() finished executing for source of uuid: {entity_id}"
+        msg = f"indexer.index_tree() finished executing for donor of uuid: {entity_id}"
         logger.info(msg)
         return msg
 
@@ -262,7 +262,7 @@ class SenNetTranslator(TranslatorInterface):
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX][
-                'document_source_endpoint'].strip(
+                'document_donor_endpoint'].strip(
                 '/')
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
@@ -279,13 +279,13 @@ class SenNetTranslator(TranslatorInterface):
         auth_helper = self.init_auth_helper()
         self.request_headers = self.create_request_headers_for_auth(token)
 
-        self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+        self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_donor_endpoint'].strip('/')
 
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
 
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               'sennet_translation/neo4j-to-es-attributes.json'),
+                               'neo4j-to-es-attributes.json'),
                   'r') as json_file:
             self.attr_map = json.load(json_file)
 
@@ -368,7 +368,7 @@ class SenNetTranslator(TranslatorInterface):
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
         except Exception:
-            msg = f"Exception encountered during executing SenNetTranslator call_indexer() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
+            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -386,9 +386,9 @@ class SenNetTranslator(TranslatorInterface):
                 dataset_doc.pop('descendant_ids')
                 dataset_doc.pop('immediate_descendants')
                 dataset_doc.pop('immediate_ancestors')
-                dataset_doc.pop('source')
+                dataset_doc.pop('donor')
                 dataset_doc.pop('origin_sample')
-                dataset_doc.pop('source_sample')
+                dataset_doc.pop('donor_sample')
 
                 datasets.append(dataset_doc)
 
@@ -420,11 +420,11 @@ class SenNetTranslator(TranslatorInterface):
         if entity['entity_type'] in entity_types:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
-    # For Upload, Dataset, Source and Sample objects:
+    # For Upload, Dataset, Donor and Sample objects:
     # add a calculated (not stored in Neo4j) field called `display_subtype` to
     # all Elasticsearch documents of the above types with the following rules:
     # Upload: Just make it "Data Upload" for all uploads
-    # Source: "Source"
+    # Donor: "Donor"
     # Sample: if specimen_type == 'organ' the display name linked to the corresponding description of organ code
     # otherwise the display name linked to the value of the corresponding description of specimen_type code
     # Dataset: the display names linked to the values in data_types as a comma separated list
@@ -434,8 +434,8 @@ class SenNetTranslator(TranslatorInterface):
 
         if entity_type == 'Upload':
             display_subtype = 'Data Upload'
-        elif entity_type == 'Source':
-            display_subtype = 'Source'
+        elif entity_type == 'Donor':
+            display_subtype = 'Donor'
         elif entity_type == 'Sample':
             if 'specimen_type' in entity:
                 if entity['specimen_type'].lower() == 'organ':
@@ -456,7 +456,7 @@ class SenNetTranslator(TranslatorInterface):
         else:
             # Do nothing
             logger.error(
-                f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Source/Sample/Dataset")
+                f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
 
         return display_subtype
 
@@ -482,11 +482,11 @@ class SenNetTranslator(TranslatorInterface):
                     # Add to the list
                     ancestors.append(ancestor_dict)
 
-                # Find the Source
-                source = None
+                # Find the Donor
+                donor = None
                 for a in ancestors:
-                    if a['entity_type'] == 'Source':
-                        source = copy.copy(a)
+                    if a['entity_type'] == 'Donor':
+                        donor = copy.copy(a)
                         break
 
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
@@ -515,7 +515,7 @@ class SenNetTranslator(TranslatorInterface):
             # The origin_sample is the sample that `specimen_type` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Add new properties
-                entity['source'] = source
+                entity['donor'] = donor
 
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
                         entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
@@ -532,22 +532,22 @@ class SenNetTranslator(TranslatorInterface):
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
-                    entity['source_sample'] = None
+                    entity['donor_sample'] = None
 
                     e = entity
 
-                    while entity['source_sample'] is None:
+                    while entity['donor_sample'] is None:
                         parents = self.call_entity_api(e['uuid'], 'parents')
 
                         try:
                             # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                # entity['source_sample'] = parents[0]
-                                entity['source_sample'] = parents
+                                # entity['donor_sample'] = parents[0]
+                                entity['donor_sample'] = parents
 
                             e = parents[0]
                         except IndexError:
-                            entity['source_sample'] = {}
+                            entity['donor_sample'] = {}
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
@@ -576,12 +576,12 @@ class SenNetTranslator(TranslatorInterface):
                 entity['metadata'].pop('files')
 
             # Rename for properties that are objects
-            if entity.get('source', None):
-                self.entity_keys_rename(entity['source'])
+            if entity.get('donor', None):
+                self.entity_keys_rename(entity['donor'])
             if entity.get('origin_sample', None):
                 self.entity_keys_rename(entity['origin_sample'])
-            if entity.get('source_sample', None):
-                for s in entity.get('source_sample', None):
+            if entity.get('donor_sample', None):
+                for s in entity.get('donor_sample', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
@@ -635,9 +635,9 @@ class SenNetTranslator(TranslatorInterface):
         return json.dumps(entity)
 
     # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Source/Sample/Dataset
+    # This method is only applied to Donor/Sample/Dataset
     # For Dataset, if status=='Published', it goes into the public index
-    # For Source/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
+    # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
     # then they go into public index
     # Don't confuse with `data_access_level`
     def entity_is_public(self, node):
@@ -702,7 +702,7 @@ if __name__ == "__main__":
         sys.exit(msg)
 
     # Create an instance of the indexer
-    translator = SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    translator = HuBMAPTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
 
     auth_helper = translator.init_auth_helper()
 
@@ -719,7 +719,7 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    # TODO: Need to generalize this once SenNet authorization is updated
+    # TODO: Need to generalize this once HuBMAP authorization is updated
     if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message

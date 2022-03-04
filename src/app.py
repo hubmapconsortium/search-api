@@ -1,24 +1,18 @@
 import os
-import time
-from pathlib import Path
-from flask import Flask, jsonify, abort, request, Response
-import concurrent.futures
 import threading
-import requests
-import logging
-from urllib.parse import urlparse
+
+from flask import Flask, request, Response
 from flask import current_app as app
+# HuBMAP commons
+from hubmap_commons.hm_auth import AuthHelper
 from urllib3.exceptions import InsecureRequestWarning
 from yaml import safe_load
 
+from libs.assay_type import AssayType
 # Local modules
 from translator.SenNetTranslator import SenNetTranslator
-from elasticsearch.indexer import Indexer
-
-from libs.assay_type import AssayType
-
-# HuBMAP commons
-from hubmap_commons.hm_auth import AuthHelper
+from translator.HuBMAPTranslator import HuBMAPTranslator
+from translator.translation_functions import *
 
 # Set logging fromat and level (default is warning)
 # All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
@@ -33,14 +27,12 @@ app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
-donor_source = group_name = group_id = None
+group_name = group_id = None
 if app.config['API_TYPE'] == 'HUBMAP':
-    donor_source = 'donor'
     group_name = 'HuBMAP'
     group_id = 'hmgroupids'
 
 elif app.config['API_TYPE'] == 'SENNET':
-    donor_source = 'source'
     # TODO: need to add new group name to auth library as well as group id
     group_name = 'HuBMAP'
     group_id = 'hmgroupids'
@@ -297,8 +289,8 @@ def reindex(uuid):
     token = get_user_token(request.headers)
 
     try:
-        indexer = init_translator(token)
-        threading.Thread(target=indexer.translate, args=[uuid]).start()
+        translator = init_translator(token)
+        threading.Thread(target=translator.translate, args=[uuid]).start()
         # indexer.reindex(uuid)  # for non-thread
 
         logger.info(f"Started to reindex uuid: {uuid}")
@@ -322,8 +314,8 @@ def reindex_all():
     logger.debug(saved_request)
 
     try:
-        indexer = init_translator(token)
-        threading.Thread(target=reindex_all_uuids, args=[indexer, token]).start()
+        translator = init_translator(token)
+        threading.Thread(target=translator.translate_all, args=[]).start()
 
         logger.info('Started live reindex all')
     except Exception as e:
@@ -337,26 +329,6 @@ def reindex_all():
 ####################################################################################################
 ## Internal Functions Used By API 
 ####################################################################################################
-
-
-# Throws error for 400 Bad Reqeust with message
-def bad_request_error(err_msg):
-    abort(400, description=err_msg)
-
-
-# Throws error for 401 Unauthorized with message
-def unauthorized_error(err_msg):
-    abort(401, description=err_msg)
-
-
-# Throws error for 403 Forbidden with message
-def forbidden_error(err_msg):
-    abort(403, description=err_msg)
-
-
-# Throws error for 500 Internal Server Error with message
-def internal_server_error(err_msg):
-    abort(500, description=err_msg)
 
 
 # Get user infomation dict based on the http request(headers)
@@ -549,253 +521,17 @@ def get_target_index(request, index_without_prefix):
     return target_index
 
 
-# Make a call to Elasticsearch
-def execute_query(query_against, request, index, es_url, query=None):
-    supported_query_against = ['_search', '_count']
-    separator = ','
-
-    if query_against not in supported_query_against:
-        bad_request_error(
-            f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
-
-    # Determine the target real index in Elasticsearch to be searched against
-    # index = get_target_index(request, index_without_prefix)
-
-    # target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
-    # es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
-
-    logger.debug('es_url')
-    logger.debug(es_url)
-    logger.debug(type(es_url))
-    # use the index es connection
-    target_url = es_url + '/' + index + '/' + query_against
-
-    logger.debug("Target url: " + target_url)
-    if query is None:
-        # Parse incoming json string into json data(python dict object)
-        json_data = request.get_json()
-
-        # All we need to do is to simply pass the search json to elasticsearch
-        # The request json may contain "access_group" in this case
-        # Will also pass through the query string in URL
-        target_url = target_url + get_query_string(request.url)
-        # Make a request with json data
-        # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
-    else:
-        json_data = query
-
-    logger.debug(json_data)
-
-    resp = requests.post(url=target_url, json=json_data)
-    logger.debug("==========response==========")
-    logger.debug(resp)
-    try:
-        return jsonify(resp.json())
-    except Exception as e:
-        logger.debug(e)
-        raise e
-    # Return the elasticsearch resulting json data as json string
-    return jsonify(resp)
-
-
-# Get the query string from orignal request
-def get_query_string(url):
-    query_string = ''
-    parsed_url = urlparse(url)
-
-    logger.debug("======parsed_url======")
-    logger.debug(parsed_url)
-
-    # Add the ? at beginning of the query string if not empty
-    if not parsed_url.query:
-        query_string = '?' + parsed_url.query
-
-    return query_string
-
-
-# Get a list of entity uuids via entity-api for a given entity type:
-# Collection, Donor, Sample, Dataset, Submission. Case-insensitive.
-def get_uuids_by_entity_type(entity_type, token):
-    entity_type = entity_type.lower()
-
-    request_headers = create_request_headers_for_auth(token)
-
-    # Use different entity-api endpoint for Collection
-    if entity_type == 'collection':
-        # url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
-        url = DEFAULT_ENTITY_API_URL + "/collections?property=uuid"
-    else:
-        # url = app.config['ENTITY_API_URL'] + "/" + entity_type + "/entities?property=uuid"
-        url = DEFAULT_ENTITY_API_URL + "/" + entity_type + "/entities?property=uuid"
-
-    response = requests.get(url, headers=request_headers, verify=False)
-
-    if response.status_code != 200:
-        internal_server_error(
-            "get_uuids_by_entity_type() failed to make a request to entity-api for entity type: " + entity_type)
-
-    uuids_list = response.json()
-
-    return uuids_list
-
-
-# Create a dict with HTTP Authorization header with Bearer token
-def create_request_headers_for_auth(token):
-    auth_header_name = 'Authorization'
-    auth_scheme = 'Bearer'
-
-    headers_dict = {
-        # Don't forget the space between scheme and the token value
-        auth_header_name: auth_scheme + ' ' + token
-    }
-
-    return headers_dict
-
-
-def get_uuids_from_es(index, es_url):
-    uuids = []
-    size = 10_000
-    query = {
-        "size": size,
-        "from": len(uuids),
-        "_source": ["_id"],
-        "query": {
-            "bool": {
-                "must": [],
-                "filter": [
-                    {
-                        "match_all": {}
-                    }
-                ],
-                "should": [],
-                "must_not": []
-            }
-        }
-    }
-
-    end_of_list = False
-    while not end_of_list:
-        logger.debug("Searching ES for uuids...")
-        logger.debug(es_url)
-        resp = execute_query('_search', None, index, es_url, query)
-        logger.debug('Got a response from ES...')
-        ret_obj = resp.get_json()
-        uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
-
-        total = ret_obj.get('hits').get('total').get('value')
-        if total <= len(uuids):
-            end_of_list = True
-        else:
-            query['from'] = len(uuids)
-
-    return uuids
-
-
 def init_translator(token):
     if app.config['API_TYPE'] == 'HUBMAP':
-        return Indexer(
-            INDICES,
-            app.config['APP_CLIENT_ID'],
-            app.config['APP_CLIENT_SECRET'],
-            token
-        )
+        # return Indexer(
+        #     INDICES,
+        #     app.config['APP_CLIENT_ID'],
+        #     app.config['APP_CLIENT_SECRET'],
+        #     token
+        # )
+        return HuBMAPTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
     elif app.config['API_TYPE'] == 'SENNET':
         return SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
-
-
-def reindex_all_uuids(indexer, token):
-    with app.app_context():
-        try:
-            logger.info("############# Reindex Live Started #############")
-
-            start = time.time()
-
-            # Make calls to entity-api to get a list of uuids for each entity type
-            donor_uuids_list = get_uuids_by_entity_type(donor_source, token)
-            sample_uuids_list = get_uuids_by_entity_type("sample", token)
-            dataset_uuids_list = get_uuids_by_entity_type("dataset", token)
-            upload_uuids_list = get_uuids_by_entity_type("upload", token)
-            public_collection_uuids_list = get_uuids_by_entity_type("collection", token)
-
-            logger.debug("merging sets into a one list...")
-            # Merge into a big list that with no duplicates
-            all_entities_uuids = set(
-                donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
-
-            es_uuids = []
-            # for index in ast.literal_eval(app.config['INDICES']).keys():
-            logger.debug("looping through the indices...")
-            logger.debug(INDICES['indices'].keys())
-
-            index_names = get_all_indice_names()
-            logger.debug(index_names)
-
-            for index in index_names.keys():
-                all_indices = index_names[index]
-                # get URL for that index
-                es_url = INDICES['indices'][index]['elasticsearch']['url'].strip('/')
-
-                for actual_index in all_indices:
-                    es_uuids.extend(get_uuids_from_es(actual_index, es_url))
-
-            es_uuids = set(es_uuids)
-
-            logger.debug("looping through the UUIDs...")
-
-            # Remove entities found in Elasticserach but no longer in neo4j
-            for uuid in es_uuids:
-                if uuid not in all_entities_uuids:
-                    logger.debug(
-                        f"Entity of uuid: {uuid} found in Elasticserach but no longer in neo4j. Delete it from Elasticserach.")
-                    indexer.delete(uuid)
-
-            logger.debug("Starting multi-thread reindexing ...")
-
-            # Reindex in multi-treading mode for:
-            # - each public collection
-            # - each upload, only add to the hm_consortium_entities index (private index of the default)
-            # - each donor and its descendants in the tree
-            futures_list = []
-            results = []
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                public_collection_futures_list = [executor.submit(indexer.index_public_collection, uuid, reindex=True)
-                                                  for uuid in public_collection_uuids_list]
-                upload_futures_list = [executor.submit(indexer.index_upload, uuid, reindex=True) for uuid in
-                                       upload_uuids_list]
-                donor_futures_list = [executor.submit(indexer.index_tree, uuid) for uuid in donor_uuids_list]
-
-                # Append the above three lists into one
-                futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
-
-                for f in concurrent.futures.as_completed(futures_list):
-                    logger.debug(f.result())
-
-            end = time.time()
-
-            logger.info(
-                f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
-        except Exception as e:
-            logger.error(e)
-
-
-# Gets a list of actually public and private indice names
-def get_all_indice_names():
-    all_names = {}
-    try:
-        indices = INDICES['indices'].keys()
-        for i in indices:
-            index_info = {}
-            index_names = []
-            public_index = INDICES['indices'][i]['public']
-            private_index = INDICES['indices'][i]['private']
-            index_names.append(public_index)
-            index_names.append(private_index)
-            index_info[i] = index_names
-            all_names.update(index_info)
-    except Exception as e:
-        raise e
-
-    return all_names
 
 
 # Get a list of filtered Elasticsearch indices to expose to end users without the prefix

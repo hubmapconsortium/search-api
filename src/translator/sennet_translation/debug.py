@@ -6,7 +6,7 @@ import logging
 
 from yaml import dump as dump_yaml, safe_load as load_yaml
 
-from elasticsearch.addl_index_transformations.portal import transform
+from translator.hubmap_translation.addl_index_transformations.portal import transform
 
 
 if __name__ == "__main__":
