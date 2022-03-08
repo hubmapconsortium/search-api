@@ -6,15 +6,15 @@ import os
 import sys
 import time
 
-# For reusing the app.cfg configuration when running indexer.py as script
+# For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
 from hubmap_commons import globus_groups
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 from yaml import safe_load
 
-from Indexer import Indexer
-from translator.TranslatorInterface import TranslatorInterface
+from indexer import Indexer
+from translator.translator_interface import TranslatorInterface
 from translator.translation_functions import *
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
@@ -48,6 +48,46 @@ class SenNetTranslator(TranslatorInterface):
     DEFAULT_ENTITY_API_URL = ''
     indexer = None
     entity_api_cache = {}
+
+    def __init__(self, indices, app_client_id, app_client_secret, token):
+        try:
+            self.indices: dict = {}
+            # Do not include the indexes that are self managed...
+            for key, value in indices['indices'].items():
+                if 'reindex_enabled' in value and value['reindex_enabled'] is True:
+                    self.indices[key] = value
+            self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
+            self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
+            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX][
+                'document_source_endpoint'].strip(
+                '/')
+
+            self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
+
+            logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
+            logger.debug(self.INDICES)
+        except Exception:
+            raise ValueError("Invalid indices config")
+
+        self.app_client_id = app_client_id
+        self.app_client_secret = app_client_secret
+        self.token = token
+
+        auth_helper = self.init_auth_helper()
+        self.request_headers = self.create_request_headers_for_auth(token)
+
+        self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+
+        # Add index_version by parsing the VERSION file
+        self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
+
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'sennet_translation/neo4j-to-es-attributes.json'),
+                  'r') as json_file:
+            self.attr_map = json.load(json_file)
+
+        # # Preload all the transformers
+        self.init_transformers()
 
     def translate_all(self):
         with app.app_context():
@@ -127,6 +167,8 @@ class SenNetTranslator(TranslatorInterface):
 
     def translate(self, entity_id):
         try:
+            start = time.time()
+
             # Retrieve the entity details
             entity = self.call_entity_api(entity_id, 'entities')
 
@@ -164,6 +206,11 @@ class SenNetTranslator(TranslatorInterface):
                         self.call_indexer(node, True)
 
                 logger.info("################reindex() DONE######################")
+
+                end = time.time()
+
+                logger.info(
+                    f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
 
                 # Clear the entity api cache
                 self.entity_api_cache.clear()
@@ -251,46 +298,6 @@ class SenNetTranslator(TranslatorInterface):
         msg = f"indexer.index_tree() finished executing for source of uuid: {entity_id}"
         logger.info(msg)
         return msg
-
-    def __init__(self, indices, app_client_id, app_client_secret, token):
-        try:
-            self.indices: dict = {}
-            # Do not include the indexes that are self managed...
-            for key, value in indices['indices'].items():
-                if 'reindex_enabled' in value and value['reindex_enabled'] is True:
-                    self.indices[key] = value
-            self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
-            self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
-            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX][
-                'document_source_endpoint'].strip(
-                '/')
-
-            self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
-
-            logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
-            logger.debug(self.INDICES)
-        except Exception:
-            raise ValueError("Invalid indices config")
-
-        self.app_client_id = app_client_id
-        self.app_client_secret = app_client_secret
-        self.token = token
-
-        auth_helper = self.init_auth_helper()
-        self.request_headers = self.create_request_headers_for_auth(token)
-
-        self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-
-        # Add index_version by parsing the VERSION file
-        self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
-
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               'sennet_translation/neo4j-to-es-attributes.json'),
-                  'r') as json_file:
-            self.attr_map = json.load(json_file)
-
-        # # Preload all the transformers
-        self.init_transformers()
 
     def init_transformers(self):
         for index in self.indices.keys():
@@ -682,8 +689,49 @@ class SenNetTranslator(TranslatorInterface):
 
         return response.json()
 
+    def main(self):
+        try:
+            # Delete and recreate target indices
+            # for index, configs in self.indices['indices'].items():
+            for index in self.indices.keys():
+                # each index should have a public/private index
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
-# Running indexer.py as a script in command line
+                try:
+                    self.indexer.delete_index(public_index)
+                except Exception as e:
+                    pass
+
+                try:
+                    self.indexer.delete_index(private_index)
+                except Exception as e:
+                    pass
+                print('*********************************************')
+
+                # get the specific mapping file for the designated index
+                index_mapping_file = self.INDICES['indices'][index]['elasticsearch']['mappings']
+
+                # read the elasticserach specific mappings
+                index_mapping_settings = safe_load(
+                    (Path(__file__).absolute().parent.parent / index_mapping_file).read_text())
+
+                print(index_mapping_settings)
+
+                print('*********************************************')
+
+                self.indexer.create_index(public_index, index_mapping_settings)
+
+                print('*********************************************')
+                self.indexer.create_index(private_index, index_mapping_settings)
+
+        except Exception:
+            msg = "Exception encountered during executing indexer.main()"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
+
+
+# Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
@@ -729,6 +777,7 @@ if __name__ == "__main__":
     start = time.time()
     logger.info("############# Full index via script started #############")
 
+    translator.main()
     translator.translate_all()
 
     end = time.time()

@@ -10,8 +10,8 @@ from yaml import safe_load
 
 from libs.assay_type import AssayType
 # Local modules
-from translator.SenNetTranslator import SenNetTranslator
-from translator.HuBMAPTranslator import HuBMAPTranslator
+from translator.sennet_translator import SenNetTranslator
+from translator.hubmap_translator import HuBMAPTranslator
 from translator.translation_functions import *
 
 # Set logging fromat and level (default is warning)

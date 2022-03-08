@@ -8,6 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 class Indexer:
+    def __init__(self, indices, default_index):
+        self.elasticsearch_url = indices[default_index]['elasticsearch']['url'].strip('/')
+
+        self.eswriter = ESWriter(self.elasticsearch_url)
+
     def index(self, entity_id, document, index_name, reindex=False):
         # Delete old doc for reindex
         if reindex:
@@ -25,8 +30,3 @@ class Indexer:
 
     def delete_index(self, index_name):
         self.eswriter.delete_index(index_name)
-
-    def __init__(self, indices, default_index):
-        self.elasticsearch_url = indices[default_index]['elasticsearch']['url'].strip('/')
-
-        self.eswriter = ESWriter(self.elasticsearch_url)

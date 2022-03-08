@@ -16,7 +16,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from globus_sdk import AccessTokenAuthorizer, AuthClient
 import importlib
 
-# For reusing the app.cfg configuration when running indexer.py as script
+# For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
 
 # Local modules
@@ -964,7 +964,7 @@ class Indexer:
 
 
 ####################################################################################################
-## Run indexer.py as script
+## Run indexer_base.py as script
 ####################################################################################################
 
 # To be used by the full index to ensure the nexus token 
@@ -978,7 +978,7 @@ def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
     return False
 
 
-# Running indexer.py as a script in command line
+# Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
