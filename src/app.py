@@ -1,7 +1,11 @@
+import logging
 import os
 import threading
+from pathlib import Path
+from urllib.parse import urlparse
 
-from flask import Flask, request, Response
+import requests
+from flask import Flask, jsonify, abort, request, Response
 from flask import current_app as app
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -10,14 +14,14 @@ from yaml import safe_load
 
 from libs.assay_type import AssayType
 # Local modules
-from translator.sennet_translator import SenNetTranslator
 from translator.hubmap_translator import HuBMAPTranslator
-from translator.translation_functions import *
+from translator.sennet_translator import SenNetTranslator
 
 # Set logging fromat and level (default is warning)
 # All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
 # Log rotation is handled via logrotate on the host system with a configuration file
 # Do NOT handle log file and rotation via the Python logging to avoid issues with multi-worker processes
+
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s:%(lineno)d: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
@@ -26,19 +30,6 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
-
-group_name = group_id = None
-if app.config['API_TYPE'] == 'HUBMAP':
-    group_name = 'HuBMAP'
-    group_id = 'hmgroupids'
-
-elif app.config['API_TYPE'] == 'SENNET':
-    # TODO: need to add new group name to auth library as well as group id
-    group_name = 'HuBMAP'
-    group_id = 'hmgroupids'
-else:
-    raise ValueError(
-        "Required configuration parameter API_TYPE not found in application configuration. Must be set to 'HUBMAP' or 'SENNET'.")
 
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
@@ -53,6 +44,19 @@ DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['docum
 
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+group_name = group_id = None
+if app.config['API_TYPE'] == 'HUBMAP':
+    group_name = 'HuBMAP'
+    group_id = 'hmgroupids'
+
+elif app.config['API_TYPE'] == 'SENNET':
+    # TODO: need to add new group name to auth library as well as group id
+    group_name = 'HuBMAP'
+    group_id = 'hmgroupids'
+else:
+    raise ValueError(
+        "Required configuration parameter API_TYPE not found in application configuration. Must be set to 'HUBMAP' or 'SENNET'.")
 
 
 ####################################################################################################
@@ -157,9 +161,10 @@ def assayname(name=None):
 ## API
 ####################################################################################################
 
-# Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API. 
+# Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API.
+# BUT AWS API Gateway only supports POST with request body
 # general search uses the DEFAULT_INDEX
-@app.route('/search', methods=['GET', 'POST'])
+@app.route('/search', methods=['POST'])
 def search():
     # Always expect a json body
     request_json_required(request)
@@ -179,8 +184,9 @@ def search():
 
 
 # Both HTTP GET and HTTP POST can be used to execute search with body against ElasticSearch REST API.
+# BUT AWS API Gateway only supports POST with request body
 # Note: the index in URL is not he real index in Elasticsearch, it's that index without prefix
-@app.route('/<index_without_prefix>/search', methods=['GET', 'POST'])
+@app.route('/<index_without_prefix>/search', methods=['POST'])
 def search_by_index(index_without_prefix):
     # Always expect a json body
     request_json_required(request)
@@ -284,7 +290,7 @@ def status():
 @app.route('/reindex/<uuid>', methods=['PUT'])
 def reindex(uuid):
     # Reindex individual document doesn't require the token to belong
-    # to the HuBMAP-Data-Admin group 
+    # to the HuBMAP-Data-Admin group
     # since this is being used by entity-api and ingest-api too
     token = get_user_token(request.headers)
 
@@ -327,14 +333,60 @@ def reindex_all():
 
 
 ####################################################################################################
-## Internal Functions Used By API 
+## Internal Functions Used By API
 ####################################################################################################
+
+
+# Throws error for 400 Bad Reqeust with message
+def bad_request_error(err_msg):
+    abort(400, description=err_msg)
+
+
+# Throws error for 401 Unauthorized with message
+def unauthorized_error(err_msg):
+    abort(401, description=err_msg)
+
+
+# Throws error for 403 Forbidden with message
+def forbidden_error(err_msg):
+    abort(403, description=err_msg)
+
+
+# Throws error for 500 Internal Server Error with message
+def internal_server_error(err_msg):
+    abort(500, description=err_msg)
 
 
 # Get user infomation dict based on the http request(headers)
 # `group_required` is a boolean, when True, 'hmgroupids' is in the output
 def get_user_info_for_access_check(request, group_required):
     return auth_helper_instance.getUserInfoUsingRequest(request, group_required)
+
+
+"""
+Send back useful error message instead of AWS API Gateway's default 500 message
+when the response payload size is over 10MB (10485760 bytes)
+
+Parameters
+----------
+response_text: str
+    The http response body string
+
+Returns
+-------
+flask.Response
+    500 response with error message if over the hard limit
+"""
+
+
+def check_response_payload_size(response_text):
+    search_result_payload = len(response_text.encode('utf-8'))
+    aws_api_gateway_payload_max = 10485760
+
+    if search_result_payload > aws_api_gateway_payload_max:
+        msg = f'Search result length {search_result_payload} is larger than allowed maximum of {aws_api_gateway_payload_max} bytes'
+        logger.debug(msg)
+        internal_server_error(msg)
 
 
 """
@@ -488,10 +540,10 @@ def validate_index(index_without_prefix):
 
 # Determine the target real index in Elasticsearch bases on the request header and given index (without prefix)
 # The Authorization header with globus token is optional
-# Case #1: Authorization header is missing, default to use the `hm_public_<index_without_prefix>`. 
-# Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_<index_without_prefix>`. 
+# Case #1: Authorization header is missing, default to use the `hm_public_<index_without_prefix>`.
+# Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_<index_without_prefix>`.
 # Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
-# Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_<index_without_prefix>`. 
+# Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_<index_without_prefix>`.
 def get_target_index(request, index_without_prefix):
     # Case #1 and #2
 
@@ -521,14 +573,150 @@ def get_target_index(request, index_without_prefix):
     return target_index
 
 
+# Make a call to Elasticsearch
+def execute_query(query_against, request, index, es_url, query=None):
+    supported_query_against = ['_search', '_count']
+    separator = ','
+
+    if query_against not in supported_query_against:
+        bad_request_error(
+            f"Query against '{query_against}' is not supported by Search API. Use one of the following: {separator.join(supported_query_against)}")
+
+    # Determine the target real index in Elasticsearch to be searched against
+    # index = get_target_index(request, index_without_prefix)
+
+    # target_url = app.config['ELASTICSEARCH_URL'] + '/' + target_index + '/' + query_against
+    # es_url = INDICES['indices'][index_without_prefix]['elasticsearch']['url'].strip('/')
+
+    logger.debug('es_url')
+    logger.debug(es_url)
+    logger.debug(type(es_url))
+    # use the index es connection
+    target_url = es_url + '/' + index + '/' + query_against
+
+    logger.debug("Target url: " + target_url)
+    if query is None:
+        # Parse incoming json string into json data(python dict object)
+        json_data = request.get_json()
+
+        # All we need to do is to simply pass the search json to elasticsearch
+        # The request json may contain "access_group" in this case
+        # Will also pass through the query string in URL
+        target_url = target_url + get_query_string(request.url)
+        # Make a request with json data
+        # The use of json parameter converts python dict to json string and adds content-type: application/json automatically
+    else:
+        json_data = query
+
+    logger.debug(json_data)
+
+    response = requests.post(url=target_url, json=json_data)
+
+    logger.debug(f"==========response status code: {response.status_code} ==========")
+
+    # Handling response over 10MB with a more useful message instead of AWS API Gateway's default 500 message
+    # Note Content-length header is not always provided, we have to calculate
+    check_response_payload_size(response.text)
+
+    # Return the elasticsearch resulting json data
+    return jsonify(response.json())
+
+
+# Get the query string from orignal request
+def get_query_string(url):
+    query_string = ''
+    parsed_url = urlparse(url)
+
+    logger.debug("======parsed_url======")
+    logger.debug(parsed_url)
+
+    # Add the ? at beginning of the query string if not empty
+    if not parsed_url.query:
+        query_string = '?' + parsed_url.query
+
+    return query_string
+
+
+# Get a list of entity uuids via entity-api for a given entity type:
+# Collection, Donor, Sample, Dataset, Submission. Case-insensitive.
+def get_uuids_by_entity_type(entity_type, token):
+    entity_type = entity_type.lower()
+
+    request_headers = create_request_headers_for_auth(token)
+
+    # Use different entity-api endpoint for Collection
+    if entity_type == 'collection':
+        # url = app.config['ENTITY_API_URL'] + "/collections?property=uuid"
+        url = DEFAULT_ENTITY_API_URL + "/collections?property=uuid"
+    else:
+        # url = app.config['ENTITY_API_URL'] + "/" + entity_type + "/entities?property=uuid"
+        url = DEFAULT_ENTITY_API_URL + "/" + entity_type + "/entities?property=uuid"
+
+    response = requests.get(url, headers=request_headers, verify=False)
+
+    if response.status_code != 200:
+        internal_server_error(
+            "get_uuids_by_entity_type() failed to make a request to entity-api for entity type: " + entity_type)
+
+    uuids_list = response.json()
+
+    return uuids_list
+
+
+# Create a dict with HTTP Authorization header with Bearer token
+def create_request_headers_for_auth(token):
+    auth_header_name = 'Authorization'
+    auth_scheme = 'Bearer'
+
+    headers_dict = {
+        # Don't forget the space between scheme and the token value
+        auth_header_name: auth_scheme + ' ' + token
+    }
+
+    return headers_dict
+
+
+def get_uuids_from_es(index, es_url):
+    uuids = []
+    size = 10_000
+    query = {
+        "size": size,
+        "from": len(uuids),
+        "_source": ["_id"],
+        "query": {
+            "bool": {
+                "must": [],
+                "filter": [
+                    {
+                        "match_all": {}
+                    }
+                ],
+                "should": [],
+                "must_not": []
+            }
+        }
+    }
+
+    end_of_list = False
+    while not end_of_list:
+        logger.debug("Searching ES for uuids...")
+        logger.debug(es_url)
+        resp = execute_query('_search', None, index, es_url, query)
+        logger.debug('Got a response from ES...')
+        ret_obj = resp.get_json()
+        uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
+
+        total = ret_obj.get('hits').get('total').get('value')
+        if total <= len(uuids):
+            end_of_list = True
+        else:
+            query['from'] = len(uuids)
+
+    return uuids
+
+
 def init_translator(token):
     if app.config['API_TYPE'] == 'HUBMAP':
-        # return Indexer(
-        #     INDICES,
-        #     app.config['APP_CLIENT_ID'],
-        #     app.config['APP_CLIENT_SECRET'],
-        #     token
-        # )
         return HuBMAPTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
     elif app.config['API_TYPE'] == 'SENNET':
         return SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)

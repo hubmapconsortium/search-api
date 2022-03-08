@@ -14,8 +14,8 @@ from hubmap_commons.hm_auth import AuthHelper
 from yaml import safe_load
 
 from indexer import Indexer
+from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface
-from translator.translation_functions import *
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
