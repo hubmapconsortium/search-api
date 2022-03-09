@@ -31,7 +31,7 @@ def translate(doc):
 
 # Utils:
 
-_enums_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
+_enums_dir = Path(__file__).parent.parent.parent.parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
 _enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
 
 
