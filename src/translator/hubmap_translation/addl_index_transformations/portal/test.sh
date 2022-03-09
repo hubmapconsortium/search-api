@@ -11,7 +11,7 @@ flake8 \
 end portal/flake8
 
 start portal/doctests
-cd ../../..
+cd ../../../..
 for F in translator/hubmap_translation/addl_index_transformations/portal/*.py; do
   CMD="python -m doctest -o REPORT_NDIFF $F"
   echo $CMD
