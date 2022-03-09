@@ -21,7 +21,7 @@ from flask import Flask, Response
 
 # Local modules
 from libs.es_writer import ESWriter
-#from elasticsearch.addl_index_transformations.portal import transform
+#from hubmap_translation.addl_index_transformations.portal import transform
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -37,7 +37,7 @@ requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'instance')),
+app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'instance')),
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
@@ -66,7 +66,7 @@ class Indexer:
         except Exception:
             raise ValueError("Invalid indices config")
 
-        self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
+        self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['hubmap_translation']['url'].strip('/')
 
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
@@ -109,7 +109,7 @@ class Indexer:
             self.DEFAULT_INDEX_WITHOUT_PREFIX = self.INDICES['default_index']
 
             # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
-            DEFAULT_ELASTICSEARCH_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
+            DEFAULT_ELASTICSEARCH_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['hubmap_translation']['url'].strip('/')
             DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
             # Delete and recreate target indices
@@ -131,7 +131,7 @@ class Indexer:
                 print('*********************************************')                
 
                 # get the specific mapping file for the designated index
-                index_mapping_file = self.INDICES['indices'][index]['elasticsearch']['mappings']
+                index_mapping_file = self.INDICES['indices'][index]['hubmap_translation']['mappings']
 
                 # read the elasticserach specific mappings 
                 index_mapping_settings = safe_load((Path(__file__).absolute().parent / index_mapping_file).read_text())
@@ -983,7 +983,7 @@ def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
-    app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance'), instance_relative_config=True)
+    app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../instance'), instance_relative_config=True)
     app.config.from_pyfile('app.cfg')
 
     INDICES = safe_load((Path(__file__).absolute().parent / '../instance/search-config.yaml').read_text())

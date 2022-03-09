@@ -2,6 +2,7 @@ import concurrent.futures
 import copy
 import importlib
 import json
+import logging
 import os
 import sys
 import time
@@ -14,12 +15,14 @@ from hubmap_commons.hm_auth import AuthHelper
 from yaml import safe_load
 
 from indexer import Indexer
+from opensearch_helper_functions import *
 from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
 
 entity_properties_list = [
     'metadata',
@@ -81,7 +84,7 @@ class HuBMAPTranslator(TranslatorInterface):
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent.parent / 'VERSION').read_text()).strip()
 
-        with open(Path(__file__).resolve().parent.parent / 'elasticsearch' / 'neo4j-to-es-attributes.json',
+        with open(Path(__file__).resolve().parent / 'hubmap_translation' / 'neo4j-to-es-attributes.json',
                   'r') as json_file:
             self.attr_map = json.load(json_file)
 
@@ -673,7 +676,7 @@ class HuBMAPTranslator(TranslatorInterface):
 
         response = requests.get(url, headers=self.request_headers, verify=False)
         if response.status_code != 200:
-            msg = f"HuBMAP translator failed to get " + endpoint + " via entity-api for target entity_id: " + entity_id
+            msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
             logger.error(msg)
             sys.exit(msg)
 
@@ -705,7 +708,7 @@ class HuBMAPTranslator(TranslatorInterface):
                 index_mapping_file = self.INDICES['indices'][index]['elasticsearch']['mappings']
 
                 # read the elasticserach specific mappings
-                index_mapping_settings = safe_load((Path(__file__).absolute().parent.parent / index_mapping_file).read_text())
+                index_mapping_settings = safe_load((Path(__file__).absolute().parent / index_mapping_file).read_text())
 
                 print(index_mapping_settings)
 

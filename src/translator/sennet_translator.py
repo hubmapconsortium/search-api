@@ -13,6 +13,7 @@ from hubmap_commons import globus_groups
 from hubmap_commons.hm_auth import AuthHelper
 from yaml import safe_load
 
+from opensearch_helper_functions import *
 from indexer import Indexer
 from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface

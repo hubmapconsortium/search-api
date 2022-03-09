@@ -3,8 +3,7 @@ from pathlib import Path
 
 import requests
 import yaml
-
-from app import execute_query
+from flask import jsonify
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -22,45 +21,6 @@ def create_request_headers_for_auth(token):
     }
 
     return headers_dict
-
-
-def get_uuids_from_es(index, es_url):
-    uuids = []
-    size = 10_000
-    query = {
-        "size": size,
-        "from": len(uuids),
-        "_source": ["_id"],
-        "query": {
-            "bool": {
-                "must": [],
-                "filter": [
-                    {
-                        "match_all": {}
-                    }
-                ],
-                "should": [],
-                "must_not": []
-            }
-        }
-    }
-
-    end_of_list = False
-    while not end_of_list:
-        logger.debug("Searching ES for uuids...")
-        logger.debug(es_url)
-        resp = execute_query('_search', None, index, es_url, query)
-        logger.debug('Got a response from ES...')
-        ret_obj = resp.get_json()
-        uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
-
-        total = ret_obj.get('hits').get('total').get('value')
-        if total <= len(uuids):
-            end_of_list = True
-        else:
-            query['from'] = len(uuids)
-
-    return uuids
 
 
 # Get a list of entity uuids via entity-api for a given entity type:
@@ -81,8 +41,8 @@ def get_uuids_by_entity_type(entity_type, token, entity_api_url):
     response = requests.get(url, headers=request_headers, verify=False)
 
     if response.status_code != 200:
-        internal_server_error(
-            "get_uuids_by_entity_type() failed to make a request to entity-api for entity type: " + entity_type)
+        return jsonify(error=str(
+            "get_uuids_by_entity_type() failed to make a request to entity-api for entity type: " + entity_type)), 500
 
     uuids_list = response.json()
 
