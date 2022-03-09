@@ -21,7 +21,7 @@ cd -
 end portal/doctests
 
 start portal/cli
-cd ../../../..
+cd ../../../../..
 PYTHONPATH="src:$PYTHONPATH" \
   python src/translator/hubmap_translation/addl_index_transformations/portal/__init__.py \
   src/translator/hubmap_translation/addl_index_transformations/portal/tests/fixtures/input-doc.json \
@@ -31,7 +31,7 @@ cd -
 end portal/cli
 
 start portal/pytest
-cd ../../../..
+cd ../../../../..
 PYTHONPATH="src:$PYTHONPATH" pytest --verbose --log-cli-level WARN
 cd -
 end portal/pytest

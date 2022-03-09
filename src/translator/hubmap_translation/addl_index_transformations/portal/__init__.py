@@ -176,7 +176,7 @@ def transform(doc, batch_id='unspecified'):
     return doc_copy
 
 
-_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
+_data_dir = Path(__file__).parent.parent.parent.parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
@@ -287,7 +287,7 @@ def _get_schema(doc):
     with TemporaryDirectory() as td:
         # Regenerating schemas with every validation is wasteful.
         # Chuck would strongly prefer that this be cached.
-        script_path = _data_dir.parent.parent / 'generate-schemas.sh'
+        script_path = _data_dir.parent / 'generate-schemas.sh'
         subprocess.run([script_path, td], check=True)
         entity_type = doc['entity_type'].lower()
         schema_path = Path(td) / f'{entity_type}.schema.yaml'
