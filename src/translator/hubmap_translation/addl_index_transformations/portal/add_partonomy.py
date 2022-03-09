@@ -10,7 +10,7 @@ _two_letter_to_iri = {
     two_letter: organ.get('iri')
     for two_letter, organ
     in safe_load(
-        (Path(__file__).parent.parent.parent.parent
+        (Path(__file__).parent.parent.parent.parent.parent
          / 'search-schema/data/definitions/enums/organ_types.yaml').read_text()
     ).items()
 }
