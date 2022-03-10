@@ -682,13 +682,40 @@ class SenNetTranslator(TranslatorInterface):
 
         response = requests.get(url, headers=self.request_headers, verify=False)
         if response.status_code != 200:
-            msg = f"HuBMAP translator failed to get " + endpoint + " via entity-api for target entity_id: " + entity_id
-            logger.error(msg)
-            sys.exit(msg)
+            # See if this uuid is a public Collection instead before exiting
+            try:
+                return self.get_public_collection(entity_id)
+            except requests.exceptions.RequestException as e:
+                logger.exception(e)
+
+                # Stop running
+                msg = f"SenNet translator failed to reach: " + url + ". Response: " + response.json()
+                logger.error(msg)
+                sys.exit(msg)
 
         self.entity_api_cache[url] = response.json()
 
         return response.json()
+
+    def get_public_collection(self, entity_id):
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
+        # - no token at all
+        # Here we do NOT send over the token
+        url = self.entity_api_url + "/collections/" + entity_id
+        response = requests.get(url, headers=self.request_headers, verify=False)
+
+        if response.status_code != 200:
+            msg = "SenNet translator get_collection() failed to get public collection of uuid: " + entity_id + " via entity-api"
+            logger.exception(msg)
+
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            raise requests.exceptions.RequestException(response.text)
+
+        collection_dict = response.json()
+
+        return collection_dict
 
     def main(self):
         try:

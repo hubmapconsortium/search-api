@@ -22,13 +22,12 @@ from translator.translator_interface import TranslatorInterface
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
 
 entity_properties_list = [
     'metadata',
     'donor',
     'origin_sample',
-    'donor_sample',
+    'source_sample',
     'ancestor_ids',
     'descendant_ids',
     'ancestors',
@@ -390,7 +389,7 @@ class HuBMAPTranslator(TranslatorInterface):
                 dataset_doc.pop('immediate_ancestors')
                 dataset_doc.pop('donor')
                 dataset_doc.pop('origin_sample')
-                dataset_doc.pop('donor_sample')
+                dataset_doc.pop('source_sample')
 
                 datasets.append(dataset_doc)
 
@@ -534,22 +533,22 @@ class HuBMAPTranslator(TranslatorInterface):
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
-                    entity['donor_sample'] = None
+                    entity['source_sample'] = None
 
                     e = entity
 
-                    while entity['donor_sample'] is None:
+                    while entity['source_sample'] is None:
                         parents = self.call_entity_api(e['uuid'], 'parents')
 
                         try:
                             # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                # entity['donor_sample'] = parents[0]
-                                entity['donor_sample'] = parents
+                                # entity['source_sample'] = parents[0]
+                                entity['source_sample'] = parents
 
                             e = parents[0]
                         except IndexError:
-                            entity['donor_sample'] = {}
+                            entity['source_sample'] = {}
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
@@ -582,8 +581,8 @@ class HuBMAPTranslator(TranslatorInterface):
                 self.entity_keys_rename(entity['donor'])
             if entity.get('origin_sample', None):
                 self.entity_keys_rename(entity['origin_sample'])
-            if entity.get('donor_sample', None):
-                for s in entity.get('donor_sample', None):
+            if entity.get('source_sample', None):
+                for s in entity.get('source_sample', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
@@ -676,13 +675,41 @@ class HuBMAPTranslator(TranslatorInterface):
 
         response = requests.get(url, headers=self.request_headers, verify=False)
         if response.status_code != 200:
-            msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
-            logger.error(msg)
-            sys.exit(msg)
+            # See if this uuid is a public Collection instead before exiting
+            try:
+                return self.get_public_collection(entity_id)
+            except requests.exceptions.RequestException as e:
+                logger.exception(e)
+
+                # Stop running
+                msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
+                logger.error(msg)
+                sys.exit(msg)
+
 
         self.entity_api_cache[url] = response.json()
 
         return response.json()
+
+    def get_public_collection(self, entity_id):
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
+        # - no token at all
+        # Here we do NOT send over the token
+        url = self.entity_api_url + "/collections/" + entity_id
+        response = requests.get(url, headers=self.request_headers, verify=False)
+
+        if response.status_code != 200:
+            msg = "HuBMAP translator get_collection() failed to get public collection of uuid: " + entity_id + " via entity-api"
+            logger.exception(msg)
+
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            raise requests.exceptions.RequestException(response.text)
+
+        collection_dict = response.json()
+
+        return collection_dict
 
     def main(self):
         try:
