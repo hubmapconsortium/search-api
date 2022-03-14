@@ -168,8 +168,6 @@ class SenNetTranslator(TranslatorInterface):
 
     def translate(self, entity_id):
         try:
-            start = time.time()
-
             # Retrieve the entity details
             entity = self.call_entity_api(entity_id, 'entities')
 
@@ -208,19 +206,64 @@ class SenNetTranslator(TranslatorInterface):
 
                 logger.info("################reindex() DONE######################")
 
-                end = time.time()
-
-                logger.info(
-                    f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
-
                 # Clear the entity api cache
                 self.entity_api_cache.clear()
 
-                return "indexer.reindex() finished executing"
+                return "SenNet Translator.translate() finished executing"
         except Exception:
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+    def update(self, entity_id, document):
+        for index in self.indices.keys():
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+
+            if self.is_public(document):
+                self.indexer.index(entity_id, document, public_index, True)
+
+            self.indexer.index(entity_id, document, private_index, True)
+
+    def add(self, entity_id, document):
+        for index in self.indices.keys():
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+
+            if self.is_public(document):
+                self.indexer.index(entity_id, document, public_index, False)
+
+            self.indexer.index(entity_id, document, private_index, False)
+
+    # Collection doesn't actually have this `data_access_level` property
+    # This method is only applied to Source/Sample/Dataset
+    # For Dataset, if status=='Published', it goes into the public index
+    # For Source/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
+    # then they go into public index
+    # Don't confuse with `data_access_level`
+    def is_public(self, document):
+        is_public = False
+
+        if document['entity_type'] == 'Dataset':
+            # In case 'status' not set
+            if 'status' in document:
+                if document['status'].lower() == self.DATASET_STATUS_PUBLISHED:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(
+                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
+        else:
+            # In case 'data_access_level' not set
+            if 'data_access_level' in document:
+                if document['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(
+                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+
+        return is_public
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
@@ -355,7 +398,7 @@ class SenNetTranslator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if self.entity_is_public(org_node):
+                    if self.is_public(org_node):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -638,39 +681,9 @@ class SenNetTranslator(TranslatorInterface):
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
-        entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
-        entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
+        entity['descendants'] = list(filter(self.is_public, entity['descendants']))
+        entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
         return json.dumps(entity)
-
-    # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Source/Sample/Dataset
-    # For Dataset, if status=='Published', it goes into the public index
-    # For Source/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
-    # then they go into public index
-    # Don't confuse with `data_access_level`
-    def entity_is_public(self, node):
-        is_public = False
-
-        if node['entity_type'] == 'Dataset':
-            # In case 'status' not set
-            if 'status' in node:
-                if node['status'].lower() == self.DATASET_STATUS_PUBLISHED:
-                    is_public = True
-            else:
-                # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{node['entity_type']} of uuid: {node['uuid']} missing 'status' property, treat as not public, verify and set the status.")
-        else:
-            # In case 'data_access_level' not set
-            if 'data_access_level' in node:
-                if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
-                    is_public = True
-            else:
-                # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
-
-        return is_public
 
     def call_entity_api(self, entity_id, endpoint, url_property=None):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id

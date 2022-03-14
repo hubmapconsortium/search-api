@@ -209,11 +209,61 @@ class HuBMAPTranslator(TranslatorInterface):
                 # Clear the entity api cache
                 self.entity_api_cache.clear()
 
-                return "indexer.reindex() finished executing"
+                return "HuBMAP Translator.translate() finished executing"
         except Exception:
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+    def update(self, entity_id, document):
+        for index in self.indices.keys():
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+
+            if self.is_public(document):
+                self.indexer.index(entity_id, document, public_index, True)
+
+            self.indexer.index(entity_id, document, private_index, True)
+
+    def add(self, entity_id, document):
+        for index in self.indices.keys():
+            public_index = self.INDICES['indices'][index]['public']
+            private_index = self.INDICES['indices'][index]['private']
+
+            if self.is_public(document):
+                self.indexer.index(entity_id, document, public_index, False)
+
+            self.indexer.index(entity_id, document, private_index, False)
+
+    # Collection doesn't actually have this `data_access_level` property
+    # This method is only applied to Donor/Sample/Dataset
+    # For Dataset, if status=='Published', it goes into the public index
+    # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
+    # then they go into public index
+    # Don't confuse with `data_access_level`
+    def is_public(self, document):
+        is_public = False
+
+        if document['entity_type'] == 'Dataset':
+            # In case 'status' not set
+            if 'status' in document:
+                if document['status'].lower() == self.DATASET_STATUS_PUBLISHED:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(
+                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
+        else:
+            # In case 'data_access_level' not set
+            if 'data_access_level' in document:
+                if document['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
+                    is_public = True
+            else:
+                # Log as an error to be fixed in Neo4j
+                logger.error(
+                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+
+        return is_public
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
@@ -227,71 +277,80 @@ class HuBMAPTranslator(TranslatorInterface):
 
     # When indexing, Upload WILL NEVER BE PUBLIC
     def translate_upload(self, entity, reindex=False):
-        default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
+        try:
+            default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
-        # Retrieve the upload entity details
-        upload = self.call_entity_api(entity['uuid'], 'entities')
+            # Retrieve the upload entity details
+            upload = self.call_entity_api(entity['uuid'], 'entities')
 
-        self.add_datasets_to_entity(upload)
-        self.entity_keys_rename(upload)
+            self.add_datasets_to_entity(upload)
+            self.entity_keys_rename(upload)
 
-        # Add additional calculated fields if any applies to Upload
-        self.add_calculated_fields(upload)
+            # Add additional calculated fields if any applies to Upload
+            self.add_calculated_fields(upload)
 
-        self.call_indexer(entity, reindex, json.dumps(upload), default_private_index)
+            self.call_indexer(entity, reindex, json.dumps(upload), default_private_index)
+        except Exception as e:
+            logger.error(e)
 
     def translate_public_collection(self, entity, reindex=False):
-        # The entity-api returns public collection with a list of connected public/published datasets, for either
-        # - a valid token but not in HuBMAP-Read group or
-        # - no token at all
-        # Here we do NOT send over the token
-        collection = self.call_entity_api(entity['uuid'], 'collections')
+        try:
+            # The entity-api returns public collection with a list of connected public/published datasets, for either
+            # - a valid token but not in HuBMAP-Read group or
+            # - no token at all
+            # Here we do NOT send over the token
+            collection = self.call_entity_api(entity['uuid'], 'collections')
 
-        self.add_datasets_to_entity(collection)
-        self.entity_keys_rename(collection)
+            self.add_datasets_to_entity(collection)
+            self.entity_keys_rename(collection)
 
-        # Add additional calculated fields if any applies to Collection
-        self.add_calculated_fields(collection)
+            # Add additional calculated fields if any applies to Collection
+            self.add_calculated_fields(collection)
 
-        for index in self.indices.keys():
-            # each index should have a public index
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
+            for index in self.indices.keys():
+                # each index should have a public index
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
-            # Add the tranformed doc to the portal index
-            json_data = ""
+                # Add the tranformed doc to the portal index
+                json_data = ""
 
-            # if the index has a transformer use that else do a now load
-            if self.TRANSFORMERS.get(index):
-                json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
-            else:
-                json_data = json.dumps(collection)
+                # if the index has a transformer use that else do a now load
+                if self.TRANSFORMERS.get(index):
+                    json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
+                else:
+                    json_data = json.dumps(collection)
 
-            self.call_indexer(entity, reindex, json_data, public_index)
-            self.call_indexer(entity, reindex, json_data, private_index)
+                self.call_indexer(entity, reindex, json_data, public_index)
+                self.call_indexer(entity, reindex, json_data, private_index)
+        except Exception as e:
+            logger.error(e)
 
     def translate_tree(self, entity_id):
-        # logger.info(f"Total threads count: {threading.active_count()}")
+        try:
+            # logger.info(f"Total threads count: {threading.active_count()}")
 
-        logger.info(f"Executing index_tree() for donor of uuid: {entity_id}")
+            logger.info(f"Executing index_tree() for donor of uuid: {entity_id}")
 
-        descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+            descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
-        # Index the donor entity itself separately
-        donor = self.call_entity_api(entity_id, 'entities')
+            # Index the donor entity itself separately
+            donor = self.call_entity_api(entity_id, 'entities')
 
-        self.call_indexer(donor)
+            self.call_indexer(donor)
 
-        # Index all the descendants of this donor
-        for descendant_uuid in descendant_uuids:
-            # Retrieve the entity details
-            descendant = self.call_entity_api(descendant_uuid, 'entities')
+            # Index all the descendants of this donor
+            for descendant_uuid in descendant_uuids:
+                # Retrieve the entity details
+                descendant = self.call_entity_api(descendant_uuid, 'entities')
 
-            self.call_indexer(descendant)
+                self.call_indexer(descendant)
 
-        msg = f"indexer.index_tree() finished executing for donor of uuid: {entity_id}"
-        logger.info(msg)
-        return msg
+            msg = f"indexer.index_tree() finished executing for donor of uuid: {entity_id}"
+            logger.info(msg)
+            return msg
+        except Exception as e:
+            logger.error(e)
 
     def init_transformers(self):
         for index in self.indices.keys():
@@ -348,7 +407,7 @@ class HuBMAPTranslator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if self.entity_is_public(org_node):
+                    if self.is_public(org_node):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -631,39 +690,9 @@ class HuBMAPTranslator(TranslatorInterface):
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
-        entity['descendants'] = list(filter(self.entity_is_public, entity['descendants']))
-        entity['immediate_descendants'] = list(filter(self.entity_is_public, entity['immediate_descendants']))
+        entity['descendants'] = list(filter(self.is_public, entity['descendants']))
+        entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
         return json.dumps(entity)
-
-    # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Donor/Sample/Dataset
-    # For Dataset, if status=='Published', it goes into the public index
-    # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
-    # then they go into public index
-    # Don't confuse with `data_access_level`
-    def entity_is_public(self, node):
-        is_public = False
-
-        if node['entity_type'] == 'Dataset':
-            # In case 'status' not set
-            if 'status' in node:
-                if node['status'].lower() == self.DATASET_STATUS_PUBLISHED:
-                    is_public = True
-            else:
-                # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{node['entity_type']} of uuid: {node['uuid']} missing 'status' property, treat as not public, verify and set the status.")
-        else:
-            # In case 'data_access_level' not set
-            if 'data_access_level' in node:
-                if node['data_access_level'].lower() == self.ACCESS_LEVEL_PUBLIC:
-                    is_public = True
-            else:
-                # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
-
-        return is_public
 
     def call_entity_api(self, entity_id, endpoint, url_property=None):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
@@ -685,7 +714,6 @@ class HuBMAPTranslator(TranslatorInterface):
                 msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
                 logger.error(msg)
                 sys.exit(msg)
-
 
         self.entity_api_cache[url] = response.json()
 

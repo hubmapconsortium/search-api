@@ -15,6 +15,7 @@ from yaml import safe_load
 from libs.assay_type import AssayType
 # Local modules
 from opensearch_helper_functions import *
+from translator.bcrf_translator import BCRFTranslator
 from translator.hubmap_translator import HuBMAPTranslator
 from translator.sennet_translator import SenNetTranslator
 
@@ -333,6 +334,53 @@ def reindex_all():
     return 'Request of live reindex all documents accepted', 202
 
 
+@app.route('/update/<uuid>', methods=['PUT'])
+def update(uuid):
+    # Update a specific document with the passed in UUID
+    # Takes in a document that will replace the existing one
+
+    # Always expect a json body
+    request_json_required(request)
+
+    token = get_user_token(request.headers)
+    document = request.json
+
+    try:
+        translator = init_translator(token)
+        threading.Thread(target=translator.update, args=[uuid, document]).start()
+
+        logger.info(f"Started to update document with uuid: {uuid}")
+    except Exception as e:
+        logger.exception(e)
+
+        internal_server_error(e)
+
+    return f"Request of updating {uuid} accepted", 202
+
+
+@app.route('/add/<uuid>', methods=['POST'])
+def add(uuid):
+    # Create a specific document with the passed in UUID
+    # Takes in a document in the body of the request
+
+    # Always expect a json body
+    request_json_required(request)
+
+    token = get_user_token(request.headers)
+    document = request.json
+
+    try:
+        translator = init_translator(token)
+        threading.Thread(target=translator.add, args=[uuid, document]).start()
+
+        logger.info(f"Started to add document with uuid: {uuid}")
+    except Exception as e:
+        logger.exception(e)
+
+        internal_server_error(e)
+
+    return f"Request of adding {uuid} accepted", 202
+
 # Get user infomation dict based on the http request(headers)
 # `group_required` is a boolean, when True, 'hmgroupids' is in the output
 def get_user_info_for_access_check(request, group_required):
@@ -567,6 +615,8 @@ def init_translator(token):
         return HuBMAPTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
     elif app.config['API_TYPE'] == 'SENNET':
         return SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    elif app.config['API_TYPE'] == 'BCRF':
+        return BCRFTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
 
 
 # Get a list of filtered Elasticsearch indices to expose to end users without the prefix
