@@ -2,10 +2,9 @@ BUILD
 
 **/.vscode/
 
-**/*.bak
-**/*-local*
-
-**/*.orig
+#eclipse project files
+.project
+.pydevproject
 
 # Docker stuff
 docker/data
