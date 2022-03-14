@@ -3,7 +3,7 @@ python:
   - '3.7'
 cache: pip
 services:
-  - hubmap_translation
+  - elasticsearch
 before_script:
   - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
 env:
