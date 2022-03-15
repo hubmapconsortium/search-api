@@ -16,7 +16,7 @@ indices:
     document_source_endpoint: <Server URL for source documents>
     elasticsearch:
       url: <ES URL>
-      mappings: "search-default-config.yaml"
+      mappings: "hubmap_translation/search-default-config.yaml"
 
   portal: 
     active: true
@@ -28,9 +28,9 @@ indices:
     document_source_endpoint: <Server URL for source documents>
     elasticsearch:
       url: <ES URL>
-      mappings: "addl_index_transformations/portal/config.yaml"
+      mappings: "hubmap_translation/addl_index_transformations/portal/config.yaml"
     transform:
-      module: elasticsearch.addl_index_transformations.portal
+      module: translator.hubmap_translation.addl_index_transformations.portal
 
   # Only used by antibody-api to query stored documents via search-api
   # The indexer.py doesn't use this index
