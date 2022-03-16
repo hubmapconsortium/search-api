@@ -176,9 +176,9 @@ class SenNetTranslator(TranslatorInterface):
                 logger.info(f"Executing translate() for entity_id: {entity_id}, entity_type: {entity['entity_type']}")
 
                 if entity['entity_type'] == 'Collection':
-                    self.translate_public_collection(entity, reindex=True)
+                    self.translate_public_collection(entity_id, reindex=True)
                 elif entity['entity_type'] == 'Upload':
-                    self.translate_upload(entity, reindex=True)
+                    self.translate_upload(entity_id, reindex=True)
                 else:
                     previous_revision_entity_ids = []
                     next_revision_entity_ids = []
@@ -276,11 +276,11 @@ class SenNetTranslator(TranslatorInterface):
                 self.indexer.delete_document(entity_id, private_index)
 
     # When indexing, Upload WILL NEVER BE PUBLIC
-    def translate_upload(self, entity, reindex=False):
+    def translate_upload(self, entity_id, reindex=False):
         default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
         # Retrieve the upload entity details
-        upload = self.call_entity_api(entity['uuid'], 'entities')
+        upload = self.call_entity_api(entity_id, 'entities')
 
         self.add_datasets_to_entity(upload)
         self.entity_keys_rename(upload)
@@ -288,14 +288,22 @@ class SenNetTranslator(TranslatorInterface):
         # Add additional calculated fields if any applies to Upload
         self.add_calculated_fields(upload)
 
-        self.call_indexer(entity, reindex, json.dumps(upload), default_private_index)
+        self.call_indexer(upload, reindex, json.dumps(upload), default_private_index)
 
-    def translate_public_collection(self, entity, reindex=False):
+    def translate_public_collection(self, entity_id, reindex=False):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
-        collection = self.call_entity_api(entity['uuid'], 'collections')
+        try:
+            collection = self.get_public_collection(entity_id)
+        except requests.exceptions.RequestException as e:
+            logger.exception(e)
+            # Stop running
+
+            msg = "SenNet Translator.translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api"
+            logger.error(msg)
+            sys.exit(msg)
 
         self.add_datasets_to_entity(collection)
         self.entity_keys_rename(collection)
@@ -317,8 +325,8 @@ class SenNetTranslator(TranslatorInterface):
             else:
                 json_data = json.dumps(collection)
 
-            self.call_indexer(entity, reindex, json_data, public_index)
-            self.call_indexer(entity, reindex, json_data, private_index)
+            self.call_indexer(collection, reindex, json_data, public_index)
+            self.call_indexer(collection, reindex, json_data, private_index)
 
     def translate_tree(self, entity_id):
         # logger.info(f"Total threads count: {threading.active_count()}")
