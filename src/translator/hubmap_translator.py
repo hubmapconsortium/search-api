@@ -221,9 +221,9 @@ class HuBMAPTranslator(TranslatorInterface):
             private_index = self.INDICES['indices'][index]['private']
 
             if self.is_public(document):
-                self.indexer.index(entity_id, document, public_index, True)
+                self.indexer.index(entity_id, json.dumps(document), public_index, True)
 
-            self.indexer.index(entity_id, document, private_index, True)
+            self.indexer.index(entity_id, json.dumps(document), private_index, True)
 
     def add(self, entity_id, document):
         for index in self.indices.keys():
@@ -231,9 +231,9 @@ class HuBMAPTranslator(TranslatorInterface):
             private_index = self.INDICES['indices'][index]['private']
 
             if self.is_public(document):
-                self.indexer.index(entity_id, document, public_index, False)
+                self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
-            self.indexer.index(entity_id, document, private_index, False)
+            self.indexer.index(entity_id, json.dumps(document), private_index, False)
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
