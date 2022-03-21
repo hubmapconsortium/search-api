@@ -316,7 +316,7 @@ def reindex(uuid):
 def reindex_all():
     # The token needs to belong to the HuBMAP-Data-Admin group
     # to be able to trigger a live reindex for all documents
-    token = get_user_token(request.headers, admin_access_required=False)
+    token = get_user_token(request.headers, admin_access_required=True)
     saved_request = request.headers
 
     logger.debug(saved_request)
