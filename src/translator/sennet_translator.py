@@ -91,81 +91,82 @@ class SenNetTranslator(TranslatorInterface):
         self.init_transformers()
 
     def translate_all(self):
-        try:
-            logger.info("############# Reindex Live Started #############")
+        with app.app_context():
+            try:
+                logger.info("############# Reindex Live Started #############")
 
-            start = time.time()
+                start = time.time()
 
-            # Make calls to entity-api to get a list of uuids for each entity type
-            source_uuids_list = get_uuids_by_entity_type("source", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-            sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers,
-                                                         self.DEFAULT_ENTITY_API_URL)
-            dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers,
-                                                          self.DEFAULT_ENTITY_API_URL)
-            upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers,
-                                                         self.DEFAULT_ENTITY_API_URL)
-            public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
-                                                                    self.DEFAULT_ENTITY_API_URL)
-            logger.debug("merging sets into a one list...")
-            # Merge into a big list that with no duplicates
-            all_entities_uuids = set(
-                source_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
+                # Make calls to entity-api to get a list of uuids for each entity type
+                source_uuids_list = get_uuids_by_entity_type("source", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers,
+                                                             self.DEFAULT_ENTITY_API_URL)
+                dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers,
+                                                              self.DEFAULT_ENTITY_API_URL)
+                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers,
+                                                             self.DEFAULT_ENTITY_API_URL)
+                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
+                                                                        self.DEFAULT_ENTITY_API_URL)
+                logger.debug("merging sets into a one list...")
+                # Merge into a big list that with no duplicates
+                all_entities_uuids = set(
+                    source_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
 
-            es_uuids = []
-            # for index in ast.literal_eval(app.config['INDICES']).keys():
-            logger.debug("looping through the indices...")
-            logger.debug(self.INDICES['indices'].keys())
+                es_uuids = []
+                # for index in ast.literal_eval(app.config['INDICES']).keys():
+                logger.debug("looping through the indices...")
+                logger.debug(self.INDICES['indices'].keys())
 
-            index_names = get_all_indice_names(self.INDICES)
-            logger.debug(index_names)
+                index_names = get_all_indice_names(self.INDICES)
+                logger.debug(index_names)
 
-            for index in index_names.keys():
-                all_indices = index_names[index]
-                # get URL for that index
-                es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
+                for index in index_names.keys():
+                    all_indices = index_names[index]
+                    # get URL for that index
+                    es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
 
-                for actual_index in all_indices:
-                    es_uuids.extend(get_uuids_from_es(actual_index, es_url))
+                    for actual_index in all_indices:
+                        es_uuids.extend(get_uuids_from_es(actual_index, es_url))
 
-            es_uuids = set(es_uuids)
+                es_uuids = set(es_uuids)
 
-            logger.debug("looping through the UUIDs...")
+                logger.debug("looping through the UUIDs...")
 
-            # Remove entities found in Elasticserach but no longer in neo4j
-            for uuid in es_uuids:
-                if uuid not in all_entities_uuids:
-                    logger.debug(
-                        f"Entity of uuid: {uuid} found in Elasticserach but no longer in neo4j. Delete it from Elasticserach.")
-                    self.delete(uuid)
+                # Remove entities found in Elasticserach but no longer in neo4j
+                for uuid in es_uuids:
+                    if uuid not in all_entities_uuids:
+                        logger.debug(
+                            f"Entity of uuid: {uuid} found in Elasticserach but no longer in neo4j. Delete it from Elasticserach.")
+                        self.delete(uuid)
 
-            logger.debug("Starting multi-thread reindexing ...")
+                logger.debug("Starting multi-thread reindexing ...")
 
-            # Reindex in multi-treading mode for:
-            # - each public collection
-            # - each upload, only add to the hm_consortium_entities index (private index of the default)
-            # - each source and its descendants in the tree
-            futures_list = []
-            results = []
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                public_collection_futures_list = [
-                    executor.submit(self.translate_public_collection, uuid, reindex=True)
-                    for uuid in public_collection_uuids_list]
-                upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
-                                       upload_uuids_list]
-                source_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in source_uuids_list]
+                # Reindex in multi-treading mode for:
+                # - each public collection
+                # - each upload, only add to the hm_consortium_entities index (private index of the default)
+                # - each source and its descendants in the tree
+                futures_list = []
+                results = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    public_collection_futures_list = [
+                        executor.submit(self.translate_public_collection, uuid, reindex=True)
+                        for uuid in public_collection_uuids_list]
+                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
+                                           upload_uuids_list]
+                    source_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in source_uuids_list]
 
-                # Append the above three lists into one
-                futures_list = public_collection_futures_list + upload_futures_list + source_futures_list
+                    # Append the above three lists into one
+                    futures_list = public_collection_futures_list + upload_futures_list + source_futures_list
 
-                for f in concurrent.futures.as_completed(futures_list):
-                    logger.debug(f.result())
+                    for f in concurrent.futures.as_completed(futures_list):
+                        logger.debug(f.result())
 
-            end = time.time()
+                end = time.time()
 
-            logger.info(
-                f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
-        except Exception as e:
-            logger.error(e)
+                logger.info(
+                    f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
+            except Exception as e:
+                logger.error(e)
 
     def translate(self, entity_id):
         try:
