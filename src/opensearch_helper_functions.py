@@ -1,4 +1,6 @@
-from flask import abort, jsonify
+import os
+
+from flask import abort, jsonify, Flask
 import logging
 import requests
 from urllib.parse import urlparse
@@ -7,7 +9,8 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s:%(lineno)d
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
-
+app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
+            instance_relative_config=True)
 ####################################################################################################
 ## Internal Functions Used By API
 ####################################################################################################

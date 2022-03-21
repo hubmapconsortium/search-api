@@ -10,25 +10,10 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
 logger = logging.getLogger(__name__)
 
 
-# Create a dict with HTTP Authorization header with Bearer token
-def create_request_headers_for_auth(token):
-    auth_header_name = 'Authorization'
-    auth_scheme = 'Bearer'
-
-    headers_dict = {
-        # Don't forget the space between scheme and the token value
-        auth_header_name: auth_scheme + ' ' + token
-    }
-
-    return headers_dict
-
-
 # Get a list of entity uuids via entity-api for a given entity type:
 # Collection, Donor, Source, Sample, Dataset, Submission. Case-insensitive.
-def get_uuids_by_entity_type(entity_type, token, entity_api_url):
+def get_uuids_by_entity_type(entity_type, request_headers, entity_api_url):
     entity_type = entity_type.lower()
-
-    request_headers = create_request_headers_for_auth(token)
 
     # Use different entity-api endpoint for Collection
     if entity_type == 'collection':

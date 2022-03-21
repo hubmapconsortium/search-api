@@ -98,11 +98,14 @@ class HuBMAPTranslator(TranslatorInterface):
                 start = time.time()
 
                 # Make calls to entity-api to get a list of uuids for each entity type
-                donor_uuids_list = get_uuids_by_entity_type("donor", token, self.DEFAULT_ENTITY_API_URL)
-                sample_uuids_list = get_uuids_by_entity_type("sample", token, self.DEFAULT_ENTITY_API_URL)
-                dataset_uuids_list = get_uuids_by_entity_type("dataset", token, self.DEFAULT_ENTITY_API_URL)
-                upload_uuids_list = get_uuids_by_entity_type("upload", token, self.DEFAULT_ENTITY_API_URL)
-                public_collection_uuids_list = get_uuids_by_entity_type("collection", token,
+                donor_uuids_list = get_uuids_by_entity_type("donor", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers,
+                                                             self.DEFAULT_ENTITY_API_URL)
+                dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers,
+                                                              self.DEFAULT_ENTITY_API_URL)
+                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers,
+                                                             self.DEFAULT_ENTITY_API_URL)
+                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
                                                                         self.DEFAULT_ENTITY_API_URL)
 
                 logger.debug("merging sets into a one list...")
@@ -113,7 +116,7 @@ class HuBMAPTranslator(TranslatorInterface):
                 es_uuids = []
                 # for index in ast.literal_eval(app.config['INDICES']).keys():
                 logger.debug("looping through the indices...")
-                logger.debug(INDICES['indices'].keys())
+                logger.debug(self.INDICES['indices'].keys())
 
                 index_names = get_all_indice_names(self.INDICES)
                 logger.debug(index_names)
@@ -121,7 +124,7 @@ class HuBMAPTranslator(TranslatorInterface):
                 for index in index_names.keys():
                     all_indices = index_names[index]
                     # get URL for that index
-                    es_url = INDICES['indices'][index]['elasticsearch']['url'].strip('/')
+                    es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
 
                     for actual_index in all_indices:
                         es_uuids.extend(get_uuids_from_es(actual_index, es_url))
