@@ -1,0 +1,16 @@
+New:
+  description: Dataset definition has been created and has not yet been submitted.
+QA:
+  description: The data has been submitted, has passed automated checks and all post-processing has been completed successfully
+Error:
+  description: Data was submitted, but an error occurred during automated checks or post-processing pipelines
+Hold:
+  description: The data is being held for processing and release in the future.
+Processing:
+  description: The data is currently being processed after being submitted.
+Published:
+  description: The data has been published after successful automated tests, post-processing and manual curation. (sign-off status has to be 1)
+Invalid:
+  description: The data was submitted but did not pass pre-processing validation checks.
+Withdrawn:
+  description: Data has been withdrawn after being published. (sign-off status has to be 1)

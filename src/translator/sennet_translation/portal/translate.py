@@ -21,7 +21,7 @@ def translate(doc):
     _translate_file_description(doc)
     _translate_status(doc)
     _translate_organ(doc)
-    _translate_donor_metadata(doc)
+    _translate_source_metadata(doc)
     _translate_specimen_type(doc)
     _translate_data_type(doc)
     _translate_timestamp(doc)
@@ -31,7 +31,7 @@ def translate(doc):
 
 # Utils:
 
-_enums_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
+_enums_dir = Path(__file__).parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
 _enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
 
 
@@ -40,8 +40,8 @@ def _map(doc, key, map):
     # but better to do it everywhere than to miss one case.
     if key in doc:
         doc[f'mapped_{key}'] = map(doc[key])
-    if 'donor' in doc:
-        _map(doc['donor'], key, map)
+    if 'source' in doc:
+        _map(doc['source'], key, map)
     if 'origin_sample' in doc:
         _map(doc['origin_sample'], key, map)
     if 'source_sample' in doc:
@@ -56,14 +56,14 @@ def _add_metadata_metadata_placeholder(doc):
     '''
     For datasets, the "metadata" used by the portal is actually at
     "metadata.metadata" and in dev-search, there is a boolean facet
-    that looks for this path. Samples and Donors don't follow this pattern,
+    that looks for this path. Samples and Sources don't follow this pattern,
     but to enable the boolean facet, we add a placeholder.
 
-    >>> doc = {'entity_type': 'Donor', 'metadata': {}}
+    >>> doc = {'entity_type': 'Source', 'metadata': {}}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' in doc['metadata']
 
-    >>> doc = {'entity_type': 'Donor'}
+    >>> doc = {'entity_type': 'Source'}
     >>> _add_metadata_metadata_placeholder(doc)
     >>> assert 'metadata' not in doc
 
@@ -72,7 +72,7 @@ def _add_metadata_metadata_placeholder(doc):
     >>> assert 'metadata' not in doc['metadata']
 
     '''
-    if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
+    if doc['entity_type'] in ['Source', 'Sample'] and 'metadata' in doc:
         doc['metadata']['metadata'] = {'has_metadata': True}
 
 
@@ -291,12 +291,12 @@ def _data_types_map(ks):
     return [r]
 
 
-# Donor metadata:
+# Source metadata:
 
-def _translate_donor_metadata(doc):
+def _translate_source_metadata(doc):
     '''
     >>> doc = {"metadata": None}
-    >>> _translate_donor_metadata(doc)
+    >>> _translate_source_metadata(doc)
     >>> doc
     {'metadata': None, 'mapped_metadata': {}}
 
@@ -304,7 +304,7 @@ def _translate_donor_metadata(doc):
 
     >>> doc = {
     ...     "metadata": {
-    ...         "organ_donor_data": [{
+    ...         "organ_source_data": [{
     ...             "preferred_term": "Diabetes",
     ...             "grouping_concept_preferred_term": "Medical history"
     ...         },
@@ -314,7 +314,7 @@ def _translate_donor_metadata(doc):
     ...         }]
     ...     }
     ... }
-    >>> _translate_donor_metadata(doc)
+    >>> _translate_source_metadata(doc)
     >>> doc['mapped_metadata']
     {'medical_history': ['Diabetes', 'Cancer']}
 
@@ -322,7 +322,7 @@ def _translate_donor_metadata(doc):
 
     >>> doc = {
     ...     "metadata": {
-    ...         "organ_donor_data": [{
+    ...         "organ_source_data": [{
     ...             "data_type": "Numeric",
     ...             "data_value": "87.6",
     ...             "grouping_concept_preferred_term": "Weight",
@@ -330,21 +330,21 @@ def _translate_donor_metadata(doc):
     ...         }]
     ...     }
     ... }
-    >>> _translate_donor_metadata(doc)
+    >>> _translate_source_metadata(doc)
     >>> doc['mapped_metadata']
     {'weight_value': [87.6], 'weight_unit': ['kg']}
 
     '''
-    _map(doc, 'metadata', _donor_metadata_map)
+    _map(doc, 'metadata', _source_metadata_map)
 
 
-def _donor_metadata_map(metadata):
+def _source_metadata_map(metadata):
     if metadata is None:
         return {}
-    donor_metadata = metadata.get('organ_donor_data') or metadata.get('living_donor_data') or {}
+    source_metadata = metadata.get('organ_source_data') or metadata.get('living_source_data') or {}
     mapped_metadata = defaultdict(list)
 
-    for kv in donor_metadata:
+    for kv in source_metadata:
         term = kv['grouping_concept_preferred_term']
         key = re.sub(r'\W+', '_', term).lower()
         value = (

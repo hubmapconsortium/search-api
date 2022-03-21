@@ -10,19 +10,19 @@ from tempfile import TemporaryDirectory
 from yaml import safe_load as load_yaml
 import jsonschema
 
-from elasticsearch.addl_index_transformations.portal.translate import (
+from translator.sennet_translation.portal.translate import (
     translate, TranslationException
 )
-from elasticsearch.addl_index_transformations.portal.add_counts import (
+from translator.sennet_translation.portal.add_counts import (
     add_counts
 )
-from elasticsearch.addl_index_transformations.portal.add_partonomy import (
+from translator.sennet_translation.portal.add_partonomy import (
     add_partonomy
 )
-from elasticsearch.addl_index_transformations.portal.sort_files import (
+from translator.sennet_translation.portal.sort_files import (
     sort_files
 )
-from elasticsearch.addl_index_transformations.portal.reset_entity_type import (
+from translator.sennet_translation.portal.reset_entity_type import (
     reset_entity_type
 )
 
@@ -69,9 +69,9 @@ def transform(doc, batch_id='unspecified'):
     ...    'data_access_level': 'consortium',
     ...    'data_types': ['salmon_rnaseq_10x_sn'],
     ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
-    ...    'donor': {
+    ...    'source': {
     ...        "metadata": {
-    ...            "organ_donor_data": [
+    ...            "organ_source_data": [
     ...                {
     ...                    "data_type": "Nominal",
     ...                    "grouping_concept_preferred_term": "Sex",
@@ -95,7 +95,7 @@ def transform(doc, batch_id='unspecified'):
     ...            'data_path': 'No!',
     ...            'metadata_path': 'No!',
     ...            'tissue_id': 'No!',
-    ...            'donor_id': 'No!',
+    ...            'source_id': 'No!',
     ...            'cell_barcode_size': '123',
     ...            'should_be_int': '123',
     ...            'should_be_float': '123.456',
@@ -120,8 +120,8 @@ def transform(doc, batch_id='unspecified'):
      'data_types': ['salmon_rnaseq_10x_sn'],
      'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
      'descendants': [{'entity_type': 'Sample or Dataset'}],
-     'donor': {'mapped_metadata': {'sex': ['Male']},
-               'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
+     'source': {'mapped_metadata': {'sex': ['Male']},
+               'metadata': {'organ_source_data': [{'data_type': 'Nominal',
                                                   'grouping_concept_preferred_term': 'Sex',
                                                   'preferred_term': 'Male'}]}},
      'entity_type': 'dataset',
@@ -176,7 +176,7 @@ def transform(doc, batch_id='unspecified'):
     return doc_copy
 
 
-_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
+_data_dir = Path(__file__).parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
@@ -188,7 +188,7 @@ def _map(doc, clean):
     # but better to do it everywhere than to miss one case.
     clean(doc)
 
-    single_valued_fields = ['donor', 'origin_sample', 'source_sample', 'rui_location']
+    single_valued_fields = ['source', 'origin_sample', 'source_sample', 'rui_location']
     multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
 
     for single_doc_field in single_valued_fields:
@@ -215,7 +215,7 @@ def _simple_clean(doc):
     # based only on the problems we actually see:
     name_field = 'created_by_user_displayname'
     if doc.get(name_field, '').lower() in [
-            'daniel cotter', 'amir bahmani', 'adam kagel', 'gloria pryhuber']:
+        'daniel cotter', 'amir bahmani', 'adam kagel', 'gloria pryhuber']:
         doc[name_field] = doc[name_field].title()
 
     # Clean up metadata:
@@ -225,7 +225,7 @@ def _simple_clean(doc):
         bad_fields = [
             'collectiontype', 'null',  # Inserted by IEC.
             'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
-            'donor_id', 'tissue_id'  # For internal use only.
+            'source_id', 'tissue_id'  # For internal use only.
         ]
 
         # Ideally, we'd pull from https://github.com/hubmapconsortium/ingest-validation-tools/blob/main/docs/field-types.yaml
@@ -310,11 +310,11 @@ def _add_validation_errors(doc):
     >>> pprint(doc['mapper_metadata']['validation_errors'][0])
     {'absolute_path': '/entity_type',
      'absolute_schema_path': '/properties/entity_type/enum',
-     'message': "'dataset' is not one of ['Collection', 'Dataset', 'Donor', "
+     'message': "'dataset' is not one of ['Collection', 'Dataset', 'Source', "
                 "'Sample']"}
 
     >>> doc = {
-    ...    'entity_type': 'Donor',
+    ...    'entity_type': 'Source',
     ...    'create_timestamp': 'FAKE',
     ...    'created_by_user_displayname': 'FAKE',
     ...    'created_by_user_email': 'FAKE',

@@ -21,8 +21,8 @@ pip install -r requirements-dev.txt
 
 # on mac:
 brew tap elastic/tap
-brew install elastic/tap/elasticsearch-full
-elasticsearch &  # Wait for it to start...
+brew install elastic/tap/hubmap_translation-full
+hubmap_translation &  # Wait for it to start...
 
 ./test.sh
 ```

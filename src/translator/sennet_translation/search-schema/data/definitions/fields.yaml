@@ -1,0 +1,310 @@
+contains_human_genetic_sequences:
+  description: true if the data contains human gene sequence information, false
+    otherwise
+  entity_types:
+  - dataset
+  enum: null
+  required: true
+create_timestamp:
+  description: The data/time when the entity was created
+  entity_types:
+  - source
+  - sample
+  - dataset
+  - collection
+  enum: null
+  required: true
+created_by_user_displayname:
+  description: The name of the person who registered/created the Entity.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: true
+created_by_user_email:
+  description: The email address of the person who registerd/created the Entity.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: true
+creation_action:
+  description: The action that created this this Entity
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: false
+data_access_level:
+  description: The access control level for the entity
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: data_access_levels
+  required: true  
+data_types:
+  description: 'TODO: An array of data/assay types contained in the Dataset.'
+  entity_types:
+  - dataset
+  enum: assay_types
+  required: false
+description:
+  description: A description of the Entity, hand entered into the UI
+  entity_types:
+  - source
+  - sample
+  - dataset
+  - collection
+  enum: null
+  required: false
+display_doi:
+  description: HuBMAP id generated at the same time as and associated directly with
+    the UUID for the Entity.  This ID can be used when registering an object with
+    the DOI System.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: false
+source:
+  description: The ancestor Source at the top of the provenance chain for the Entity.  This
+    contains, in JSON, the full Entity information for the Source.
+  entity_types:
+  - sample
+  - dataset
+  enum: null
+  required: Depends on entity type
+entity_type:
+  description: The entity type.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  - collection
+  enum: entity_types
+  required: true
+files:
+  description: An array of information about the files contained in the dataset.
+  entity_types:
+  - dataset
+  enum: null
+  required: false
+group_name:
+  description: The name of the lab/TMC/TTD/RTI where the Entity was registered.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: true
+group_uuid:
+  description: A UUID associated with the lab/TMC/TTD/RTI where the Entity was registered.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: true
+hubmap_display_id:
+  description: 'HuBMAP id used internal to the Consortium, generated at the same
+    time as and associated directly with the UUID for the Entity.  The id is built
+    on the the id from the parent object.  Format explained here: https://docs.google.com/document/d/1DjHgmqWF1VA5-3mfzLFNfabbzmc8KLSG9xWx1DDLlzo/'
+  entity_types:
+  - source
+  - sample
+  enum: null
+  required: false
+lab_source_id:
+  description: An source id specific to the lab where the tissue was procured.
+  entity_types:
+  - source
+  enum: null
+  required: Depends on entity type
+lab_name:
+  description: A lab specific label/name assigned to a source by the lab during registration
+    of the source.
+  entity_types:
+  - source
+  enum: null
+  required: false
+lab_tissue_sample_id:
+  description: An id specific to the lab where the tissue was processed.
+  entity_types:
+  - sample
+  enum: null
+  required: Depends on entity type
+last_modified_timestamp:
+  description: The date/time when the entity was last updatedl
+  entity_types:
+  - source
+  - sample
+  - dataset
+  - collection
+  enum: null
+  required: true
+metadata:
+  description: Metadata associated with the Entity. Formated in JSON. Source metadata
+    is transformed from files uploaded into the Ingest UI.  Sample metadata will
+    be transformed from files uploaded into the Ingest UI.  Dataset metadata will
+    be transformed from the HIVE specified .tsv file provided with data uploads
+    and/or extraction from data or metadata files provided in the data upload.
+  entity_types:
+  - source
+  - sample
+  - dataset
+  enum: null
+  required: false
+name:
+  description: The name of a dataset as entered into the Ingest UI
+  entity_types:
+  - dataset
+  enum: null
+  required: Depends on entity type
+organ:
+  description: The organ type when specimen_type == organ.
+  entity_types:
+  - sample
+  enum: organ_types
+  required: false
+organ_other:
+  description: If organ type == other, the organ name is specified in this field
+  entity_types:
+  - sample
+  enum: null
+  required: false
+origin_sample:
+  description: The tissue sample directly below Source (should usually be an organ)
+    at the top of the provenance chain for the Entity. This conntains, in JSON,
+    the full Entity information for the Sample.
+  entity_types:
+  - sample
+  - dataset
+  enum: null
+  required: Depends on entity type
+portal_metadata_upload_files:
+  description: An array of information about metadata files uploaded via the Tissue
+    Registration UI
+  entity_types:
+  - source
+  - sample
+  enum: null
+  required: false
+portal_uploaded_image_files:
+  description: An array of information about image files uploaded during source or
+    tissue registration via the Tissue Registration UI
+  entity_types:
+  - source
+  - sample
+  enum: null
+  required: false
+protocol_url:
+  description: The url to the protocols.io instance describing source selection criteria,
+    tissue procurement protocols and or data generation/derivation details.
+  entity_types:
+  - source
+  - sample
+  enum: null
+  required: Just one of these two
+rui_location:
+  description: Location information of where the tissue sample came from in the
+    organ that the tissue was sourced from.  Specified in JSON, as outputed from
+    the RUI tool.
+  entity_types:
+  - sample
+  enum: null
+  required: false
+source_sample:
+  description: The tissue sample or samples that the data was directly derived from.  This
+    contains, in JSON, the full Entity information for the Sample.
+  entity_types:
+  - dataset
+  enum: null
+  required: Depends on entity type
+specimen_type:
+  description: For Sample entities, the type of tissue specimen.
+  entity_types:
+  - sample
+  enum: tissue_sample_types
+  required: true
+specimen_type_other:
+  description: If specimen_type == other, the specimen type name is specified in
+    this field
+  entity_types:
+  - sample
+  enum: null
+  required: false
+status:
+  description: The status of a Dataset.
+  entity_types:
+  - dataset
+  enum: dataset_status_types
+  required: Depends on entity type
+uuid:
+  description: The HuBMAP auto-generated UUID for the Entity
+  entity_types:
+  - source
+  - sample
+  - dataset
+  - collection
+  enum: null
+  required: true
+visit:
+  description: The clinical visit specifier of when a piece of tissue was procured.  This
+    is hand entered via the Tissue Registration UI at the time of tissue registration.
+  entity_types:
+  - sample
+  enum: null
+  required: false
+contacts:
+  description: People to contact for this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+creators:
+  description: People Who created this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+datasets:
+  description: datasets belong to this collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
+# description:
+#   description: TODO
+#   entity_types:
+#   - collection
+#   enum: null
+#   required: false
+doi_url:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+has_doi:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+registered_doi:
+  description: TODO
+  entity_types:
+  - collection
+  enum: null
+  required: false
+title:
+  description: The title of collection
+  entity_types:
+  - collection
+  enum: null
+  required: false
