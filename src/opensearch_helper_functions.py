@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
             instance_relative_config=True)
+
+
 ####################################################################################################
 ## Internal Functions Used By API
 ####################################################################################################
@@ -115,12 +117,15 @@ def execute_query(query_against, request, index, es_url, query=None):
 
     logger.debug(f"==========response status code: {response.status_code} ==========")
 
-    # Handling response over 10MB with a more useful message instead of AWS API Gateway's default 500 message
-    # Note Content-length header is not always provided, we have to calculate
-    check_response_payload_size(response.text)
+    # Only check the response payload size on a successful call
+    # If any errors, no way the Elasticsearch response payload is over 10MB
+    if response.status_code == 200:
+        # Handling response over 10MB with a more useful message instead of AWS API Gateway's default 500 message
+        # Note Content-length header is not always provided, we have to calculate
+        check_response_payload_size(response.text)
 
-    # Return the elasticsearch resulting json data
-    return jsonify(response.json())
+    # Return the Elasticsearch resulting json data and status code
+    return jsonify(response.json()), response.status_code
 
 
 # Get the query string from orignal request
