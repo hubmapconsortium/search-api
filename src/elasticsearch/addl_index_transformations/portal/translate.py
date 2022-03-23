@@ -63,10 +63,8 @@ def _add_has_visualization(doc):
     viewconf with a callback. Being able to search for datasets with
     visualizations is also useful.
     '''
-    def get_assay(name):
-        return AssayType(name)
     if doc['entity_type'] == 'dataset':
-        doc['visualization'] = has_visualization(doc, get_assay)
+        doc['visualization'] = has_visualization(doc, lambda name: AssayType(name))
 
 
 def _add_metadata_metadata_placeholder(doc):
