@@ -101,9 +101,10 @@ def transform(doc, batch_id='unspecified'):
     ...            'should_be_float': '123.456',
     ...            'keep_this_field': 'Yes!',
     ...            'is_boolean': '1'
-    ...        }
+    ...        },
+    ...        'dag_provenance_list': [],
     ...    },
-    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
+    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
@@ -140,7 +141,8 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'cell_barcode_size': '123',
+     'metadata': {'dag_provenance_list': [],
+                  'metadata': {'cell_barcode_size': '123',
                                'is_boolean': 'TRUE',
                                'keep_this_field': 'Yes!',
                                'should_be_float': 123.456,
@@ -148,7 +150,8 @@ def transform(doc, batch_id='unspecified'):
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
-     'status': 'New'}
+     'status': 'New',
+     'visualization': True}
 
     '''
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'

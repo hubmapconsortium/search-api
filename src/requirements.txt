@@ -11,3 +11,5 @@ PyYAML==5.4.1
 # For local development:
 # COMMONS_BRANCH=master pip install -r requirements.txt
 git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
+
+git+https://github.com/hubmapconsortium/portal-visualization.git@0.0.1#egg=portal-visualization
