@@ -15,7 +15,7 @@ class Indexer:
         self.eswriter = ESWriter(self.elasticsearch_url)
 
     def index(self, entity_id, document, index_name, reindex=False):
-        document = json.dumps(self.remove_empty_elements(json.loads(document)))
+        # document = json.dumps(self.remove_empty_elements(json.loads(document)))
         # Delete old doc for reindex
         if reindex:
             logger.debug(f"Deleting old document with uuid: {entity_id} from index: {index_name}")
