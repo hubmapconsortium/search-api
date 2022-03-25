@@ -1,7 +1,4 @@
-language: python
-python:
-  - '3.7'
-cache: pip
+language: python # Use default 3.6
 services:
   - elasticsearch
 before_script:
