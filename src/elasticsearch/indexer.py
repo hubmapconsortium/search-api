@@ -871,13 +871,13 @@ class Indexer:
         
         return is_public
 
-
+    # Entity-api only returns a list of datast uuids assiciated with the collection due to performance consideration
     def add_datasets_to_collection(self, collection):
         datasets = []
-        if 'datasets' in collection:
-            for dataset in collection['datasets']:
+        if 'dataset_uuids' in collection:
+            for dataset_uuid in collection['dataset_uuids']:
                 # Retrieve the entity details
-                dataset = self.get_entity(dataset['uuid'])
+                dataset = self.get_entity(dataset_uuid)
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
@@ -894,7 +894,8 @@ class Indexer:
 
         collection['datasets'] = datasets
     
-    # Currently the handling is same as add_datasets_to_collection()
+    # Different from colletion handling above, entity-api returns a list of dataset dicts assiciated with the upload
+    # with a few time-consuming triggers excluded
     def add_datasets_to_upload(self, upload):
         datasets = []
         if 'datasets' in upload:
