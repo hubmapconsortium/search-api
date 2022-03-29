@@ -651,9 +651,13 @@ def get_uuids_from_es(index, es_url):
     while not end_of_list:
         logger.debug("Searching ES for uuids...")
         logger.debug(es_url)
-        resp = execute_query('_search', None, index, es_url, query)
+
+        # execute_query() returns two values
+        resp, status_code = execute_query('_search', None, index, es_url, query)
+
         logger.debug('Got a response from ES...')
-        ret_obj = resp[0].get_json()
+        
+        ret_obj = resp.get_json()
         uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
 
         total = ret_obj.get('hits').get('total').get('value')
