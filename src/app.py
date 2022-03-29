@@ -651,9 +651,13 @@ def get_uuids_from_es(index, es_url):
     while not end_of_list:
         logger.debug("Searching ES for uuids...")
         logger.debug(es_url)
-        resp = execute_query('_search', None, index, es_url, query)
+
+        # execute_query() returns two values
+        resp, status_code = execute_query('_search', None, index, es_url, query)
+
         logger.debug('Got a response from ES...')
-        ret_obj = resp[0].get_json()
+
+        ret_obj = resp.get_json()
         uuids.extend(hit['_id'] for hit in ret_obj.get('hits').get('hits'))
 
         total = ret_obj.get('hits').get('total').get('value')
@@ -696,7 +700,7 @@ def reindex_all_uuids(indexer, token):
             logger.debug(INDICES['indices'].keys())
 
          
-            index_names = get_all_indice_names()
+            index_names = get_all_reindex_enabled_indice_names()
             logger.debug(index_names)
 
             for index in index_names.keys():
@@ -743,19 +747,22 @@ def reindex_all_uuids(indexer, token):
             logger.error(e)
 
 # Gets a list of actually public and private indice names
-def get_all_indice_names():
+# Only the indices with `reindex_enabled: true`
+def get_all_reindex_enabled_indice_names():
     all_names = {}
     try:
         indices = INDICES['indices'].keys()
         for i in indices:
-            index_info = {}
-            index_names = []
-            public_index = INDICES['indices'][i]['public']
-            private_index = INDICES['indices'][i]['private']          
-            index_names.append(public_index)
-            index_names.append(private_index)
-            index_info[i] = index_names
-            all_names.update(index_info)
+            target_index = INDICES['indices'][i]
+            if 'reindex_enabled' in target_index and target_index['reindex_enabled'] is True:
+                index_info = {}
+                index_names = []
+                public_index = target_index['public']
+                private_index = target_index['private']          
+                index_names.append(public_index)
+                index_names.append(private_index)
+                index_info[i] = index_names
+                all_names.update(index_info)
     except Exception as e:
         raise e
    
