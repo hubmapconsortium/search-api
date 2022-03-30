@@ -3,7 +3,7 @@ Flask==1.1.2
 jsonschema==3.2.0
 
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
-requests==2.25.1
+requests==2.27.1
 PyYAML==5.4.1
 
 # The branch name of commons to be used during image build:
