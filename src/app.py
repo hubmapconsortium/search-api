@@ -45,7 +45,7 @@ DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['el
 DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
 secure_group = app.config['SECURE_GROUP']
-group_id = app.config['GROUP_ID']
+group_id = 'group_membership_ids'
 
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
