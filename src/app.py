@@ -44,21 +44,11 @@ logger.debug(INDICES)
 DEFAULT_ELASTICSEARCH_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
 DEFAULT_ENTITY_API_URL = INDICES['indices'][DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
+secure_group = app.config['SECURE_GROUP']
+group_id = 'group_membership_ids'
+
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-
-group_name = group_id = None
-if app.config['API_TYPE'] == 'HUBMAP':
-    group_name = 'HuBMAP'
-    group_id = 'hmgroupids'
-
-elif app.config['API_TYPE'] == 'SENNET':
-    # TODO: need to add new group name to auth library as well as group id
-    group_name = 'HuBMAP'
-    group_id = 'hmgroupids'
-else:
-    raise ValueError(
-        "Required configuration parameter API_TYPE not found in application configuration. Must be set to 'HUBMAP' or 'SENNET'.")
 
 
 ####################################################################################################
@@ -114,7 +104,7 @@ except Exception:
 
 @app.route('/', methods=['GET'])
 def index():
-    return "Hello! This is " + group_name + " Search API service :)"
+    return "Hello! This is the Search API service :)"
 
 
 ####################################################################################################
@@ -381,6 +371,7 @@ def add(uuid):
 
     return f"Request of adding {uuid} accepted", 202
 
+
 # Get user infomation dict based on the http request(headers)
 # `group_required` is a boolean, when True, 'hmgroupids' is in the output
 def get_user_info_for_access_check(request, group_required):
@@ -452,7 +443,7 @@ def user_in_hubmap_data_admin_group(request):
         # The property 'hmgroupids' is ALWASYS in the output with using get_user_info()
         # when the token in request is a nexus_token
         user_info = get_user_info(request)
-        hubmap_data_admin_group_uuid = auth_helper_instance.groupNameToId(group_name + '-Data-Admin')['uuid']
+        hubmap_data_admin_group_uuid = auth_helper_instance.groupNameToId(secure_group)['uuid']
     except Exception as e:
         # Log the full stack trace, prepend a line with our message
         logger.exception(e)
