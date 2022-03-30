@@ -117,8 +117,8 @@ class SenNetTranslator(TranslatorInterface):
                 logger.debug("looping through the indices...")
                 logger.debug(self.INDICES['indices'].keys())
 
-                index_names = get_all_indice_names(self.INDICES)
-                logger.debug(index_names)
+                index_names = get_all_reindex_enabled_indice_names(self.INDICES)
+                logger.debug(INDICES['indices'].keys())
 
                 for index in index_names.keys():
                     all_indices = index_names[index]

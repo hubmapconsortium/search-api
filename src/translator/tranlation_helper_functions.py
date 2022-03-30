@@ -35,19 +35,22 @@ def get_uuids_by_entity_type(entity_type, request_headers, entity_api_url):
 
 
 # Gets a list of actually public and private indice names
-def get_all_indice_names(all_indices):
+# Only the indices with `reindex_enabled: true`
+def get_all_reindex_enabled_indice_names(all_indices):
     all_names = {}
     try:
         indices = all_indices['indices'].keys()
         for i in indices:
-            index_info = {}
-            index_names = []
-            public_index = all_indices['indices'][i]['public']
-            private_index = all_indices['indices'][i]['private']
-            index_names.append(public_index)
-            index_names.append(private_index)
-            index_info[i] = index_names
-            all_names.update(index_info)
+            target_index = all_indices['indices'][i]
+            if 'reindex_enabled' in target_index and target_index['reindex_enabled'] is True:
+                index_info = {}
+                index_names = []
+                public_index = target_index['public']
+                private_index = target_index['private']
+                index_names.append(public_index)
+                index_names.append(private_index)
+                index_info[i] = index_names
+                all_names.update(index_info)
     except Exception as e:
         raise e
 
