@@ -8,5 +8,7 @@ GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 # Globus HuBMAP-Data_Admin group UUID
 GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID = '89a69625-99d7-11ea-9366-0e98982705c1'
 
+#Set to either 'SENNET' or 'HUBMAP' depending on which application it should work with
+API_TYPE = 'HUBMAP'
 SECURE_GROUP = 'HuBMAP-Data-Admin'
 GROUP_ID = 'hmgroupids'
