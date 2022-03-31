@@ -119,7 +119,7 @@ class HuBMAPTranslator(TranslatorInterface):
                 logger.debug(self.INDICES['indices'].keys())
 
                 index_names = get_all_reindex_enabled_indice_names(self.INDICES)
-                logger.debug(INDICES['indices'].keys())
+                logger.debug(self.INDICES['indices'].keys())
 
                 for index in index_names.keys():
                     all_indices = index_names[index]
