@@ -602,12 +602,8 @@ def create_request_headers_for_auth(token):
 
 
 def init_translator(token):
-    if app.config['API_TYPE'] == 'HUBMAP':
-        return HuBMAPTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
-    elif app.config['API_TYPE'] == 'SENNET':
-        return SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
-    elif app.config['API_TYPE'] == 'BCRF':
-        return BCRFTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    klass = globals()[app.config['TRANSLATOR_CLASS']]
+    return klass(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
 
 
 # Get a list of filtered Elasticsearch indices to expose to end users without the prefix
