@@ -10,7 +10,7 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
 logger = logging.getLogger(__name__)
 
 
-class BCRFTranslator(TranslatorInterface):
+class Translator(TranslatorInterface):
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
             self.indices: dict = {}

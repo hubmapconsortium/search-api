@@ -39,7 +39,7 @@ entity_properties_list = [
 entity_types = ['Upload', 'Source', 'Sample', 'Dataset']
 
 
-class SenNetTranslator(TranslatorInterface):
+class Translator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_STATUS_PUBLISHED = 'published'
@@ -800,7 +800,7 @@ if __name__ == "__main__":
         sys.exit(msg)
 
     # Create an instance of the indexer
-    translator = SenNetTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
 
     auth_helper = translator.init_auth_helper()
 
