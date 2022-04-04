@@ -1,3 +1,4 @@
+import importlib
 import logging
 import os
 import threading
@@ -15,9 +16,6 @@ from yaml import safe_load
 from libs.assay_type import AssayType
 # Local modules
 from opensearch_helper_functions import *
-from translator.bcrf_translator import BCRFTranslator
-from translator.hubmap_translator import HuBMAPTranslator
-from translator.sennet_translator import SenNetTranslator
 
 # Set logging fromat and level (default is warning)
 # All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
@@ -32,6 +30,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
+
+translator_module = importlib.import_module("translator." + app.config['TRANSLATOR_CLASS'])
 
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
@@ -602,8 +602,7 @@ def create_request_headers_for_auth(token):
 
 
 def init_translator(token):
-    klass = globals()[app.config['TRANSLATOR_CLASS']]
-    return klass(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    return translator_module.Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
 
 
 # Get a list of filtered Elasticsearch indices to expose to end users without the prefix
