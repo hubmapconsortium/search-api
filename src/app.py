@@ -31,7 +31,7 @@ app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname
             instance_relative_config=True)
 app.config.from_pyfile('app.cfg')
 
-translator_module = importlib.import_module("translator." + app.config['TRANSLATOR_CLASS'])
+translator_module = importlib.import_module("translator." + app.config['TRANSLATOR_MODULE'])
 
 # load the index configurations and set the default
 INDICES = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
