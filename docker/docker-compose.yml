@@ -29,7 +29,7 @@ services:
       # Mount the app config to container in order to keep it outside of the image
       - "../src/instance:/usr/src/app/src/instance"
       # To avoid permission issue
-      - "..src/translator/hubmap_translation/addl_index_transformations/portal/cache:/usr/src/app/src/translator/hubmap_translation/addl_index_transformations/portal/cache"
+      - "../src/translator/hubmap_translation/addl_index_transformations/portal/cache:/usr/src/app/src/translator/hubmap_translation/addl_index_transformations/portal/cache"
       # Mount the logging to container
       - "../log:/usr/src/app/log"
       # Mount conf.d on host machine to the nginx conf.d on container
