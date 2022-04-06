@@ -357,11 +357,18 @@ class Translator(TranslatorInterface):
         for index in self.indices.keys():
             try:
                 xform_module = self.INDICES['indices'][index]['transform']['module']
-                m = importlib.import_module(xform_module)
-                self.TRANSFORMERS[index] = m
-            except Exception as e:
-                msg = f"Transformer missing or not specified for index: {index}"
-                logger.info(msg)
+
+                logger.info(f"Transform module to be dynamically imported: {xform_module} at time: {time.time()}")
+
+                try:
+                    m = importlib.import_module(xform_module)
+                    self.TRANSFORMERS[index] = m
+                except Exception as e:
+                    logger.error(e)
+                    msg = f"Failed to dynamically import transform module index: {index} at time: {time.time()}"
+                    logger.exception(msg)
+            except KeyError as e:
+                logger.info(f'No transform or transform module specified in the search-config.yaml for index: {index}')
 
         logger.debug("========Preloaded transformers===========")
         logger.debug(self.TRANSFORMERS)
