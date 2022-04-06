@@ -26,6 +26,8 @@ src/VERSION
 # Rotated log files
 **/*.log*
 
+# Portal cache
+src/translator/hubmap_translation/addl_index_transformations/portal/cache/*.jsonld
 
 __pycache__/
 
