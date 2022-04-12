@@ -1,0 +1,3 @@
+[submodule "src/translator/hubmap_translation"]
+	path = src/translator/hubmap_translation
+	url = https://github.com/hubmapconsortium/hubmap-translation.git
