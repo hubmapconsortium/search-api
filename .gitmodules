@@ -1,6 +1,0 @@
-[submodule "src/translator/hubmap_translation"]
-	path = src/translator/hubmap_translation
-	url = https://github.com/hubmapconsortium/hubmap-translation.git
-[submodule "src/translator/sennet_translation"]
-	path = src/translator/sennet_translation
-	url = https://github.com/sennetconsortium/sennet_translation.git
