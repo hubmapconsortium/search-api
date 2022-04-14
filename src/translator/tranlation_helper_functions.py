@@ -60,7 +60,7 @@ def get_all_reindex_enabled_indice_names(all_indices):
 def get_type_description(type_code, type_yaml_file_name):
     filename = 'search-schema/data/definitions/enums/' + type_yaml_file_name + '.yaml'
     type_yaml_file = Path(
-        __file__).absolute().parent.parent / filename
+        __file__).absolute().parent.parent.parent.parent.parent / filename
 
     logger.debug(f"========type_code: {type_code}")
 

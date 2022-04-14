@@ -5,15 +5,15 @@ services:
   
   search-api:
     build: 
-      context: ./search-api
+      context: ./search_api
       args:
         # The commons github branch to be used during image build (default to master if not set or null)
         - COMMONS_BRANCH=${COMMONS_BRANCH:-master}
     # Build the image with name and tag
     # Exit with an error message containing err if unset or empty in the environment
-    image: search-api:${SEARCH_API_VERSION:?err}
-    hostname: search-api
-    container_name: search-api
+    image: search_api:${SEARCH_API_VERSION:?err}
+    hostname: search_api
+    container_name: search_api
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080"]
       interval: 1m30s
@@ -33,7 +33,7 @@ services:
       # Mount the logging to container
       - "../log:/usr/src/app/log"
       # Mount conf.d on host machine to the nginx conf.d on container
-      - "./search-api/nginx/conf.d:/etc/nginx/conf.d"
+      - "./search_api/nginx/conf.d:/etc/nginx/conf.d"
     networks:
       - gateway_hubmap
 

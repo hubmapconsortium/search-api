@@ -19,7 +19,7 @@ BoolOrNone = Union[bool, None]
 
 StrOrListStr = TypeVar('StrOrListStr', str, List[str])
 
-DEFINITION_PATH = (Path(__file__).resolve().parent.parent
+DEFINITION_PATH = (Path(__file__).resolve().parent.parent.parent.parent.parent
                    / 'search-schema' / 'data'
                    / 'definitions' / 'enums' / 'assay_types.yaml')
 
