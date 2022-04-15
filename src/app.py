@@ -1,4 +1,5 @@
 import threading
+import concurrent.futures
 from pathlib import Path
 
 from flask import request, Response
@@ -308,10 +309,13 @@ class SearchAPI:
         # to the HuBMAP-Data-Admin group
         # since this is being used by entity-api and ingest-api too
         token = self.get_user_token(request.headers)
-
+        result = None
         try:
             translator = self.init_translator(token)
-            threading.Thread(target=translator.translate, args=[uuid]).start()
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(translator.translate, uuid)
+                result = future.result()
+            # threading.Thread(target=translator.translate, args=[uuid]).start()
             # indexer.reindex(uuid)  # for non-thread
 
             logger.info(f"Started to reindex uuid: {uuid}")
@@ -320,7 +324,8 @@ class SearchAPI:
 
             internal_server_error(e)
 
-        return f"Request of reindexing {uuid} accepted", 202
+        return result, 202
+        # return f"Request of reindexing {uuid} accepted", 202
 
     # Live reindex without first deleting and recreating the indices
     # This just deletes the old document and add the latest document of each entity (if still available)
