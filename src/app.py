@@ -1,3 +1,4 @@
+import concurrent.futures
 import threading
 from pathlib import Path
 
@@ -309,18 +310,31 @@ class SearchAPI:
         # since this is being used by entity-api and ingest-api too
         token = self.get_user_token(request.headers)
 
-        try:
-            translator = self.init_translator(token)
-            threading.Thread(target=translator.translate, args=[uuid]).start()
-            # indexer.reindex(uuid)  # for non-thread
+        # Check if query parameter is passed to used futures instead of threading
+        asynchronous = request.args.get('async')
 
-            logger.info(f"Started to reindex uuid: {uuid}")
-        except Exception as e:
-            logger.exception(e)
+        translator = self.init_translator(token)
+        if asynchronous:
+            try:
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(translator.translate, uuid)
+                    result = future.result()
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
 
-            internal_server_error(e)
+            return result, 202
 
-        return f"Request of reindexing {uuid} accepted", 202
+        else:
+            try:
+                threading.Thread(target=translator.translate, args=[uuid]).start()
+
+                logger.info(f"Started to update document with uuid: {uuid}")
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
+
+            return f"Request of reindexing {uuid} accepted", 202
 
     # Live reindex without first deleting and recreating the indices
     # This just deletes the old document and add the latest document of each entity (if still available)
@@ -354,17 +368,31 @@ class SearchAPI:
         token = self.get_user_token(request.headers)
         document = request.json
 
-        try:
-            translator = self.init_translator(token)
-            threading.Thread(target=translator.update, args=[uuid, document]).start()
+        # Check if query parameter is passed to used futures instead of threading
+        asynchronous = request.args.get('async')
 
-            logger.info(f"Started to update document with uuid: {uuid}")
-        except Exception as e:
-            logger.exception(e)
+        translator = self.init_translator(token)
+        if asynchronous:
+            try:
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(translator.update, uuid, document)
+                    result = future.result()
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
 
-            internal_server_error(e)
+            return result, 202
 
-        return f"Request of updating {uuid} accepted", 202
+        else:
+            try:
+                threading.Thread(target=translator.update, args=[uuid, document]).start()
+
+                logger.info(f"Started to update document with uuid: {uuid}")
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
+
+            return f"Request of updating {uuid} accepted", 202
 
     def add(self, uuid):
         # Create a specific document with the passed in UUID
@@ -376,19 +404,33 @@ class SearchAPI:
         token = self.get_user_token(request.headers)
         document = request.json
 
-        try:
-            translator = self.init_translator(token)
-            threading.Thread(target=translator.add, args=[uuid, document]).start()
+        # Check if query parameter is passed to used futures instead of threading
+        asynchronous = request.args.get('async')
 
-            logger.info(f"Started to add document with uuid: {uuid}")
-        except Exception as e:
-            logger.exception(e)
+        translator = self.init_translator(token)
+        if asynchronous:
+            try:
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(translator.add, uuid, document)
+                    result = future.result()
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
 
-            internal_server_error(e)
+            return result, 202
 
-        return f"Request of adding {uuid} accepted", 202
+        else:
+            try:
+                threading.Thread(target=translator.add, args=[uuid, document]).start()
 
-    # Get user infomation dict based on the http request(headers)
+                logger.info(f"Started to add document with uuid: {uuid}")
+            except Exception as e:
+                logger.exception(e)
+                internal_server_error(e)
+
+            return f"Request of adding {uuid} accepted", 202
+
+    # Get user information dict based on the http request(headers)
     # `group_required` is a boolean, when True, 'hmgroupids' is in the output
     def get_user_info_for_access_check(self, request, group_required):
         return self.auth_helper_instance.getUserInfoUsingRequest(request, group_required)
