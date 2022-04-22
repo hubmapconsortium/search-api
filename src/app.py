@@ -583,11 +583,15 @@ class SearchAPI:
     # Case #2: Authorization header with valid token, but the member doesn't belong to the HuBMAP-Read group, direct the call to `hm_public_<index_without_prefix>`.
     # Case #3: Authorization header presents but with invalid or expired token, return 401 (if someone is sending a token, they might be expecting more than public stuff).
     # Case #4: Authorization header presents with a valid token that has the group access, direct the call to `hm_consortium_<index_without_prefix>`.
+    # Case #5: In the instance of BCRF there is no public index so we default to private
     def get_target_index(self, request, index_without_prefix):
+        # Case #5
+        try:
+            target_index = self.INDICES['indices'][index_without_prefix]['public']
+        except KeyError:
+            target_index = self.INDICES['indices'][index_without_prefix]['private']
+
         # Case #1 and #2
-
-        target_index = self.INDICES['indices'][index_without_prefix]['public']
-
         # Keys in request.headers are case insensitive
         if 'Authorization' in request.headers:
             # user_info is a dict
