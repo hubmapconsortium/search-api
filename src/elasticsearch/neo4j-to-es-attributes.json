@@ -149,6 +149,9 @@
     },
     "contributors": {
       "es_name": "contributors"
+    },
+    "tissue_type": {
+      "es_name": "tissue_type"
     }
   }
 }
