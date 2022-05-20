@@ -1,0 +1,24 @@
+**/.vscode/
+
+#eclipse project files
+.project
+.pydevproject
+
+# log files in any path
+**/*.log
+
+# Rotated log files
+**/*.log*
+
+__pycache__/
+
+Pipfile
+Pipfile.lock
+
+#Eclipse project files
+.project
+.pydevproject
+
+.idea
+
+*.DS_Store

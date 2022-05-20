@@ -1,0 +1,9 @@
+version: "3.7"
+
+services:
+  
+  search-api:build: 
+    # Use the published image from DockerHub
+    image: hubmap/search-api:latest
+
+

@@ -8,6 +8,4 @@ GLOBUS_HUBMAP_READ_GROUP_UUID = '5777527e-ec11-11e8-ab41-0af86edb4424'
 # Globus HuBMAP-Data_Admin group UUID
 GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID = '89a69625-99d7-11ea-9366-0e98982705c1'
 
-#Set to the name of the module that will be used for translation
-TRANSLATOR_MODULE = 'hubmap_translator'
 SECURE_GROUP = 'HuBMAP-Data-Admin'

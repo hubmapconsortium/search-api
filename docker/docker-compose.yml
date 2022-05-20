@@ -4,16 +4,13 @@ version: "3.7"
 services:
   
   search-api:
-    build: 
-      context: ./search-api
-      args:
-        # The commons github branch to be used during image build (default to master if not set or null)
-        - COMMONS_BRANCH=${COMMONS_BRANCH:-master}
-    # Build the image with name and tag
-    # Exit with an error message containing err if unset or empty in the environment
-    image: search-api:${SEARCH_API_VERSION:?err}
     hostname: search-api
     container_name: search-api
+    # Map host machine port 4444 to container port 8080
+    # Only root can listen on ports below 1024, we use higher-numbered ports
+    # since nginx is running under non-root user hubmap
+    ports:
+      - "4444:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080"]
       interval: 1m30s
@@ -29,7 +26,7 @@ services:
       # Mount the app config to container in order to keep it outside of the image
       - "../src/instance:/usr/src/app/src/instance"
       # To avoid permission issue
-      - "../src/translator/hubmap_translation/addl_index_transformations/portal/cache:/usr/src/app/src/translator/hubmap_translation/addl_index_transformations/portal/cache"
+      - "../src/hubmap_translation/addl_index_transformations/portal/cache:/usr/src/app/src/hubmap_translation/addl_index_transformations/portal/cache"
       # Mount the logging to container
       - "../log:/usr/src/app/log"
       # Mount conf.d on host machine to the nginx conf.d on container
@@ -40,4 +37,4 @@ services:
 networks:
   # This is the network created by gateway to enable communicaton between multiple docker-compose projects
   gateway_hubmap:
-    external: true
+    external: false

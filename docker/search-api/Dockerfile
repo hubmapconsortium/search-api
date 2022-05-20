@@ -25,13 +25,15 @@ enabled=1\n'\
 # 1 - Install nginx (using the custom yum repo specified earlier)
 # 2 - Remove the default nginx config file
 # 3 - Overwrite the nginx.conf with ours to run nginx as non-root
-# 4 - Install flask app dependencies with pip (pip3 also works)
-# 5 - Make the start script executable
-# 6 - Clean all yum cache
+# 4 - Remove the copied nginx directory
+# 5 - Install flask app dependencies with pip (pip3 also works)
+# 6 - Make the start script executable
+# 7 - Clean all yum cache
 RUN yum install -y nginx && \
     rm /etc/nginx/conf.d/default.conf && \
-    mv nginx.conf /etc/nginx/nginx.conf && \
-    pip install -r src/requirements.txt && \
+    mv nginx/nginx.conf /etc/nginx/nginx.conf && \
+    rm -rf nginx && \
+    pip install -r src/search-adaptor/src/requirements.txt && \
     chmod +x start.sh && \
     yum clean all 
 
