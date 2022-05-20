@@ -1,8 +1,0 @@
-Dataset:
-    description: A collection of data
-Donor:
-    description: A donor who tissue was procured from.
-Sample:
-    description: A tissue sample, could be an organ
-Collection:
-    description: A group of datasets given a DOI
