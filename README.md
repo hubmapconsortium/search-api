@@ -1,4 +1,4 @@
-# hubmap-translation
+# HuBMAP Search API
 
 ## Working with submodule
 
@@ -9,14 +9,14 @@ for the URL and specific branch of the Search-API that is to be used. Once you a
 git submodule update --init --remote
 ```
 
-## Docker build for development
+## Docker build for local development
 
 ```
 cd docker
 ./docker-development.sh [check|config|build|start|stop|down]
 ```
 
-## Docker build for deployment
+## Docker build for deployment on DEV/TEST/STAGE/PROD
 
 ```
 cd docker
