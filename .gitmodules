@@ -1,4 +1,4 @@
 [submodule "src/search-adaptor"]
 	path = src/search-adaptor
 	url = https://github.com/dbmi-pitt/search-adaptor.git
-	branch = yuanzhou/initial-build
+	branch = dev-integrate
