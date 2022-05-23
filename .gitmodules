@@ -2,3 +2,4 @@
 	path = src/search-adaptor
 	url = https://github.com/dbmi-pitt/search-adaptor.git
 	branch = dev-integrate
+	ignore = dirty
