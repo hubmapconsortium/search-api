@@ -6,8 +6,10 @@ from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
+# Ignore PEP8 "E402 module level import not at top of file" with using the
+# inline comment "# noqa: E402"
 sys.path.append("search-adaptor/src")
-from libs.assay_type import AssayType
+from libs.assay_type import AssayType  # noqa: E402
 
 
 class TranslationException(Exception):
