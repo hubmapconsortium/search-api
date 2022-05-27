@@ -12,7 +12,7 @@ end portal/flake8
 
 start portal/doctests
 cd ../../../..
-for F in translator/hubmap_translation/addl_index_transformations/portal/*.py; do
+for F in hubmap_translation/addl_index_transformations/portal/*.py; do
   CMD="python -m doctest -o REPORT_NDIFF $F"
   echo $CMD
   eval $CMD
@@ -23,8 +23,8 @@ end portal/doctests
 start portal/cli
 cd ../../../../..
 PYTHONPATH="src:$PYTHONPATH" \
-  python src/translator/hubmap_translation/addl_index_transformations/portal/__init__.py \
-  src/translator/hubmap_translation/addl_index_transformations/portal/tests/fixtures/input-doc.json \
+  python src/hubmap_translation/addl_index_transformations/portal/__init__.py \
+  src/hubmap_translation/addl_index_transformations/portal/tests/fixtures/input-doc.json \
   | grep '"entity_type": "dataset"'
   # Doctest covers the details: Just want to make sure it runs.
 cd -
