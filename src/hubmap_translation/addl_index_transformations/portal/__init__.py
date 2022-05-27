@@ -215,7 +215,7 @@ def _simple_clean(doc):
     # based only on the problems we actually see:
     name_field = 'created_by_user_displayname'
     if doc.get(name_field, '').lower() in [
-        'daniel cotter', 'amir bahmani', 'adam kagel', 'gloria pryhuber']:
+            'daniel cotter', 'amir bahmani', 'adam kagel', 'gloria pryhuber']:
         doc[name_field] = doc[name_field].title()
 
     # Clean up metadata:
