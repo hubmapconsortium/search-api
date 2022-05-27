@@ -1,10 +1,12 @@
 from pathlib import Path
 import re
+import sys
 from datetime import datetime
 from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
+sys.path.append("search-adaptor/src")
 from libs.assay_type import AssayType
 
 
