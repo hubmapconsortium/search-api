@@ -76,6 +76,7 @@ class Indexer:
         self.request_headers = self.create_request_headers_for_auth(token)
 
         self.eswriter = ESWriter(self.elasticsearch_url)
+        logger.debug(f"ESWriter Found {self.eswriter}")
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
         # Add index_version by parsing the VERSION file
@@ -587,6 +588,7 @@ class Indexer:
                 entity['donor'] = donor
 
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+                entity['origin_samples'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
 
                 if entity['origin_sample'] is None:
                     try:
@@ -594,10 +596,17 @@ class Indexer:
                         entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+                if entity['origin_samples'] is None:
+                    try:
+                        # The origin_samples are the ancestors which 'specimen_type' is "organ" and the 'organ' code is set
+                        entity['origin_samples'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
+                    except StopIteration:
+                        entity['origin_samples'] = []
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
+                    entity['source_samples'] = None
 
                     e = entity
                     
@@ -620,6 +629,26 @@ class Indexer:
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
+
+                    while entity['source_samples'] is None:
+                        url = self.entity_api_url + "/parents/" + e['uuid']
+                        parents_resp = requests.get(url, headers = self.request_headers, verify = False)
+                        if parents_resp.status_code != 200:
+                            msg = f"indexer.generate_doc() failed to get parents via entity-api for uuid: {e['uuid']}"
+                            logger.error(msg)
+                            sys.exit(msg)
+
+                        parents = parents_resp.json()
+
+                        try:
+                            # Why?
+                            if parents[0]['entity_type'] == 'Sample':
+                                #entity['source_sample'] = parents[0]
+                                entity['source_samples'] = parents
+
+                            e = parents[0]
+                        except IndexError:
+                            entity['source_sample'] = []
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
