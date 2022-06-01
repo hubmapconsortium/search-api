@@ -12,6 +12,7 @@ This repository relies on the [search-adaptor](https://github.com/dbmi-pitt/sear
 git submodule update --init --remote
 ```
 
+
 ## Docker build for local development
 
 There are a few configurable environment variables to keep in mind:

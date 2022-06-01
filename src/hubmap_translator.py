@@ -6,15 +6,16 @@ import logging
 import os
 import sys
 import time
+from yaml import safe_load
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
-from hubmap_commons import globus_groups
-# HuBMAP commons
-from hubmap_commons.hm_auth import AuthHelper
-from yaml import safe_load
 
-sys.path.append("search-api/src")
+# HuBMAP commons
+from hubmap_commons import globus_groups
+from hubmap_commons.hm_auth import AuthHelper
+
+sys.path.append("search-adaptor/src")
 from indexer import Indexer
 from opensearch_helper_functions import *
 from translator.tranlation_helper_functions import *
