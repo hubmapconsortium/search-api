@@ -14,6 +14,21 @@ git submodule update --init --remote
 
 ## Docker build for local development
 
+There are a few configurable environment variables to keep in mind:
+
+- `COMMONS_BRANCH`: build argument only to be used during image creation. We can specify which [commons](https://github.com/hubmapconsortium/commons) branch to use during the image creation. Default to master branch if not set or null.
+- `HOST_UID`: the user id on the host machine to be mapped to the container. Default to 1000 if not set or null.
+- `HOST_GID`: the user's group id on the host machine to be mapped to the container. Default to 1000 if not set or null.
+
+We can set and verify the environment variable like below:
+
+````
+export COMMONS_BRANCH=master
+echo $COMMONS_BRANCH
+````
+
+Note: Environment variables set like this are only stored temporally. When you exit the running instance of bash by exiting the terminal, they get discarded. So for rebuilding the docker image, we'll need to make sure to set the environment variables again if necessary.
+
 ```
 cd docker
 ./docker-development.sh [check|config|build|start|stop|down]
