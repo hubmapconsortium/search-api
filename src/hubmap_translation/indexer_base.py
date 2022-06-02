@@ -124,17 +124,17 @@ class Indexer:
                     self.eswriter.delete_index(public_index)
                 except Exception as e:
                     pass
-                
+
                 try:
                     self.eswriter.delete_index(private_index)
                 except Exception as e:
                     pass
-                print('*********************************************')                
+                print('*********************************************')
 
                 # get the specific mapping file for the designated index
                 index_mapping_file = self.INDICES['indices'][index]['hubmap_translation']['mappings']
 
-                # read the elasticserach specific mappings 
+                # read the elasticserach specific mappings
                 index_mapping_settings = safe_load((Path(__file__).absolute().parent / index_mapping_file).read_text())
 
                 print(index_mapping_settings)
@@ -149,7 +149,7 @@ class Indexer:
             # Get a list of public Collection uuids
             url = self.entity_api_url + "/collections?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
-            
+
             if response.status_code != 200:
                 msg = "indexer.main() failed to get all the public Collection uuids via entity-api"
                 logger.error(msg)
@@ -162,7 +162,7 @@ class Indexer:
             # Get a list of Upload uuids
             url = self.entity_api_url + "/upload/entities?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
-            
+
             if response.status_code != 200:
                 msg = "indexer.main() failed to get all the Upload uuids via entity-api"
                 logger.error(msg)
@@ -175,7 +175,7 @@ class Indexer:
             # Get a list of Donor uuids
             url = self.entity_api_url + "/donor/entities?property=uuid"
             response = requests.get(url, headers = self.request_headers, verify = False)
-            
+
             if response.status_code != 200:
                 msg = "indexer.main() failed to get all the Donor uuids via entity-api"
                 logger.error(msg)
@@ -200,7 +200,7 @@ class Indexer:
 
                 # Append the above three lists into one
                 futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
-                
+
                 for f in concurrent.futures.as_completed(futures_list):
                     logger.debug(f.result())
         except Exception:
@@ -212,7 +212,7 @@ class Indexer:
         # logger.info(f"Total threads count: {threading.active_count()}")
 
         logger.info(f"Executing index_tree() for donor of uuid: {donor_uuid}")
-  
+
         url = self.entity_api_url + "/descendants/" + donor_uuid + '?property=uuid'
         response = requests.get(url, headers = self.request_headers, verify = False)
 
@@ -220,7 +220,7 @@ class Indexer:
             msg = f"indexer.index_tree() failed to get descendant uuids via entity-api for donor of uuid: {donor_uuid}"
             logger.error(msg)
             sys.exit(msg)
-        
+
         descendant_uuids = response.json()
 
         # Index the donor entity itself separately
@@ -246,8 +246,8 @@ class Indexer:
     def index_public_collection(self, uuid, reindex = False):
         logger.debug(f"Reindex public Collection with uuid: {uuid}")
 
-        # The entity-api returns public collection with a list of connected public/published datasets, for either 
-        # - a valid token but not in HuBMAP-Read group or 
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
         try:
@@ -259,7 +259,7 @@ class Indexer:
             msg = "indexer.index_public_collection() failed to get public collection of uuid: {uuid} via entity-api"
             logger.error(msg)
             sys.exit(msg)
-  
+
         self.add_datasets_to_collection(collection)
         self.entity_keys_rename(collection)
 
@@ -271,7 +271,7 @@ class Indexer:
             # each index should have a public index
             public_index = self.INDICES['indices'][index]['public']
             private_index = self.INDICES['indices'][index]['private']
-            
+
             # Delete old doc for reindex
             if reindex:
                 self.eswriter.delete_document(public_index, uuid)
@@ -330,7 +330,7 @@ class Indexer:
         try:
             # Retrieve the entity details
             entity = self.get_entity(uuid)
-            
+
             # Check if entity is empty
             if bool(entity):
                 logger.info(f"Executing reindex() for uuid: {uuid}, entity_type: {entity['entity_type']}")
@@ -351,7 +351,7 @@ class Indexer:
                         msg = f"indexer.reindex() failed to get ancestor uuids via entity-api for target uuid: {uuid}"
                         logger.error(msg)
                         sys.exit(msg)
-                    
+
                     ancestor_uuids = ancestor_uuids_response.json()
 
                     url = self.entity_api_url + "/descendants/" + uuid + '?property=uuid'
@@ -360,7 +360,7 @@ class Indexer:
                         msg = f"indexer.reindex() failed to get descendant uuids via entity-api for target uuid: {uuid}"
                         logger.error()
                         sys.exit(msg)
-                    
+
                     descendant_uuids = descendant_uuids_response.json()
 
                     # Only Dataset entities may have previous/next revisions
@@ -371,7 +371,7 @@ class Indexer:
                             msg = f"indexer.reindex() failed to get previous revision uuids via entity-api for target uuid: {uuid}"
                             logger.error(msg)
                             sys.exit(msg)
-                        
+
                         previous_revision_uuids = previous_revision_uuids_response.json()
 
                         url = self.entity_api_url + "/next_revisions/" + uuid + '?property=uuid'
@@ -380,7 +380,7 @@ class Indexer:
                             msg = f"indexer.reindex() failed to get next revision uuids via entity-api for target uuid: {uuid}"
                             logger.error(msg)
                             sys.exit(msg)
-                        
+
                         next_revision_uuids = next_revision_uuids_response.json()
 
                     # All uuids in the path excluding the entity itself
@@ -396,9 +396,9 @@ class Indexer:
                         node = self.get_entity(entity_uuid)
 
                         logger.debug(f"entity_type: {node.get('entity_type', 'Unknown')}, uuid: {node.get('uuid', None)}")
-                        
+
                         self.update_index(node)
-                
+
                 logger.info("################reindex() DONE######################")
 
                 return "indexer.reindex() finished executing"
@@ -407,7 +407,7 @@ class Indexer:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    # Used by app.py reindex_all_uuids() for Live reindex all 
+    # Used by app.py reindex_all_uuids() for Live reindex all
     def delete(self, uuid):
         try:
             for index, _ in self.indices.items():
@@ -418,7 +418,7 @@ class Indexer:
                 private_index = self.INDICES['indices'][index]['private']
                 if public_index != private_index:
                     self.eswriter.delete_document(private_index, uuid)
-               
+
         except Exception:
             msg = "Exceptions during executing indexer.delete()"
             # Log the full stack trace, prepend a line with our message
@@ -426,7 +426,7 @@ class Indexer:
 
 
     # For Upload, Dataset, Donor and Sample objects:
-    # add a calculated (not stored in Neo4j) field called `display_subtype` to 
+    # add a calculated (not stored in Neo4j) field called `display_subtype` to
     # all Elasticsearch documents of the above types with the following rules:
     # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
@@ -466,7 +466,7 @@ class Indexer:
 
     def get_organ_description(self, organ_code):
         definition_yaml_file = Path(__file__).absolute().parent / 'search-schema/data/definitions/enums/organ_types.yaml'
-        
+
         return self.load_definition_code_description(organ_code, definition_yaml_file)
 
 
@@ -597,11 +597,10 @@ class Indexer:
                     except StopIteration:
                         entity['origin_sample'] = {}
                 if entity['origin_samples'] is None:
-                    try:
-                        # The origin_samples are the ancestors which 'specimen_type' is "organ" and the 'organ' code is set
-                        entity['origin_samples'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
-                    except StopIteration:
-                        entity['origin_samples'] = []
+                    entity['origin_samples'] = []
+                    for each in ancestors:
+                        if ('specimen_type' in each) and (each['specimen_type'].lower() == 'organ') and ('organ' in each) and (each['organ'].strip() != ''):
+                            entity['origin_samples'].append(each)
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
@@ -609,7 +608,7 @@ class Indexer:
                     entity['source_samples'] = None
 
                     e = entity
-                    
+
                     while entity['source_sample'] is None:
                         url = self.entity_api_url + "/parents/" + e['uuid']
                         parents_resp = requests.get(url, headers = self.request_headers, verify = False)
@@ -671,7 +670,7 @@ class Indexer:
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-            # Remove the `files` element from the entity['metadata'] dict 
+            # Remove the `files` element from the entity['metadata'] dict
             # to reduce the doc size to be indexed?
             if ('metadata' in entity) and ('files' in entity['metadata']):
                 entity['metadata'].pop('files')
@@ -683,6 +682,12 @@ class Indexer:
                 self.entity_keys_rename(entity['origin_sample'])
             if entity.get('source_sample', None):
                 for s in entity.get('source_sample', None):
+                    self.entity_keys_rename(s)
+            if entity.get('origin_samples', None):
+                for o in entity.get('origin_samples', None):
+                    self.entity_keys_rename(o)
+            if entity.get('source_samples', None):
+                for s in entity.get('source_samples', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
@@ -722,11 +727,11 @@ class Indexer:
                 msg = f"indexer.generate_public_doc() failed to get status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
                 logger.error(msg)
                 sys.exit(msg)
-            
+
             # The call to entity-api returns string directly
             dataset_status = (response.text).lower()
 
-            # Check the `next_revision_uuid` and if the dataset is not published, 
+            # Check the `next_revision_uuid` and if the dataset is not published,
             # pop the `next_revision_uuid` from this entity
             if dataset_status != self.DATASET_STATUS_PUBLISHED:
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
@@ -743,7 +748,7 @@ class Indexer:
             auth_helper = AuthHelper.create(self.app_client_id, self.app_client_secret)
         else:
             auth_helper = AuthHelper.instance()
-        
+
         return auth_helper
 
     # Create a dict with HTTP Authorization header with Bearer token
@@ -764,7 +769,7 @@ class Indexer:
 
         to_delete_keys = []
         temp = {}
-        
+
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
@@ -772,7 +777,7 @@ class Indexer:
                 # To be backward compatible for API clients relying on the old version
                 # Also gives the ES consumer flexibility to change the inner structure
                 # Note: when `rui_location` is stored as json object (Python dict) in ES
-                # with the default dynamic mapping, it can cause errors due to 
+                # with the default dynamic mapping, it can cause errors due to
                 # the changing data types of some internal fields
                 # isinstance() check is to avoid json.dumps() on json string again
                 if (key == 'rui_location') and isinstance(entity[key], dict):
@@ -784,24 +789,26 @@ class Indexer:
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
         properties_list = [
-            'metadata', 
-            'donor', 
-            'origin_sample', 
-            'source_sample', 
-            'ancestor_ids', 
-            'descendant_ids', 
-            'ancestors', 
-            'descendants', 
-            'files', 
-            'immediate_ancestors', 
-            'immediate_descendants', 
+            'metadata',
+            'donor',
+            'origin_sample',
+            'source_sample',
+            'origin_samples',
+            'source_samples',
+            'ancestor_ids',
+            'descendant_ids',
+            'ancestors',
+            'descendants',
+            'files',
+            'immediate_ancestors',
+            'immediate_descendants',
             'datasets'
         ]
 
         for key in to_delete_keys:
             if key not in properties_list:
                 entity.pop(key)
-        
+
         entity.update(temp)
 
         # logger.debug("==================entity after renaming keys==================")
@@ -810,9 +817,9 @@ class Indexer:
 
     def remove_specific_key_entry(self, obj, key_to_remove):
         if type(obj) == dict:
-            if key_to_remove in obj.keys(): 
+            if key_to_remove in obj.keys():
                 obj.pop(key_to_remove)
-            
+
             for key in obj.keys():
                 self.remove_specific_key_entry(obj[key], key_to_remove)
         elif type(obj) == list:
@@ -841,7 +848,7 @@ class Indexer:
 
                 # write entity into indices
                 for index in self.indices.keys():
-               
+
                     public_index = self.INDICES['indices'][index]['public']
                     private_index = self.INDICES['indices'][index]['private']
 
@@ -851,13 +858,13 @@ class Indexer:
                     if (self.entity_is_public(org_node)):
                         public_doc = self.generate_public_doc(node)
 
-                        if transformer is not None:                     
+                        if transformer is not None:
                             public_transformed = transformer.transform(json.loads(public_doc))
                             public_transformed_doc = json.dumps(public_transformed)
                             target_doc = public_transformed_doc
                         else:
                             target_doc = public_doc
-                    
+
                         self.eswriter.write_or_update_document(index_name=public_index, doc=target_doc, uuid=node['uuid'])
 
                     # add it to private
@@ -866,9 +873,9 @@ class Indexer:
                         target_doc = json.dumps(private_transformed)
                     else:
                         target_doc = doc
-       
+
                     self.eswriter.write_or_update_document(index_name=private_index, doc=target_doc, uuid=node['uuid'])
-        
+
         except Exception:
             msg = f"Exception encountered during executing indexer.update_index() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
             # Log the full stack trace, prepend a line with our message
@@ -883,7 +890,7 @@ class Indexer:
     # Don't confuse with `data_access_level`
     def entity_is_public(self, node):
         is_public = False
- 
+
         if node['entity_type'] == 'Dataset':
             # In case 'status' not set
             if 'status' in node:
@@ -900,7 +907,7 @@ class Indexer:
             else:
                 # Log as an error to be fixed in Neo4j
                 logger.error(f"{node['entity_type']} of uuid: {node['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
-        
+
         return is_public
 
 
@@ -921,11 +928,13 @@ class Indexer:
                 dataset_doc.pop('donor')
                 dataset_doc.pop('origin_sample')
                 dataset_doc.pop('source_sample')
+                dataset_doc.pop('origin_samples')
+                dataset_doc.pop('source_samples')
 
                 datasets.append(dataset_doc)
 
         collection['datasets'] = datasets
-    
+
     # Currently the handling is same as add_datasets_to_collection()
     def add_datasets_to_upload(self, upload):
         datasets = []
@@ -943,7 +952,9 @@ class Indexer:
                 dataset_doc.pop('immediate_ancestors')
                 dataset_doc.pop('donor')
                 dataset_doc.pop('origin_sample')
+                dataset_doc.pop('origin_samples')
                 dataset_doc.pop('source_sample')
+                dataset_doc.pop('source_samples')
 
                 datasets.append(dataset_doc)
 
@@ -960,7 +971,7 @@ class Indexer:
                 entity_dict = self.get_public_collection(uuid)
             except requests.exceptions.RequestException as e:
                 logger.exception(e)
-                
+
                 # Stop running
                 msg = f"indexer.get_entity() failed to get entity via entity-api for uuid: {uuid}"
                 logger.error(msg)
@@ -972,8 +983,8 @@ class Indexer:
 
 
     def get_public_collection(self, uuid):
-        # The entity-api returns public collection with a list of connected public/published datasets, for either 
-        # - a valid token but not in HuBMAP-Read group or 
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
         url = self.entity_api_url + "/collections/" + uuid
@@ -986,7 +997,7 @@ class Indexer:
             # Bubble up the error message from entity-api instead of sys.exit(msg)
             # The caller will need to handle this exception
             raise requests.exceptions.RequestException(response.text)
-    
+
         collection_dict = response.json()
 
         return collection_dict
@@ -996,7 +1007,7 @@ class Indexer:
 ## Run indexer_base.py as script
 ####################################################################################################
 
-# To be used by the full index to ensure the nexus token 
+# To be used by the full index to ensure the nexus token
 # belongs to HuBMAP-Data-Admin group
 def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
     for group_id in user_group_ids:

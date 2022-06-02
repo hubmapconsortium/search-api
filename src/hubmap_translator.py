@@ -29,7 +29,9 @@ entity_properties_list = [
     'metadata',
     'donor',
     'origin_sample',
+    'origin_samples',
     'source_sample',
+    'source_samples',
     'ancestor_ids',
     'descendant_ids',
     'ancestors',
@@ -469,6 +471,8 @@ class Translator(TranslatorInterface):
                 dataset_doc.pop('donor')
                 dataset_doc.pop('origin_sample')
                 dataset_doc.pop('source_sample')
+                dataset_doc.pop('source_samples')
+                dataset_doc.pop('origin_samples')
 
                 datasets.append(dataset_doc)
 
@@ -597,22 +601,26 @@ class Translator(TranslatorInterface):
                 # Add new properties
                 entity['donor'] = donor
 
-                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
-                        entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
-                                                                       entity['organ'].strip() != '') else None
+                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+                entity['origin_samples'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
 
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (
-                                a['specimen_type'].lower() == 'organ') and ('organ' in a) and (
-                                                                         a['organ'].strip() != '')))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+
+                if entity['origin_samples'] is None:
+                    entity['origin_samples'] = []
+                    for each in ancestors:
+                        if ('specimen_type' in each) and (each['specimen_type'].lower() == 'organ') and ('organ' in each) and (each['organ'].strip() != ''):
+                            entity['origin_samples'].append(each)
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
+                    entity['source_samples'] = None
 
                     e = entity
 
@@ -628,6 +636,19 @@ class Translator(TranslatorInterface):
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
+
+                    while entity['source_samples'] is None:
+                        parents = self.call_entity_api(e['uuid'], 'parents')
+
+                        try:
+                            # Why?
+                            if parents[0]['entity_type'] == 'Sample':
+                                # entity['source_samples'] = parents[0]
+                                entity['source_samples'] = parents
+
+                            e = parents[0]
+                        except IndexError:
+                            entity['source_samples'] = []
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
@@ -662,6 +683,12 @@ class Translator(TranslatorInterface):
                 self.entity_keys_rename(entity['origin_sample'])
             if entity.get('source_sample', None):
                 for s in entity.get('source_sample', None):
+                    self.entity_keys_rename(s)
+            if entity.get('origin_samples', None):
+                for o in entity.get('origin_samples', None):
+                    self.entity_keys_rename(o)
+            if entity.get('source_samples', None):
+                for s in entity.get('source_samples', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
