@@ -629,6 +629,8 @@ class Indexer:
                         except IndexError:
                             entity['source_sample'] = {}
 
+                    e = entity
+
                     while entity['source_samples'] is None:
                         url = self.entity_api_url + "/parents/" + e['uuid']
                         parents_resp = requests.get(url, headers = self.request_headers, verify = False)
