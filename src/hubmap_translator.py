@@ -637,6 +637,8 @@ class Translator(TranslatorInterface):
                         except IndexError:
                             entity['source_sample'] = {}
 
+                    e = entity
+
                     while entity['source_samples'] is None:
                         parents = self.call_entity_api(e['uuid'], 'parents')
 
