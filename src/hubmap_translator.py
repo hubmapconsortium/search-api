@@ -475,13 +475,28 @@ class Translator(TranslatorInterface):
         entity['datasets'] = datasets
 
     def entity_keys_rename(self, entity):
+        # logger.debug("==================entity before renaming keys==================")
+        # logger.debug(entity)
+
         to_delete_keys = []
         temp = {}
 
         for key in entity:
             to_delete_keys.append(key)
             if key in self.attr_map['ENTITY']:
-                temp_val = entity[key]
+                # Special case of Sample.rui_location
+                # To be backward compatible for API clients relying on the old version
+                # Also gives the ES consumer flexibility to change the inner structure
+                # Note: when `rui_location` is stored as json object (Python dict) in ES
+                # with the default dynamic mapping, it can cause errors due to
+                # the changing data types of some internal fields
+                # isinstance() check is to avoid json.dumps() on json string again
+                if (key == 'rui_location') and isinstance(entity[key], dict):
+                    # Convert Python dict to json string
+                    temp_val = json.dumps(entity[key])
+                else:
+                    temp_val = entity[key]
+
                 temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
 
         for key in to_delete_keys:
@@ -489,6 +504,9 @@ class Translator(TranslatorInterface):
                 entity.pop(key)
 
         entity.update(temp)
+
+        # logger.debug("==================entity after renaming keys==================")
+        # logger.debug(entity)
 
     # These calculated fields are not stored in neo4j but will be generated
     # and added to the ES
@@ -749,10 +767,19 @@ class Translator(TranslatorInterface):
 
         if response.status_code != 200:
             msg = "HuBMAP translator get_collection() failed to get public collection of uuid: " + entity_id + " via entity-api"
+
+            # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+            logger.debug("======get_public_collection() status code from hubmap_translator======")
+            logger.debug(response.status_code)
+
+            logger.debug("======get_public_collection() response text from hubmap_translator-api======")
+            logger.debug(response.text)
 
             # Bubble up the error message from entity-api instead of sys.exit(msg)
             # The caller will need to handle this exception
+            response.raise_for_status()
             raise requests.exceptions.RequestException(response.text)
 
         collection_dict = response.json()
