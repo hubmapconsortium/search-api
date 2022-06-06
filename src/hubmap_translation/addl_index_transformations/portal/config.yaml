@@ -7,6 +7,19 @@ mappings:
   date_detection: False
   dynamic_templates:
     -
+      map_every_numeric:
+        match_pattern: regex
+        path_match: "((.*?)Dataset$)|
+              ((.*?)Donor$)|
+              ((.*?)Sample$)|
+              ((.*?)create_timestamp$)|
+              ((.*?)last_modified_timestamp$)|
+              ((.*?)age$)|
+              ((.*?)bmi$)|
+              ((.*?)size$)"
+        mapping:
+          type: "{dynamic_type}"
+    -
       map_every_string:
         match_mapping_type: string
         mapping:
