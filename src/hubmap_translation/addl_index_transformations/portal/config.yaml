@@ -12,8 +12,8 @@ mappings:
         match_pattern: regex
         match: "((.*?)bulk_rna_isolation_quality_metric_value$)|
               ((.*?)z_rotation$)|
-              ((.*?)resolution_x_value)|
-              ((.*?)bulk_rna_yield_value)|
+              ((.*?)resolution_x_value$)|
+              ((.*?)bulk_rna_yield_value$)|
               ((.*?)z_rotation$)"
         mapping:
           type: float
