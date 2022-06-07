@@ -7,13 +7,6 @@ mappings:
   date_detection: False
   dynamic_templates:
     -
-      # Used to resolve "cannot be changed from type [long] to [float]" error
-      scaled_float:
-        match_pattern: regex
-        match: "^(.*bulk_rna_isolation_quality_metric_value)$|^(.*z_rotation)$|^(.*resolution_[a-z]*_value)$|^(.*bulk_rna_yield_value)$|^(.*library_final_yield)$|^(.*sequencing_phix_percent)$"
-        mapping:
-          type: float
-    -
       transposition_kit_number:
         path_match: "*.transposition_kit_number"
         mapping:
@@ -24,10 +17,9 @@ mappings:
               type: keyword
     -
       map_every_numeric:
-        match_pattern: regex
-        match: "^(.*Dataset)$|^(.*Donor)$|^(.*Sample)$|^(.*create_timestamp)$|^(.*last_modified_timestamp)$|^(.*age)$|^(.*bmi)$|^(.*size)$"
+        match_mapping_type: long
         mapping:
-          type: "{dynamic_type}"
+          type: float
     -
       map_every_string:
         match_mapping_type: string
