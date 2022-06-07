@@ -15,7 +15,7 @@ mappings:
           fields:
             keyword:
               type: keyword
-    -
+    - # Handle all numeric types as float to avoid cast errors
       map_every_numeric:
         match_mapping_type: long
         mapping:
