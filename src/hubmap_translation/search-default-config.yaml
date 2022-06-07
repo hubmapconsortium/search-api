@@ -4,3 +4,26 @@ settings:
     query.default_field: 2048
 mappings:
   date_detection: False
+  dynamic_templates:
+    -
+      # Used to resolve "cannot be changed from type [long] to [float]" error
+      scaled_float:
+        match_pattern: regex
+        match: "^(.*bulk_rna_isolation_quality_metric_value)$|^(.*z_rotation)$|^(.*resolution_x_value)$|^(.*bulk_rna_yield_value)$|^(.*z_rotation)$"
+        mapping:
+          type: float
+    -
+      transposition_kit_number:
+        path_match: "*.transposition_kit_number"
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            keyword:
+              type: keyword
+    -
+      map_every_numeric:
+        match_pattern: regex
+        match: "^(.*Dataset)$|^(.*Donor)$|^(.*Sample)$|^(.*create_timestamp)$|^(.*last_modified_timestamp)$|^(.*age)$|^(.*bmi)$|^(.*size)$"
+        mapping:
+          type: "{dynamic_type}"
