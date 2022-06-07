@@ -10,7 +10,7 @@ mappings:
       # Used to resolve "cannot be changed from type [long] to [float]" error
       scaled_float:
         match_pattern: regex
-        match: "^(.*bulk_rna_isolation_quality_metric_value)$|^(.*z_rotation)$|^(.*resolution_x_value)$|^(.*bulk_rna_yield_value)$|^(.*z_rotation)$"
+        match: "^(.*bulk_rna_isolation_quality_metric_value)$|^(.*z_rotation)$|^(.*resolution_x_value)$|^(.*bulk_rna_yield_value)$"
         mapping:
           type: float
     -
@@ -22,6 +22,11 @@ mappings:
           fields:
             keyword:
               type: keyword
+    -
+      sequencing_phix_percent:
+        path_match: "*.sequencing_phix_percent"
+        mapping:
+          type: long
     -
       map_every_numeric:
         match_pattern: regex
