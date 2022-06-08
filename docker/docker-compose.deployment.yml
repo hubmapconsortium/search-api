@@ -3,7 +3,7 @@ version: "3.7"
 services:
   
   search-api: 
-    # Use the published image from DockerHub
-    image: hubmap/search-api:latest
+    # Use the published image and tag from DockerHub
+    image: hubmap/search-api:${SEARCH_API_VERSION:?err}
 
 
