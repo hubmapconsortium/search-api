@@ -620,7 +620,11 @@ class Translator(TranslatorInterface):
                 entity['donor'] = donor
 
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
-                entity['origin_samples'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+
+                if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
+                    entity['origin_samples'] = [copy.copy(entity)]
+                else:
+                    entity['origin_samples'] = None
 
                 if entity['origin_sample'] is None:
                     try:
