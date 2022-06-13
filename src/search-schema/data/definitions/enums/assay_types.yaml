@@ -51,7 +51,7 @@ CODEX:
 
 # interim solution to handle variant CODEX with new directory schema
 CODEX2:
-    description: CODEX
+    description: CODEX (CODEX2 assay type)
     alt-names: []
     primary: true
     contains-pii: false
