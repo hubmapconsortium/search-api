@@ -47,6 +47,7 @@ LL:
   iri: http://purl.obolibrary.org/obo/UBERON_0002168
 LN:
   description: Knee (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0001465
 LV:
   description: Liver
   iri: http://purl.obolibrary.org/obo/UBERON_0002107
@@ -81,6 +82,7 @@ RL:
   iri: http://purl.obolibrary.org/obo/UBERON_0002167
 RN:
   description: Knee (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0001465
 SI:
   description: Small Intestine
   iri: http://purl.obolibrary.org/obo/UBERON_0002108
