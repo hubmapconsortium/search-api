@@ -10,12 +10,16 @@
 
 AO:
   description: Aorta
+  iri: http://purl.obolibrary.org/obo/UBERON_0000947
 BL:
   description: Bladder
+  iri: http://purl.obolibrary.org/obo/UBERON_0018707
 BD:
   description: Blood
+  iri: http://purl.obolibrary.org/obo/UBERON_0000178
 BM:
   description: Bone Marrow
+  iri: http://purl.obolibrary.org/obo/UBERON_0002371
 BR:
   description: Brain
   iri: http://purl.obolibrary.org/obo/UBERON_0000955
@@ -28,8 +32,10 @@ HT:
   iri: http://purl.obolibrary.org/obo/UBERON_0000948
 LB:
   description: Bronchus (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002178
 LE:
   description: Eye (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0004548
 LI:
   description: Large Intestine
   iri: http://purl.obolibrary.org/obo/UBERON_0000059
@@ -43,13 +49,16 @@ LN:
   description: Knee (Left)
 LV:
   description: Liver
+  iri: http://purl.obolibrary.org/obo/UBERON_0002107
 LY:
   description: Lymph Node
   iri: http://purl.obolibrary.org/obo/UBERON_0000029
 LO:
   description: Ovary (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002119
 RO:
   description: Ovary (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002118
 OT:
   description: Other
 PA:
@@ -57,10 +66,13 @@ PA:
   iri: http://purl.obolibrary.org/obo/UBERON_0001264
 PL:
   description: Placenta
+  iri: http://purl.obolibrary.org/obo/UBERON_0001987
 RB:
   description: Bronchus (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0002177
 RE:
   description: Eye (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0004549
 RK:
   description: Kidney (Right)
   iri: http://purl.obolibrary.org/obo/UBERON_0004539
@@ -71,6 +83,7 @@ RN:
   description: Knee (Right)
 SI:
   description: Small Intestine
+  iri: http://purl.obolibrary.org/obo/UBERON_0002108
 SK:
   description: Skin
   iri: http://purl.obolibrary.org/obo/UBERON_0002097
@@ -79,12 +92,16 @@ SP:
   iri: http://purl.obolibrary.org/obo/UBERON_0002106
 ST:
   description: Sternum
+  iri: http://purl.obolibrary.org/obo/UBERON_0000975
 TH:
   description: Thymus
   iri: http://purl.obolibrary.org/obo/UBERON_0002370
 TR:
   description: Trachea
+  iri: http://purl.obolibrary.org/obo/UBERON_0003126
 UR:
   description: Ureter
+  iri: http://purl.obolibrary.org/obo/UBERON_0000056
 UT:
   description: Uterus
+  iri: http://purl.obolibrary.org/obo/UBERON_0000995
