@@ -21,7 +21,7 @@ src/instance/search-config.yaml
 
 *.DS_Store
 
-__pycache__/
+**/__pycache__/
 
 # Docker copied files and directories
 docker/search-api/src
@@ -30,5 +30,3 @@ docker/VERSION
 
 # Portal cache
 src/hubmap_translation/addl_index_transformations/portal/cache/*.jsonld
-
-src/hubmap_translation/addl_index_transformations/portal/__pycache__/

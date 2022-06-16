@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.3-labs
+
 # Parent image
 FROM hubmap/api-base-image:1.0.0
 

@@ -289,16 +289,3 @@ If you have multiple indices you need to specify which of these is the default. 
 The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI. SmartAPI allows users to register API documents. The documentation is associated with this github account: api-developers@hubmapconsortium.org.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-

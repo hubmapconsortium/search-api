@@ -37,9 +37,4 @@ app = search_adaptor_module.SearchAPI(config, translator_module).app
 
 # For local standalone (non-docker) development/testing
 if __name__ == "__main__":
-    try:
-        app.run(host='0.0.0.0', port="5005")
-    except Exception as e:
-        print("Error during starting debug server.")
-        print(str(e))
-        print("Error during startup.")
+    app.run(host='0.0.0.0', port="5005")

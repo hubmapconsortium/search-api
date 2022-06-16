@@ -21,7 +21,6 @@ from flask import Flask, Response
 
 # Local modules
 from libs.es_writer import ESWriter
-#from hubmap_translation.addl_index_transformations.portal import transform
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -1018,7 +1017,6 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    #TODO: Need to generalize this once SenNet authorization is updated
     if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message
