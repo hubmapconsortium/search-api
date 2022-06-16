@@ -83,10 +83,7 @@ def add_partonomy(doc):
         annotations.append(organ_iri)
 
     if 'rui_location' in doc:
-        if isinstance(doc['rui_location'], str):
-            rui_location = loads(doc['rui_location'])
-        else:
-            rui_location = doc['rui_location']
+        rui_location = loads(doc['rui_location'])
         annotations += rui_location.get('ccf_annotations', [])
 
     partonomy_sets_doc = defaultdict(set)
