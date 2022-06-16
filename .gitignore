@@ -25,8 +25,8 @@ src/instance/search-config.yaml
 
 # Docker copied files and directories
 docker/search-api/src
-docker/BUILD
-docker/VERSION
+docker/search-api/VERSION
+docker/search-api/BUILD
 
 # Portal cache
 src/hubmap_translation/addl_index_transformations/portal/cache/*.jsonld

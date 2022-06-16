@@ -11,6 +11,7 @@ before_script:
   - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
 install:
   - pip install -r src/search-adaptor/src/requirements.txt
-  - pip install -r src/search-adaptor/src/requirements-dev.txt
+  - pip install -r src/requirements.txt
+  - pip install -r src/requirements-dev.txt
 script:
   - ./test.sh
