@@ -8,7 +8,7 @@ default_index: entities
 indices:
   entities: 
     active: true
-    #Set to "sn_" instead of "hm_" for SenNet
+    # Set to "sn_" instead of "hm_" for SenNet
     reindex_enabled: true
     public: hm_public_entities
     private: hm_consortium_entities
