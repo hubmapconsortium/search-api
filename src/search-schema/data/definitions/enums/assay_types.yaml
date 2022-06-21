@@ -49,6 +49,14 @@ CODEX:
     contains-pii: false
     vitessce-hints: []
 
+# interim solution to handle variant CODEX with new directory schema
+CODEX2:
+    description: CODEX (CODEX2 assay type)
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
 codex_cytokit_v1:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
