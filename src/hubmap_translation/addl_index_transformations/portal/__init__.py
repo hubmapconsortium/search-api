@@ -10,19 +10,19 @@ from tempfile import TemporaryDirectory
 from yaml import safe_load as load_yaml
 import jsonschema
 
-from elasticsearch.addl_index_transformations.portal.translate import (
+from hubmap_translation.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
-from elasticsearch.addl_index_transformations.portal.add_counts import (
+from hubmap_translation.addl_index_transformations.portal.add_counts import (
     add_counts
 )
-from elasticsearch.addl_index_transformations.portal.add_partonomy import (
+from hubmap_translation.addl_index_transformations.portal.add_partonomy import (
     add_partonomy
 )
-from elasticsearch.addl_index_transformations.portal.sort_files import (
+from hubmap_translation.addl_index_transformations.portal.sort_files import (
     sort_files
 )
-from elasticsearch.addl_index_transformations.portal.reset_entity_type import (
+from hubmap_translation.addl_index_transformations.portal.reset_entity_type import (
     reset_entity_type
 )
 
