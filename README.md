@@ -258,7 +258,7 @@ cd docker
 
 ```
 cd docker
-export ENTITY_API_VERSION=a.b.c (replace with the actual released version number)
+export SEARCH_API_VERSION=a.b.c (replace with the actual released version number)
 ./docker-deployment.sh [start|stop|down]
 ```
 
