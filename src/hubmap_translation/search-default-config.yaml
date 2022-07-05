@@ -6,15 +6,11 @@ settings:
 mappings:
   date_detection: False
   dynamic_templates:
-    -
-      transposition_kit_number:
-        path_match: "*.transposition_kit_number"
+    - metadata.metadata:
+        path_match: "*metadata.metadata.*"
         mapping:
-          copy_to: all_text
           type: text
-          fields:
-            keyword:
-              type: keyword
+
     - # Handle all numeric types as float to avoid cast errors
       map_every_numeric:
         match_mapping_type: long
