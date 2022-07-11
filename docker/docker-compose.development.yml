@@ -5,7 +5,7 @@ services:
   search-api:
     build: 
       context: ./search-api
-      # Uncomment if tesitng against a specific branch of commons other than the PyPI package
+      # Uncomment if testing against a specific branch of commons other than the PyPI package
       # Will also need to use the 'git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons'
       # in src/requirements.txt accordingly
       # args:

@@ -32,14 +32,12 @@ config['APP_CLIENT_SECRET'] = app.config['APP_CLIENT_SECRET']
 
 translator_module = importlib.import_module("hubmap_translator")
 
+sys.path.append("libs")
+assay_type_module = importlib.import_module("assay_type", "libs")
+
 # This `app` will be imported by wsgi.py when deployed with uWSGI server
-app = search_adaptor_module.SearchAPI(config, translator_module).app
+app = search_adaptor_module.SearchAPI(config, translator_module, assay_type_module).app
 
 # For local standalone (non-docker) development/testing
 if __name__ == "__main__":
-    try:
-        app.run(host='0.0.0.0', port="5005")
-    except Exception as e:
-        print("Error during starting debug server.")
-        print(str(e))
-        print("Error during startup.")
+    app.run(host='0.0.0.0', port="5005")

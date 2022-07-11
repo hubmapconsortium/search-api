@@ -137,11 +137,11 @@ class Translator(TranslatorInterface):
 
                 logger.debug("looping through the UUIDs...")
 
-                # Remove entities found in Elasticserach but no longer in neo4j
+                # Remove entities found in Elasticsearch but no longer in neo4j
                 for uuid in es_uuids:
                     if uuid not in all_entities_uuids:
                         logger.debug(
-                            f"Entity of uuid: {uuid} found in Elasticserach but no longer in neo4j. Delete it from Elasticserach.")
+                            f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
                         self.delete(uuid)
 
                 logger.debug("Starting multi-thread reindexing ...")
