@@ -602,8 +602,20 @@ class Translator(TranslatorInterface):
                     descendants.append(descendant_dict)
 
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
-                immediate_ancestors = self.call_entity_api(entity_id, 'parents')
-                immediate_descendants = self.call_entity_api(entity_id, 'children')
+                # But we wanted to iterate over the uuids to get each dataset via call_entity_api()
+                # by eccluding the fields with empty strings under `Dataset.ingest_metadata.metadata`
+                # Comment out the old implementation 7/13/2022 - Zhou
+                # immediate_ancestors = self.call_entity_api(entity_id, 'parents')
+                # immediate_descendants = self.call_entity_api(entity_id, 'children')
+                immediate_ancestors_ids = self.call_entity_api(entity_id, 'parents', 'uuid')
+                for immediate_ancestor_uuid in immediate_ancestors_ids:
+                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'entities')
+                    immediate_ancestors.append(immediate_ancestor_dict)
+
+                immediate_descendants_ids = self.call_entity_api(entity_id, 'children', 'uuid')
+                for immediate_descendant_uuid in immediate_descendants_ids:
+                    immediate_descendant_dict = self.call_entity_api(immediate_descendans_uuid, 'entities')
+                    immediate_descendants.append(immediate_descendant_dict)
 
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
@@ -788,15 +800,18 @@ class Translator(TranslatorInterface):
                 sys.exit(msg)
 
         entity_response = response.json()
-        # Remove any metadata.metadata fields if the value is empty or just whitespace
+
+        # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
+        # to address the Elasticsearch index error due to inconsistent data types - 7/13/2022
         if ('ingest_metadata' in entity_response) and ('metadata' in entity_response['ingest_metadata']):
             for key in list(entity_response['ingest_metadata']['metadata']):
                 if isinstance(entity_response['ingest_metadata']['metadata'][key], str):
-                    if not entity_response['ingest_metadata']['metadata'][key] or re.search(r'^\s+$',
-                                                                                            entity_response[
-                                                                                                'ingest_metadata'][
-                                                                                                'metadata'][key]):
-                        del entity_response['ingest_metadata']['metadata'][key]
+                    if not entity_response['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', entity_response['ingest_metadata']['metadata'][key]):
+                        # del entity_response['ingest_metadata']['metadata'][key]
+
+                        logger.info(f"Remove ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {entity_id}")
+
+                        entity_response['ingest_metadata']['metadata'].pop(key)
 
         self.entity_api_cache[url] = entity_response
 
