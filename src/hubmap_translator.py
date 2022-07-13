@@ -701,14 +701,6 @@ class Translator(TranslatorInterface):
             if ('metadata' in entity) and ('files' in entity['metadata']):
                 entity['metadata'].pop('files')
 
-            # Remove any metadata.metadata fields if the value is empty or just whitespace
-            if('metadata' in entity) and ('metadata' in entity['metadata']):
-                for key in list(entity['metadata']['metadata']):
-                    if isinstance(entity['metadata']['metadata'][key], str):
-                        if not entity['metadata']['metadata'][key] or re.search(r'^\s+$', entity['metadata']['metadata'][key]):
-                        # if not entity['metadata']['metadata'][key] or entity['metadata']['metadata'][key].isspace():
-                            del entity['metadata']['metadata'][key]
-
             # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
@@ -795,9 +787,20 @@ class Translator(TranslatorInterface):
                 logger.error(msg)
                 sys.exit(msg)
 
-        self.entity_api_cache[url] = response.json()
+        entity_response = response.json()
+        # Remove any metadata.metadata fields if the value is empty or just whitespace
+        if ('ingest_metadata' in entity_response) and ('metadata' in entity_response['ingest_metadata']):
+            for key in list(entity_response['ingest_metadata']['metadata']):
+                if isinstance(entity_response['ingest_metadata']['metadata'][key], str):
+                    if not entity_response['ingest_metadata']['metadata'][key] or re.search(r'^\s+$',
+                                                                                            entity_response[
+                                                                                                'ingest_metadata'][
+                                                                                                'metadata'][key]):
+                        del entity_response['ingest_metadata']['metadata'][key]
 
-        return response.json()
+        self.entity_api_cache[url] = entity_response
+
+        return entity_response
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
