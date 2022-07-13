@@ -614,7 +614,7 @@ class Translator(TranslatorInterface):
 
                 immediate_descendants_ids = self.call_entity_api(entity_id, 'children', 'uuid')
                 for immediate_descendant_uuid in immediate_descendants_ids:
-                    immediate_descendant_dict = self.call_entity_api(immediate_descendans_uuid, 'entities')
+                    immediate_descendant_dict = self.call_entity_api(immediate_descendan_uuid, 'entities')
                     immediate_descendants.append(immediate_descendant_dict)
 
                 # Add new properties to entity
