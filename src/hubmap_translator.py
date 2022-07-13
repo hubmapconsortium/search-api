@@ -4,6 +4,7 @@ import importlib
 import json
 import logging
 import os
+import re
 import sys
 import time
 from yaml import safe_load
@@ -672,6 +673,14 @@ class Translator(TranslatorInterface):
             # to reduce the doc size to be indexed?
             if ('metadata' in entity) and ('files' in entity['metadata']):
                 entity['metadata'].pop('files')
+
+            # Remove any metadata.metadata fields if the value is empty or just whitespace
+            if('metadata' in entity) and ('metadata' in entity['metadata']):
+                for key in list(entity['metadata']['metadata']):
+                    if isinstance(entity['metadata']['metadata'][key], str):
+                        if not entity['metadata']['metadata'][key] or re.search(r'^\s+$', entity['metadata']['metadata'][key]):
+                        # if not entity['metadata']['metadata'][key] or entity['metadata']['metadata'][key].isspace():
+                            del entity['metadata']['metadata'][key]
 
             # Rename for properties that are objects
             if entity.get('donor', None):
