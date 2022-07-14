@@ -472,7 +472,7 @@ class Translator(TranslatorInterface):
 
         for prop in properties_to_exclude:
             if prop in entity_dict:
-                logger.info(f"exclude_entity_properties() excludes propery '{key}' from the resulting entity-api json for uuid {entity_dict['uuid']}")
+                logger.info(f"exclude_entity_properties() excludes propery '{prop}' from the resulting entity-api json for uuid {entity_dict['uuid']}")
                 entity_dict.pop(prop)
 
         return entity_dict
