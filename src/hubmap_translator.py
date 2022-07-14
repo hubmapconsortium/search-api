@@ -785,7 +785,7 @@ class Translator(TranslatorInterface):
                 if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
                     if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
                         del dataset_dict['ingest_metadata']['metadata'][key]
-                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {entity_id}")
+                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
         
         return dataset_dict
 
