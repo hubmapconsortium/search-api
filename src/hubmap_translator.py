@@ -4,6 +4,7 @@ import importlib
 import json
 import logging
 import os
+import re
 import sys
 import time
 from yaml import safe_load
@@ -95,7 +96,7 @@ class Translator(TranslatorInterface):
     def translate_all(self):
         with app.app_context():
             try:
-                logger.info("############# Reindex Live Started #############")
+                logger.info("############# translate_all() Started #############")
 
                 start = time.time()
 
@@ -167,7 +168,7 @@ class Translator(TranslatorInterface):
                 end = time.time()
 
                 logger.info(
-                    f"############# Live Reindex-All Completed. Total time used: {end - start} seconds. #############")
+                    f"############# translate_all() Completed. Total time used: {end - start} seconds. #############")
             except Exception as e:
                 logger.error(e)
 
@@ -452,6 +453,8 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+
+    # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
         datasets = []
         if 'datasets' in entity:
@@ -571,13 +574,12 @@ class Translator(TranslatorInterface):
                 immediate_descendants = []
 
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
+                # Get back a list of ancestor uuids first
                 ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-
                 for ancestor_uuid in ancestor_ids:
-                    # Retrieve the entity details
+                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # self.call_entity_api() already handled that
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
-
-                    # Add to the list
                     ancestors.append(ancestor_dict)
 
                 # Find the Donor
@@ -587,19 +589,29 @@ class Translator(TranslatorInterface):
                         donor = copy.copy(a)
                         break
 
+                # Get back a list of descendant uuids first
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
-
                 for descendant_uuid in descendant_ids:
-                    # Retrieve the entity details
+                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # self.call_entity_api() already handled that
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
-
-                    # Add to the list
                     descendants.append(descendant_dict)
 
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
-                immediate_ancestors = self.call_entity_api(entity_id, 'parents')
-                immediate_descendants = self.call_entity_api(entity_id, 'children')
+                immediate_ancestors_list = self.call_entity_api(entity_id, 'parents')
+                for immediate_ancestor_dict in immediate_ancestors_list:
+                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
+                    # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
+                    immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
 
+                immediate_descendants_list = self.call_entity_api(entity_id, 'children')
+                for immediate_descendant_dict in immediate_descendants_list:
+                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
+                    # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
+                    immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_descendant_dict))
+                
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
                 entity['descendants'] = descendants
@@ -732,6 +744,19 @@ class Translator(TranslatorInterface):
         entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
         return json.dumps(entity)
 
+    # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
+    # to address the Elasticsearch index error due to inconsistent data types - 7/13/2022 Max & Zhou
+    def exclude_dataset_ingest_metadata_empty_fields(self, dataset_dict):
+        if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
+            for key in list(dataset_dict['ingest_metadata']['metadata']):
+                if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
+                    if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
+                        del dataset_dict['ingest_metadata']['metadata'][key]
+                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
+        
+        return dataset_dict
+
+
     def call_entity_api(self, entity_id, endpoint, url_property=None):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
@@ -753,9 +778,16 @@ class Translator(TranslatorInterface):
                 logger.error(msg)
                 sys.exit(msg)
 
-        self.entity_api_cache[url] = response.json()
+        entity_response = response.json()
 
-        return response.json()
+        # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
+        # to address the Elasticsearch index error due to inconsistent data types
+        # If entity is not Dataset, no change - 7/13/2022 Max & Zhou
+        entity_response = self.exclude_dataset_ingest_metadata_empty_fields(entity_response)
+
+        self.entity_api_cache[url] = entity_response
+
+        return entity_response
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
@@ -804,7 +836,6 @@ class Translator(TranslatorInterface):
                     self.indexer.delete_index(private_index)
                 except Exception as e:
                     pass
-                print('*********************************************')
 
                 # get the specific mapping file for the designated index
                 index_mapping_file = self.INDICES['indices'][index]['elasticsearch']['mappings']
@@ -812,13 +843,7 @@ class Translator(TranslatorInterface):
                 # read the elasticserach specific mappings
                 index_mapping_settings = safe_load((Path(__file__).absolute().parent / index_mapping_file).read_text())
 
-                print(index_mapping_settings)
-
-                print('*********************************************')
-
                 self.indexer.create_index(public_index, index_mapping_settings)
-
-                print('*********************************************')
                 self.indexer.create_index(private_index, index_mapping_settings)
 
         except Exception:
