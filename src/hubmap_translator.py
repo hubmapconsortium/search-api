@@ -456,7 +456,7 @@ class Translator(TranslatorInterface):
             logger.exception(msg)
 
     # To avoid data too large issue at index time,
-    # alaso reduce the total number of fields - 7/13/2022 Zhou
+    # also reduce the total number of fields - 7/13/2022 Zhou
     def exclude_entity_properties(self, entity_dict):
         properties_to_exclude = [
             # Properties to skip for Sample
@@ -472,11 +472,13 @@ class Translator(TranslatorInterface):
 
         for prop in properties_to_exclude:
             if prop in entity_dict:
+                logger.info(f"exclude_entity_properties() excludes propery '{key}' from the resulting entity-api json for uuid {entity_dict['uuid']}")
                 entity_dict.pop(prop)
 
         return entity_dict
 
 
+    # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
         datasets = []
         if 'datasets' in entity:
@@ -484,7 +486,9 @@ class Translator(TranslatorInterface):
                 # Retrieve the entity details
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
 
-                dataset_doc = self.generate_doc(dataset, 'dict')
+                modified_dataset = self.exclude_entity_properties(dataset)
+
+                dataset_doc = self.generate_doc(modified_dataset, 'dict')
                 dataset_doc.pop('ancestors')
                 dataset_doc.pop('ancestor_ids')
                 dataset_doc.pop('descendants')
@@ -599,11 +603,11 @@ class Translator(TranslatorInterface):
 
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
                 ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-
                 for ancestor_uuid in ancestor_ids:
                     # Retrieve the entity details
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
-                    ancestors.append(ancestor_dict)
+                    modified_ancestor_dict = self.exclude_entity_properties(ancestor_dict)
+                    ancestors.append(modified_ancestor_dict)
 
                 # Find the Donor
                 donor = None
@@ -613,11 +617,11 @@ class Translator(TranslatorInterface):
                         break
 
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
-
                 for descendant_uuid in descendant_ids:
                     # Retrieve the entity details
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
-                    descendants.append(descendant_dict)
+                    modified_descendant_dict = self.exclude_entity_properties(descendant_dict)
+                    descendants.append(modified_descendant_dict)
 
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
                 # But we wanted to iterate over the uuids to get each dataset via call_entity_api()
@@ -822,13 +826,12 @@ class Translator(TranslatorInterface):
         entity_response = response.json()
 
         # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
-        # to address the Elasticsearch index error due to inconsistent data types - 7/13/2022
+        # to address the Elasticsearch index error due to inconsistent data types - 7/13/2022 Max
         if ('ingest_metadata' in entity_response) and ('metadata' in entity_response['ingest_metadata']):
             for key in list(entity_response['ingest_metadata']['metadata']):
                 if isinstance(entity_response['ingest_metadata']['metadata'][key], str):
                     if not entity_response['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', entity_response['ingest_metadata']['metadata'][key]):
                         # del entity_response['ingest_metadata']['metadata'][key]
-
                         logger.info(f"Remove ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {entity_id}")
 
                         entity_response['ingest_metadata']['metadata'].pop(key)
