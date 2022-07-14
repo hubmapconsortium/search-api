@@ -455,28 +455,6 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    # To avoid data too large issue at index time,
-    # also reduce the total number of fields - 7/13/2022 Zhou
-    def exclude_entity_properties(self, entity_dict):
-        properties_to_exclude = [
-            # Properties to skip for Sample
-            'direct_ancestor',
-            # Properties to skip for Dataset
-            'direct_ancestors',
-            'collections',
-            'upload',
-            'title',
-            'next_revision_uuid',
-            'previous_revision_uuid'
-        ]
-
-        for prop in properties_to_exclude:
-            if prop in entity_dict:
-                logger.info(f"exclude_entity_properties() excludes propery '{prop}' from the resulting entity-api json for uuid {entity_dict['uuid']}")
-                entity_dict.pop(prop)
-
-        return entity_dict
-
 
     # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
@@ -486,9 +464,7 @@ class Translator(TranslatorInterface):
                 # Retrieve the entity details
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
 
-                modified_dataset = self.exclude_entity_properties(dataset)
-
-                dataset_doc = self.generate_doc(modified_dataset, 'dict')
+                dataset_doc = self.generate_doc(dataset, 'dict')
                 dataset_doc.pop('ancestors')
                 dataset_doc.pop('ancestor_ids')
                 dataset_doc.pop('descendants')
@@ -606,8 +582,7 @@ class Translator(TranslatorInterface):
                 for ancestor_uuid in ancestor_ids:
                     # Retrieve the entity details
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
-                    modified_ancestor_dict = self.exclude_entity_properties(ancestor_dict)
-                    ancestors.append(modified_ancestor_dict)
+                    ancestors.append(ancestor_dict)
 
                 # Find the Donor
                 donor = None
@@ -620,27 +595,12 @@ class Translator(TranslatorInterface):
                 for descendant_uuid in descendant_ids:
                     # Retrieve the entity details
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
-                    modified_descendant_dict = self.exclude_entity_properties(descendant_dict)
-                    descendants.append(modified_descendant_dict)
+                    descendants.append(descendant_dict)
 
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
-                # But we wanted to iterate over the uuids to get each dataset via call_entity_api()
-                # by eccluding the fields with empty strings under `Dataset.ingest_metadata.metadata`
-                # Comment out the old implementation 7/13/2022 - Zhou
-                # immediate_ancestors = self.call_entity_api(entity_id, 'parents')
-                # immediate_descendants = self.call_entity_api(entity_id, 'children')
-                immediate_ancestors_ids = self.call_entity_api(entity_id, 'parents', 'uuid')
-                for immediate_ancestor_uuid in immediate_ancestors_ids:
-                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'entities')
-                    modified_immediate_ancestor_dict = self.exclude_entity_properties(immediate_ancestor_dict)
-                    immediate_ancestors.append(modified_immediate_ancestor_dict)
-
-                immediate_descendants_ids = self.call_entity_api(entity_id, 'children', 'uuid')
-                for immediate_descendant_uuid in immediate_descendants_ids:
-                    immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'entities')
-                    modified_immediate_ancestor_dict = self.exclude_entity_properties(immediate_descendant_dict)
-                    immediate_descendants.append(modified_immediate_ancestor_dict)
-
+                immediate_ancestors = self.call_entity_api(entity_id, 'parents')
+                immediate_descendants = self.call_entity_api(entity_id, 'children')
+                
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
                 entity['descendants'] = descendants
@@ -831,10 +791,8 @@ class Translator(TranslatorInterface):
             for key in list(entity_response['ingest_metadata']['metadata']):
                 if isinstance(entity_response['ingest_metadata']['metadata'][key], str):
                     if not entity_response['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', entity_response['ingest_metadata']['metadata'][key]):
-                        # del entity_response['ingest_metadata']['metadata'][key]
-                        logger.info(f"Remove ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {entity_id}")
-
-                        entity_response['ingest_metadata']['metadata'].pop(key)
+                        del entity_response['ingest_metadata']['metadata'][key]
+                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {entity_id}")
 
         self.entity_api_cache[url] = entity_response
 
