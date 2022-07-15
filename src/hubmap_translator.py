@@ -663,7 +663,16 @@ class Translator(TranslatorInterface):
                     if 'ingest_metadata' in entity:
                         ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
-                            entity['files'] = ingest_metadata['files']
+                            if ingest_metadata['files'].strip() == "":
+                                entity['files'] = []
+                            else:
+                                entity['files'] = ingest_metadata['files']
+                        else:
+                            entity['files'] = []
+                    else:
+                        entity['files'] = []
+
+
 
             self.entity_keys_rename(entity)
 
