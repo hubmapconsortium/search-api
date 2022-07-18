@@ -1,16 +1,19 @@
 settings:
   index:
-    mapping.total_fields.limit: 10000
+    mapping.total_fields.limit: 6000
     query.default_field: 2048
-    
+
 mappings:
   date_detection: False
   dynamic_templates:
-    - metadata.metadata:
-        path_match: "*metadata.metadata.*"
+    - transposition_kit_number:
+        path_match: "*.transposition_kit_number"
         mapping:
+          copy_to: all_text
           type: text
-
+          fields:
+            keyword:
+              type: keyword
     - # Handle all numeric types as float to avoid cast errors
       map_every_numeric:
         match_mapping_type: long
