@@ -603,7 +603,7 @@ class Translator(TranslatorInterface):
                     # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
                     # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
+                    immediate_ancestors.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
 
                 immediate_descendants_list = self.call_entity_api(entity_id, 'children')
                 for immediate_descendant_dict in immediate_descendants_list:
