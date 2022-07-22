@@ -26,6 +26,7 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
+# This list contains fields that are added to the top-level at index runtime
 entity_properties_list = [
     'metadata',
     'donor',
@@ -40,6 +41,7 @@ entity_properties_list = [
     'immediate_descendants',
     'datasets'
 ]
+
 entity_types = ['Upload', 'Donor', 'Sample', 'Dataset']
 
 
@@ -451,11 +453,13 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
-    def exclude_added_top_level_properties(self, entity_dict):
+    # The `except_properties_list` is a subset of entity_properties_list
+    def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
         for prop in entity_properties_list:
-            if prop in entity_dict:
+            if (prop in entity_dict) and (prop not in except_properties_list):
                  entity_dict.pop(prop)
 
 
@@ -468,6 +472,7 @@ class Translator(TranslatorInterface):
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
+
                 # dataset_doc.pop('ancestors')
                 # dataset_doc.pop('ancestor_ids')
                 # dataset_doc.pop('descendants')
@@ -478,7 +483,10 @@ class Translator(TranslatorInterface):
                 # dataset_doc.pop('origin_sample')
                 # dataset_doc.pop('source_sample')
 
-                self.exclude_added_top_level_properties(dataset_doc)
+                # This function call is equvalant to the above lines commented out
+                # We probably don't need to except 'datasets' property because 
+                # Dataset has no such property ever defined in entity schema yaml? - 7/22/2022 Zhou
+                self.exclude_added_top_level_properties(dataset_doc, except_properties = ['metadata', 'files', 'datasets'])
 
                 datasets.append(dataset_doc)
 
