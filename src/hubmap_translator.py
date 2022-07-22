@@ -451,6 +451,13 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+    # The added fields specified in `entity_properties_list` should not be added
+    # to themselves as sub fields
+    def exclude_added_top_level_properties(self, entity_dict):
+        for prop in entity_properties_list:
+            if prop in entity_dict:
+                 entity_dict.pop(prop)
+
 
     # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
@@ -461,15 +468,17 @@ class Translator(TranslatorInterface):
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
-                dataset_doc.pop('ancestors')
-                dataset_doc.pop('ancestor_ids')
-                dataset_doc.pop('descendants')
-                dataset_doc.pop('descendant_ids')
-                dataset_doc.pop('immediate_descendants')
-                dataset_doc.pop('immediate_ancestors')
-                dataset_doc.pop('donor')
-                dataset_doc.pop('origin_sample')
-                dataset_doc.pop('source_sample')
+                # dataset_doc.pop('ancestors')
+                # dataset_doc.pop('ancestor_ids')
+                # dataset_doc.pop('descendants')
+                # dataset_doc.pop('descendant_ids')
+                # dataset_doc.pop('immediate_descendants')
+                # dataset_doc.pop('immediate_ancestors')
+                # dataset_doc.pop('donor')
+                # dataset_doc.pop('origin_sample')
+                # dataset_doc.pop('source_sample')
+
+                self.exclude_added_top_level_properties(dataset_doc)
 
                 datasets.append(dataset_doc)
 
@@ -637,6 +646,9 @@ class Translator(TranslatorInterface):
                     except StopIteration:
                         entity['origin_sample'] = {}
 
+                # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                self.exclude_added_top_level_properties(entity['origin_sample'])
+
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
@@ -655,6 +667,9 @@ class Translator(TranslatorInterface):
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
+
+                    # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                    self.exclude_added_top_level_properties(entity['origin_sample'])
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
