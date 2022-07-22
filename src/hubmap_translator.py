@@ -407,9 +407,6 @@ class Translator(TranslatorInterface):
         return headers_dict
 
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
-        # Make a deepcopy
-        org_node = copy.deepcopy(entity)
-
         try:
             if document is None:
                 document = self.generate_doc(entity, 'json')
@@ -429,7 +426,7 @@ class Translator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if self.is_public(org_node):
+                    if self.is_public(entity):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -450,7 +447,7 @@ class Translator(TranslatorInterface):
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
         except Exception:
-            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
+            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -587,8 +584,7 @@ class Translator(TranslatorInterface):
                 donor = None
                 for a in ancestors:
                     if a['entity_type'] == 'Donor':
-                        # Make a deepcopy
-                        donor = copy.deepcopy(a)
+                        donor = copy.copy(a)
                         break
 
                 # Get back a list of descendant uuids first
@@ -629,15 +625,13 @@ class Translator(TranslatorInterface):
                 # Add new properties
                 entity['donor'] = donor
 
-                # Make a deepcopy
-                entity['origin_sample'] = copy.deepcopy(entity) if ('specimen_type' in entity) and (
+                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
                         entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
                                                                        entity['organ'].strip() != '') else None
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        # Make a deepcopy
-                        entity['origin_sample'] = copy.deepcopy(next(a for a in ancestors if ('specimen_type' in a) and (
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (
                                 a['specimen_type'].lower() == 'organ') and ('organ' in a) and (
                                                                          a['organ'].strip() != '')))
                     except StopIteration:
