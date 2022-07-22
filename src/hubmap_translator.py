@@ -655,7 +655,7 @@ class Translator(TranslatorInterface):
                         entity['origin_sample'] = {}
 
                 # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
-                self.exclude_added_top_level_properties(entity['origin_sample'])
+                self.exclude_added_top_level_properties(entity['origin_sample'], except_properties_list = ['metadata'])
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
@@ -677,7 +677,7 @@ class Translator(TranslatorInterface):
                             entity['source_sample'] = {}
 
                     # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
-                    self.exclude_added_top_level_properties(entity['source_sample'])
+                    self.exclude_added_top_level_properties(entity['source_sample'], except_properties_list = ['metadata'])
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
