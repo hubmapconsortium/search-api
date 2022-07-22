@@ -407,6 +407,7 @@ class Translator(TranslatorInterface):
         return headers_dict
 
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
+        # Make a deepcopy
         org_node = copy.deepcopy(entity)
 
         try:
@@ -586,7 +587,8 @@ class Translator(TranslatorInterface):
                 donor = None
                 for a in ancestors:
                     if a['entity_type'] == 'Donor':
-                        donor = copy.copy(a)
+                        # Make a deepcopy
+                        donor = copy.deepcopy(a)
                         break
 
                 # Get back a list of descendant uuids first
@@ -627,14 +629,15 @@ class Translator(TranslatorInterface):
                 # Add new properties
                 entity['donor'] = donor
 
-                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
+                # Make a deepcopy
+                entity['origin_sample'] = copy.deepcopy(entity) if ('specimen_type' in entity) and (
                         entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
                                                                        entity['organ'].strip() != '') else None
-
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (
+                        # Make a deepcopy
+                        entity['origin_sample'] = copy.deepcopy(next(a for a in ancestors if ('specimen_type' in a) and (
                                 a['specimen_type'].lower() == 'organ') and ('organ' in a) and (
                                                                          a['organ'].strip() != '')))
                     except StopIteration:
@@ -763,7 +766,12 @@ class Translator(TranslatorInterface):
             url += "?property=" + url_property
 
         if url in self.entity_api_cache:
-            return copy.copy(self.entity_api_cache[url])
+            # Return the deepcopy of the original dict
+            # Becase the cached dict will be reused by other calls and get modified by adding extra fields during index
+            # Shallow copy will reference to the original dict which gets added with extra fields
+            logger.debug(f"Returning the cached deepcopy of entity dict for uuid: {entity_id}")
+
+            return copy.deepcopy(self.entity_api_cache[url])
 
         response = requests.get(url, headers=self.request_headers, verify=False)
         if response.status_code != 200:
@@ -778,16 +786,16 @@ class Translator(TranslatorInterface):
                 logger.error(msg)
                 sys.exit(msg)
 
-        entity_response = response.json()
-
         # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
         # to address the Elasticsearch index error due to inconsistent data types
         # If entity is not Dataset, no change - 7/13/2022 Max & Zhou
-        entity_response = self.exclude_dataset_ingest_metadata_empty_fields(entity_response)
+        entity_dict = self.exclude_dataset_ingest_metadata_empty_fields(response.json())
 
-        self.entity_api_cache[url] = entity_response
+        # Make a deepcopy of the entity dict to store in cache
+        # Because this `entity_dict` will get modified by adding extra fields during index
+        self.entity_api_cache[url] = copy.deepcopy(entity_dict)
 
-        return entity_response
+        return entity_dict
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
