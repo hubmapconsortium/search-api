@@ -483,10 +483,10 @@ class Translator(TranslatorInterface):
                 # dataset_doc.pop('origin_sample')
                 # dataset_doc.pop('source_sample')
 
-                # This function call is equvalant to the above lines commented out
+                # This function call is equivalent to the above lines commented out
                 # We probably don't need to except 'datasets' property because 
                 # Dataset has no such property ever defined in entity schema yaml? - 7/22/2022 Zhou
-                self.exclude_added_top_level_properties(dataset_doc, except_properties = ['metadata', 'files', 'datasets'])
+                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['metadata', 'files', 'datasets'])
 
                 datasets.append(dataset_doc)
 
