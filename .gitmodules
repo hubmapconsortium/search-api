@@ -1,5 +1,5 @@
 [submodule "src/search-adaptor"]
 	path = src/search-adaptor
 	url = https://github.com/dbmi-pitt/search-adaptor.git
-	branch = flask-v2
+	branch = yuanzhou/flask-v2
 	ignore = dirty
