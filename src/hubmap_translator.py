@@ -26,6 +26,7 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
+# This list contains fields that are added to the top-level at index runtime
 entity_properties_list = [
     'metadata',
     'donor',
@@ -40,7 +41,9 @@ entity_properties_list = [
     'immediate_descendants',
     'datasets'
 ]
-entity_types = ['Upload', 'Donor', 'Sample', 'Dataset']
+
+# Entity types that will have `display_subtype` generated ar index time
+entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset']
 
 
 class Translator(TranslatorInterface):
@@ -407,8 +410,6 @@ class Translator(TranslatorInterface):
         return headers_dict
 
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
-        org_node = copy.deepcopy(entity)
-
         try:
             if document is None:
                 document = self.generate_doc(entity, 'json')
@@ -428,7 +429,7 @@ class Translator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if self.is_public(org_node):
+                    if self.is_public(entity):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -449,9 +450,18 @@ class Translator(TranslatorInterface):
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
         except Exception:
-            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
+            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+
+    # The added fields specified in `entity_properties_list` should not be added
+    # to themselves as sub fields
+    # The `except_properties_list` is a subset of entity_properties_list
+    def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
+        for prop in entity_properties_list:
+            if (prop in entity_dict) and (prop not in except_properties_list):
+                 entity_dict.pop(prop)
 
 
     # Used for Upload and Collection index
@@ -463,15 +473,21 @@ class Translator(TranslatorInterface):
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
 
                 dataset_doc = self.generate_doc(dataset, 'dict')
-                dataset_doc.pop('ancestors')
-                dataset_doc.pop('ancestor_ids')
-                dataset_doc.pop('descendants')
-                dataset_doc.pop('descendant_ids')
-                dataset_doc.pop('immediate_descendants')
-                dataset_doc.pop('immediate_ancestors')
-                dataset_doc.pop('donor')
-                dataset_doc.pop('origin_sample')
-                dataset_doc.pop('source_sample')
+
+                # dataset_doc.pop('ancestors')
+                # dataset_doc.pop('ancestor_ids')
+                # dataset_doc.pop('descendants')
+                # dataset_doc.pop('descendant_ids')
+                # dataset_doc.pop('immediate_descendants')
+                # dataset_doc.pop('immediate_ancestors')
+                # dataset_doc.pop('donor')
+                # dataset_doc.pop('origin_sample')
+                # dataset_doc.pop('source_sample')
+
+                # This function call is equivalent to the above lines commented out
+                # We probably don't need to except 'datasets' property because 
+                # Dataset has no such property ever defined in entity schema yaml? - 7/22/2022 Zhou
+                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['metadata', 'files', 'datasets'])
 
                 datasets.append(dataset_doc)
 
@@ -518,7 +534,7 @@ class Translator(TranslatorInterface):
         entity['index_version'] = self.index_version
 
         # Add display_subtype
-        if entity['entity_type'] in entity_types:
+        if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
     # For Upload, Dataset, Donor and Sample objects:
@@ -630,7 +646,6 @@ class Translator(TranslatorInterface):
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
                         entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
                                                                        entity['organ'].strip() != '') else None
-
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
@@ -639,6 +654,9 @@ class Translator(TranslatorInterface):
                                                                          a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+
+                # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                self.exclude_added_top_level_properties(entity['origin_sample'], except_properties_list = ['metadata'])
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
@@ -658,6 +676,9 @@ class Translator(TranslatorInterface):
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
+
+                    # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                    self.exclude_added_top_level_properties(entity['source_sample'], except_properties_list = ['metadata'])
 
                     # Move files to the root level if exist
                     if 'ingest_metadata' in entity:
@@ -763,7 +784,12 @@ class Translator(TranslatorInterface):
             url += "?property=" + url_property
 
         if url in self.entity_api_cache:
-            return copy.copy(self.entity_api_cache[url])
+            # Return the deepcopy of the original dict
+            # Becase the cached dict will be reused by other calls and get modified by adding extra fields during index
+            # Shallow copy will reference to the original dict which gets added with extra fields
+            logger.debug(f"Returning the cached deepcopy of entity dict for uuid: {entity_id}")
+
+            return copy.deepcopy(self.entity_api_cache[url])
 
         response = requests.get(url, headers=self.request_headers, verify=False)
         if response.status_code != 200:
@@ -778,16 +804,16 @@ class Translator(TranslatorInterface):
                 logger.error(msg)
                 sys.exit(msg)
 
-        entity_response = response.json()
-
         # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
         # to address the Elasticsearch index error due to inconsistent data types
         # If entity is not Dataset, no change - 7/13/2022 Max & Zhou
-        entity_response = self.exclude_dataset_ingest_metadata_empty_fields(entity_response)
+        entity_dict = self.exclude_dataset_ingest_metadata_empty_fields(response.json())
 
-        self.entity_api_cache[url] = entity_response
+        # Make a deepcopy of the entity dict to store in cache
+        # Because this `entity_dict` will get modified by adding extra fields during index
+        self.entity_api_cache[url] = copy.deepcopy(entity_dict)
 
-        return entity_response
+        return entity_dict
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
