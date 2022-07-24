@@ -42,7 +42,8 @@ entity_properties_list = [
     'datasets'
 ]
 
-entity_types = ['Upload', 'Donor', 'Sample', 'Dataset']
+# Entity types that will have `display_subtype` generated ar index time
+entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset']
 
 
 class Translator(TranslatorInterface):
@@ -533,7 +534,7 @@ class Translator(TranslatorInterface):
         entity['index_version'] = self.index_version
 
         # Add display_subtype
-        if entity['entity_type'] in entity_types:
+        if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
     # For Upload, Dataset, Donor and Sample objects:
