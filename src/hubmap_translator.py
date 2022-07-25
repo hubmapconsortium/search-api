@@ -681,10 +681,13 @@ class Translator(TranslatorInterface):
                     self.exclude_added_top_level_properties(entity['source_sample'], except_properties_list = ['metadata'])
 
                     # Move files to the root level if exist
+                    entity['files'] = []
                     if 'ingest_metadata' in entity:
                         ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
-                            entity['files'] = ingest_metadata['files']
+                            if ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
+                                entity['files'] = ingest_metadata['files']
+                            entity['ingest_metadata'].pop('files')
 
             self.entity_keys_rename(entity)
 
@@ -700,11 +703,6 @@ class Translator(TranslatorInterface):
 
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
-
-            # Remove the `files` element from the entity['metadata'] dict
-            # to reduce the doc size to be indexed?
-            if ('metadata' in entity) and ('files' in entity['metadata']):
-                entity['metadata'].pop('files')
 
             # Rename for properties that are objects
             if entity.get('donor', None):
