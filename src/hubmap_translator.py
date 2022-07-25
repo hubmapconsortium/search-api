@@ -704,10 +704,6 @@ class Translator(TranslatorInterface):
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
-<<<<<<< HEAD
-
-=======
->>>>>>> ee03c5bef5b4697edc912d9c6e433f32078535b2
             # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
