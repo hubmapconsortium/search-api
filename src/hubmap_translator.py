@@ -684,10 +684,10 @@ class Translator(TranslatorInterface):
                     entity['files'] = []
                     if 'ingest_metadata' in entity:
                         ingest_metadata = entity['ingest_metadata']
-                        if 'files' in ingest_metadata and ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
-                            entity['files'] = ingest_metadata.pop('files')
-
-
+                        if 'files' in ingest_metadata:
+                            if ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
+                                entity['files'] = ingest_metadata['files']
+                            entity['ingest_metadata'].pop('files')
 
             self.entity_keys_rename(entity)
 
@@ -704,7 +704,10 @@ class Translator(TranslatorInterface):
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ee03c5bef5b4697edc912d9c6e433f32078535b2
             # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
