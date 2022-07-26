@@ -596,6 +596,11 @@ class Translator(TranslatorInterface):
                     # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() already handled that
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
+
+                    # Only applies when this ancestor entity is a Dataset
+                    # Use case 2: call this method to remove the `ingest_metadata.files` of empty string value to avoid mapping conflict
+                    self.remove_dataset_metadata_files(ancestor_dict)
+
                     ancestors.append(ancestor_dict)
 
                 # Find the Donor
@@ -611,11 +616,20 @@ class Translator(TranslatorInterface):
                     # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() already handled that
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
+
+                    # Only applies when this ancestor entity is a Dataset
+                    # Use case 2: call this method to remove the `ingest_metadata.files` of empty string value to avoid mapping conflict
+                    self.remove_dataset_metadata_files(descendant_dict)
+
                     descendants.append(descendant_dict)
 
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
                 immediate_ancestors_list = self.call_entity_api(entity_id, 'parents')
                 for immediate_ancestor_dict in immediate_ancestors_list:
+                    # Only applies when this ancestor entity is a Dataset
+                    # Use case 2: call this method to remove the `ingest_metadata.files` of empty string value to avoid mapping conflict
+                    self.remove_dataset_metadata_files(immediate_ancestor_dict)
+
                     # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
                     # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
@@ -623,6 +637,10 @@ class Translator(TranslatorInterface):
 
                 immediate_descendants_list = self.call_entity_api(entity_id, 'children')
                 for immediate_descendant_dict in immediate_descendants_list:
+                    # Only applies when this ancestor entity is a Dataset
+                    # Use case 2: call this method to remove the `ingest_metadata.files` of empty string value to avoid mapping conflict
+                    self.remove_dataset_metadata_files(immediate_descendant_dict)
+
                     # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
                     # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
@@ -687,7 +705,9 @@ class Translator(TranslatorInterface):
                         if 'files' in ingest_metadata:
                             if ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
                                 entity['files'] = ingest_metadata['files']
-                            entity['ingest_metadata'].pop('files')
+
+                            # Use case 1: always remove the `files` property after copying the original files data to top level
+                            self.remove_dataset_metadata_files(entity)
 
             self.entity_keys_rename(entity)
 
@@ -735,6 +755,16 @@ class Translator(TranslatorInterface):
             msg = "Exceptions during executing indexer.generate_doc()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+
+    # Remove the `ingest_metadata.files` field from a given dataset dict
+    # Use case 1: call this method after copying the files data to the top level entity.files field
+    # Use case 2: call this method to remove the `ingest_metadata.files` of empty string value to avoid mapping conflict
+    def remove_dataset_metadata_files(self, dataset_dict):
+        if ('ingest_metadata' in dataset_dict) and (files in dataset_dict['ingest_metadata']):
+            dataset_dict['ingest_metadata'].pop('files')
+            logger.info(f"Removed ingest_medata.files due to empty string value for dataset uuid {dataset_dict['uuid']}")
+
 
     def generate_public_doc(self, entity):
         # Only Dataset has this 'next_revision_uuid' property
