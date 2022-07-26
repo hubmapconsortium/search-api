@@ -763,6 +763,7 @@ class Translator(TranslatorInterface):
         if ('ingest_metadata' in dataset_dict) and ('files' in dataset_dict['ingest_metadata']):
             if isinstance(dataset_dict['ingest_metadata']['files'], str) and (dataset_dict['ingest_metadata']['files'].strip() == ''):
                 del dataset_dict['ingest_metadata']['files']
+                logger.info(f"Removed ['ingest_metadata']['files'] due to empty string value, for Dataset {dataset_dict['uuid']}")
 
         # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
         # to to avoid dynamic mapping conflict
