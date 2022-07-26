@@ -37,6 +37,7 @@ entity_properties_list = [
     'descendants',
     # This 'files' field is either empty list [] or the files info list copied from 'Dataset.ingest_metadata.files'
     'files',
+    'datasets',
     'immediate_ancestors',
     'immediate_descendants'
 ]
@@ -475,7 +476,7 @@ class Translator(TranslatorInterface):
                 # Retrieve the entity details
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
                 dataset_doc = self.generate_doc(dataset, 'dict')
-                self.exclude_added_top_level_properties(dataset_doc)
+                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
                 datasets.append(dataset_doc)
 
         entity['datasets'] = datasets
