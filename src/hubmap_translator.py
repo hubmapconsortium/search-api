@@ -57,6 +57,7 @@ class Translator(TranslatorInterface):
     indexer = None
     entity_api_cache = {}
 
+
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
             self.indices: dict = {}
@@ -66,13 +67,11 @@ class Translator(TranslatorInterface):
                     self.indices[key] = value
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
-            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX][
-                'document_source_endpoint'].strip(
-                '/')
+            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
-            logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
+            logger.debug("=========== INDICES config ===========")
             logger.debug(self.INDICES)
         except Exception:
             raise ValueError("Invalid indices config")
@@ -95,6 +94,7 @@ class Translator(TranslatorInterface):
 
         # # Preload all the transformers
         self.init_transformers()
+
 
     def translate_all(self):
         with app.app_context():
@@ -175,6 +175,7 @@ class Translator(TranslatorInterface):
             except Exception as e:
                 logger.error(e)
 
+
     def translate(self, entity_id):
         try:
             # Retrieve the entity details
@@ -215,7 +216,7 @@ class Translator(TranslatorInterface):
 
                         self.call_indexer(node, True)
 
-                logger.info("################reindex() DONE######################")
+                logger.info(f"################ Reindex DONE for entity {entity_id} ######################")
 
                 # Clear the entity api cache
                 self.entity_api_cache.clear()
@@ -225,6 +226,7 @@ class Translator(TranslatorInterface):
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
 
     def update(self, entity_id, document):
         for index in self.indices.keys():
@@ -236,6 +238,7 @@ class Translator(TranslatorInterface):
 
             self.indexer.index(entity_id, json.dumps(document), private_index, True)
 
+
     def add(self, entity_id, document):
         for index in self.indices.keys():
             public_index = self.INDICES['indices'][index]['public']
@@ -245,6 +248,7 @@ class Translator(TranslatorInterface):
                 self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
             self.indexer.index(entity_id, json.dumps(document), private_index, False)
+
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
@@ -276,6 +280,7 @@ class Translator(TranslatorInterface):
 
         return is_public
 
+
     def delete(self, entity_id):
         for index, _ in self.indices.items():
             # each index should have a public/private index
@@ -285,6 +290,7 @@ class Translator(TranslatorInterface):
             private_index = self.INDICES['indices'][index]['private']
             if public_index != private_index:
                 self.indexer.delete_document(entity_id, private_index)
+
 
     # When indexing, Upload WILL NEVER BE PUBLIC
     def translate_upload(self, entity_id, reindex=False):
@@ -303,6 +309,7 @@ class Translator(TranslatorInterface):
             self.call_indexer(upload, reindex, json.dumps(upload), default_private_index)
         except Exception as e:
             logger.error(e)
+
 
     def translate_public_collection(self, entity_id, reindex=False):
         try:
@@ -345,6 +352,7 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
+
     def translate_tree(self, entity_id):
         try:
             # logger.info(f"Total threads count: {threading.active_count()}")
@@ -371,6 +379,7 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
+
     def init_transformers(self):
         for index in self.indices.keys():
             try:
@@ -391,6 +400,7 @@ class Translator(TranslatorInterface):
         logger.debug("========Preloaded transformers===========")
         logger.debug(self.TRANSFORMERS)
 
+
     def init_auth_helper(self):
         if AuthHelper.isInitialized() == False:
             auth_helper = AuthHelper.create(self.app_client_id, self.app_client_secret)
@@ -398,6 +408,7 @@ class Translator(TranslatorInterface):
             auth_helper = AuthHelper.instance()
 
         return auth_helper
+
 
     # Create a dict with HTTP Authorization header with Bearer token
     def create_request_headers_for_auth(self, token):
@@ -481,6 +492,7 @@ class Translator(TranslatorInterface):
 
         entity['datasets'] = datasets
 
+
     def entity_keys_rename(self, entity):
         # logger.debug("==================entity before renaming keys==================")
         # logger.debug(entity)
@@ -515,6 +527,7 @@ class Translator(TranslatorInterface):
         # logger.debug("==================entity after renaming keys==================")
         # logger.debug(entity)
 
+
     # These calculated fields are not stored in neo4j but will be generated
     # and added to the ES
     def add_calculated_fields(self, entity):
@@ -524,6 +537,7 @@ class Translator(TranslatorInterface):
         # Add display_subtype
         if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
+
 
     # For Upload, Dataset, Donor and Sample objects:
     # add a calculated (not stored in Neo4j) field called `display_subtype` to
@@ -564,6 +578,7 @@ class Translator(TranslatorInterface):
                 f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
 
         return display_subtype
+
 
     # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and 
     # ingest_metadata.metadata sub fields with empty string values from previous call
@@ -756,6 +771,7 @@ class Translator(TranslatorInterface):
         entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
         return json.dumps(entity)
 
+
     # Remove unwanted empty string fields
     # - `ingest_metadata.files`
     # - `ingest_metadata.metadata.*` sub fields
@@ -778,7 +794,10 @@ class Translator(TranslatorInterface):
         return dataset_dict
 
 
-    def call_entity_api(self, entity_id, endpoint, url_property=None):
+    # This method is supposed to only retrieve Dataset|Donor|Sample
+    # The Collection and Upload are handled by separate calls
+    # The returned data can either be an entity dict or a list of uuids (when `url_property` parameter is specified)
+    def call_entity_api(self, entity_id, endpoint, url_property = None):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
             url += "?property=" + url_property
@@ -792,28 +811,37 @@ class Translator(TranslatorInterface):
             return copy.deepcopy(self.entity_api_cache[url])
 
         response = requests.get(url, headers=self.request_headers, verify=False)
+
+        # Won't store the response data in cache in the event of an HTTP error
         if response.status_code != 200:
-            # See if this uuid is a public Collection instead before exiting
-            try:
-                return self.get_public_collection(entity_id)
-            except requests.exceptions.RequestException as e:
-                logger.exception(e)
+            msg = f"HuBMAP translator call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
 
-                # Stop running
-                msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
-                logger.error(msg)
-                sys.exit(msg)
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
-        # Remove ingest_metadata.files and any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
-        # to address the Elasticsearch index error due to inconsistent data types
-        # If entity is not Dataset, no change - 7/13/2022 Max & Zhou
-        entity_dict = self.exclude_dataset_ingest_metadata_empty_fields(response.json())
+            logger.debug("======call_entity_api() status code from entity-api======")
+            logger.debug(response.status_code)
 
-        # Make a deepcopy of the entity dict to store in cache
-        # Because this `entity_dict` will get modified by adding extra fields during index
-        self.entity_api_cache[url] = copy.deepcopy(entity_dict)
+            logger.debug("======call_entity_api() response text from entity-api======")
+            logger.debug(response.text)
 
-        return entity_dict
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            response.raise_for_status()
+            raise requests.exceptions.RequestException(response.text)
+
+        # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
+        # For Dataset, remove ingest_metadata.files and any ingest_metadata.metadata sub fields if value is empty string or just whitespace 
+        # to address the Elasticsearch index mapping conflict error due to inconsistent data types
+        # If result is an list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
+        result = self.exclude_dataset_ingest_metadata_empty_fields(response.json())
+
+        # Make a deepcopy of the result to store in cache
+        # Because when the result is a dict, it will get modified by adding extra fields during index
+        self.entity_api_cache[url] = copy.deepcopy(result)
+
+        return result
+
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
@@ -824,15 +852,15 @@ class Translator(TranslatorInterface):
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
-            msg = "HuBMAP translator get_collection() failed to get public collection of uuid: " + entity_id + " via entity-api"
+            msg = f"HuBMAP translator get_public_collection() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-            logger.debug("======get_public_collection() status code from hubmap_translator======")
+            logger.debug("======get_public_collection() status code from entity-api======")
             logger.debug(response.status_code)
 
-            logger.debug("======get_public_collection() response text from hubmap_translator-api======")
+            logger.debug("======get_public_collection() response text from entity-api======")
             logger.debug(response.text)
 
             # Bubble up the error message from entity-api instead of sys.exit(msg)
@@ -843,6 +871,7 @@ class Translator(TranslatorInterface):
         collection_dict = response.json()
 
         return collection_dict
+
 
     def main(self):
         try:
@@ -873,7 +902,7 @@ class Translator(TranslatorInterface):
                 self.indexer.create_index(private_index, index_mapping_settings)
 
         except Exception:
-            msg = "Exception encountered during executing indexer.main()"
+            msg = "Exception encountered during executing Translator.main()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
