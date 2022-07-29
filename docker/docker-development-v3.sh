@@ -83,7 +83,7 @@ else
 
         echo 'Checks complete, all good :)'
     elif [ "$1" = "config" ]; then
-        docker-compose -f docker-compose-v3.yml -p search-api-v3 config
+        docker-compose -f docker-compose.development.v3.yml -p search-api-v3 config
     elif [ "$1" = "build" ]; then
         # Delete the copied source code dir if exists
         if [ -d "search-api/src" ]; then
@@ -106,13 +106,13 @@ else
         cp ../VERSION search-api
         cp ../BUILD search-api
 
-        docker-compose -f docker-compose-v3.yml -p search-api-v3 build
+        docker-compose -f docker-compose.development.v3.yml -p search-api-v3 build
     elif [ "$1" = "start" ]; then
-        docker-compose -f docker-compose-v3.yml -p search-api-v3 up -d
+        docker-compose -f docker-compose.development.v3.yml -p search-api-v3 up -d
     elif [ "$1" = "stop" ]; then
-        docker-compose -f docker-compose-v3.yml -p search-api-v3 stop
+        docker-compose -f docker-compose.development.v3.yml -p search-api-v3 stop
     elif [ "$1" = "down" ]; then
-        docker-compose -f docker-compose-v3.yml -p search-api-v3 down
+        docker-compose -f docker-compose.development.v3.yml -p search-api-v3 down
     fi
 fi
 
