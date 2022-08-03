@@ -55,8 +55,6 @@ class Translator(TranslatorInterface):
     TRANSFORMERS = {}
     DEFAULT_ENTITY_API_URL = ''
     indexer = None
-    entity_api_cache = {}
-
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
@@ -217,9 +215,6 @@ class Translator(TranslatorInterface):
                         self.call_indexer(node, True)
 
                 logger.info(f"################ Reindex DONE for entity {entity_id} ######################")
-
-                # Clear the entity api cache
-                self.entity_api_cache.clear()
 
                 return "HuBMAP Translator.translate() finished executing"
         except Exception:
@@ -623,14 +618,16 @@ class Translator(TranslatorInterface):
                 for immediate_ancestor_dict in immediate_ancestors_list:
                     # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
-                    # without excluding any Dataset.ingest_metadata.files and Dataset.ingest_metadata.metadata sub fields with empty string values
+                    # without changing Dataset.ingest_metadata.files to empty list [] when value is empty string and 
+                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
                     immediate_ancestors.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
 
                 immediate_descendants_list = self.call_entity_api(entity_id, 'children')
                 for immediate_descendant_dict in immediate_descendants_list:
                     # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without excluding any Dataset.ingest_metadata.files and Dataset.ingest_metadata.metadata sub fields with empty string values
+                    # without changing Dataset.ingest_metadata.files to empty list [] when value is empty string and 
+                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
                     immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_descendant_dict))
                 
                 # Add new properties to entity
@@ -685,16 +682,14 @@ class Translator(TranslatorInterface):
                     # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                     self.exclude_added_top_level_properties(entity['source_sample'])
 
-                    # Move files to the root level if exist
+                    # COPY files to the top level if exist, otherise set as empty list []
+                    # Still keep the original ingest_metadata.files (but will change to empty list [] if empty string value)
                     entity['files'] = []
                     if 'ingest_metadata' in entity:
                         ingest_metadata = entity['ingest_metadata']
                         if 'files' in ingest_metadata:
                             if ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
                                 entity['files'] = ingest_metadata['files']
-
-                            # Always remove the `ingest_metadata.files` property after copying the original files data to top level
-                            entity['ingest_metadata'].pop('files')
 
             self.entity_keys_rename(entity)
 
@@ -772,15 +767,14 @@ class Translator(TranslatorInterface):
         return json.dumps(entity)
 
 
-    # Remove unwanted empty string fields
-    # - `ingest_metadata.files`
-    # - `ingest_metadata.metadata.*` sub fields
+    # - Set `ingest_metadata.files` to empty list [] when value is empty string
+    # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
     def exclude_dataset_ingest_metadata_empty_fields(self, dataset_dict):
         # Remove the `ingest_metadata.files` only when its value is empty string to avoid dynamic mapping conflict
         if ('ingest_metadata' in dataset_dict) and ('files' in dataset_dict['ingest_metadata']):
             if isinstance(dataset_dict['ingest_metadata']['files'], str) and (dataset_dict['ingest_metadata']['files'].strip() == ''):
-                del dataset_dict['ingest_metadata']['files']
-                logger.info(f"Removed ['ingest_metadata']['files'] due to empty string value, for Dataset {dataset_dict['uuid']}")
+                dataset_dict['ingest_metadata']['files'] = []
+                logger.info(f"Changed ['ingest_metadata']['files'] to empty list [] due to empty string value, for Dataset {dataset_dict['uuid']}")
 
         # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
         # to to avoid dynamic mapping conflict
@@ -801,14 +795,6 @@ class Translator(TranslatorInterface):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
             url += "?property=" + url_property
-
-        if url in self.entity_api_cache:
-            # Return the deepcopy of the original dict
-            # Becase the cached dict will be reused by other calls and get modified by adding extra fields during index
-            # Shallow copy will reference to the original dict which gets added with extra fields
-            logger.debug(f"Returning the cached deepcopy of entity dict for uuid: {entity_id}")
-
-            return copy.deepcopy(self.entity_api_cache[url])
 
         response = requests.get(url, headers=self.request_headers, verify=False)
 
@@ -831,16 +817,11 @@ class Translator(TranslatorInterface):
             raise requests.exceptions.RequestException(response.text)
 
         # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
-        # For Dataset, remove ingest_metadata.files and any ingest_metadata.metadata sub fields if value is empty string or just whitespace 
+        # For Dataset, change ingest_metadata.files to empty list [] if value is empty string,
+        # remove any ingest_metadata.metadata sub fields if value is empty string or just whitespace 
         # to address the Elasticsearch index mapping conflict error due to inconsistent data types
         # If result is an list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
-        result = self.exclude_dataset_ingest_metadata_empty_fields(response.json())
-
-        # Make a deepcopy of the result to store in cache
-        # Because when the result is a dict, it will get modified by adding extra fields during index
-        self.entity_api_cache[url] = copy.deepcopy(result)
-
-        return result
+        return self.exclude_dataset_ingest_metadata_empty_fields(response.json())
 
 
     def get_public_collection(self, entity_id):
