@@ -575,8 +575,8 @@ class Translator(TranslatorInterface):
         return display_subtype
 
 
-    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and 
-    # ingest_metadata.metadata sub fields with empty string values from previous call
+    # Note: this entity dict input (if Dataset) has already handled ingest_metadata.files (with empty string or missing)
+    # and ingest_metadata.metadata sub fields with empty string values from previous call
     def generate_doc(self, entity, return_type):
         try:
             entity_id = entity['uuid']
@@ -593,7 +593,7 @@ class Translator(TranslatorInterface):
                 # Get back a list of ancestor uuids first
                 ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
                 for ancestor_uuid in ancestor_ids:
-                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
                     ancestors.append(ancestor_dict)
@@ -608,7 +608,7 @@ class Translator(TranslatorInterface):
                 # Get back a list of descendant uuids first
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
                 for descendant_uuid in descendant_ids:
-                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
                     descendants.append(descendant_dict)
@@ -616,19 +616,19 @@ class Translator(TranslatorInterface):
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
                 immediate_ancestors_list = self.call_entity_api(entity_id, 'parents')
                 for immediate_ancestor_dict in immediate_ancestors_list:
-                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
-                    # without changing Dataset.ingest_metadata.files to empty list [] when value is empty string and 
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
                     # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_ancestors.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
+                    immediate_ancestors.append(self.prepare_dataset(immediate_ancestor_dict))
 
                 immediate_descendants_list = self.call_entity_api(entity_id, 'children')
                 for immediate_descendant_dict in immediate_descendants_list:
-                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without changing Dataset.ingest_metadata.files to empty list [] when value is empty string and 
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and 
                     # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_descendant_dict))
+                    immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
                 
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
@@ -681,15 +681,6 @@ class Translator(TranslatorInterface):
 
                     # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                     self.exclude_added_top_level_properties(entity['source_sample'])
-
-                    # COPY files to the top level if exist, otherise set as empty list []
-                    # Still keep the original ingest_metadata.files (but will change to empty list [] if empty string value)
-                    entity['files'] = []
-                    if 'ingest_metadata' in entity:
-                        ingest_metadata = entity['ingest_metadata']
-                        if 'files' in ingest_metadata:
-                            if ((isinstance(ingest_metadata['files'], str) and ingest_metadata['files'].strip() != '') or not isinstance(ingest_metadata['files'], str)):
-                                entity['files'] = ingest_metadata['files']
 
             self.entity_keys_rename(entity)
 
@@ -767,24 +758,40 @@ class Translator(TranslatorInterface):
         return json.dumps(entity)
 
 
-    # - Set `ingest_metadata.files` to empty list [] when value is empty string
+    # Only applies to Dataset, no change to other entity types:
+    # - Add the top-level 'files' field and set to empty list [] as default
+    # - Set `ingest_metadata.files` to empty list [] when value is string (regardless empty or not) or the filed is missing
+    # - Copy the actual files info list ['ingest_metadata']['files'] to the added top-level field
     # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
-    def exclude_dataset_ingest_metadata_empty_fields(self, dataset_dict):
-        # Remove the `ingest_metadata.files` only when its value is empty string to avoid dynamic mapping conflict
-        if ('ingest_metadata' in dataset_dict) and ('files' in dataset_dict['ingest_metadata']):
-            if isinstance(dataset_dict['ingest_metadata']['files'], str) and (dataset_dict['ingest_metadata']['files'].strip() == ''):
-                dataset_dict['ingest_metadata']['files'] = []
-                logger.info(f"Changed ['ingest_metadata']['files'] to empty list [] due to empty string value, for Dataset {dataset_dict['uuid']}")
+    def prepare_dataset(self, dataset_dict):
+        # Add this top-level field for Dataset and set to empty list as default
+        if dataset_dict['entity_type'] == 'Dataset':
+            dataset_dict['files'] = []
 
-        # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
-        # to to avoid dynamic mapping conflict
-        if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
-            for key in list(dataset_dict['ingest_metadata']['metadata']):
-                if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
-                    if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
-                        del dataset_dict['ingest_metadata']['metadata'][key]
-                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
-        
+            if 'ingest_metadata' in dataset_dict:
+                if 'files' in dataset_dict['ingest_metadata']:
+                    if isinstance(dataset_dict['ingest_metadata']['files'], list):
+                        # Copy the actual files info list to the added top-level field
+                        dataset_dict['files'] = dataset_dict['ingest_metadata']['files']
+                    elif isinstance(dataset_dict['ingest_metadata']['files'], str):
+                        # Set the original value to an emtpy list to avid mapping error
+                        dataset_dict['ingest_metadata']['files'] = []
+                        logger.info(f"Set ['ingest_metadata']['files'] to empty list [] due to string value {dataset_dict['ingest_metadata']['files']} found, for Dataset {dataset_dict['uuid']}")
+                    else:
+                        logger.error(f"Invalid data type of ['ingest_metadata']['files'], for Dataset {dataset_dict['uuid']}")
+                else:
+                    dataset_dict['ingest_metadata']['files'] = []
+                    logger.info(f"Add missing field ['ingest_metadata']['files'] and set to empty list [], for Dataset {dataset_dict['uuid']}")
+
+            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
+            # to to avoid dynamic mapping conflict
+            if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
+                for key in list(dataset_dict['ingest_metadata']['metadata']):
+                    if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
+                        if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
+                            del dataset_dict['ingest_metadata']['metadata'][key]
+                            logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
+            
         return dataset_dict
 
 
@@ -817,11 +824,9 @@ class Translator(TranslatorInterface):
             raise requests.exceptions.RequestException(response.text)
 
         # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
-        # For Dataset, change ingest_metadata.files to empty list [] if value is empty string,
-        # remove any ingest_metadata.metadata sub fields if value is empty string or just whitespace 
-        # to address the Elasticsearch index mapping conflict error due to inconsistent data types
-        # If result is an list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
-        return self.exclude_dataset_ingest_metadata_empty_fields(response.json())
+        # For Dataset, data manipulation is performed
+        # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
+        return self.prepare_dataset(response.json())
 
 
     def get_public_collection(self, entity_id):
