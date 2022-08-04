@@ -55,13 +55,12 @@ else
     # Print empty line
     echo
 
-    # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., rc
     if [ "$1" = "start" ]; then
-        docker-compose -f docker-compose.rc.yml up -d
+        docker-compose -f docker-compose.rc.yml -p search-api-rc up -d
     elif [ "$1" = "stop" ]; then
-        docker-compose -f docker-compose.rc.yml stop
+        docker-compose -f docker-compose.rc.yml -p search-api-rc stop
     elif [ "$1" = "down" ]; then
-        docker-compose -f docker-compose.rc.yml down
+        docker-compose -f docker-compose.rc.yml -p search-api-rc down
     fi
 fi
 

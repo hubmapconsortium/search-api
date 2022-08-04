@@ -83,8 +83,7 @@ else
 
         echo 'Checks complete, all good :)'
     elif [ "$1" = "config" ]; then
-        # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., v3
-        docker-compose -f docker-compose.yml -f docker-compose.development.yml config
+        docker-compose -f docker-compose.yml -f docker-compose.development.yml -p search-api config
     elif [ "$1" = "build" ]; then
         # Delete the copied source code dir if exists
         if [ -d "search-api/src" ]; then
@@ -107,14 +106,13 @@ else
         cp ../VERSION search-api
         cp ../BUILD search-api
 
-        # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., v3
-        docker-compose -f docker-compose.yml -f docker-compose.development.yml build
+        docker-compose -f docker-compose.yml -f docker-compose.development.yml -p search-api build
     elif [ "$1" = "start" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.development.yml up -d
+        docker-compose -f docker-compose.yml -f docker-compose.development.yml -p search-api up -d
     elif [ "$1" = "stop" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.development.yml stop
+        docker-compose -f docker-compose.yml -f docker-compose.development.yml -p search-api stop
     elif [ "$1" = "down" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.development.yml down
+        docker-compose -f docker-compose.yml -f docker-compose.development.yml -p search-api down
     fi
 fi
 
