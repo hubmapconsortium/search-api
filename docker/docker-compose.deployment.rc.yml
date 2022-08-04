@@ -5,11 +5,5 @@ services:
   search-api-rc: 
     # Use the published image and tag from DockerHub
     image: hubmap/search-api:${SEARCH_API_VERSION:?err}
-    # To distiguish from the production stable release `search-api`
-    hostname: search-api-rc
-    container_name: search-api-rc
-    # The Release Candidate instance runs on port 4343 on the same host VM
-    ports:
-      - "4343:8080"
 
 

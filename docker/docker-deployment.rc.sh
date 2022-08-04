@@ -57,11 +57,11 @@ else
 
     # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., v3
     if [ "$1" = "start" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.deployment.rc.yml up -d
+        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml up -d
     elif [ "$1" = "stop" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.deployment.rc.yml stop
+        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml stop
     elif [ "$1" = "down" ]; then
-        docker-compose -f docker-compose.yml -f docker-compose.deployment.rc.yml down
+        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml down
     fi
 fi
 
