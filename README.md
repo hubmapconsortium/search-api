@@ -254,12 +254,19 @@ cd docker
 ./docker-development.sh [check|config|build|start|stop|down]
 ```
 
-## Docker build for deployment on TEST/STAGE/PROD
+## Docker deployment for TEST/STAGE/PROD
+
+On TEST/STAGE/PROD environments, we use the same published docker image from DockerHub for deployment rather than building a new image.
 
 ```
 cd docker
-export SEARCH_API_VERSION=a.b.c (replace with the actual released version number)
 ./docker-deployment.sh [start|stop|down]
+```
+
+For the Release candicate (RC) instance use a separate script:
+
+```
+./docker-rc.sh [start|stop|down]
 ```
 
 ## Updating API Documentation
