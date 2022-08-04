@@ -1,9 +1,0 @@
-version: "3.7"
-
-services:
-  
-  search-api-rc: 
-    # Use the published image and tag from DockerHub
-    image: hubmap/search-api:${SEARCH_API_VERSION:?err}
-
-

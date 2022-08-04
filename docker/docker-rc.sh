@@ -35,8 +35,8 @@ function generate_build_version() {
 # Version number is from the VERSION file
 # Also remove newlines and leading/trailing slashes if present in that VERSION file
 function export_version() {
-    export SEARCH_API_VERSION=$(tr -d "\n\r" < ../VERSION | xargs)
-    echo "SEARCH_API_VERSION: $SEARCH_API_VERSION"
+    export SEARCH_API_RC_VERSION=$(tr -d "\n\r" < ../VERSION | xargs)
+    echo "SEARCH_API_RC_VERSION: $SEARCH_API_RC_VERSION"
 }
 
 
@@ -55,13 +55,13 @@ else
     # Print empty line
     echo
 
-    # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., v3
+    # Do NOT use `-p search-api` because we can have multiple projects of search-api, e.g., rc
     if [ "$1" = "start" ]; then
-        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml up -d
+        docker-compose -f docker-compose.rc.yml up -d
     elif [ "$1" = "stop" ]; then
-        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml stop
+        docker-compose -f docker-compose.rc.yml stop
     elif [ "$1" = "down" ]; then
-        docker-compose -f docker-compose.rc.yml -f docker-compose.deployment.rc.yml down
+        docker-compose -f docker-compose.rc.yml down
     fi
 fi
 
