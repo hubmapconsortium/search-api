@@ -758,6 +758,7 @@ class Translator(TranslatorInterface):
         return json.dumps(entity)
 
 
+    # The input `dataset_dict` can be a list if the entity-api returns a list, other times it's dict
     # Only applies to Dataset, no change to other entity types:
     # - Add the top-level 'files' field and set to empty list [] as default
     # - Set `ingest_metadata.files` to empty list [] when value is string (regardless empty or not) or the filed is missing
@@ -765,7 +766,7 @@ class Translator(TranslatorInterface):
     # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
     def prepare_dataset(self, dataset_dict):
         # Add this top-level field for Dataset and set to empty list as default
-        if dataset_dict['entity_type'] == 'Dataset':
+        if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] == 'Dataset'):
             dataset_dict['files'] = []
 
             if 'ingest_metadata' in dataset_dict:
