@@ -26,8 +26,8 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
+# This list contains fields that are added to the top-level at index runtime
 entity_properties_list = [
-    'metadata',
     'donor',
     'origin_sample',
     'source_sample',
@@ -35,12 +35,15 @@ entity_properties_list = [
     'descendant_ids',
     'ancestors',
     'descendants',
+    # This 'files' field is either empty list [] or the files info list copied from 'Dataset.ingest_metadata.files'
     'files',
+    'datasets',
     'immediate_ancestors',
-    'immediate_descendants',
-    'datasets'
+    'immediate_descendants'
 ]
-entity_types = ['Upload', 'Donor', 'Sample', 'Dataset']
+
+# Entity types that will have `display_subtype` generated ar index time
+entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset']
 
 
 class Translator(TranslatorInterface):
@@ -52,7 +55,6 @@ class Translator(TranslatorInterface):
     TRANSFORMERS = {}
     DEFAULT_ENTITY_API_URL = ''
     indexer = None
-    entity_api_cache = {}
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
@@ -63,13 +65,11 @@ class Translator(TranslatorInterface):
                     self.indices[key] = value
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
-            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX][
-                'document_source_endpoint'].strip(
-                '/')
+            self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
-            logger.debug("@@@@@@@@@@@@@@@@@@@@ INDICES")
+            logger.debug("=========== INDICES config ===========")
             logger.debug(self.INDICES)
         except Exception:
             raise ValueError("Invalid indices config")
@@ -92,6 +92,7 @@ class Translator(TranslatorInterface):
 
         # # Preload all the transformers
         self.init_transformers()
+
 
     def translate_all(self):
         with app.app_context():
@@ -172,9 +173,12 @@ class Translator(TranslatorInterface):
             except Exception as e:
                 logger.error(e)
 
+
     def translate(self, entity_id):
         try:
             # Retrieve the entity details
+            # This returned entity dict (if Dataset) has removed ingest_metadata.files and 
+            # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
             entity = self.call_entity_api(entity_id, 'entities')
 
             # Check if entity is empty
@@ -210,16 +214,14 @@ class Translator(TranslatorInterface):
 
                         self.call_indexer(node, True)
 
-                logger.info("################reindex() DONE######################")
-
-                # Clear the entity api cache
-                self.entity_api_cache.clear()
+                logger.info(f"################ Reindex DONE for entity {entity_id} ######################")
 
                 return "HuBMAP Translator.translate() finished executing"
         except Exception:
             msg = "Exceptions during executing indexer.reindex()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
 
     def update(self, entity_id, document):
         for index in self.indices.keys():
@@ -231,6 +233,7 @@ class Translator(TranslatorInterface):
 
             self.indexer.index(entity_id, json.dumps(document), private_index, True)
 
+
     def add(self, entity_id, document):
         for index in self.indices.keys():
             public_index = self.INDICES['indices'][index]['public']
@@ -240,6 +243,7 @@ class Translator(TranslatorInterface):
                 self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
             self.indexer.index(entity_id, json.dumps(document), private_index, False)
+
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
@@ -271,6 +275,7 @@ class Translator(TranslatorInterface):
 
         return is_public
 
+
     def delete(self, entity_id):
         for index, _ in self.indices.items():
             # each index should have a public/private index
@@ -280,6 +285,7 @@ class Translator(TranslatorInterface):
             private_index = self.INDICES['indices'][index]['private']
             if public_index != private_index:
                 self.indexer.delete_document(entity_id, private_index)
+
 
     # When indexing, Upload WILL NEVER BE PUBLIC
     def translate_upload(self, entity_id, reindex=False):
@@ -298,6 +304,7 @@ class Translator(TranslatorInterface):
             self.call_indexer(upload, reindex, json.dumps(upload), default_private_index)
         except Exception as e:
             logger.error(e)
+
 
     def translate_public_collection(self, entity_id, reindex=False):
         try:
@@ -340,6 +347,7 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
+
     def translate_tree(self, entity_id):
         try:
             # logger.info(f"Total threads count: {threading.active_count()}")
@@ -366,6 +374,7 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
+
     def init_transformers(self):
         for index in self.indices.keys():
             try:
@@ -386,6 +395,7 @@ class Translator(TranslatorInterface):
         logger.debug("========Preloaded transformers===========")
         logger.debug(self.TRANSFORMERS)
 
+
     def init_auth_helper(self):
         if AuthHelper.isInitialized() == False:
             auth_helper = AuthHelper.create(self.app_client_id, self.app_client_secret)
@@ -393,6 +403,7 @@ class Translator(TranslatorInterface):
             auth_helper = AuthHelper.instance()
 
         return auth_helper
+
 
     # Create a dict with HTTP Authorization header with Bearer token
     def create_request_headers_for_auth(self, token):
@@ -406,9 +417,9 @@ class Translator(TranslatorInterface):
 
         return headers_dict
 
+    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and 
+    # ingest_metadata.metadata sub fields with empty string values from previous call
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
-        org_node = copy.deepcopy(entity)
-
         try:
             if document is None:
                 document = self.generate_doc(entity, 'json')
@@ -428,7 +439,7 @@ class Translator(TranslatorInterface):
                     # check to see if the index has a transformer, default to None if not found
                     transformer = self.TRANSFORMERS.get(index, None)
 
-                    if self.is_public(org_node):
+                    if self.is_public(entity):
                         public_doc = self.generate_public_doc(entity)
 
                         if transformer is not None:
@@ -449,9 +460,18 @@ class Translator(TranslatorInterface):
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
         except Exception:
-            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {org_node['uuid']}, entity_type: {org_node['entity_type']}"
+            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+
+    # The added fields specified in `entity_properties_list` should not be added
+    # to themselves as sub fields
+    # The `except_properties_list` is a subset of entity_properties_list
+    def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
+        for prop in entity_properties_list:
+            if (prop in entity_dict) and (prop not in except_properties_list):
+                 entity_dict.pop(prop)
 
 
     # Used for Upload and Collection index
@@ -461,21 +481,12 @@ class Translator(TranslatorInterface):
             for dataset in entity['datasets']:
                 # Retrieve the entity details
                 dataset = self.call_entity_api(dataset['uuid'], 'entities')
-
                 dataset_doc = self.generate_doc(dataset, 'dict')
-                dataset_doc.pop('ancestors')
-                dataset_doc.pop('ancestor_ids')
-                dataset_doc.pop('descendants')
-                dataset_doc.pop('descendant_ids')
-                dataset_doc.pop('immediate_descendants')
-                dataset_doc.pop('immediate_ancestors')
-                dataset_doc.pop('donor')
-                dataset_doc.pop('origin_sample')
-                dataset_doc.pop('source_sample')
-
+                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
                 datasets.append(dataset_doc)
 
         entity['datasets'] = datasets
+
 
     def entity_keys_rename(self, entity):
         # logger.debug("==================entity before renaming keys==================")
@@ -511,6 +522,7 @@ class Translator(TranslatorInterface):
         # logger.debug("==================entity after renaming keys==================")
         # logger.debug(entity)
 
+
     # These calculated fields are not stored in neo4j but will be generated
     # and added to the ES
     def add_calculated_fields(self, entity):
@@ -518,8 +530,9 @@ class Translator(TranslatorInterface):
         entity['index_version'] = self.index_version
 
         # Add display_subtype
-        if entity['entity_type'] in entity_types:
+        if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
+
 
     # For Upload, Dataset, Donor and Sample objects:
     # add a calculated (not stored in Neo4j) field called `display_subtype` to
@@ -561,6 +574,9 @@ class Translator(TranslatorInterface):
 
         return display_subtype
 
+
+    # Note: this entity dict input (if Dataset) has already handled ingest_metadata.files (with empty string or missing)
+    # and ingest_metadata.metadata sub fields with empty string values from previous call
     def generate_doc(self, entity, return_type):
         try:
             entity_id = entity['uuid']
@@ -577,7 +593,7 @@ class Translator(TranslatorInterface):
                 # Get back a list of ancestor uuids first
                 ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
                 for ancestor_uuid in ancestor_ids:
-                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
                     ancestors.append(ancestor_dict)
@@ -592,7 +608,7 @@ class Translator(TranslatorInterface):
                 # Get back a list of descendant uuids first
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
                 for descendant_uuid in descendant_ids:
-                    # No need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
                     descendants.append(descendant_dict)
@@ -600,17 +616,19 @@ class Translator(TranslatorInterface):
                 # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
                 immediate_ancestors_list = self.call_entity_api(entity_id, 'parents')
                 for immediate_ancestor_dict in immediate_ancestors_list:
-                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
-                    # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_ancestors.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_ancestor_dict))
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
+                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
+                    immediate_ancestors.append(self.prepare_dataset(immediate_ancestor_dict))
 
                 immediate_descendants_list = self.call_entity_api(entity_id, 'children')
                 for immediate_descendant_dict in immediate_descendants_list:
-                    # We need to call self.exclude_dataset_ingest_metadata_empty_fields() here because
+                    # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_descendants.append(self.exclude_dataset_ingest_metadata_empty_fields(immediate_descendant_dict))
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and 
+                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
+                    immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
                 
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
@@ -630,7 +648,6 @@ class Translator(TranslatorInterface):
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
                         entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
                                                                        entity['organ'].strip() != '') else None
-
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
@@ -639,6 +656,9 @@ class Translator(TranslatorInterface):
                                                                          a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+
+                # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                self.exclude_added_top_level_properties(entity['origin_sample'])
 
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
@@ -659,11 +679,8 @@ class Translator(TranslatorInterface):
                         except IndexError:
                             entity['source_sample'] = {}
 
-                    # Move files to the root level if exist
-                    if 'ingest_metadata' in entity:
-                        ingest_metadata = entity['ingest_metadata']
-                        if 'files' in ingest_metadata:
-                            entity['files'] = ingest_metadata['files']
+                    # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
+                    self.exclude_added_top_level_properties(entity['source_sample'])
 
             self.entity_keys_rename(entity)
 
@@ -679,11 +696,6 @@ class Translator(TranslatorInterface):
 
                 # Add new property
                 entity['group_name'] = group_dict['displayname']
-
-            # Remove the `files` element from the entity['metadata'] dict
-            # to reduce the doc size to be indexed?
-            if ('metadata' in entity) and ('files' in entity['metadata']):
-                entity['metadata'].pop('files')
 
             # Rename for properties that are objects
             if entity.get('donor', None):
@@ -717,6 +729,7 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+
     def generate_public_doc(self, entity):
         # Only Dataset has this 'next_revision_uuid' property
         property_key = 'next_revision_uuid'
@@ -744,50 +757,78 @@ class Translator(TranslatorInterface):
         entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
         return json.dumps(entity)
 
-    # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
-    # to address the Elasticsearch index error due to inconsistent data types - 7/13/2022 Max & Zhou
-    def exclude_dataset_ingest_metadata_empty_fields(self, dataset_dict):
-        if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
-            for key in list(dataset_dict['ingest_metadata']['metadata']):
-                if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
-                    if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
-                        del dataset_dict['ingest_metadata']['metadata'][key]
-                        logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
-        
+
+    # The input `dataset_dict` can be a list if the entity-api returns a list, other times it's dict
+    # Only applies to Dataset, no change to other entity types:
+    # - Add the top-level 'files' field and set to empty list [] as default
+    # - Set `ingest_metadata.files` to empty list [] when value is string (regardless empty or not) or the filed is missing
+    # - Copy the actual files info list ['ingest_metadata']['files'] to the added top-level field
+    # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
+    def prepare_dataset(self, dataset_dict):
+        # Add this top-level field for Dataset and set to empty list as default
+        if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] == 'Dataset'):
+            dataset_dict['files'] = []
+
+            if 'ingest_metadata' in dataset_dict:
+                if 'files' in dataset_dict['ingest_metadata']:
+                    if isinstance(dataset_dict['ingest_metadata']['files'], list):
+                        # Copy the actual files info list to the added top-level field
+                        dataset_dict['files'] = dataset_dict['ingest_metadata']['files']
+                    elif isinstance(dataset_dict['ingest_metadata']['files'], str):
+                        # Set the original value to an emtpy list to avid mapping error
+                        dataset_dict['ingest_metadata']['files'] = []
+                        logger.info(f"Set ['ingest_metadata']['files'] to empty list [] due to string value {dataset_dict['ingest_metadata']['files']} found, for Dataset {dataset_dict['uuid']}")
+                    else:
+                        logger.error(f"Invalid data type of ['ingest_metadata']['files'], for Dataset {dataset_dict['uuid']}")
+                else:
+                    dataset_dict['ingest_metadata']['files'] = []
+                    logger.info(f"Add missing field ['ingest_metadata']['files'] and set to empty list [], for Dataset {dataset_dict['uuid']}")
+
+            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
+            # to to avoid dynamic mapping conflict
+            if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
+                for key in list(dataset_dict['ingest_metadata']['metadata']):
+                    if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
+                        if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
+                            del dataset_dict['ingest_metadata']['metadata'][key]
+                            logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
+            
         return dataset_dict
 
 
-    def call_entity_api(self, entity_id, endpoint, url_property=None):
+    # This method is supposed to only retrieve Dataset|Donor|Sample
+    # The Collection and Upload are handled by separate calls
+    # The returned data can either be an entity dict or a list of uuids (when `url_property` parameter is specified)
+    def call_entity_api(self, entity_id, endpoint, url_property = None):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
             url += "?property=" + url_property
 
-        if url in self.entity_api_cache:
-            return copy.copy(self.entity_api_cache[url])
-
         response = requests.get(url, headers=self.request_headers, verify=False)
+
+        # Won't store the response data in cache in the event of an HTTP error
         if response.status_code != 200:
-            # See if this uuid is a public Collection instead before exiting
-            try:
-                return self.get_public_collection(entity_id)
-            except requests.exceptions.RequestException as e:
-                logger.exception(e)
+            msg = f"HuBMAP translator call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
 
-                # Stop running
-                msg = f"HuBMAP translator failed to reach: " + url + ". Response: " + response.json()
-                logger.error(msg)
-                sys.exit(msg)
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
-        entity_response = response.json()
+            logger.debug("======call_entity_api() status code from entity-api======")
+            logger.debug(response.status_code)
 
-        # Remove any Dataset.ingest_metadata.metadata sub fields if the value is empty string or just whitespace 
-        # to address the Elasticsearch index error due to inconsistent data types
-        # If entity is not Dataset, no change - 7/13/2022 Max & Zhou
-        entity_response = self.exclude_dataset_ingest_metadata_empty_fields(entity_response)
+            logger.debug("======call_entity_api() response text from entity-api======")
+            logger.debug(response.text)
 
-        self.entity_api_cache[url] = entity_response
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            response.raise_for_status()
+            raise requests.exceptions.RequestException(response.text)
 
-        return entity_response
+        # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
+        # For Dataset, data manipulation is performed
+        # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
+        return self.prepare_dataset(response.json())
+
 
     def get_public_collection(self, entity_id):
         # The entity-api returns public collection with a list of connected public/published datasets, for either
@@ -798,15 +839,15 @@ class Translator(TranslatorInterface):
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
-            msg = "HuBMAP translator get_collection() failed to get public collection of uuid: " + entity_id + " via entity-api"
+            msg = f"HuBMAP translator get_public_collection() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-            logger.debug("======get_public_collection() status code from hubmap_translator======")
+            logger.debug("======get_public_collection() status code from entity-api======")
             logger.debug(response.status_code)
 
-            logger.debug("======get_public_collection() response text from hubmap_translator-api======")
+            logger.debug("======get_public_collection() response text from entity-api======")
             logger.debug(response.text)
 
             # Bubble up the error message from entity-api instead of sys.exit(msg)
@@ -817,6 +858,7 @@ class Translator(TranslatorInterface):
         collection_dict = response.json()
 
         return collection_dict
+
 
     def main(self):
         try:
@@ -847,7 +889,7 @@ class Translator(TranslatorInterface):
                 self.indexer.create_index(private_index, index_mapping_settings)
 
         except Exception:
-            msg = "Exception encountered during executing indexer.main()"
+            msg = "Exception encountered during executing Translator.main()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
