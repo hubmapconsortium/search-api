@@ -926,8 +926,7 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    # TODO: Need to generalize this once HuBMAP authorization is updated
-    if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
+    if not auth_helper.has_data_admin_prvis(token):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message
         logger.exception(msg)
