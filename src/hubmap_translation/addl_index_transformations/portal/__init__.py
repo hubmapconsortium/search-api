@@ -4,8 +4,6 @@ from copy import deepcopy
 import logging
 from json import dumps
 import datetime
-import subprocess
-from tempfile import TemporaryDirectory
 
 from yaml import safe_load as load_yaml
 import jsonschema
@@ -298,8 +296,24 @@ def _add_validation_errors(doc):
     '''
     >>> from pprint import pprint
 
+    >>> doc = {}
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    [{'absolute_path': '/',
+      'absolute_schema_path': '/required',
+      'message': "'uuid' is a required property"}]
+
     >>> doc = {
-    ...    'uuid': 'FAKE',
+    ...    'uuid': 'not-uuid',
+    ... }
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    [{'absolute_path': '/uuid',
+      'absolute_schema_path': '/properties/uuid/pattern',
+      'message': "'not-uuid' does not match '^[0-9a-f]{32}$'"}]
+
+    >>> doc = {
+    ...    'uuid': '0123456789abcdef0123456789abcdef',
     ... }
     >>> _add_validation_errors(doc)
     >>> pprint(doc['mapper_metadata']['validation_errors'])
