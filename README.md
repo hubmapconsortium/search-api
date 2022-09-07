@@ -237,8 +237,8 @@ If you have multiple indices you need to specify which of these is the default. 
 There are a few configurable environment variables to keep in mind:
 
 - `COMMONS_BRANCH`: build argument only to be used during image creation when we need to use a branch of commons from github rather than the published PyPI package. Default to master branch if not set or null.
-- `HOST_UID`: the user id on the host machine to be mapped to the container. Default to 1000 if not set or null.
-- `HOST_GID`: the user's group id on the host machine to be mapped to the container. Default to 1000 if not set or null.
+- `HOST_UID`: the user id on the host machine to be mapped to the container. Default to 1001 if not set or null.
+- `HOST_GID`: the user's group id on the host machine to be mapped to the container. Default to 1001 if not set or null.
 
 We can set and verify the environment variable like below:
 
