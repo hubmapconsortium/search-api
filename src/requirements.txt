@@ -12,4 +12,4 @@ PyYAML==5.4.1
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
 hubmap-commons==2.0.15
 
--r src/search-adaptor/src/requirements.txt
+-r search-adaptor/src/requirements.txt
