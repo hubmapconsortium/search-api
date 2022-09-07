@@ -1,11 +1,16 @@
-language: python # Use default 3.6
+# https://docs.travis-ci.com/user/customizing-the-build/#git-submodules
+git:
+  submodules: true
+
+language: python
+python:
+  - "3.9"
 services:
   - elasticsearch
 before_script:
   - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
-env:
-  - COMMONS_BRANCH=master
 install:
+  - pip install -r src/search-adaptor/src/requirements.txt
   - pip install -r src/requirements.txt
   - pip install -r src/requirements-dev.txt
 script:

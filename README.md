@@ -4,20 +4,28 @@ The HuBMAP Search API is a thin wrapper of the Elasticsearch. It handles data in
 
 The API documentation is available on SmartAPI at https://smart-api.info/ui/7aaf02b838022d564da776b03f357158
 
+## Working with submodule
+
+This repository relies on the [search-adaptor](https://github.com/dbmi-pitt/search-adaptor) as a submodule to function. The file `.gitmodules` contains the configuration for the URL and specific branch of the submodule that is to be used. Once you already have cloned this repository and switched to the target branch, to load the latest `search-adaptor` submodule:
+
+```
+git submodule update --init --remote
+```
+
 ## Development process
 
 ### Portal index
 
 Front end developers who need to work on the `portal` index should start in
-[the `addl_index_transformations/portal` subdirectory](https://github.com/hubmapconsortium/search-api/tree/test-release/src/elasticsearch/addl_index_transformations/portal);
+[the `addl_index_transformations/portal` subdirectory](https://github.com/hubmapconsortium/search-api/tree/main/hubmap-translation/src/hubmap_translation/addl_index_transformations/portal);
 You don't need to read the rest of this page.
 
 ### Local development
 After checking out the repo, installing the dependencies,
 and starting a local Elasticsearch instance, tests should pass:
 ```shell
-COMMONS_BRANCH=master pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -r src/requirements.txt
+pip install -r src/requirements-dev.txt
 
 # on mac:
 brew tap elastic/tap
@@ -28,17 +36,17 @@ elasticsearch &  # Wait for it to start...
 ```
 
 ### To release via TEST infrastructure
-- Make new feature or bug fix branches from `test-release`.
-- Make PRs to `test-release`. (This is the default branch.)
-- As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to TEST infrastructure, and redeploy and reindex the TEST instance.
+- Make new feature or bug fix branches from `main` branch (the default branch)
+- Make PRs to `main`
+- As a codeowner, Zhou (github username `yuanzhou`) is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to TEST infrastructure, and redeploy and reindex the TEST instance.
 - Developer or someone on the team who is familiar with the change will test/qa the change
-- When any current changes in the `test-release` have been approved after test/qa on TEST, Zhou will release to PROD.
+- When any current changes in the `main` have been approved after test/qa on TEST, Zhou will release to PROD using the same docker image that has been tested on TEST infrastructure.
 
 ### To work on features in the development environment before ready for testing and releasing
-- Make new feature branches from `test-release`.
-- Make PRs to `dev-integrate`.
+- Make new feature branches off the `main` branch
+- Make PRs to `dev-integrate`
 - As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to devel, and redeploy and reindex the DEV instance.
-- When a feature branch is ready for testing and release, make a PR to `test-release` for deployment and testing on the TEST infrastructure as above.
+- When a feature branch is ready for testing and release, make a PR to `main` for deployment and testing on the TEST infrastructure as above.
 
 ## Updating the enumerations
 
@@ -179,88 +187,6 @@ response = requests.post(
 hits = response.json()['hits']['hits']
 ```
 
-## Docker development and deployment environments
-
-We have the following 5 development and deployment environments:
-
-* localhost - all the services will be deployed with docker containers including sample Neo4j and sample MySQL are running on the same localhost listing on different ports, without globus data
-* dev - all services except ingest-api will be running on AWS EC2 with SSL certificates, Neo4j and MySQL are dev versions on AWS, and ingest-api(and another nginx) will be running on PSC with domain and globus data
-* test - similar to dev with a focus on testing and connects to Neo4j and MySQL test versions of database
-* stage - as similar to the production environment as it can be.
-* prod - similar to test but for production settings with production versions of Neo4j and MySQL
-
-### Localhost development
-
-This option allows you to setup all the pieces in a containerized environment with docker and docker-compose. This requires to have the [HuBMAP Gateway](https://github.com/hubmapconsortium/gateway) running locally before starting building this docker compose project. Please follow the [instructions](https://github.com/hubmapconsortium/gateway#workflow-of-setting-up-multiple-hubmap-docker-compose-projects). It also requires the Gateway project to be configured accordingly.
-
-### Remote deployment
-
-In localhost mode, all the docker containers are running on the same host machine. However, the ingest-api will be deployed on a separare host machine for dev, test, stage, and prod mode due to different deployment requirements. 
-
-There are a few configurable environment variables to keep in mind:
-
-- `COMMONS_BRANCH`: build argument only to be used during image creation. We can specify which [commons](https://github.com/hubmapconsortium/commons) branch to use during the image creation. Default to master branch if not set or null.
-- `HOST_UID`: the user id on the host machine to be mapped to the container. Default to 1000 if not set or null.
-- `HOST_GID`: the user's group id on the host machine to be mapped to the container. Default to 1000 if not set or null.
-
-We can set and verify the environment variable like below:
-
-````
-export COMMONS_BRANCH=devel
-echo $COMMONS_BRANCH
-````
-
-Note: Environment variables set like this are only stored temporally. When you exit the running instance of bash by exiting the terminal, they get discarded. So for rebuilding the docker image, we'll need to make sure to set the environment variables again if necessary.
-
-````
-Usage: ./search-api-docker.sh [localhost|dev|test|stage|prod] [check|config|build|start|stop|down]
-````
-
-Before we go ahead to start building the docker image, we can do a check to see if the required configuration file is in place:
-
-````
-cd docker
-./search-api-docker.sh dev check
-````
-
-We can also validate and view the details of corresponding compose file:
-
-````
-./search-api-docker.sh dev config
-````
-
-Building the docker images and starting/stopping the contianers require to use docker daemon, you'll probably need to use `sudo` in the following steps. If you don’t want to preface the docker command with sudo, add users to the docker group:
-
-````
-sudo usermod -aG docker $USER
-````
-
-Then log out and log back in so that your group membership is re-evaluated. If testing on a virtual machine, it may be necessary to restart the virtual machine for changes to take effect.
-
-To build the docker image of search-api:
-
-````
-./search-api-docker.sh dev build
-````
-
-To start up the search-api container:
-
-````
-./search-api-docker.sh dev start
-````
-
-And stop the running container by:
-
-````
-./search-api-docker.sh dev stop
-````
-
-You can also stop the running container and remove it by:
-
-````
-./search-api-docker.sh dev down
-````
-
 ### Configuring a Single or Multiple Indices
 
 All configuration options reside within the **src/instance/search-config.yaml** file which will allow you to specify configuration options for each index, that will be available via the **search-api**. This file will support any number of index configurations.  
@@ -306,7 +232,44 @@ If you have multiple indices you need to specify which of these is the default. 
 **mappings: [file]** - used to specify a file which contains index settings or mappings (i.e., mapping.total_fields.limit: 5000) specific to Elasticsearch. see [index settings](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-update-settings.html).  Also, the default settings are located in **elasticsearch/search-default-config.yaml**.  This file is used during the index creation process before data is ingested by the indexer.
 
 
-### Updating API Documentation
+## Docker build for local/DEV development
+
+There are a few configurable environment variables to keep in mind:
+
+- `COMMONS_BRANCH`: build argument only to be used during image creation when we need to use a branch of commons from github rather than the published PyPI package. Default to master branch if not set or null.
+- `HOST_UID`: the user id on the host machine to be mapped to the container. Default to 1000 if not set or null.
+- `HOST_GID`: the user's group id on the host machine to be mapped to the container. Default to 1000 if not set or null.
+
+We can set and verify the environment variable like below:
+
+````
+export COMMONS_BRANCH=master
+echo $COMMONS_BRANCH
+````
+
+Note: Environment variables set like this are only stored temporally. When you exit the running instance of bash by exiting the terminal, they get discarded. So for rebuilding the docker image, we'll need to make sure to set the environment variables again if necessary.
+
+```
+cd docker
+./docker-development.sh [check|config|build|start|stop|down]
+```
+
+## Docker deployment for TEST/STAGE/PROD
+
+On TEST/STAGE/PROD environments, we use the same published docker image from DockerHub for deployment rather than building a new image.
+
+```
+cd docker
+./docker-deployment.sh [start|stop|down]
+```
+
+For the Release candicate (RC) instance use a separate script:
+
+```
+./docker-rc.sh [start|stop|down]
+```
+
+## Updating API Documentation
 
 The documentation for the API calls is hosted on SmartAPI.  Modifying the `search-api-spec.yaml` file and commititng the changes to github should update the API shown on SmartAPI. SmartAPI allows users to register API documents. The documentation is associated with this github account: api-developers@hubmapconsortium.org.
 

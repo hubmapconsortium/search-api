@@ -1,0 +1,32 @@
+settings:
+  index:
+    mapping.total_fields.limit: 3500
+    query.default_field: 2048
+
+mappings:
+  date_detection: False
+  dynamic_templates:
+    - transposition_kit_number:
+        path_match: "*.transposition_kit_number"
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            keyword:
+              type: keyword
+    - # Handle all numeric types as float to avoid cast errors
+      map_every_numeric:
+        match_mapping_type: long
+        mapping:
+          type: float
+    - map_every_string:
+        match_mapping_type: string
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            # This emulates the default ES behavior,
+            # giving us a "keyword" subfield,
+            # with a "keyword" type.
+            keyword:
+              type: keyword

@@ -3,14 +3,16 @@ version: "3.7"
 # Will use the hostname when talking between services on the same network
 services:
   
-  search-api:
-    hostname: search-api
-    container_name: search-api
-    # Map host machine port 4444 to container port 8080
+  search-api-rc:
+    # Use the published image and tag from DockerHub
+    image: hubmap/search-api:${SEARCH_API_RC_VERSION:?err}
+    hostname: search-api-rc
+    container_name: search-api-rc
+    # Map host machine port 4343 to container port 8080
     # Only root can listen on ports below 1024, we use higher-numbered ports
     # since nginx is running under non-root user hubmap
     ports:
-      - "4444:8080"
+      - "4343:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080"]
       interval: 1m30s

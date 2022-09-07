@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   description: The HuBMAP Search API is a thin wrapper of the Elasticsearch API. It handles data indexing and reindexing into the backend Elasticsearch. It also accepts the search query and passes through to the Elasticsearch with data access security check.
-  version: 2.2.0
+  version: 3.0.1
   title: HuBMAP Search API
   termsOfService: 'https://hubmapconsortium.org'
   contact:
@@ -11,7 +11,7 @@ info:
     name: MIT License
     url: 'https://github.com/hubmapconsortium/entity-api/blob/master/license.txt'
 servers:
-  - url: "https://search.api.hubmapconsortium.org"
+  - url: "https://search.api.hubmapconsortium.org/v3/"
 components:
   schemas:
     requestJsonBody:
@@ -42,7 +42,7 @@ tags:
 
 externalDocs:
   description: Elasticsearch API Documentation
-  url: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html
+  url: https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html
       
 paths:
 
@@ -180,7 +180,7 @@ paths:
       tags:
         - search
       summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.   
-      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search) rules.
+      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html#run-request-body-search) rules.
       operationId: search-post
       requestBody:
         description: Request JSON of Elasticsearch query
@@ -224,7 +224,7 @@ paths:
       tags:
         - search_by_index
       summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.  This call contraints the results to the specified index_name parameter.  Other than that, this call is identical to the /search method.    
-      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html#run-request-body-search) rules.
+      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html#run-request-body-search) rules.
       operationId: search-post-by-index
       parameters:
         - name: index_name

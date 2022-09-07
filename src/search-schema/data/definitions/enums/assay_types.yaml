@@ -49,6 +49,14 @@ CODEX:
     contains-pii: false
     vitessce-hints: []
 
+# interim solution to handle variant CODEX with new directory schema
+CODEX2:
+    description: CODEX (CODEX2 assay type)
+    alt-names: []
+    primary: true
+    contains-pii: false
+    vitessce-hints: []
+
 codex_cytokit_v1:
     description: CODEX [Cytokit + SPRM]
     alt-names: []
@@ -478,28 +486,28 @@ MS:
 
 LC-MS_bottom_up:
     description: 'LC-MS Bottom Up'
-    alt-names: []
+    alt-names: ['LC-MS Bottom-Up']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
 MS_bottom_up:
     description: 'MS Bottom Up'
-    alt-names: []
+    alt-names: ['MS Bottom-Up']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
 LC-MS_top_down:
     description: 'LC-MS Top Down'
-    alt-names: []
+    alt-names: ['LC-MS Top-Down']
     primary: true
     contains-pii: false
     vitessce-hints: []
 
 MS_top_down:
     description: 'MS Top Down'
-    alt-names: []
+    alt-names: ['MS Top-Down']
     primary: true
     contains-pii: false
     vitessce-hints: []

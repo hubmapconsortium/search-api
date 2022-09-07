@@ -16,12 +16,11 @@ from urllib3.exceptions import InsecureRequestWarning
 from globus_sdk import AccessTokenAuthorizer, AuthClient
 import importlib
 
-# For reusing the app.cfg configuration when running indexer.py as script
+# For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
 
 # Local modules
 from libs.es_writer import ESWriter
-#from elasticsearch.addl_index_transformations.portal import transform
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
@@ -37,6 +36,9 @@ requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
+app = Flask(__name__, instance_path=os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'instance')),
+            instance_relative_config=True)
+app.config.from_pyfile('app.cfg')
 
 class Indexer:
     # Class variables/constants
@@ -63,7 +65,7 @@ class Indexer:
         except Exception:
             raise ValueError("Invalid indices config")
 
-        self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
+        self.elasticsearch_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['hubmap_translation']['url'].strip('/')
 
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
@@ -106,7 +108,7 @@ class Indexer:
             self.DEFAULT_INDEX_WITHOUT_PREFIX = self.INDICES['default_index']
 
             # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
-            DEFAULT_ELASTICSEARCH_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['elasticsearch']['url'].strip('/')
+            DEFAULT_ELASTICSEARCH_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['hubmap_translation']['url'].strip('/')
             DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
 
             # Delete and recreate target indices
@@ -128,7 +130,7 @@ class Indexer:
                 print('*********************************************')                
 
                 # get the specific mapping file for the designated index
-                index_mapping_file = self.INDICES['indices'][index]['elasticsearch']['mappings']
+                index_mapping_file = self.INDICES['indices'][index]['hubmap_translation']['mappings']
 
                 # read the elasticserach specific mappings 
                 index_mapping_settings = safe_load((Path(__file__).absolute().parent / index_mapping_file).read_text())
@@ -461,13 +463,13 @@ class Indexer:
 
 
     def get_organ_description(self, organ_code):
-        definition_yaml_file = Path(__file__).absolute().parent.parent / 'search-schema/data/definitions/enums/organ_types.yaml'
+        definition_yaml_file = Path(__file__).absolute().parent / 'search-schema/data/definitions/enums/organ_types.yaml'
         
         return self.load_definition_code_description(organ_code, definition_yaml_file)
 
 
     def get_tissue_sample_description(self, tissue_sample_code):
-        definition_yaml_file = Path(__file__).absolute().parent.parent / 'search-schema/data/definitions/enums/tissue_sample_types.yaml'
+        definition_yaml_file = Path(__file__).absolute().parent / 'search-schema/data/definitions/enums/tissue_sample_types.yaml'
 
         return self.load_definition_code_description(tissue_sample_code, definition_yaml_file)
 
@@ -795,7 +797,7 @@ class Indexer:
 
             # Handle Upload differently by only updating it in the hm_consortium_entities index
             if node['entity_type'] == 'Upload':
-                target_index = 'hm_consortium_entities'
+                target_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
                 # Delete old doc and write with new one
                 self.eswriter.delete_document(target_index, node['uuid'])
@@ -961,7 +963,7 @@ class Indexer:
 
 
 ####################################################################################################
-## Run indexer.py as script
+## Run indexer_base.py as script
 ####################################################################################################
 
 # To be used by the full index to ensure the nexus token 
@@ -975,12 +977,12 @@ def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
     return False
 
 
-# Running indexer.py as a script in command line
+# Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
-    app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance'), instance_relative_config=True)
+    app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../instance'), instance_relative_config=True)
     app.config.from_pyfile('app.cfg')
 
     INDICES = safe_load((Path(__file__).absolute().parent / '../instance/search-config.yaml').read_text())

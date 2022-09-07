@@ -149,6 +149,12 @@
     },
     "contributors": {
       "es_name": "contributors"
+    },
+    "tissue_type": {
+      "es_name": "tissue_type"
+    },
+    "dbgap_url": {
+      "es_name": "dbgap_url"
     }
   }
 }
