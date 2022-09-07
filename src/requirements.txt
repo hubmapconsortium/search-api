@@ -11,3 +11,5 @@ PyYAML==5.4.1
 # Default is master branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
 hubmap-commons==2.0.15
+
+-r src/search-adaptor/src/requirements.txt
