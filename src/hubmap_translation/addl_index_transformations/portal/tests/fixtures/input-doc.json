@@ -28,6 +28,7 @@
         "metadata": {
             "_random_stuff_that_should_not_be_ui": true,
             "unrealistic": "Donors do not have metadata/metadata."
-        }
+        },
+        "dag_provenance_list": []
     }
 }
