@@ -9,5 +9,5 @@ PyYAML==5.4.1
 # Use the published package from PyPI as default
 # Use the branch name of commons from github for testing new changes made in commons from different branch
 # Default is master branch specified in search-api's docker-compose.development.yml if not set
-# git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
-hubmap-commons==2.0.15
+git+https://github.com/hubmapconsortium/commons.git@shirey/refactor-mult-apps#egg=hubmap-commons
+#hubmap-commons==2.0.15
