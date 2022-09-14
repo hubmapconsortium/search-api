@@ -4,8 +4,6 @@ from copy import deepcopy
 import logging
 from json import dumps
 import datetime
-import subprocess
-from tempfile import TemporaryDirectory
 
 from yaml import safe_load as load_yaml
 import jsonschema
@@ -101,9 +99,10 @@ def transform(doc, batch_id='unspecified'):
     ...            'should_be_float': '123.456',
     ...            'keep_this_field': 'Yes!',
     ...            'is_boolean': '1'
-    ...        }
+    ...        },
+    ...        'dag_provenance_list': [],
     ...    },
-    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}'
+    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
     ... })
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
@@ -140,7 +139,8 @@ def transform(doc, batch_id='unspecified'):
      'mapped_external_group_name': 'Outside HuBMAP',
      'mapped_metadata': {},
      'mapped_status': 'New',
-     'metadata': {'metadata': {'cell_barcode_size': '123',
+     'metadata': {'dag_provenance_list': [],
+                  'metadata': {'cell_barcode_size': '123',
                                'is_boolean': 'TRUE',
                                'keep_this_field': 'Yes!',
                                'should_be_float': 123.456,
@@ -148,7 +148,8 @@ def transform(doc, batch_id='unspecified'):
      'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
-     'status': 'New'}
+     'status': 'New',
+     'visualization': True}
 
     '''
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
@@ -174,9 +175,6 @@ def transform(doc, batch_id='unspecified'):
     })
     logging.info(f'End: {id_for_log}')
     return doc_copy
-
-
-_data_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data'
 
 
 def _clean(doc):
@@ -284,50 +282,41 @@ def _simple_clean(doc):
 
 
 def _get_schema(doc):
-    with TemporaryDirectory() as td:
-        # Regenerating schemas with every validation is wasteful.
-        # Chuck would strongly prefer that this be cached.
-        script_path = _data_dir.parent / 'generate-schemas.sh'
-        subprocess.run([script_path, td], check=True)
-        entity_type = doc['entity_type'].lower()
-        schema_path = Path(td) / f'{entity_type}.schema.yaml'
-        schema = load_yaml(schema_path.read_text())
-    return schema
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+            "uuid": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+            }
+        },
+        "required": ["uuid"]
+    }
 
 
 def _add_validation_errors(doc):
     '''
     >>> from pprint import pprint
 
-    >>> doc = {'entity_type': 'JUST WRONG'}
-    >>> try:
-    ...     _add_validation_errors(doc)
-    ... except FileNotFoundError as e:
-    ...     assert 'just wrong.schema.yaml' in str(e)
-
-    >>> doc = {'entity_type': 'dataset'}
+    >>> doc = {}
     >>> _add_validation_errors(doc)
-    >>> pprint(doc['mapper_metadata']['validation_errors'][0])
-    {'absolute_path': '/entity_type',
-     'absolute_schema_path': '/properties/entity_type/enum',
-     'message': "'dataset' is not one of ['Collection', 'Dataset', 'Donor', "
-                "'Sample']"}
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    [{'absolute_path': '/',
+      'absolute_schema_path': '/required',
+      'message': "'uuid' is a required property"}]
 
     >>> doc = {
-    ...    'entity_type': 'Donor',
-    ...    'create_timestamp': 'FAKE',
-    ...    'created_by_user_displayname': 'FAKE',
-    ...    'created_by_user_email': 'FAKE',
-    ...    'data_access_level': 'public',
-    ...    'group_name': 'FAKE',
-    ...    'group_uuid': 'FAKE',
-    ...    'last_modified_timestamp': 'FAKE',
-    ...    'uuid': 'FAKE',
-    ...    'access_group': 'FAKE',
-    ...    'ancestor_ids': 'FAKE',
-    ...    'ancestors': 'FAKE',
-    ...    'descendant_ids': 'FAKE',
-    ...    'descendants': 'FAKE'
+    ...    'uuid': 'not-uuid',
+    ... }
+    >>> _add_validation_errors(doc)
+    >>> pprint(doc['mapper_metadata']['validation_errors'])
+    [{'absolute_path': '/uuid',
+      'absolute_schema_path': '/properties/uuid/pattern',
+      'message': "'not-uuid' does not match '^[0-9a-f]{32}$'"}]
+
+    >>> doc = {
+    ...    'uuid': '0123456789abcdef0123456789abcdef',
     ... }
     >>> _add_validation_errors(doc)
     >>> pprint(doc['mapper_metadata']['validation_errors'])
@@ -335,9 +324,6 @@ def _add_validation_errors(doc):
 
     '''
     schema = _get_schema(doc)
-    if not schema.keys():
-        doc['mapper_metadata'] = {'validation_errors': ["Can't load schema"]}
-        return
     validator = jsonschema.Draft7Validator(schema)
     errors = [
         {

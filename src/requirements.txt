@@ -3,11 +3,15 @@ urllib3==1.26.5
 jsonschema==3.2.0
 
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
-requests==2.25.1
+requests==2.27.1
 PyYAML==5.4.1
+
+git+https://github.com/hubmapconsortium/portal-visualization.git@0.0.6#egg=portal-visualization
 
 # Use the published package from PyPI as default
 # Use the branch name of commons from github for testing new changes made in commons from different branch
 # Default is master branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
 hubmap-commons==2.0.15
+
+-r search-adaptor/src/requirements.txt

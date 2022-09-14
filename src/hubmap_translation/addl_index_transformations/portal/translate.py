@@ -6,6 +6,8 @@ from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
+from portal_visualization.builder_factory import has_visualization
+
 # Ignore PEP8 "E402 module level import not at top of file" with using the
 # inline comment "# noqa: E402"
 sys.path.append("search-adaptor/src")
@@ -21,6 +23,7 @@ def _unexpected(s):
 
 
 def translate(doc):
+    _add_has_visualization(doc)
     _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
@@ -54,6 +57,18 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
+
+
+def _add_has_visualization(doc):
+    '''
+    Actually building the whole viewconf at index-time would be too rigid,
+    but if we add a flag to indicate whether there is a visualization,
+    then the UI can reserve screen space at render-time, and get the actual
+    viewconf with a callback. Being able to search for datasets with
+    visualizations is also useful.
+    '''
+    if doc['entity_type'] == 'dataset':
+        doc['visualization'] = has_visualization(doc, lambda name: AssayType(name))
 
 
 def _add_metadata_metadata_placeholder(doc):
