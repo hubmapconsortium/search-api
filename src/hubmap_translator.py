@@ -926,7 +926,7 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    if not auth_helper.has_data_admin_prvis(token):
+    if not auth_helper.has_data_admin_privs(token):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message
         logger.exception(msg)
