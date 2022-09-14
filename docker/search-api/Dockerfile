@@ -40,7 +40,7 @@ RUN yum install -y yum-utils && \
     rm /etc/nginx/conf.d/default.conf && \
     mv nginx/nginx.conf /etc/nginx/nginx.conf && \
     rm -rf nginx && \
-    pip install --upgrade pip -r src/search-adaptor/src/requirements.txt -r src/requirements.txt && \
+    pip install -r src/requirements.txt && \
     chmod +x start.sh && \
     yum clean all
 
