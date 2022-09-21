@@ -644,18 +644,19 @@ class Translator(TranslatorInterface):
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Add new properties
                 entity['donor'] = donor
-
-                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
-                        entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
-                                                                       entity['organ'].strip() != '') else None
+                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+                entity['origin_samples'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (
-                                a['specimen_type'].lower() == 'organ') and ('organ' in a) and (
-                                                                         a['organ'].strip() != '')))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+                if entity['origin_samples'] is None:
+                    entity['origin_samples'] = []
+                    for each in ancestors:
+                        if ('specimen_type' in each) and (each['specimen_type'].lower() == 'organ') and ('organ' in each) and (each['organ'].strip() != ''):
+                            entity['origin_samples'].append(each)
 
                 # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                 self.exclude_added_top_level_properties(entity['origin_sample'])
