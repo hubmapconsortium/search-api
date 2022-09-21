@@ -2,7 +2,7 @@ import importlib
 import os
 import sys
 from pathlib import Path
-
+import libs.hubmap_endpoints
 from flask import Flask
 from yaml import safe_load
 
@@ -27,10 +27,11 @@ config['APP_CLIENT_SECRET'] = app.config['APP_CLIENT_SECRET']
 translator_module = importlib.import_module("hubmap_translator")
 
 sys.path.append("libs")
-assay_type_module = importlib.import_module("assay_type", "libs")
+
+hubmap_blueprint = libs.hubmap_endpoints.hubmap_blueprint
 
 # This `app` will be imported by wsgi.py when deployed with uWSGI server
-app = search_adaptor_module.SearchAPI(config, translator_module, assay_type_module).app
+app = search_adaptor_module.SearchAPI(config, translator_module, hubmap_blueprint).app
 
 # For local standalone (non-docker) development/testing
 if __name__ == "__main__":
