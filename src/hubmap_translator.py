@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import time
+from hubmap_sdk import EntitySdk
 from yaml import safe_load
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
@@ -31,6 +32,8 @@ entity_properties_list = [
     'donor',
     'origin_sample',
     'source_sample',
+    'origin_samples',
+    'source_samples',
     'ancestor_ids',
     'descendant_ids',
     'ancestors',
@@ -660,10 +663,11 @@ class Translator(TranslatorInterface):
 
                 # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                 self.exclude_added_top_level_properties(entity['origin_sample'])
-
+                self.exclude_added_top_level_properties(entity['origin_samples'])
                 # Trying to understand here!!!
                 if entity['entity_type'] == 'Dataset':
                     entity['source_sample'] = None
+                    entity['source_samples'] = None
 
                     e = entity
 
@@ -671,17 +675,30 @@ class Translator(TranslatorInterface):
                         parents = self.call_entity_api(e['uuid'], 'parents')
 
                         try:
-                            # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                # entity['source_sample'] = parents[0]
                                 entity['source_sample'] = parents
 
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
 
+                    e = entity
+                    entity_sdk_instance = EntitySdk(token=self.token, service_url=self.entity_api_url)
+                    while entity['source_samples'] is None:
+                        parents_resp = entity_sdk_instance.get_parents(e['uuid'])
+                        parents_resp_list = []
+                        for each in parents_resp:
+                            parents_resp_list.append(vars(each))
+                        parents = self.prepare_dataset(parents_resp_list)
+                        try:
+                            if parents[0]['entity_type'] == 'Sample':
+                                entity['source_samples'] = parents
+                            e = parents[0]
+                        except IndexError:
+                            entity['source_samples'] = []
                     # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                     self.exclude_added_top_level_properties(entity['source_sample'])
+                    self.exclude_added_top_level_properties(entity['source_samples'])
 
             self.entity_keys_rename(entity)
 
@@ -705,6 +722,12 @@ class Translator(TranslatorInterface):
                 self.entity_keys_rename(entity['origin_sample'])
             if entity.get('source_sample', None):
                 for s in entity.get('source_sample', None):
+                    self.entity_keys_rename(s)
+            if entity.get('origin_samples', None):
+                for o in entity.get('origin_samples', None):
+                    self.entity_keys_rename(o)
+            if entity.get('source_samples', None):
+                for s in entity.get('source_samples', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
