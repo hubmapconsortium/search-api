@@ -1,6 +1,5 @@
 from flask import Blueprint, request, Response, abort, jsonify
-import src.libs.assay_type as assay_type_module
-from opensearch_helper_functions import *
+import libs.assay_type as assay_type_module
 
 hubmap_blueprint = Blueprint('hubmap_blueprint', __name__)
 
