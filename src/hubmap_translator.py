@@ -7,7 +7,6 @@ import os
 import re
 import sys
 import time
-from hubmap_sdk import EntitySdk
 from yaml import safe_load
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
@@ -683,13 +682,10 @@ class Translator(TranslatorInterface):
                             entity['source_sample'] = {}
 
                     e = entity
-                    entity_sdk_instance = EntitySdk(token=self.token, service_url=self.entity_api_url)
+
                     while entity['source_samples'] is None:
-                        parents_resp = entity_sdk_instance.get_parents(e['uuid'])
-                        parents_resp_list = []
-                        for each in parents_resp:
-                            parents_resp_list.append(vars(each))
-                        parents = self.prepare_dataset(parents_resp_list)
+                        parents = self.call_entity_api(e['uuid'], 'parents')
+
                         try:
                             if parents[0]['entity_type'] == 'Sample':
                                 entity['source_samples'] = parents
