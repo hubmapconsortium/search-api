@@ -2,11 +2,12 @@ import importlib
 import os
 import sys
 from pathlib import Path
-import libs.hubmap_endpoints
 from flask import Flask
 from yaml import safe_load
 
 sys.path.append("search-adaptor/src")
+from opensearch_helper_functions import *
+import libs.hubmap_endpoints
 search_adaptor_module = importlib.import_module("app", "search-adaptor/src")
 
 config = {}
