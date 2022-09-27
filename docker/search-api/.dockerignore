@@ -9,3 +9,6 @@ nginx/conf.d
 
 # Ignore the flask instance folder
 src/instance
+
+# Ignore search-schema from the submodule
+src/search-adaptor/src/search-schema
