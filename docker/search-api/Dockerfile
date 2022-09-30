@@ -31,7 +31,7 @@ module_hotfixes=true\n'\
 # 4 - Remove the default nginx config file
 # 5 - Overwrite the nginx.conf with ours to run nginx as non-root
 # 6 - Remove the nginx directory copied from host machine (nginx/conf.d gets mounted to the container)
-# 7 - Install app dependencies for both search-adaptor submodule and search-api with pip (pip3 also works)
+# 7 - Upgrade pip (the one installed in base image may be old) and install flask app dependencies (pip3 also works)
 # 8 - Make the start script executable
 # 9 - Clean all yum cache
 RUN yum install -y yum-utils && \

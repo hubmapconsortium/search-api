@@ -2,11 +2,12 @@ import importlib
 import os
 import sys
 from pathlib import Path
-
 from flask import Flask
 from yaml import safe_load
 
 sys.path.append("search-adaptor/src")
+from opensearch_helper_functions import *
+import libs.hubmap_endpoints
 search_adaptor_module = importlib.import_module("app", "search-adaptor/src")
 
 config = {}
@@ -21,22 +22,17 @@ config['DEFAULT_INDEX_WITHOUT_PREFIX'] = config['INDICES']['default_index']
 # Remove trailing slash / from URL base to avoid "//" caused by config with trailing slash
 config['DEFAULT_ELASTICSEARCH_URL'] = config['INDICES']['indices'][config['DEFAULT_INDEX_WITHOUT_PREFIX']]['elasticsearch']['url'].strip('/')
 config['DEFAULT_ENTITY_API_URL'] = config['INDICES']['indices'][config['DEFAULT_INDEX_WITHOUT_PREFIX']]['document_source_endpoint'].strip('/')
-
-config['GLOBUS_HUBMAP_READ_GROUP_UUID'] = app.config['GLOBUS_HUBMAP_READ_GROUP_UUID']
-config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID'] = app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']
-config['SECURE_GROUP'] = app.config['SECURE_GROUP']
-config['GROUP_ID'] = 'group_membership_ids'
-
 config['APP_CLIENT_ID'] = app.config['APP_CLIENT_ID']
 config['APP_CLIENT_SECRET'] = app.config['APP_CLIENT_SECRET']
 
 translator_module = importlib.import_module("hubmap_translator")
 
 sys.path.append("libs")
-assay_type_module = importlib.import_module("assay_type", "libs")
+
+hubmap_blueprint = libs.hubmap_endpoints.hubmap_blueprint
 
 # This `app` will be imported by wsgi.py when deployed with uWSGI server
-app = search_adaptor_module.SearchAPI(config, translator_module, assay_type_module).app
+app = search_adaptor_module.SearchAPI(config, translator_module, hubmap_blueprint).app
 
 # For local standalone (non-docker) development/testing
 if __name__ == "__main__":

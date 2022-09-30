@@ -24,7 +24,6 @@ from libs.es_writer import ESWriter
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
-from hubmap_commons import globus_groups
 
 # Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
 requests.packages.urllib3.disable_warnings(category = InsecureRequestWarning)
@@ -71,7 +70,6 @@ class Indexer:
         self.app_client_secret = app_client_secret
         self.token = token
 
-        auth_helper = self.init_auth_helper()
         self.request_headers = self.create_request_headers_for_auth(token)
 
         self.eswriter = ESWriter(self.elasticsearch_url)
@@ -634,7 +632,8 @@ class Indexer:
                 group_uuid = entity['group_uuid']
 
                 # Get the globus groups info based on the groups json file in commons package
-                globus_groups_info = globus_groups.get_globus_groups_info()
+                auth_helper = self.init_auth_helper()
+                globus_groups_info = auth_helper.get_globus_groups_info()
                 groups_by_id_dict = globus_groups_info['by_id']
                 group_dict = groups_by_id_dict[group_uuid]
 
@@ -966,17 +965,6 @@ class Indexer:
 ## Run indexer_base.py as script
 ####################################################################################################
 
-# To be used by the full index to ensure the nexus token 
-# belongs to HuBMAP-Data-Admin group
-def user_belongs_to_data_admin_group(user_group_ids, data_admin_group_uuid):
-    for group_id in user_group_ids:
-        if group_id == data_admin_group_uuid:
-            return True
-
-    # By now, no match
-    return False
-
-
 # Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
@@ -1017,7 +1005,7 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
+    if not auth_helper.has_data_admin_prvis(token):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message
         logger.exception(msg)

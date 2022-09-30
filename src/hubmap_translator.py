@@ -13,7 +13,6 @@ from yaml import safe_load
 from flask import Flask, Response
 
 # HuBMAP commons
-from hubmap_commons import globus_groups
 from hubmap_commons.hm_auth import AuthHelper
 
 sys.path.append("search-adaptor/src")
@@ -77,12 +76,8 @@ class Translator(TranslatorInterface):
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
         self.token = token
-
-        auth_helper = self.init_auth_helper()
         self.request_headers = self.create_request_headers_for_auth(token)
-
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
 
@@ -690,7 +685,8 @@ class Translator(TranslatorInterface):
                 group_uuid = entity['group_uuid']
 
                 # Get the globus groups info based on the groups json file in commons package
-                globus_groups_info = globus_groups.get_globus_groups_info()
+                auth_helper_instance = self.init_auth_helper()
+                globus_groups_info = auth_helper_instance.get_globus_groups_info()
                 groups_by_id_dict = globus_groups_info['by_id']
                 group_dict = groups_by_id_dict[group_uuid]
 
@@ -930,8 +926,7 @@ if __name__ == "__main__":
     group_ids = user_info_dict['group_membership_ids']
 
     # Ensure the user belongs to the HuBMAP-Data-Admin group
-    # TODO: Need to generalize this once HuBMAP authorization is updated
-    if not user_belongs_to_data_admin_group(group_ids, app.config['GLOBUS_HUBMAP_DATA_ADMIN_GROUP_UUID']):
+    if not auth_helper.has_data_admin_privs(token):
         msg = "The given token doesn't belong to the HuBMAP-Data-Admin group, access not granted"
         # Log the full stack trace, prepend a line with our message
         logger.exception(msg)
