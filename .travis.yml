@@ -9,9 +9,12 @@ services:
   - elasticsearch
 before_script:
   - sleep 10  # Advised by https://docs.travis-ci.com/user/database-setup/#elasticsearch
-# Will delete build from commons branch and use the PyPI release later
-env:
-  - COMMONS_BRANCH=main
+
+# Uncomment when test against a commons github branch
+# also need to enable the branch github install in requirements.txt
+# env:
+#   - COMMONS_BRANCH=main
+
 install:
   - pip install -r src/requirements.txt
   - pip install -r src/requirements-dev.txt
