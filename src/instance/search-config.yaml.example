@@ -41,3 +41,11 @@ indices:
     private: hm_antibodies
     elasticsearch:
       url: <ES URL>
+
+  hm_files:
+    active: true
+    reindex_enabled: false
+    public: hm_files
+    elasticsearch:
+      url: <ES URL>
+      mappings: "hubmap_translation/search-default-config.yaml"

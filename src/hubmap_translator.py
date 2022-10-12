@@ -217,27 +217,33 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+    def update(self, entity_id, document, index=None):
+        if index is not None:
+            self.indexer.index(entity_id, json.dumps(document), index, True)
+        else:
+            for index in self.indices.keys():
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
-    def update(self, entity_id, document):
-        for index in self.indices.keys():
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
+                if self.is_public(document):
+                    self.indexer.index(entity_id, json.dumps(document), public_index, True)
 
-            if self.is_public(document):
-                self.indexer.index(entity_id, json.dumps(document), public_index, True)
+                self.indexer.index(entity_id, json.dumps(document), private_index, True)
+        return "Updated document successfully"
 
-            self.indexer.index(entity_id, json.dumps(document), private_index, True)
+    def add(self, entity_id, document, index=None):
+        if index is not None:
+            self.indexer.index(entity_id, json.dumps(document), index, False)
+        else:
+            for index in self.indices.keys():
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
+                if self.is_public(document):
+                    self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
-    def add(self, entity_id, document):
-        for index in self.indices.keys():
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
-
-            if self.is_public(document):
-                self.indexer.index(entity_id, json.dumps(document), public_index, False)
-
-            self.indexer.index(entity_id, json.dumps(document), private_index, False)
+                self.indexer.index(entity_id, json.dumps(document), private_index, False)
+        return "Added document successfully"
 
 
     # Collection doesn't actually have this `data_access_level` property
@@ -624,7 +630,7 @@ class Translator(TranslatorInterface):
                     # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and 
                     # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
                     immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
-                
+
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
                 entity['descendants'] = descendants
@@ -788,7 +794,7 @@ class Translator(TranslatorInterface):
                         if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
                             del dataset_dict['ingest_metadata']['metadata'][key]
                             logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
-            
+
         return dataset_dict
 
 
