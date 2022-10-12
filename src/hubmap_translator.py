@@ -219,31 +219,31 @@ class Translator(TranslatorInterface):
 
     def update(self, entity_id, document, index=None):
         if index is not None:
-            self.indexer.index(entity_id, json.dumps(document), index, True)
+            response = self.indexer.index(entity_id, json.dumps(document), index, True)
         else:
             for index in self.indices.keys():
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
 
                 if self.is_public(document):
-                    self.indexer.index(entity_id, json.dumps(document), public_index, True)
+                    response = self.indexer.index(entity_id, json.dumps(document), public_index, True)
 
-                self.indexer.index(entity_id, json.dumps(document), private_index, True)
-        return "Updated document successfully"
+                response += self.indexer.index(entity_id, json.dumps(document), private_index, True)
+        return response
 
     def add(self, entity_id, document, index=None):
         if index is not None:
-            self.indexer.index(entity_id, json.dumps(document), index, False)
+            response = self.indexer.index(entity_id, json.dumps(document), index, False)
         else:
             for index in self.indices.keys():
                 public_index = self.INDICES['indices'][index]['public']
                 private_index = self.INDICES['indices'][index]['private']
 
                 if self.is_public(document):
-                    self.indexer.index(entity_id, json.dumps(document), public_index, False)
+                    response = self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
-                self.indexer.index(entity_id, json.dumps(document), private_index, False)
-        return "Added document successfully"
+                response += self.indexer.index(entity_id, json.dumps(document), private_index, False)
+        return response
 
 
     # Collection doesn't actually have this `data_access_level` property
