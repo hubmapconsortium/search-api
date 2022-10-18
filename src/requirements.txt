@@ -11,7 +11,7 @@ git+https://github.com/hubmapconsortium/portal-visualization.git@0.0.6#egg=porta
 # Use the branch name of commons from github for testing new changes made in commons from different branch
 # Default is main branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
-hubmap-commons==2.1.0
+hubmap-commons==2.1.1
 
 # The use of `-r` lets us specify the transitive requirements in one place
 -r search-adaptor/src/requirements.txt
