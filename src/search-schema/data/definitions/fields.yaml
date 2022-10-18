@@ -186,6 +186,15 @@ origin_sample:
   - dataset
   enum: null
   required: Depends on entity type
+origin_samples:
+  description: The tissue samples directly below Donor (should usually be an organ)
+    at the top of the provenance chain for the Entity. This conntains, in JSON,
+    the full Entity information for the Sample.
+  entity_types:
+  - sample
+  - dataset
+  enum: null
+  required: Depends on entity type
 portal_metadata_upload_files:
   description: An array of information about metadata files uploaded via the Tissue
     Registration UI
@@ -220,6 +229,13 @@ rui_location:
   required: false
 source_sample:
   description: The tissue sample or samples that the data was directly derived from.  This
+    contains, in JSON, the full Entity information for the Sample.
+  entity_types:
+  - dataset
+  enum: null
+  required: Depends on entity type
+source_samples:
+  description: The tissue samples or samples that the data was directly derived from.  This
     contains, in JSON, the full Entity information for the Sample.
   entity_types:
   - dataset
