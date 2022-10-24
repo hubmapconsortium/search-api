@@ -466,9 +466,15 @@ class Translator(TranslatorInterface):
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
     def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
-        for prop in entity_properties_list:
-            if (prop in entity_dict) and (prop not in except_properties_list):
-                 entity_dict.pop(prop)
+        if isinstance(entity_dict, dict):
+            for prop in entity_properties_list:
+                if (prop in entity_dict) and (prop not in except_properties_list):
+                     entity_dict.pop(prop)
+        elif isinstance(entity_dict, list):
+            for prop in entity_properties_list:
+                for item in entity_dict:
+                    if (prop in item) and (prop not in except_properties_list):
+                        item.pop(prop)
 
 
     # Used for Upload and Collection index
