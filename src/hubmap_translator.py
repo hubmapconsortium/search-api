@@ -465,16 +465,18 @@ class Translator(TranslatorInterface):
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
-    def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
-        if isinstance(entity_dict, dict):
+    def exclude_added_top_level_properties(self, entity_data, except_properties_list = []):
+        if isinstance(entity_data, dict):
             for prop in entity_properties_list:
-                if (prop in entity_dict) and (prop not in except_properties_list):
-                     entity_dict.pop(prop)
-        elif isinstance(entity_dict, list):
+                if (prop in entity_data) and (prop not in except_properties_list):
+                     entity_data.pop(prop)
+        elif isinstance(entity_data, list):
             for prop in entity_properties_list:
-                for item in entity_dict:
-                    if (prop in item) and (prop not in except_properties_list):
+                for item in entity_data:
+                    if isinstance(item, dict) and (prop in item) and (prop not in except_properties_list):
                         item.pop(prop)
+        else:
+            logger.debug(f'The input entity_data type: {type(entity_data)}. Only dict and list are supported.')
 
 
     # Used for Upload and Collection index
