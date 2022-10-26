@@ -655,7 +655,7 @@ class Translator(TranslatorInterface):
                 # origin_sample field will be dropped once 
                 # we migrate to use the new origin_samples field
                 entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
-                
+
                 # entity['origin_sample'] is a dict if not None
                 if entity['origin_sample'] is None:
                     try:
@@ -666,6 +666,8 @@ class Translator(TranslatorInterface):
                 
                 # entity['origin_samples'] is a list
                 entity['origin_samples'] = []
+                if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
+                    entity['origin_samples'].append(copy.copy(entity))
                 for ancestor in ancestors:
                     if ('specimen_type' in ancestor) and (ancestor['specimen_type'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
                         entity['origin_samples'].append(ancestor)
