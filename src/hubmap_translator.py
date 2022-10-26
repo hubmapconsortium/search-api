@@ -668,9 +668,10 @@ class Translator(TranslatorInterface):
                 entity['origin_samples'] = []
                 if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
                     entity['origin_samples'].append(copy.copy(entity))
-                for ancestor in ancestors:
-                    if ('specimen_type' in ancestor) and (ancestor['specimen_type'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
-                        entity['origin_samples'].append(ancestor)
+                else:
+                    for ancestor in ancestors:
+                        if ('specimen_type' in ancestor) and (ancestor['specimen_type'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
+                            entity['origin_samples'].append(ancestor)
 
                 # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                 self.exclude_added_top_level_properties(entity['origin_sample'])
