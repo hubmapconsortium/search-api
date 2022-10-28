@@ -21,7 +21,7 @@ from opensearch_helper_functions import *
 from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface
 
-logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
+logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
@@ -78,6 +78,8 @@ class Translator(TranslatorInterface):
         self.token = token
         self.request_headers = self.create_request_headers_for_auth(token)
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+        UUID_API_URL = 'https://uuid-api.dev.hubmapconsortium.org' #@TODO-un-hard-code, figure out what stuff on above line does/means
+        self.uuid_api_url = UUID_API_URL.strip('/') #@TODO-un-hard-code, figure out above line should be in a config
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
 
@@ -172,7 +174,7 @@ class Translator(TranslatorInterface):
     def translate(self, entity_id):
         try:
             # Retrieve the entity details
-            # This returned entity dict (if Dataset) has removed ingest_metadata.files and 
+            # This returned entity dict (if Dataset) has removed ingest_metadata.files and
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
             entity = self.call_entity_api(entity_id, 'entities')
 
@@ -245,7 +247,6 @@ class Translator(TranslatorInterface):
                 response += self.indexer.index(entity_id, json.dumps(document), private_index, False)
         return response
 
-
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
     # For Dataset, if status=='Published', it goes into the public index
@@ -276,6 +277,28 @@ class Translator(TranslatorInterface):
 
         return is_public
 
+    def delete_docs(self, index_name, uuid):
+        # Clear multiple documents from the specified index.
+        # When index_name is for the files-api and uuid is for a Dataset, clear all file manifests for the Dataset.
+        # When index_name is for the files-api and uuid is not specified, clear all file manifests in the index.
+        # Otherwise, raise an Exception indicating the specified arguments are not supported.
+
+        if not index_name:
+            raise Exception(f"index_name must be specified for Translator.delete_docs().")
+
+        # if index_name not in ['hm_files']: #@TODO-un-hard-code...self.INDICES['indices']['hm_files']['public']
+        #     raise Exception(f"Translator.delete_docs() is not configured to clear documents from index_name '{index_name} for HuBMAP.")
+
+        if uuid:
+            # Get the entity with the specified UUID, and confirm it is a supported type.  This probably repeats
+            # work done by the caller, but count on the caller for other business logic, like constraining
+            # to Datasets without PHI.
+            uuidEntity = self.call_entity_api(uuid, 'entities')
+            if uuidEntity['entity_type'] != 'Dataset':
+                raise Exception(f"Translator.delete_docs() is not configured to clear documents for entities of type '{uuidEntity['entity_type']} for HuBMAP.")
+            self.indexer.delete_fieldmatch_document(index_name, 'dataset_uuid', uuid)
+        else:
+            self.indexer.delete_fieldmatch_document(index_name)
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
@@ -418,7 +441,7 @@ class Translator(TranslatorInterface):
 
         return headers_dict
 
-    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and 
+    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
         try:
@@ -627,7 +650,7 @@ class Translator(TranslatorInterface):
                 for immediate_descendant_dict in immediate_descendants_list:
                     # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and 
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
                     # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
                     immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
 
@@ -786,7 +809,7 @@ class Translator(TranslatorInterface):
                     dataset_dict['ingest_metadata']['files'] = []
                     logger.info(f"Add missing field ['ingest_metadata']['files'] and set to empty list [], for Dataset {dataset_dict['uuid']}")
 
-            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
+            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace
             # to to avoid dynamic mapping conflict
             if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
                 for key in list(dataset_dict['ingest_metadata']['metadata']):
@@ -797,6 +820,24 @@ class Translator(TranslatorInterface):
 
         return dataset_dict
 
+    # Retrieve a list of files in a Dataset from the uuid-api service
+    def _get_dataset_files_info(self, dataset_uuid):
+        auth_helper_instance = self.init_auth_helper()
+        # Get the single Globus groups token for authorization
+        auth_token = auth_helper_instance.getAuthorizationTokens(self.request_headers)
+
+        if isinstance(auth_token, Response):
+            raise requests.exceptions.HTTPError(response=auth_token)
+        elif isinstance(auth_token, str):
+            token = auth_token
+        else:
+            raise requests.exceptions.HTTPError(response=Response("Valid Globus groups token required",401))
+
+        get_url = self.uuid_api_url + '/' + dataset_uuid + '/files'
+        response = requests.get(get_url, headers = {'Authorization': 'Bearer ' + token}, verify = False)
+        if response.status_code != 200:
+            raise requests.exceptions.HTTPError(response=response)
+        return json.dumps(response.json())
 
     # This method is supposed to only retrieve Dataset|Donor|Sample
     # The Collection and Upload are handled by separate calls
