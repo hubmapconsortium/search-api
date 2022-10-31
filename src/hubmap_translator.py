@@ -28,8 +28,12 @@ logger = logging.getLogger(__name__)
 # This list contains fields that are added to the top-level at index runtime
 entity_properties_list = [
     'donor',
+    # origin_sample and source_sample fields will be dropped once 
+    # we migrate to use the new fields origin_samples and source_samples
     'origin_sample',
     'source_sample',
+    'origin_samples',
+    'source_samples',
     'ancestor_ids',
     'descendant_ids',
     'ancestors',
@@ -492,10 +496,18 @@ class Translator(TranslatorInterface):
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
-    def exclude_added_top_level_properties(self, entity_dict, except_properties_list = []):
-        for prop in entity_properties_list:
-            if (prop in entity_dict) and (prop not in except_properties_list):
-                 entity_dict.pop(prop)
+    def exclude_added_top_level_properties(self, entity_data, except_properties_list = []):
+        if isinstance(entity_data, dict):
+            for prop in entity_properties_list:
+                if (prop in entity_data) and (prop not in except_properties_list):
+                     entity_data.pop(prop)
+        elif isinstance(entity_data, list):
+            for prop in entity_properties_list:
+                for item in entity_data:
+                    if isinstance(item, dict) and (prop in item) and (prop not in except_properties_list):
+                        item.pop(prop)
+        else:
+            logger.debug(f'The input entity_data type: {type(entity_data)}. Only dict and list are supported.')
 
 
     # Used for Upload and Collection index
@@ -669,24 +681,37 @@ class Translator(TranslatorInterface):
                 # Add new properties
                 entity['donor'] = donor
 
-                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (
-                        entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (
-                                                                       entity['organ'].strip() != '') else None
+                # origin_sample field will be dropped once 
+                # we migrate to use the new origin_samples field
+                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+
+                # entity['origin_sample'] is a dict if not None
                 if entity['origin_sample'] is None:
                     try:
                         # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (
-                                a['specimen_type'].lower() == 'organ') and ('organ' in a) and (
-                                                                         a['organ'].strip() != '')))
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
+                
+                # entity['origin_samples'] is a list
+                entity['origin_samples'] = []
+                if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
+                    entity['origin_samples'].append(copy.copy(entity))
+                else:
+                    for ancestor in ancestors:
+                        if ('specimen_type' in ancestor) and (ancestor['specimen_type'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
+                            entity['origin_samples'].append(ancestor)
 
                 # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                 self.exclude_added_top_level_properties(entity['origin_sample'])
-
-                # Trying to understand here!!!
+                self.exclude_added_top_level_properties(entity['origin_samples'])
+                
+                # `source_samples` field is only avaiable to Dataset
                 if entity['entity_type'] == 'Dataset':
+                    # source_sample field will be dropped once 
+                    # we migrate to use the new source_samples field
                     entity['source_sample'] = None
+                    entity['source_samples'] = None
 
                     e = entity
 
@@ -694,17 +719,28 @@ class Translator(TranslatorInterface):
                         parents = self.call_entity_api(e['uuid'], 'parents')
 
                         try:
-                            # Why?
                             if parents[0]['entity_type'] == 'Sample':
-                                # entity['source_sample'] = parents[0]
                                 entity['source_sample'] = parents
 
                             e = parents[0]
                         except IndexError:
                             entity['source_sample'] = {}
 
+                    e = entity
+
+                    while entity['source_samples'] is None:
+                        parents = self.call_entity_api(e['uuid'], 'parents')
+
+                        try:
+                            if parents[0]['entity_type'] == 'Sample':
+                                entity['source_samples'] = parents
+                            e = parents[0]
+                        except IndexError:
+                            entity['source_samples'] = []
+                    
                     # Remove those added fields specified in `entity_properties_list` from origin_sample and source_sample
                     self.exclude_added_top_level_properties(entity['source_sample'])
+                    self.exclude_added_top_level_properties(entity['source_samples'])
 
             self.entity_keys_rename(entity)
 
@@ -725,10 +761,22 @@ class Translator(TranslatorInterface):
             # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])
+            
+            # origin_sample and source_sample fields will be dropped once 
+            # we migrate to use the new fields origin_samples and source_samples
+            # `origin_sample` field is a dict
+            # `source_sample` field is a list
             if entity.get('origin_sample', None):
                 self.entity_keys_rename(entity['origin_sample'])
             if entity.get('source_sample', None):
                 for s in entity.get('source_sample', None):
+                    self.entity_keys_rename(s)
+
+            if entity.get('origin_samples', None):
+                for o in entity.get('origin_samples', None):
+                    self.entity_keys_rename(o)
+            if entity.get('source_samples', None):
+                for s in entity.get('source_samples', None):
                     self.entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
