@@ -38,4 +38,4 @@ services:
 networks:
   # This is the network created by gateway to enable communicaton between multiple docker-compose projects
   gateway_hubmap:
-    external: false
+    external: true
