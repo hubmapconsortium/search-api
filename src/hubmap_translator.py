@@ -82,8 +82,6 @@ class Translator(TranslatorInterface):
         self.token = token
         self.request_headers = self.create_request_headers_for_auth(token)
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-        UUID_API_URL = 'https://uuid-api.dev.hubmapconsortium.org' #@TODO-un-hard-code, figure out what stuff on above line does/means
-        self.uuid_api_url = UUID_API_URL.strip('/') #@TODO-un-hard-code, figure out above line should be in a config
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
 
