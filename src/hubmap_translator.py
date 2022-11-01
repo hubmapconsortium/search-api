@@ -868,25 +868,6 @@ class Translator(TranslatorInterface):
 
         return dataset_dict
 
-    # Retrieve a list of files in a Dataset from the uuid-api service
-    def _get_dataset_files_info(self, dataset_uuid):
-        auth_helper_instance = self.init_auth_helper()
-        # Get the single Globus groups token for authorization
-        auth_token = auth_helper_instance.getAuthorizationTokens(self.request_headers)
-
-        if isinstance(auth_token, Response):
-            raise requests.exceptions.HTTPError(response=auth_token)
-        elif isinstance(auth_token, str):
-            token = auth_token
-        else:
-            raise requests.exceptions.HTTPError(response=Response("Valid Globus groups token required",401))
-
-        get_url = self.uuid_api_url + '/' + dataset_uuid + '/files'
-        response = requests.get(get_url, headers = {'Authorization': 'Bearer ' + token}, verify = False)
-        if response.status_code != 200:
-            raise requests.exceptions.HTTPError(response=response)
-        return json.dumps(response.json())
-
     # This method is supposed to only retrieve Dataset|Donor|Sample
     # The Collection and Upload are handled by separate calls
     # The returned data can either be an entity dict or a list of uuids (when `url_property` parameter is specified)
