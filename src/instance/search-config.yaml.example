@@ -48,4 +48,3 @@ indices:
     public: hm_files
     elasticsearch:
       url: <ES URL>
-      mappings: "hubmap_translation/search-default-config.yaml"
