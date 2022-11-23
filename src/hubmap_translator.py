@@ -176,7 +176,7 @@ class Translator(TranslatorInterface):
     def translate(self, entity_id):
         try:
             # Retrieve the entity details
-            # This returned entity dict (if Dataset) has removed ingest_metadata.files and 
+            # This returned entity dict (if Dataset) has removed ingest_metadata.files and
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
             entity = self.call_entity_api(entity_id, 'entities')
 
@@ -221,28 +221,33 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+    def update(self, entity_id, document, index=None):
+        if index is not None:
+            response = self.indexer.index(entity_id, json.dumps(document), index, True)
+        else:
+            for index in self.indices.keys():
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
-    def update(self, entity_id, document):
-        for index in self.indices.keys():
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
+                if self.is_public(document):
+                    response = self.indexer.index(entity_id, json.dumps(document), public_index, True)
 
-            if self.is_public(document):
-                self.indexer.index(entity_id, json.dumps(document), public_index, True)
+                response += self.indexer.index(entity_id, json.dumps(document), private_index, True)
+        return response
 
-            self.indexer.index(entity_id, json.dumps(document), private_index, True)
+    def add(self, entity_id, document, index=None):
+        if index is not None:
+            response = self.indexer.index(entity_id, json.dumps(document), index, False)
+        else:
+            for index in self.indices.keys():
+                public_index = self.INDICES['indices'][index]['public']
+                private_index = self.INDICES['indices'][index]['private']
 
+                if self.is_public(document):
+                    response = self.indexer.index(entity_id, json.dumps(document), public_index, False)
 
-    def add(self, entity_id, document):
-        for index in self.indices.keys():
-            public_index = self.INDICES['indices'][index]['public']
-            private_index = self.INDICES['indices'][index]['private']
-
-            if self.is_public(document):
-                self.indexer.index(entity_id, json.dumps(document), public_index, False)
-
-            self.indexer.index(entity_id, json.dumps(document), private_index, False)
-
+                response += self.indexer.index(entity_id, json.dumps(document), private_index, False)
+        return response
 
     # Collection doesn't actually have this `data_access_level` property
     # This method is only applied to Donor/Sample/Dataset
@@ -274,6 +279,28 @@ class Translator(TranslatorInterface):
 
         return is_public
 
+    def delete_docs(self, index_name, uuid):
+        # Clear multiple documents from the specified index.
+        # When index_name is for the files-api and uuid is for a Dataset, clear all file manifests for the Dataset.
+        # When index_name is for the files-api and uuid is not specified, clear all file manifests in the index.
+        # Otherwise, raise an Exception indicating the specified arguments are not supported.
+
+        if not index_name:
+            raise Exception(f"index_name must be specified for Translator.delete_docs().")
+
+        # if index_name not in ['hm_files']: #@TODO-un-hard-code...self.INDICES['indices']['hm_files']['public']
+        #     raise Exception(f"Translator.delete_docs() is not configured to clear documents from index_name '{index_name} for HuBMAP.")
+
+        if uuid:
+            # Get the entity with the specified UUID, and confirm it is a supported type.  This probably repeats
+            # work done by the caller, but count on the caller for other business logic, like constraining
+            # to Datasets without PHI.
+            uuidEntity = self.call_entity_api(uuid, 'entities')
+            if uuidEntity['entity_type'] != 'Dataset':
+                raise Exception(f"Translator.delete_docs() is not configured to clear documents for entities of type '{uuidEntity['entity_type']} for HuBMAP.")
+            self.indexer.delete_fieldmatch_document(index_name, 'dataset_uuid', uuid)
+        else:
+            self.indexer.delete_fieldmatch_document(index_name)
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
@@ -416,7 +443,7 @@ class Translator(TranslatorInterface):
 
         return headers_dict
 
-    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and 
+    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
         try:
@@ -633,10 +660,10 @@ class Translator(TranslatorInterface):
                 for immediate_descendant_dict in immediate_descendants_list:
                     # We need to call self.prepare_dataset() here because
                     # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and 
+                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
                     # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
                     immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
-                
+
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
                 entity['descendants'] = descendants
@@ -828,7 +855,7 @@ class Translator(TranslatorInterface):
                     dataset_dict['ingest_metadata']['files'] = []
                     logger.info(f"Add missing field ['ingest_metadata']['files'] and set to empty list [], for Dataset {dataset_dict['uuid']}")
 
-            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace 
+            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace
             # to to avoid dynamic mapping conflict
             if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
                 for key in list(dataset_dict['ingest_metadata']['metadata']):
@@ -836,9 +863,8 @@ class Translator(TranslatorInterface):
                         if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
                             del dataset_dict['ingest_metadata']['metadata'][key]
                             logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
-            
-        return dataset_dict
 
+        return dataset_dict
 
     # This method is supposed to only retrieve Dataset|Donor|Sample
     # The Collection and Upload are handled by separate calls
