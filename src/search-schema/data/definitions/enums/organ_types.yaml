@@ -25,8 +25,10 @@ BR:
   iri: http://purl.obolibrary.org/obo/UBERON_0000955
 LF:
   description: Fallopian Tube (Left)
+  iri: http://purl.obolibrary.org/obo/UBERON_0001303
 RF:
   description: Fallopian Tube (Right)
+  iri: http://purl.obolibrary.org/obo/UBERON_0001302
 HT:
   description: Heart
   iri: http://purl.obolibrary.org/obo/UBERON_0000948
