@@ -13,7 +13,7 @@ AO:
   iri: http://purl.obolibrary.org/obo/UBERON_0000947
 BL:
   description: Bladder
-  iri: http://purl.obolibrary.org/obo/UBERON_0018707
+  iri: http://purl.obolibrary.org/obo/UBERON_0001255
 BD:
   description: Blood
   iri: http://purl.obolibrary.org/obo/UBERON_0000178
