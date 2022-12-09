@@ -42,10 +42,10 @@ indices:
     elasticsearch:
       url: <ES URL>
 
-  hm_files:
+  files:
     active: true
     reindex_enabled: false
-    public: hm_files
-    private: hm_files
+    public: hm_dev_public_files
+    private: hm_dev_consortium_files
     elasticsearch:
       url: <ES URL>
