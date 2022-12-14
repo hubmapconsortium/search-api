@@ -241,6 +241,12 @@ source_samples:
   - dataset
   enum: null
   required: Depends on entity type
+sample_category:
+  description: For Sample entities, the category of the sample.
+  entity_types:
+    - sample
+  enum: tissue_sample_types
+  required: true
 specimen_type:
   description: For Sample entities, the type of tissue specimen.
   entity_types:
