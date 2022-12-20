@@ -426,8 +426,8 @@ class Indexer:
     # all Elasticsearch documents of the above types with the following rules:
     # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
-    # Sample: if specimen_type == 'organ' the display name linked to the corresponding description of organ code
-    # otherwise the display name linked to the value of the corresponding description of specimen_type code
+    # Sample: if sample_category == 'organ' the display name linked to the corresponding description of organ code
+    # otherwise the display name linked to the value of the corresponding description of sample_category code
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
         entity_type = entity['entity_type']
@@ -438,16 +438,19 @@ class Indexer:
         elif entity_type == 'Donor':
             display_subtype = 'Donor'
         elif entity_type == 'Sample':
-            if 'specimen_type' in entity:
-                if entity['specimen_type'].lower() == 'organ':
+            if 'sample_category' in entity:
+                if entity['sample_category'].lower() == 'organ':
                     if 'organ' in entity:
                         display_subtype = self.get_organ_description(entity['organ'])
                     else:
-                        logger.error(f"Missing missing organ when specimen_type is set of Sample with uuid: {entity['uuid']}")
+                        logger.error(f"Missing missing organ when sample_category is set of Sample with uuid: {entity['uuid']}")
                 else:
-                    display_subtype = self.get_tissue_sample_description(entity['specimen_type'])
+                    # block/section/suspension not defined in https://github.com/hubmapconsortium/search-api/blob/main/src/search-schema/data/definitions/enums/tissue_sample_types.yaml
+                    # We just return the capitalized value 12/20/2022
+                    # display_subtype = self.get_tissue_sample_description(entity['sample_category'])
+                    display_subtype = entity['sample_category'].capitalize()
             else:
-                logger.error(f"Missing specimen_type of Sample with uuid: {entity['uuid']}")
+                logger.error(f"Missing sample_category of Sample with uuid: {entity['uuid']}")
         elif entity_type == 'Dataset':
             if 'data_types' in entity:
                 display_subtype = ','.join(entity['data_types'])
@@ -578,17 +581,17 @@ class Indexer:
                 entity['immediate_descendants'] = immediate_descendants
 
 
-            # The origin_sample is the sample that `specimen_type` is "organ" and the `organ` code is set at the same time
+            # The origin_sample is the sample that `sample_category` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset']:
                 # Add new properties
                 entity['donor'] = donor
 
-                entity['origin_sample'] = copy.copy(entity) if ('specimen_type' in entity) and (entity['specimen_type'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
+                entity['origin_sample'] = copy.copy(entity) if ('sample_category' in entity) and (entity['sample_category'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != '') else None
 
                 if entity['origin_sample'] is None:
                     try:
-                        # The origin_sample is the ancestor which `specimen_type` is "organ" and the `organ` code is set
-                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('specimen_type' in a) and (a['specimen_type'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
+                        # The origin_sample is the ancestor which `sample_category` is "organ" and the `organ` code is set
+                        entity['origin_sample'] = copy.copy(next(a for a in ancestors if ('sample_category' in a) and (a['sample_category'].lower() == 'organ') and ('organ' in a) and (a['organ'].strip() != '')))
                     except StopIteration:
                         entity['origin_sample'] = {}
 
