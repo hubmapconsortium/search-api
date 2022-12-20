@@ -7,7 +7,7 @@
     "create_timestamp": 1575489509656,
     "ancestor_ids": ["1234", "5678"],
     "ancestors": [{
-        "sample_category": "Organ",
+        "sample_category": "section",
         "created_by_user_displayname": "daniel Cotter"
     }],
     "data_access_level": "consortium",
