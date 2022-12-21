@@ -61,7 +61,7 @@ def transform(doc, batch_id='unspecified'):
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
     ...    'ancestors': [{
-    ...        'specimen_type': 'fresh_frozen_tissue_section',
+    ...        'sample_category': 'section',
     ...        'created_by_user_displayname': 'daniel Cotter'
     ...    }],
     ...    'data_access_level': 'consortium',
@@ -112,8 +112,7 @@ def transform(doc, batch_id='unspecified'):
      'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
-                    'mapped_specimen_type': 'Fresh frozen tissue section',
-                    'specimen_type': 'fresh_frozen_tissue_section'}],
+                    'sample_category': 'section'}],
      'create_timestamp': 1575489509656,
      'data_access_level': 'consortium',
      'data_types': ['salmon_rnaseq_10x_sn'],
