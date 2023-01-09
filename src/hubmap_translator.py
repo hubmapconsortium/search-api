@@ -593,10 +593,7 @@ class Translator(TranslatorInterface):
                         logger.error(
                             f"Missing missing organ when sample_category is set of Sample with uuid: {entity['uuid']}")
                 else:
-                    # block/section/suspension not defined in https://github.com/hubmapconsortium/search-api/blob/main/src/search-schema/data/definitions/enums/tissue_sample_types.yaml
-                    # We just return the capitalized value 12/20/2022
-                    # display_subtype = get_type_description(entity['sample_category'], 'tissue_sample_types')
-                    display_subtype = entity['sample_category'].capitalize()
+                    display_subtype = get_type_description(entity['sample_category'], 'tissue_sample_types')
             else:
                 logger.error(f"Missing sample_category of Sample with uuid: {entity['uuid']}")
         elif entity_type == 'Dataset':
