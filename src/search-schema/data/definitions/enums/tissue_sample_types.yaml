@@ -2,6 +2,8 @@ atacseq:
   description: ATACseq
 biopsy:
   description: Biopsy
+block:
+  description: Block
 blood:
   description: Blood
 cell_lysate:
@@ -72,6 +74,8 @@ scatacseq:
   description: scATACseq
 scrnaseq:
   description: scRNAseq
+section:
+  description: Section
 segment:
   description: Segment
 seqfish:
@@ -86,6 +90,8 @@ snatacseq:
   description: snATACseq
 snrnaseq:
   description: snRNAseq
+suspension:
+  description: Suspension
 tissue_lysate:
   description: Tissue lysate
 wgs:
