@@ -112,6 +112,7 @@ def transform(doc, batch_id='unspecified'):
      'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
      'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
+                    'mapped_sample_category': 'Section',
                     'sample_category': 'section'}],
      'create_timestamp': 1575489509656,
      'data_access_level': 'consortium',
