@@ -26,7 +26,7 @@ def add_counts(doc):
     ...    'ancestors': [],
     ...    'descendants': [{
     ...        'entity_type': 'Sample',
-    ...        'mapped_specimen_type': 'Fresh Frozen Tissue Section',
+    ...        'mapped_sample_category': 'Block',
     ...        'mapped_organ': 'Lymph Node',
     ...        'mapped_data_types': ['Autofluorescence Microscopy']
     ...    }]
@@ -36,7 +36,7 @@ def add_counts(doc):
     {'entity_type': {'Sample': 1},
      'mapped_data_types': {'Autofluorescence Microscopy': 1},
      'mapped_organ': {'Lymph Node': 1},
-     'mapped_specimen_type': {'Fresh Frozen Tissue Section': 1}}
+     'mapped_sample_category': {'Block': 1}}
 
     '''
     # Collections do not have ancestors or descendants.
@@ -47,7 +47,7 @@ def add_counts(doc):
     if 'descendants' in doc:
         doc['descendant_counts'] = {k: v for k, v in {
             'entity_type': _count_field(doc['descendants'], 'entity_type'),
-            'mapped_specimen_type': _count_field(doc['descendants'], 'mapped_specimen_type'),
+            'mapped_sample_category': _count_field(doc['descendants'], 'mapped_sample_category'),
             'mapped_organ': _count_field(doc['descendants'], 'mapped_organ'),
             'mapped_data_types': _count_array_field(doc['descendants'], 'mapped_data_types'),
         }.items() if v}
