@@ -78,9 +78,6 @@
     "metadata": {
       "es_name": "metadata"
     },
-    "specimen_metadata": {
-      "es_name": "metadata"
-    },
     "image_file_metadata": {
       "es_name": "image_file_metadata"
     },
