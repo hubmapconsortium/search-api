@@ -288,9 +288,6 @@ class Translator(TranslatorInterface):
         if not index_name:
             raise Exception(f"index_name must be specified for Translator.delete_docs().")
 
-        # if index_name not in ['hm_files']: #@TODO-un-hard-code...self.INDICES['indices']['hm_files']['public']
-        #     raise Exception(f"Translator.delete_docs() is not configured to clear documents from index_name '{index_name} for HuBMAP.")
-
         if uuid:
             # Get the entity with the specified UUID, and confirm it is a supported type.  This probably repeats
             # work done by the caller, but count on the caller for other business logic, like constraining
