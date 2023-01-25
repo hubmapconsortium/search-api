@@ -156,8 +156,8 @@
     "dbgap_url": {
       "es_name": "dbgap_url"
     },
-    "dbgap_study_url": {
-      "es_name": "dbgap_study_url"
+    "sample_category": {
+      "es_name": "sample_category"
     }
   }
 }
