@@ -313,6 +313,16 @@ doi_url:
   - collection
   enum: null
   required: false
+  dbgap_url:
+    description: 'A URL linking the dataset to the associated uploaded data at dbGaP.'
+    entity_types:
+      - dataset
+    required: false
+  dbgap_study_url:
+    description: 'A URL linking the dataset to the particular study on dbGap it belongs to'
+    entity_types:
+      - dataset
+    required: false
 has_doi:
   description: TODO
   entity_types:
