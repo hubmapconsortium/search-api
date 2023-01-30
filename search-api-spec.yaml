@@ -16,6 +16,7 @@ components:
   schemas:
     requestJsonBody:
       type: object
+      description: JSON that describes an Elasticsearch [DSL query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
     AssayTypeQueryDict:
       type: object
       properties:
@@ -34,6 +35,9 @@ components:
           type: array
           items:
             type: string
+    SearchResponse:
+      type: object
+      description: The response from calls to /search will include objects from indices related for entities, files, or antibodies. Schema elements are documented in [entity-api](https://smart-api.info/ui/0065e419668f3336a40d1f5ab89c6ba3).
 tags:
   - name: 'Search API, Elasticsearch'
     description: Operations pertaining to datasets indexed in Elasticsearch
@@ -43,7 +47,7 @@ tags:
 externalDocs:
   description: Elasticsearch API Documentation
   url: https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html
-      
+
 paths:
 
   '/assaytype':
@@ -153,7 +157,7 @@ paths:
     get:
       tags:
         - indices
-      summary: Reindex for a given UUID of dataset.  Use this method to obtain a list of valid indices within the search-api endpoint.  These index names are used in some of the subseqeunt calls made to the endpoint.
+      summary: Reindex for a given UUID of dataset.  Use this method to obtain a list of valid indices within the search-api endpoint.  These index names are used in some of the subsequent calls made to the endpoint.
       operationId: get-indices
       responses:
         '200':
@@ -164,7 +168,7 @@ paths:
                 type: object
                 properties:
                   indices:
-                    example: ["entities", "portal"] 
+                    example: ["entities", "portal"]
                     type: array
                     items:
                       type: string
@@ -175,15 +179,15 @@ paths:
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
 
-  /search:
+  '/search':
     post:
       tags:
         - search
-      summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.   
-      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html#run-request-body-search) rules.
+      summary: Executes an Elasticsearch DSL query JSON via POST and returns hits that match the query.
+      description: To execute a query, the POST method must provide 1) a request body that specifies an [Elasticsearch Query DSL statement](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html) 2) a bearer token in the Authorization header supplied by HuBMAP. Results are limited to those authorized by the bearer token. Uses the <strong>hm_consortium_entities</strong> index by default.
       operationId: search-post
       requestBody:
-        description: Request JSON of Elasticsearch query
+        description: A JSON that describes a [DSL query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html). The query will likely be a compound boolean.
         required: true
         content:
           application/json:
@@ -211,30 +215,34 @@ paths:
 }
       responses:
         '200':
-          description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
+            description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SearchResponse'
         '400':
-          description: Bad request. A JSON body and appropriate Content-Type header are required in request
+            description: Bad request. A JSON body and appropriate Content-Type header are required in request
         '401':
-          description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
+            description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
 
-  /{index_name}/search:
+  '/{index_name}/search':
     post:
       tags:
         - search_by_index
-      summary: Execute an Elasticsearch query JSON via HTTP POST and get back search hits that match the query.  This call contraints the results to the specified index_name parameter.  Other than that, this call is identical to the /search method.    
-      description: <strong>NOTE  This method also accepts a GET call using the same parameters.</strong> To query using a POST or GET, you must supply a query according to the [Request body search](https://www.elastic.co/guide/en/hubmap_translation/reference/current/search-your-data.html#run-request-body-search) rules.
+      summary: Executes an Elasticsearch DSL query JSON via POST and returns hits that match the query. The response is limited to hits against the specified index_name parameter. Values for index_name can be obtained by calling the /indices endpoint.
+      description: To execute a query, the POST method must provide 1) a request body that specifies an [Elasticsearch Query DSL statement](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html) 2) a bearer token in the Authorization header supplied by HuBMAP. Results are limited to those authorized by the bearer token. Uses the <strong>hm_consortium_entities</strong> index by default.
       operationId: search-post-by-index
       parameters:
         - name: index_name
           in: path
-          description: the name of an existing Elasticsearch index (see the /indices web service call)
+          description: the name of an existing Elasticsearch index (Use the <i>/indices</i> web service call to obtain the list of indices)
           required: true
           schema:
             type: string
       requestBody:
-        description: Request JSON of Elasticsearch query
+        description: A JSON that describes a [DSL query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html). The query will likely be a compound boolean.
         required: true
         content:
           application/json:
@@ -263,6 +271,10 @@ paths:
       responses:
         '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SearchResponse'
         '400':
           description: Bad request. A JSON body and appropriate Content-Type header are required in request
         '401':
