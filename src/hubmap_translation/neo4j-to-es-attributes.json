@@ -161,6 +161,27 @@
     },
     "sample_category": {
       "es_name": "sample_category"
+    },
+    "publication_date": {
+      "es_name": "publication_date"
+    },
+    "publication_doi": {
+      "es_name": "publication_doi"
+    },
+    "publication_url": {
+      "es_name": "publication_url"
+    },
+    "publication_venue": {
+      "es_name": "publication_venue"
+    },
+    "volume": {
+      "es_name": "volume"
+    },
+    "issue": {
+      "es_name": "issue"
+    },
+    "pages_or_article_num": {
+      "es_name": "pages_or_article_num"
     }
   }
 }
