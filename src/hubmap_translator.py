@@ -46,7 +46,7 @@ entity_properties_list = [
 ]
 
 # Entity types that will have `display_subtype` generated ar index time
-entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset']
+entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
 
 
 class Translator(TranslatorInterface):
@@ -196,7 +196,7 @@ class Translator(TranslatorInterface):
                     descendant_entity_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
                     # Only Dataset entities may have previous/next revisions
-                    if entity['entity_type'] == 'Dataset':
+                    if entity['entity_type'] in ['Dataset', 'Publication']:
                         previous_revision_entity_ids = self.call_entity_api(entity_id, 'previous_revisions',
                                                                             'uuid')
                         next_revision_entity_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
@@ -258,7 +258,7 @@ class Translator(TranslatorInterface):
     def is_public(self, document):
         is_public = False
 
-        if document['entity_type'] == 'Dataset':
+        if document['entity_type'] in ['Dataset', 'Publication']:
             # In case 'status' not set
             if 'status' in document:
                 if document['status'].lower() == self.DATASET_STATUS_PUBLISHED:
@@ -293,7 +293,7 @@ class Translator(TranslatorInterface):
             # work done by the caller, but count on the caller for other business logic, like constraining
             # to Datasets without PHI.
             uuidEntity = self.call_entity_api(uuid, 'entities')
-            if uuidEntity['entity_type'] != 'Dataset':
+            if uuidEntity['entity_type'] not in ['Dataset', 'Publication']:
                 raise Exception(f"Translator.delete_docs() is not configured to clear documents for entities of type '{uuidEntity['entity_type']} for HuBMAP.")
             self.indexer.delete_fieldmatch_document(index_name, 'dataset_uuid', uuid)
         else:
@@ -593,7 +593,7 @@ class Translator(TranslatorInterface):
                     display_subtype = get_type_description(entity['sample_category'], 'tissue_sample_types')
             else:
                 logger.error(f"Missing sample_category of Sample with uuid: {entity['uuid']}")
-        elif entity_type == 'Dataset':
+        elif entity_type in ['Dataset', 'Publication']:
             if 'data_types' in entity:
                 display_subtype = ','.join(entity['data_types'])
             else:
@@ -672,7 +672,7 @@ class Translator(TranslatorInterface):
                 entity['immediate_descendants'] = immediate_descendants
 
             # The origin_sample is the sample that `sample_category` is "organ" and the `organ` code is set at the same time
-            if entity['entity_type'] in ['Sample', 'Dataset']:
+            if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
                 # Add new properties
                 entity['donor'] = donor
 
@@ -702,7 +702,7 @@ class Translator(TranslatorInterface):
                 self.exclude_added_top_level_properties(entity['origin_samples'])
                 
                 # `source_samples` field is only avaiable to Dataset
-                if entity['entity_type'] == 'Dataset':
+                if entity['entity_type'] in ['Dataset', 'Publication']:
                     # source_sample field will be dropped once 
                     # we migrate to use the new source_samples field
                     entity['source_sample'] = None
@@ -801,7 +801,7 @@ class Translator(TranslatorInterface):
     def generate_public_doc(self, entity):
         # Only Dataset has this 'next_revision_uuid' property
         property_key = 'next_revision_uuid'
-        if (entity['entity_type'] == 'Dataset') and (property_key in entity):
+        if (entity['entity_type'] in ['Dataset', 'Publication']) and (property_key in entity):
             next_revision_uuid = entity[property_key]
             # Making a call against entity-api/entities/<next_revision_uuid>?property=status
             url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
@@ -834,7 +834,7 @@ class Translator(TranslatorInterface):
     # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
     def prepare_dataset(self, dataset_dict):
         # Add this top-level field for Dataset and set to empty list as default
-        if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] == 'Dataset'):
+        if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] in ['Dataset', 'Publication'] ):
             dataset_dict['files'] = []
 
             if 'ingest_metadata' in dataset_dict:
