@@ -182,6 +182,9 @@
     },
     "pages_or_article_num": {
       "es_name": "pages_or_article_num"
+    },
+    "publication_status": {
+      "es_name": "publication_status"
     }
   }
 }
