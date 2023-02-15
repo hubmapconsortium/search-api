@@ -406,3 +406,9 @@ pages_or_article_num:
   entity_types:
     - publication
   description: The pages or the aricle number in the publication journal
+publication_status:
+  required: true
+  enums: null
+  entity_types:
+    - publication
+  description: A boolean representing if the publication has been published yet or not. (Published in the target/venue journal/proceeding/etc.. NOT published in sense of Dataset publication)
