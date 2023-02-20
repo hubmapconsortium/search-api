@@ -62,10 +62,13 @@ class Translator(TranslatorInterface):
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
             self.indices: dict = {}
+            self.self_managed_indices: dict = {}
             # Do not include the indexes that are self managed...
             for key, value in indices['indices'].items():
                 if 'reindex_enabled' in value and value['reindex_enabled'] is True:
                     self.indices[key] = value
+                else:
+                    self.self_managed_indices[key] = value
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
@@ -172,6 +175,38 @@ class Translator(TranslatorInterface):
             except Exception as e:
                 logger.error(e)
 
+    def __get_scope_list(self, entity_id, document, index, scope):
+        scope_list = []
+        if index == 'files':
+            # It would be nice if the possible scopes could be identified from
+            # self.INDICES['indices'] rather than hardcoded. @TODO
+            # This can handle indices besides "files" which might accept "scope" as
+            # an argument, but returning an empty list, not raising an Exception, for
+            # an  unrecognized index name.
+            if scope is not None:
+                if scope not in ['public', 'private']:
+                    msg = (f"Unrecognized scope '{scope}' requested for"
+                           f" entity_id '{entity_id}' in Dataset '{document['dataset_uuid']}.")
+                    logger.info(msg)
+                    raise ValueError(msg)
+                elif scope == 'public':
+                    if self.is_public(document):
+                        scope_list.append(scope)
+                    else:
+                        # Reject the addition of 'public' was explicitly indicated, even though
+                        # the public index may be silently skipped when a scope is not specified, in
+                        # order to mimic behavior below for "non-self managed" indices.
+                        msg = (f"Dataset '{document['dataset_uuid']}"
+                               f" does not have status {self.DATASET_STATUS_PUBLISHED}, so"
+                               f" entity_id '{entity_id}' cannot go in a public index.")
+                        logger.info(msg)
+                        raise ValueError(msg)
+                elif scope == 'private':
+                    scope_list.append(scope)
+            else:
+                scope_list = ['public', 'private']
+        return scope_list
+
 
     def translate(self, entity_id):
         try:
@@ -221,9 +256,23 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    def update(self, entity_id, document, index=None):
-        if index is not None:
-            response = self.indexer.index(entity_id, json.dumps(document), index, True)
+    def update(self, entity_id, document, index=None, scope=None):
+        if index is not None and index == 'files':
+            # The "else clause" is the dominion of the original flavor of OpenSearch indices, for which search-api
+            # was created.  This clause is specific to 'files' indices, by virtue of the conditions and the
+            # following assumption that dataset_uuid is on the JSON body. @TODO-KBKBKB right?
+            scope_list = self.__get_scope_list(entity_id, document, index, scope)
+
+            response = ''
+            for scope in scope_list:
+                target_index = self.self_managed_indices[index][scope]
+                if scope == 'public' and not self.is_public(document):
+                    # Mimic behavior of "else:" clause for "non-self managed" indices below, and
+                    # silently skip public if it was put on the list by __get_scope_list() because
+                    # the scope was not explicitly specified.
+                    continue
+                response += self.indexer.index(entity_id, json.dumps(document), target_index, True)
+                response += '. '
         else:
             for index in self.indices.keys():
                 public_index = self.INDICES['indices'][index]['public']
@@ -235,9 +284,23 @@ class Translator(TranslatorInterface):
                 response += self.indexer.index(entity_id, json.dumps(document), private_index, True)
         return response
 
-    def add(self, entity_id, document, index=None):
-        if index is not None:
-            response = self.indexer.index(entity_id, json.dumps(document), index, False)
+    def add(self, entity_id, document, index=None, scope=None):
+        if index is not None and index == 'files':
+            # The "else clause" is the dominion of the original flavor of OpenSearch indices, for which search-api
+            # was created.  This clause is specific to 'files' indices, by virtue of the conditions and the
+            # following assumption that dataset_uuid is on the JSON body. @TODO-KBKBKB right?
+            scope_list = self.__get_scope_list(entity_id, document, index, scope)
+
+            response = ''
+            for scope in scope_list:
+                target_index = self.self_managed_indices[index][scope]
+                if scope == 'public' and not self.is_public(document):
+                    # Mimic behavior of "else:" clause for "non-self managed" indices below, and
+                    # silently skip public if it was put on the list by __get_scope_list() because
+                    # the scope was not explicitly specified.
+                    continue
+                response += self.indexer.index(entity_id, json.dumps(document), target_index, False)
+                response += '. '
         else:
             for index in self.indices.keys():
                 public_index = self.INDICES['indices'][index]['public']
@@ -250,13 +313,19 @@ class Translator(TranslatorInterface):
         return response
 
     # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Donor/Sample/Dataset
+    # This method is only applied to Donor/Sample/Dataset/File
+    # For File, if the Dataset of the dataset_uuid element has status=='Published', it may go in a public index
     # For Dataset, if status=='Published', it goes into the public index
     # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
     # then they go into public index
     # Don't confuse with `data_access_level`
     def is_public(self, document):
         is_public = False
+
+        if 'file_uuid' in document:
+            # Confirm the Dataset to which the File entity belongs is published
+            dataset = self.call_entity_api(document['dataset_uuid'], 'entities')
+            return self.is_public(dataset)
 
         if document['entity_type'] == 'Dataset':
             # In case 'status' not set
@@ -279,25 +348,77 @@ class Translator(TranslatorInterface):
 
         return is_public
 
-    def delete_docs(self, index_name, uuid):
-        # Clear multiple documents from the specified index.
-        # When index_name is for the files-api and uuid is for a Dataset, clear all file manifests for the Dataset.
-        # When index_name is for the files-api and uuid is not specified, clear all file manifests in the index.
+    def delete_docs(self, index, scope, entity_id):
+        # Clear multiple documents from the OpenSearch indices associated with the composite index specified
+        # When index is for the files-api and entity_id is for a File, clear all file manifests for the File.
+        # When index is for the files-api and entity_id is for a Dataset, clear all file manifests for the Dataset.
+        # When index is for the files-api and entity_id is not specified, clear all file manifests in the index.
         # Otherwise, raise an Exception indicating the specified arguments are not supported.
 
-        if not index_name:
-            raise Exception(f"index_name must be specified for Translator.delete_docs().")
+        if not index:
+            # Shouldn't happen due to configuration of Flask Blueprint routes
+            raise ValueError(f"index must be specified for Translator.delete_docs().")
 
-        if uuid:
-            # Get the entity with the specified UUID, and confirm it is a supported type.  This probably repeats
-            # work done by the caller, but count on the caller for other business logic, like constraining
-            # to Datasets without PHI.
-            uuidEntity = self.call_entity_api(uuid, 'entities')
-            if uuidEntity['entity_type'] != 'Dataset':
-                raise Exception(f"Translator.delete_docs() is not configured to clear documents for entities of type '{uuidEntity['entity_type']} for HuBMAP.")
-            self.indexer.delete_fieldmatch_document(index_name, 'dataset_uuid', uuid)
+        if index == 'files':
+            # For deleting documents, try removing them from the specified scope, but do not
+            # raise any Exception or return an error response if they are not there to be deleted.
+            scope_list = [scope] if scope else ['public', 'private']
+
+            if entity_id:
+                try:
+                    # Get the Dataset entity with the specified entity_id
+                    theEntity = self.call_entity_api(entity_id, 'entities')
+                except Exception as e:
+                    # entity-api may throw an Exception if entity_id is actually the
+                    # uuid of a File, so swallow the error here and process as
+                    # removing the file info document for a File below
+                    logger.info(    f"No entity found  with entity_id '{entity_id}' in Neo4j, so process as"
+                                    f" a request to delete a file info document for a File with that UUID.")
+                    theEntity = {   'entity_type': 'File'
+                                    ,'uuid': entity_id}
+
+            response = ''
+            for scope in scope_list:
+                target_index = self.self_managed_indices[index][scope]
+                if entity_id:
+                    # Confirm the found entity for entity_id is of a supported type.  This probably repeats
+                    # work done by the caller, but count on the caller for other business logic, like constraining
+                    # to Datasets without PHI.
+                    if theEntity and theEntity['entity_type'] not in ['Dataset', 'File']:
+                        raise ValueError(   f"Translator.delete_docs() is not configured to clear documents for"
+                                            f" entities of type '{theEntity['entity_type']} for HuBMAP.")
+                    elif theEntity['entity_type'] == 'Dataset':
+                        try:
+                            resp = self.indexer.delete_fieldmatch_document( target_index
+                                                                            ,'dataset_uuid'
+                                                                            , theEntity['uuid'])
+                            response += resp[0]
+                        except Exception as e:
+                            response += (f"While deleting the Dataset '{theEntity['uuid']}' file info documents"
+                                         f" from {target_index},"
+                                         f" exception raised was {str(e)}.")
+                    elif theEntity['entity_type'] == 'File':
+                        try:
+                            resp = self.indexer.delete_fieldmatch_document( target_index
+                                                                            ,'file_uuid'
+                                                                            ,theEntity['uuid'])
+                            response += resp[0]
+                        except Exception as e:
+                            response += (   f"While deleting the File '{theEntity['uuid']}' file info document" 
+                                            f" from {target_index},"
+                                            f" exception raised was {str(e)}.")
+                    else:
+                        raise ValueError(   f"Unable to find a Dataset or File with identifier {entity_id} whose"
+                                            f" file info documents can be deleted from OpenSearch.")
+                else:
+                    # Since a File or a Dataset was not specified, delete all documents from
+                    # the target index.
+                    response += self.indexer.delete_fieldmatch_document(target_index)
+                response += ' '
+            return response
         else:
-            self.indexer.delete_fieldmatch_document(index_name)
+            raise ValueError(f"The index '{index}' is not recognized for Translator.delete_docs() operations."
+                             f"")
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
