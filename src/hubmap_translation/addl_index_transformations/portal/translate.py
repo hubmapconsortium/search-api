@@ -55,8 +55,14 @@ def _map(doc, key, map):
         _map(doc['donor'], key, map)
     if 'origin_sample' in doc:
         _map(doc['origin_sample'], key, map)
+    if 'origin_samples' in doc:
+        for sample in doc['origin_samples']:
+            _map(sample, key, map)
     if 'source_sample' in doc:
         for sample in doc['source_sample']:
+            _map(sample, key, map)
+    if 'source_samples' in doc:
+        for sample in doc['source_samples']:
             _map(sample, key, map)
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
