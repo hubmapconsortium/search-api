@@ -78,6 +78,21 @@ DART-FISH:
     vitessce-hints: []
     contains-pii: false
 
+DESI:
+  description: DESI
+  alt-names: [DESI-IMS]
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
+DESI_pyramid:
+  description: DESI [Image Pyramid]
+  alt-names: [["DESI", "Image Pyramid"], ["DESI", "image_pyramid"], ["DESI-IMS", "Image Pyramid"], ["DESI-IMS", "image_pyramid"]]
+  primary: false
+  vis-only: true
+  contains-pii: false
+  vitessce-hints: ['pyramid']
+
 image_pyramid:
     description: Image Pyramid
     alt-names: ["Image Pyramid"]
