@@ -28,6 +28,8 @@ def translate(doc):
     _translate_file_description(doc)
     _translate_status(doc)
     _translate_organ(doc)
+    # _add_origin_samples_unique_mapped_organs depends on the existence of the mapped_organ field and must be performed after _translate_organ.
+    _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
 
     # Remove mapped_specimen_type translation due to new filed sample_category added 12/20/2022 - Zhou
@@ -55,8 +57,14 @@ def _map(doc, key, map):
         _map(doc['donor'], key, map)
     if 'origin_sample' in doc:
         _map(doc['origin_sample'], key, map)
+    if 'origin_samples' in doc:
+        for sample in doc['origin_samples']:
+            _map(sample, key, map)
     if 'source_sample' in doc:
         for sample in doc['source_sample']:
+            _map(sample, key, map)
+    if 'source_samples' in doc:
+        for sample in doc['source_samples']:
             _map(sample, key, map)
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
@@ -413,3 +421,17 @@ def _donor_metadata_map(metadata):
         mapped_metadata[f'{key}_unit'].append(kv['units'])
 
     return dict(mapped_metadata)
+
+
+def _get_unique_mapped_organs(samples):
+    '''
+    >>> samples = [{'mapped_organ': 'Lymph Node'}, {'mapped_organ': 'Small Intestine'}, {'mapped_organ': 'Lymph Node'}]
+    >>> sorted(_get_unique_mapped_organs(samples));
+    ['Lymph Node', 'Small Intestine']
+    '''
+    return list({sample['mapped_organ'] for sample in samples if 'mapped_organ' in sample})
+
+
+def _add_origin_samples_unique_mapped_organs(doc):
+    if doc['entity_type'] in ['Sample', 'Dataset'] and 'origin_samples' in doc:
+        doc['origin_samples_unique_mapped_organs'] = _get_unique_mapped_organs(doc['origin_samples'])
