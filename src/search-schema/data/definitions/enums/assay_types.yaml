@@ -264,6 +264,13 @@ PAS_pyramid:
     vis-only: true
     vitessce-hints: ['pyramid']
 
+publication:
+    description: Publication Data
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: []
+
 bulk-RNA:
     description: Bulk RNA-seq
     alt-names: ['bulk RNA']
