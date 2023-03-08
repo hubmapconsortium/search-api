@@ -1,3 +1,15 @@
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
 APP_CLIENT_SECRET = ''
+
+# AWS credentials for access such as S3 and presigned URLs
+# https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_S3_BUCKET_NAME = 'hm-api-responses'
+AWS_S3_OBJECT_PREFIX = 'Dev_service-api_unspecified-function_'
+AWS_OBJECT_URL_EXPIRATION_IN_SECS = 60*60 # 1 hour
+# Large response threshold, as determined by len() for the character set, above
+# which responses will be stashed in an S3 bucket and a pre-signed URL
+# returned in the response to avoid the AWS Gateway 10Mb constraint
+LARGE_RESPONSE_THRESHOLD = 9*(2**20)
