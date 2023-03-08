@@ -412,3 +412,9 @@ publication_status:
   entity_types:
     - publication
   description: A boolean representing if the publication has been published yet or not. (Published in the target/venue journal/proceeding/etc.. NOT published in sense of Dataset publication)
+error_message:
+  required: false
+  enums: null
+  entity_types:
+    - publication
+    - dataset

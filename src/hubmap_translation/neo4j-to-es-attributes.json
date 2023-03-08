@@ -185,6 +185,9 @@
     },
     "publication_status": {
       "es_name": "publication_status"
+    },
+    "error_message": {
+      "es_name": "error_message"
     }
   }
 }
