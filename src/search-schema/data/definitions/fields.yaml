@@ -336,7 +336,7 @@ doi_url:
   - collection
   enum: null
   required: false
-dbgap_url:
+dbgap_sra_experiment_url:
   description: 'A URL linking the dataset to the associated uploaded data at dbGaP.'
   entity_types:
     - dataset
