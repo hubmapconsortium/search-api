@@ -400,7 +400,7 @@ seqFish_lab_processed:
 
 snATACseq:
     description: snATAC-seq
-    alt-names: [sn_atac_seq_multiome_10x]
+    alt-names: []
     primary: true
     contains-pii: true
     vitessce-hints: []
@@ -409,7 +409,7 @@ sn_atac_seq:
 #snATACseq_snapATAC:
     description: snATAC-seq [SnapATAC]
 #    alt-names: [sn_atac_seq]
-    alt-names: []
+    alt-names: [sn_atac_seq_multiome_10x]
     primary: false
     contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
