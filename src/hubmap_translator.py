@@ -1048,7 +1048,7 @@ class Translator(TranslatorInterface):
         return collection_dict
 
 
-    def main(self):
+    def delete_and_recreate_indices(self):
         try:
             # Delete and recreate target indices
             # for index, configs in self.indices['indices'].items():
@@ -1077,7 +1077,7 @@ class Translator(TranslatorInterface):
                 self.indexer.create_index(private_index, index_mapping_settings)
 
         except Exception:
-            msg = "Exception encountered during executing Translator.main()"
+            msg = "Exception encountered during executing delete_and_recreate_indices()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -1127,7 +1127,7 @@ if __name__ == "__main__":
     start = time.time()
     logger.info("############# Full index via script started #############")
 
-    translator.main()
+    translator.delete_and_recreate_indices()
     translator.translate_all()
 
     end = time.time()
