@@ -153,8 +153,8 @@
     "tissue_type": {
       "es_name": "tissue_type"
     },
-    "dbgap_url": {
-      "es_name": "dbgap_url"
+    "dbgap_sra_experiment_url": {
+      "es_name": "dbgap_sra_experiment_url"
     },
     "dbgap_study_url": {
       "es_name": "dbgap_study_url"
@@ -185,6 +185,9 @@
     },
     "publication_status": {
       "es_name": "publication_status"
+    },
+    "error_message": {
+      "es_name": "error_message"
     }
   }
 }
