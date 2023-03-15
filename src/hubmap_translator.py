@@ -63,7 +63,7 @@ class Translator(TranslatorInterface):
         try:
             self.indices: dict = {}
             self.self_managed_indices: dict = {}
-            # Do not include the indexes that are self managed...
+            # Do not include the indexes that are self managed
             for key, value in indices['indices'].items():
                 if 'reindex_enabled' in value and value['reindex_enabled'] is True:
                     self.indices[key] = value
@@ -96,10 +96,11 @@ class Translator(TranslatorInterface):
         self.init_transformers()
 
 
+    # Used by full reindex via script and live reindex-all call
     def translate_all(self):
         with app.app_context():
             try:
-                logger.info("############# translate_all() Started #############")
+                logger.info("Start executing translate_all()")
 
                 start = time.time()
 
@@ -114,18 +115,11 @@ class Translator(TranslatorInterface):
                 public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
                                                                         self.DEFAULT_ENTITY_API_URL)
 
-                logger.debug("merging sets into a one list...")
                 # Merge into a big list that with no duplicates
-                all_entities_uuids = set(
-                    donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
+                all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
 
                 es_uuids = []
-                # for index in ast.literal_eval(app.config['INDICES']).keys():
-                logger.debug("looping through the indices...")
-                logger.debug(self.INDICES['indices'].keys())
-
                 index_names = get_all_reindex_enabled_indice_names(self.INDICES)
-                logger.debug(self.INDICES['indices'].keys())
 
                 for index in index_names.keys():
                     all_indices = index_names[index]
@@ -137,16 +131,11 @@ class Translator(TranslatorInterface):
 
                 es_uuids = set(es_uuids)
 
-                logger.debug("looping through the UUIDs...")
-
                 # Remove entities found in Elasticsearch but no longer in neo4j
                 for uuid in es_uuids:
                     if uuid not in all_entities_uuids:
-                        logger.debug(
-                            f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
+                        logger.debug(f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
                         self.delete(uuid)
-
-                logger.debug("Starting multi-thread reindexing ...")
 
                 # Reindex in multi-treading mode for:
                 # - each public collection
@@ -155,11 +144,14 @@ class Translator(TranslatorInterface):
                 futures_list = []
                 results = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    public_collection_futures_list = [
-                        executor.submit(self.translate_public_collection, uuid, reindex=True)
-                        for uuid in public_collection_uuids_list]
-                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
-                                           upload_uuids_list]
+                    # The default number of threads in the ThreadPoolExecutor is calculated as: 
+                    # Total Number Worker Threads = (CPUs in Your System) + 4
+                    # Where the number of CPUs is determined by Python and will take hyperthreading into account
+                    logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
+
+                    # Submit tasks to the thread pool
+                    public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
+                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
                     donor_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in donor_uuids_list]
 
                     # Append the above three lists into one
@@ -170,8 +162,7 @@ class Translator(TranslatorInterface):
 
                 end = time.time()
 
-                logger.info(
-                    f"############# translate_all() Completed. Total time used: {end - start} seconds. #############")
+                logger.info(f"Finished executing translate_all(). Total time used: {end - start} seconds.")
             except Exception as e:
                 logger.error(e)
 
@@ -208,6 +199,7 @@ class Translator(TranslatorInterface):
         return scope_list
 
 
+    # Used by individual live reindex call
     def translate(self, entity_id):
         try:
             # Retrieve the entity details
@@ -215,9 +207,11 @@ class Translator(TranslatorInterface):
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
             entity = self.call_entity_api(entity_id, 'entities')
 
+            logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
+
             # Check if entity is empty
             if bool(entity):
-                logger.info(f"Executing translate() for entity_id: {entity_id}, entity_type: {entity['entity_type']}")
+                logger.info(f"Entity uuid: {entity_id}, type: {entity['entity_type']}")
 
                 if entity['entity_type'] == 'Collection':
                     self.translate_public_collection(entity_id, reindex=True)
@@ -248,11 +242,11 @@ class Translator(TranslatorInterface):
 
                         self.call_indexer(node, True)
 
-                logger.info(f"################ Reindex DONE for entity {entity_id} ######################")
+                logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
-                return "HuBMAP Translator.translate() finished executing"
+                return "translate() finished executing"
         except Exception:
-            msg = "Exceptions during executing indexer.reindex()"
+            msg = "Exceptions during executing translate()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -334,8 +328,7 @@ class Translator(TranslatorInterface):
                     is_public = True
             else:
                 # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
+                logger.error(f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
         else:
             # In case 'data_access_level' not set
             if 'data_access_level' in document:
@@ -343,8 +336,7 @@ class Translator(TranslatorInterface):
                     is_public = True
             else:
                 # Log as an error to be fixed in Neo4j
-                logger.error(
-                    f"{document['entity_type']} of uuid: {document['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
+                logger.error(f"{document['entity_type']} of uuid: {document['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
 
         return is_public
 
@@ -357,7 +349,7 @@ class Translator(TranslatorInterface):
 
         if not index:
             # Shouldn't happen due to configuration of Flask Blueprint routes
-            raise ValueError(f"index must be specified for Translator.delete_docs().")
+            raise ValueError(f"index must be specified for delete_docs()")
 
         if index == 'files':
             # For deleting documents, try removing them from the specified scope, but do not
@@ -417,8 +409,7 @@ class Translator(TranslatorInterface):
                 response += ' '
             return response
         else:
-            raise ValueError(f"The index '{index}' is not recognized for Translator.delete_docs() operations."
-                             f"")
+            raise ValueError(f"The index '{index}' is not recognized for delete_docs() operations.")
 
     def delete(self, entity_id):
         for index, _ in self.indices.items():
@@ -434,6 +425,8 @@ class Translator(TranslatorInterface):
     # When indexing, Upload WILL NEVER BE PUBLIC
     def translate_upload(self, entity_id, reindex=False):
         try:
+            logger.info(f"Start executing translate_upload() for {entity_id}")
+
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
@@ -446,12 +439,16 @@ class Translator(TranslatorInterface):
             self.add_calculated_fields(upload)
 
             self.call_indexer(upload, reindex, json.dumps(upload), default_private_index)
+
+            logger.info(f"Finished executing translate_upload() for {entity_id}")
         except Exception as e:
             logger.error(e)
 
 
     def translate_public_collection(self, entity_id, reindex=False):
         try:
+            logger.info(f"Start executing translate_public_collection() for {entity_id}")
+
             # The entity-api returns public collection with a list of connected public/published datasets, for either
             # - a valid token but not in HuBMAP-Read group or
             # - no token at all
@@ -462,7 +459,7 @@ class Translator(TranslatorInterface):
                 logger.exception(e)
                 # Stop running
 
-                msg = "HubMAP Translator.translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api"
+                msg = f"translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api"
                 logger.error(msg)
                 sys.exit(msg)
 
@@ -488,15 +485,15 @@ class Translator(TranslatorInterface):
 
                 self.call_indexer(collection, reindex, json_data, public_index)
                 self.call_indexer(collection, reindex, json_data, private_index)
+
+            logger.info(f"Finished executing translate_public_collection() for {entity_id}")
         except Exception as e:
             logger.error(e)
 
 
     def translate_tree(self, entity_id):
         try:
-            # logger.info(f"Total threads count: {threading.active_count()}")
-
-            logger.info(f"Executing index_tree() for donor of uuid: {entity_id}")
+            logger.info(f"Start executing index_tree() for donor of uuid: {entity_id}")
 
             descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
@@ -512,7 +509,7 @@ class Translator(TranslatorInterface):
 
                 self.call_indexer(descendant)
 
-            msg = f"indexer.index_tree() finished executing for donor of uuid: {entity_id}"
+            msg = f"Finished executing translate_tree() for donor of uuid: {entity_id}"
             logger.info(msg)
             return msg
         except Exception as e:
@@ -520,6 +517,8 @@ class Translator(TranslatorInterface):
 
 
     def init_transformers(self):
+        logger.info("Start executing init_transformers()")
+
         for index in self.indices.keys():
             try:
                 xform_module = self.INDICES['indices'][index]['transform']['module']
@@ -538,6 +537,8 @@ class Translator(TranslatorInterface):
 
         logger.debug("========Preloaded transformers===========")
         logger.debug(self.TRANSFORMERS)
+
+        logger.info("Finished executing init_transformers()")
 
 
     def init_auth_helper(self):
@@ -613,6 +614,8 @@ class Translator(TranslatorInterface):
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
     def exclude_added_top_level_properties(self, entity_data, except_properties_list = []):
+        logger.info("Start executing exclude_added_top_level_properties()")
+
         if isinstance(entity_data, dict):
             for prop in entity_properties_list:
                 if (prop in entity_data) and (prop not in except_properties_list):
@@ -625,9 +628,13 @@ class Translator(TranslatorInterface):
         else:
             logger.debug(f'The input entity_data type: {type(entity_data)}. Only dict and list are supported.')
 
+        logger.info("Finished executing exclude_added_top_level_properties()")
+
 
     # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
+        logger.info("Start executing add_datasets_to_entity()")
+
         datasets = []
         if 'datasets' in entity:
             for dataset in entity['datasets']:
@@ -639,8 +646,12 @@ class Translator(TranslatorInterface):
 
         entity['datasets'] = datasets
 
+        logger.info("Finished executing add_datasets_to_entity()")
+
 
     def entity_keys_rename(self, entity):
+        logger.info("Start executing entity_keys_rename()")
+
         # logger.debug("==================entity before renaming keys==================")
         # logger.debug(entity)
 
@@ -674,16 +685,22 @@ class Translator(TranslatorInterface):
         # logger.debug("==================entity after renaming keys==================")
         # logger.debug(entity)
 
+        logger.info("Finished executing entity_keys_rename()")
+
 
     # These calculated fields are not stored in neo4j but will be generated
     # and added to the ES
     def add_calculated_fields(self, entity):
+        logger.info("Start executing add_calculated_fields()")
+
         # Add index_version by parsing the VERSION file
         entity['index_version'] = self.index_version
 
         # Add display_subtype
         if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
+
+        logger.info("Start executing add_calculated_fields()")
 
 
     # For Upload, Dataset, Donor and Sample objects:
@@ -695,6 +712,8 @@ class Translator(TranslatorInterface):
     # otherwise the display name linked to the value of the corresponding description of sample_category code
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
+        logger.info("Start executing generate_display_subtype()")
+
         entity_type = entity['entity_type']
         display_subtype = '{unknown}'
 
@@ -724,6 +743,8 @@ class Translator(TranslatorInterface):
             logger.error(
                 f"Invalid entity_type: {entity_type}. Only generate display_subtype for Upload/Donor/Sample/Dataset")
 
+        logger.info("Finished executing generate_display_subtype()")
+
         return display_subtype
 
 
@@ -731,6 +752,8 @@ class Translator(TranslatorInterface):
     # and ingest_metadata.metadata sub fields with empty string values from previous call
     def generate_doc(self, entity, return_type):
         try:
+            logger.info(f"Start executing generate_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+
             entity_id = entity['uuid']
 
             if entity['entity_type'] != 'Upload':
@@ -912,6 +935,8 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields
             self.add_calculated_fields(entity)
 
+            logger.info(f"Finished executing generate_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+
             return json.dumps(entity) if return_type == 'json' else entity
         except Exception:
             msg = "Exceptions during executing indexer.generate_doc()"
@@ -920,6 +945,8 @@ class Translator(TranslatorInterface):
 
 
     def generate_public_doc(self, entity):
+        logger.info(f"Start executing generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+
         # Only Dataset has this 'next_revision_uuid' property
         property_key = 'next_revision_uuid'
         if (entity['entity_type'] in ['Dataset', 'Publication']) and (property_key in entity):
@@ -929,7 +956,7 @@ class Translator(TranslatorInterface):
             response = requests.get(url, headers=self.request_headers, verify=False)
 
             if response.status_code != 200:
-                msg = f"indexer.generate_public_doc() failed to get status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
+                msg = f"generate_public_doc() failed to get status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
                 logger.error(msg)
                 sys.exit(msg)
 
@@ -944,6 +971,9 @@ class Translator(TranslatorInterface):
 
         entity['descendants'] = list(filter(self.is_public, entity['descendants']))
         entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
+
+        logger.info(f"Finished executing generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+
         return json.dumps(entity)
 
 
@@ -954,6 +984,8 @@ class Translator(TranslatorInterface):
     # - Copy the actual files info list ['ingest_metadata']['files'] to the added top-level field
     # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
     def prepare_dataset(self, dataset_dict):
+        logger.info("Start executing prepare_dataset()")
+
         # Add this top-level field for Dataset and set to empty list as default
         if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] in ['Dataset', 'Publication'] ):
             dataset_dict['files'] = []
@@ -981,6 +1013,8 @@ class Translator(TranslatorInterface):
                         if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
                             del dataset_dict['ingest_metadata']['metadata'][key]
                             logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
+        
+        logger.info("Finished executing prepare_dataset()")
 
         return dataset_dict
 
@@ -988,6 +1022,8 @@ class Translator(TranslatorInterface):
     # The Collection and Upload are handled by separate calls
     # The returned data can either be an entity dict or a list of uuids (when `url_property` parameter is specified)
     def call_entity_api(self, entity_id, endpoint, url_property = None):
+        logger.info(f"Start executing call_entity_api() on uuid: {entity_id}")
+
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
             url += "?property=" + url_property
@@ -996,7 +1032,7 @@ class Translator(TranslatorInterface):
 
         # Won't store the response data in cache in the event of an HTTP error
         if response.status_code != 200:
-            msg = f"HuBMAP translator call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
+            msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
@@ -1012,6 +1048,8 @@ class Translator(TranslatorInterface):
             response.raise_for_status()
             raise requests.exceptions.RequestException(response.text)
 
+        logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
+
         # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
         # For Dataset, data manipulation is performed
         # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
@@ -1019,6 +1057,8 @@ class Translator(TranslatorInterface):
 
 
     def get_public_collection(self, entity_id):
+        logger.info(f"Start executing get_public_collection() on uuid: {entity_id}")
+
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
@@ -1027,7 +1067,7 @@ class Translator(TranslatorInterface):
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
-            msg = f"HuBMAP translator get_public_collection() failed to get entity of uuid {entity_id} via entity-api"
+            msg = f"get_public_collection() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
@@ -1045,11 +1085,15 @@ class Translator(TranslatorInterface):
 
         collection_dict = response.json()
 
+        logger.info(f"Finished executing get_public_collection() on uuid: {entity_id}")
+
         return collection_dict
 
 
     def delete_and_recreate_indices(self):
         try:
+            logger.info("Start executing delete_and_recreate_indices()")
+
             # Delete and recreate target indices
             # for index, configs in self.indices['indices'].items():
             for index in self.indices.keys():
@@ -1076,6 +1120,7 @@ class Translator(TranslatorInterface):
                 self.indexer.create_index(public_index, index_mapping_settings)
                 self.indexer.create_index(private_index, index_mapping_settings)
 
+            logger.info("Finished executing delete_and_recreate_indices()")
         except Exception:
             msg = "Exception encountered during executing delete_and_recreate_indices()"
             # Log the full stack trace, prepend a line with our message
