@@ -446,22 +446,14 @@ class Translator(TranslatorInterface):
 
 
     def translate_public_collection(self, entity_id, reindex=False):
+        logger.info(f"Start executing translate_public_collection() for {entity_id}")
+
+        # The entity-api returns public collection with a list of connected public/published datasets, for either
+        # - a valid token but not in HuBMAP-Read group or
+        # - no token at all
+        # Here we do NOT send over the token
         try:
-            logger.info(f"Start executing translate_public_collection() for {entity_id}")
-
-            # The entity-api returns public collection with a list of connected public/published datasets, for either
-            # - a valid token but not in HuBMAP-Read group or
-            # - no token at all
-            # Here we do NOT send over the token
-            try:
-                collection = self.get_public_collection(entity_id)
-            except requests.exceptions.RequestException as e:
-                logger.exception(e)
-                # Stop running
-
-                msg = f"translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api"
-                logger.error(msg)
-                sys.exit(msg)
+            collection = self.get_public_collection(entity_id)
 
             self.add_datasets_to_entity(collection)
             self.entity_keys_rename(collection)
@@ -487,6 +479,10 @@ class Translator(TranslatorInterface):
                 self.call_indexer(collection, reindex, json_data, private_index)
 
             logger.info(f"Finished executing translate_public_collection() for {entity_id}")
+        except requests.exceptions.RequestException as e:
+            logger.exception(e)
+            # Log the error and will need fix later and reindex, rather than sys.exit()
+            logger.error(f"translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api")
         except Exception as e:
             logger.error(e)
 
@@ -585,7 +581,12 @@ class Translator(TranslatorInterface):
                     transformer = self.TRANSFORMERS.get(index, None)
 
                     if self.is_public(entity):
-                        public_doc = self.generate_public_doc(entity)
+                        try:
+                            public_doc = self.generate_public_doc(entity)
+                        except Exception:
+                            msg = f"Exception encountered during executing generate_public_doc() inside call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
+                            # Log the full stack trace, prepend a line with our message
+                            logger.exception(msg)
 
                         if transformer is not None:
                             public_transformed = transformer.transform(json.loads(public_doc))
@@ -605,7 +606,7 @@ class Translator(TranslatorInterface):
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
         except Exception:
-            msg = f"Exception encountered during executing HuBMAPTranslator call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
+            msg = f"Exception encountered during executing call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
@@ -951,14 +952,19 @@ class Translator(TranslatorInterface):
         property_key = 'next_revision_uuid'
         if (entity['entity_type'] in ['Dataset', 'Publication']) and (property_key in entity):
             next_revision_uuid = entity[property_key]
+            
+            # Can't reuse call_entity_api() here due to the response data type
             # Making a call against entity-api/entities/<next_revision_uuid>?property=status
             url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
             response = requests.get(url, headers=self.request_headers, verify=False)
 
             if response.status_code != 200:
-                msg = f"generate_public_doc() failed to get status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
-                logger.error(msg)
-                sys.exit(msg)
+                logger.error(f"generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}")
+                
+                # Bubble up the error message from entity-api instead of sys.exit(msg)
+                # The caller will need to handle this exception
+                response.raise_for_status()
+                raise requests.exceptions.RequestException(response.text)
 
             # The call to entity-api returns string directly
             dataset_status = (response.text).lower()
