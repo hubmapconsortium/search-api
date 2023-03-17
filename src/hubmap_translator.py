@@ -1150,7 +1150,7 @@ class MemcachedTranslator(Translator):
             url += "?property=" + url_property
         
         result = None
-        cache_key = f'REINDEX_{url}'
+        cache_key = f'{app.config['MEMCACHED_PREFIX']}{url}'
 
         if self.memcached_client_instance:
             # Memcached returns None if no cached data or expired
@@ -1188,9 +1188,10 @@ class MemcachedTranslator(Translator):
             # For Dataset, data manipulation is performed
             # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
             result = self.prepare_dataset(response.json())
+
             if self.memcached_client_instance:        
                 # Cache the result
-                memcached_client_instance.set(cache_key, result, expire = 7200)
+                memcached_client_instance.set(cache_key, result, expire = app.config['MEMCACHED_TTL'])
         else:
             logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
 
