@@ -144,8 +144,8 @@ class Translator(TranslatorInterface):
                 futures_list = []
                 results = []
 
-                # Experimental: specify the max number of threads
-                with concurrent.futures.ThreadPoolExecutor(200) as executor:
+                # Experimental: specify the max number of threads as 40 to double the default 20
+                with concurrent.futures.ThreadPoolExecutor(40) as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as: 
                     # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
                     # Where the number of CPUs is determined by Python and will take hyperthreading into account
