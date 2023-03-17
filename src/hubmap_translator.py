@@ -143,9 +143,11 @@ class Translator(TranslatorInterface):
                 # - each donor and its descendants in the tree
                 futures_list = []
                 results = []
-                with concurrent.futures.ThreadPoolExecutor() as executor:
+
+                # Experimental: specify the max number of threads
+                with concurrent.futures.ThreadPoolExecutor(200) as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as: 
-                    # Total Number Worker Threads = (CPUs in Your System) + 4
+                    # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
                     # Where the number of CPUs is determined by Python and will take hyperthreading into account
                     logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
 
