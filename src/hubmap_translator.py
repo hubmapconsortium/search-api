@@ -12,6 +12,11 @@ from yaml import safe_load
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
 
+# pymemcache.client.base.PooledClient is a thread-safe client pool 
+# that provides the same API as pymemcache.client.base.Client
+from pymemcache.client.base import PooledClient
+from pymemcache import serde
+
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
 
@@ -58,6 +63,8 @@ class Translator(TranslatorInterface):
     TRANSFORMERS = {}
     DEFAULT_ENTITY_API_URL = ''
     indexer = None
+
+    memcached_client_instance = None
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
@@ -1132,6 +1139,63 @@ class Translator(TranslatorInterface):
             logger.exception(msg)
 
 
+# Only overwrite the call_entity_api() method
+class MemcachedTranslator(Translator):
+    def call_entity_api(self, entity_id, endpoint, url_property = None):
+        logger.info(f"Start executing call_entity_api() on uuid: {entity_id}")
+
+        url = self.entity_api_url + "/" + endpoint + "/" + entity_id
+        if url_property:
+            url += "?property=" + url_property
+        
+        result = None
+        cache_key = f'REINDEX_{url}'
+
+        if self.memcached_client_instance:
+            # Memcached returns None if no cached data or expired
+            result = memcached_client_instance.get(cache_key)
+
+        current_datetime = datetime.now()
+
+        if result is None:
+            if self.memcached_client_instance::
+                logger.info(f'Cache not found or expired. Making a new query to retrieve {entity_id} at time {current_datetime}')
+
+            response = requests.get(url, headers=self.request_headers, verify=False)
+
+            # Won't store the response data in cache in the event of an HTTP error
+            if response.status_code != 200:
+                msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
+
+                # Log the full stack trace, prepend a line with our message
+                logger.exception(msg)
+
+                logger.debug("======call_entity_api() status code from entity-api======")
+                logger.debug(response.status_code)
+
+                logger.debug("======call_entity_api() response text from entity-api======")
+                logger.debug(response.text)
+
+                # Bubble up the error message from entity-api instead of sys.exit(msg)
+                # The caller will need to handle this exception
+                response.raise_for_status()
+                raise requests.exceptions.RequestException(response.text)
+
+            logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
+
+            # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
+            # For Dataset, data manipulation is performed
+            # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
+            result = self.prepare_dataset(response.json())
+            if self.memcached_client_instance:        
+                # Cache the result
+                memcached_client_instance.set(cache_key, result, expire = 7200)
+        else:
+            logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
+
+        return result
+
+
 # Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
 # It'll delete all the existing indices and recreate then then index everything
@@ -1150,8 +1214,38 @@ if __name__ == "__main__":
         logger.exception(msg)
         sys.exit(msg)
 
+    # Memcached client initialization
+    memcached_client_instance = None
+    try:
+        # Use client pool to maintain a pool of already-connected clients for improved performance
+        # The uwsgi config launches the app across multiple threads (2) inside each process (4), making essentially 8 processes
+        # Set the connect_timeout and timeout to avoid blocking the process when memcached is slow, defaults to "forever"
+        # connect_timeout: seconds to wait for a connection to the memcached server
+        # timeout: seconds to wait for send or reveive calls on the socket connected to memcached
+        # Use the ignore_exc flag to treat memcache/network errors as cache misses on calls to the get* methods
+        # Set the no_delay flag to sent TCP_NODELAY (disable Nagle's algorithm to improve TCP/IP networks and decrease the number of packets)
+        # If you intend to use anything but str as a value, it is a good idea to use a serializer
+        memcached_client_instance = PooledClient(app.config['MEMCACHED_SERVER'], 
+                                                 max_pool_size = 8,
+                                                 connect_timeout = 1,
+                                                 timeout = 30,
+                                                 ignore_exc = True, 
+                                                 no_delay = True,
+                                                 serde = serde.pickle_serde)
+
+        # memcached_client_instance can be instantiated without connecting to the Memcached server
+        # A version() call will throw error (e.g., timeout) when failed to connect to server
+        # Need to convert the version in bytes to string
+        logger.info(f'Connected to Memcached server {memcached_client_instance.version().decode()} successfully :)')
+    except Exception:
+        msg = 'Failed to connect to the Memcached server :('
+        # Log the full stack trace, prepend a line with our message
+        logger.exception(msg)
+
     # Create an instance of the indexer
-    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    translator = MemcachedTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    # Set the memcached instance
+    translator.memcached_client_instance = memcached_client_instance
 
     auth_helper = translator.init_auth_helper()
 
