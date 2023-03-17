@@ -2,16 +2,13 @@ from datetime import datetime
 from collections import OrderedDict
 from operator import getitem
 
-# New sections registered for Sample/organ HBM742.FCHF.843 (8b34faba613d743dab7392bd22721ddb)
-# whose Donor uuid is 3a0960c7cc8864dcc003165cef9ca040
+def parse_log(log_file_path):
+    print(f"Target file: {log_file_path}")
 
-file = r"./donors.log"
-
-def parse_log():
-    with open(file) as f:
+    with open(log_file_path) as f:
         f = f.readlines()
 
-    donors = {}
+    entities = {}
 
     for line in f:
         #print(line)
@@ -19,24 +16,32 @@ def parse_log():
         time = parts[0][1:20]
         uuid = parts[2].rstrip("\n")
 
-        if uuid not in donors:
-            donors[uuid] = {}
-            donors[uuid]['start'] = time
+        if uuid not in entities:
+            entities[uuid] = {}
+            entities[uuid]['start'] = time
         else:
-            donors[uuid]['end'] = time
-            donors[uuid]['duration'] = int((datetime.fromisoformat(donors[uuid]['end']) - datetime.fromisoformat(donors[uuid]['start'])).total_seconds())
+            entities[uuid]['end'] = time
+            entities[uuid]['duration'] = int((datetime.fromisoformat(entities[uuid]['end']) - datetime.fromisoformat(entities[uuid]['start'])).total_seconds())
  
 
     # Only care about the completed
-    filtered_donors = {k:v for k,v in donors.items() if 'duration' in v}
-    #print(filtered_donors)
+    filtered_entities = {k:v for k,v in entities.items() if 'duration' in v}
+    #print(filtered_entities)
 
-    sorted_filtered_donors = OrderedDict(sorted(filtered_donors.items(), key = lambda x: getitem(x[1], 'duration')))
+    sorted_filtered_entities = OrderedDict(sorted(filtered_entities.items(), key = lambda x: getitem(x[1], 'duration')))
     #print(sorted_filtered_donors)
 
-    for uuid in sorted_filtered_donors:
-        print(f"Donor: {uuid} Total index time: {sorted_filtered_donors[uuid]['duration']} seconds")
+    for uuid in sorted_filtered_entities:
+        print(f"Entity: {uuid} Total index time: {sorted_filtered_entities[uuid]['duration']} seconds")
 
 
 if __name__ == "__main__":
-    parse_log()
+    try:
+        log_file_path = sys.argv[1]
+        parse_log(log_file_path)
+    except IndexError as e:
+        msg = "Missing log file path argument"
+        logger.exception(msg)
+        sys.exit(msg)
+
+    

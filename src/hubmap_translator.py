@@ -144,8 +144,9 @@ class Translator(TranslatorInterface):
                 futures_list = []
                 results = []
 
-                # Experimental: specify the max number of threads as 40 to double the default 20
-                with concurrent.futures.ThreadPoolExecutor(40) as executor:
+                # Specify a custom max number of threads doesn't make a meaningful difference
+                # I verified with using 200 and 40 - 3/16/2023 Zhou
+                with concurrent.futures.ThreadPoolExecutor() as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as: 
                     # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
                     # Where the number of CPUs is determined by Python and will take hyperthreading into account
@@ -159,8 +160,9 @@ class Translator(TranslatorInterface):
                     # Append the above three lists into one
                     futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
 
+                    # The target function runs the task logs more details when f.result() gets executed
                     for f in concurrent.futures.as_completed(futures_list):
-                        logger.debug(f.result())
+                        result = f.result()
 
                 end = time.time()
 
@@ -226,7 +228,7 @@ class Translator(TranslatorInterface):
                     ancestor_entity_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
                     descendant_entity_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
-                    # Only Dataset entities may have previous/next revisions
+                    # Only Dataset/Publication entities may have previous/next revisions
                     if entity['entity_type'] in ['Dataset', 'Publication']:
                         previous_revision_entity_ids = self.call_entity_api(entity_id, 'previous_revisions',
                                                                             'uuid')
@@ -245,8 +247,6 @@ class Translator(TranslatorInterface):
                         self.call_indexer(node, True)
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
-
-                return "translate() finished executing"
         except Exception:
             msg = "Exceptions during executing translate()"
             # Log the full stack trace, prepend a line with our message
@@ -504,12 +504,9 @@ class Translator(TranslatorInterface):
             for descendant_uuid in descendant_uuids:
                 # Retrieve the entity details
                 descendant = self.call_entity_api(descendant_uuid, 'entities')
-
                 self.call_indexer(descendant)
 
-            msg = f"Finished executing translate_donor_tree() for donor of uuid: {entity_id}"
-            logger.info(msg)
-            return msg
+            logger.info(f"Finished executing translate_donor_tree() for donor of uuid: {entity_id}")
         except Exception as e:
             logger.error(e)
 
