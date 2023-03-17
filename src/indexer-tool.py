@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 from collections import OrderedDict
 from operator import getitem
@@ -10,14 +11,18 @@ def parse_log(log_file_path):
 
     entities = {}
 
+    # Start|Finished executing <method()> for <entity type> of uuif: <uuid>
     for line in f:
         #print(line)
         parts = line.split(": ")
         time = parts[0][1:20]
         uuid = parts[2].rstrip("\n")
 
+        method = parts[1].split(" ")[2]
+
         if uuid not in entities:
             entities[uuid] = {}
+            entities[uuid]['method'] = method
             entities[uuid]['start'] = time
         else:
             entities[uuid]['end'] = time
@@ -32,7 +37,7 @@ def parse_log(log_file_path):
     #print(sorted_filtered_donors)
 
     for uuid in sorted_filtered_entities:
-        print(f"Entity: {uuid} Total index time: {sorted_filtered_entities[uuid]['duration']} seconds")
+        print(f"Entity: {uuid} Method: {method} Total index time: {sorted_filtered_entities[uuid]['duration']} seconds")
 
 
 if __name__ == "__main__":
