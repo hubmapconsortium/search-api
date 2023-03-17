@@ -154,7 +154,7 @@ class Translator(TranslatorInterface):
                     # Submit tasks to the thread pool
                     public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
                     upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
-                    donor_futures_list = [executor.submit(self.translate_tree, uuid) for uuid in donor_uuids_list]
+                    donor_futures_list = [executor.submit(self.translate_donor_tree, uuid) for uuid in donor_uuids_list]
 
                     # Append the above three lists into one
                     futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
@@ -489,9 +489,9 @@ class Translator(TranslatorInterface):
             logger.error(e)
 
 
-    def translate_tree(self, entity_id):
+    def translate_donor_tree(self, entity_id):
         try:
-            logger.info(f"Start executing index_tree() for donor of uuid: {entity_id}")
+            logger.info(f"Start executing translate_donor_tree() for donor of uuid: {entity_id}")
 
             descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
@@ -507,7 +507,7 @@ class Translator(TranslatorInterface):
 
                 self.call_indexer(descendant)
 
-            msg = f"Finished executing translate_tree() for donor of uuid: {entity_id}"
+            msg = f"Finished executing translate_donor_tree() for donor of uuid: {entity_id}"
             logger.info(msg)
             return msg
         except Exception as e:
