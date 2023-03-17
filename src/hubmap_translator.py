@@ -1158,7 +1158,7 @@ class MemcachedTranslator(Translator):
         current_datetime = datetime.now()
 
         if result is None:
-            if self.memcached_client_instance::
+            if self.memcached_client_instance:
                 logger.info(f'Cache not found or expired. Making a new query to retrieve {entity_id} at time {current_datetime}')
 
             response = requests.get(url, headers=self.request_headers, verify=False)
