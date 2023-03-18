@@ -224,38 +224,31 @@ class Translator(TranslatorInterface):
 
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
-            # Check if entity is empty
-            if bool(entity):
-                logger.info(f"Entity uuid: {entity_id}, type: {entity['entity_type']}")
+            if entity['entity_type'] == 'Collection':
+                self.translate_public_collection(entity_id, reindex=True)
+            elif entity['entity_type'] == 'Upload':
+                self.translate_upload(entity_id, reindex=True)
+            else:
+                # Reindex the entity itself first
+                self.call_indexer(entity, reindex=True)
 
-                if entity['entity_type'] == 'Collection':
-                    self.translate_public_collection(entity_id, reindex=True)
-                elif entity['entity_type'] == 'Upload':
-                    self.translate_upload(entity_id, reindex=True)
-                else:
-                    previous_revision_entity_ids = []
-                    next_revision_entity_ids = []
+                previous_revision_entity_ids = []
+                next_revision_entity_ids = []
 
-                    ancestor_entity_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-                    descendant_entity_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+                ancestor_entity_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
+                descendant_entity_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
-                    # Only Dataset/Publication entities may have previous/next revisions
-                    if entity['entity_type'] in ['Dataset', 'Publication']:
-                        previous_revision_entity_ids = self.call_entity_api(entity_id, 'previous_revisions',
-                                                                            'uuid')
-                        next_revision_entity_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+                # Only Dataset/Publication entities may have previous/next revisions
+                if entity['entity_type'] in ['Dataset', 'Publication']:
+                    previous_revision_entity_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
+                    next_revision_entity_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
 
-                    # All entity_ids in the path excluding the entity itself
-                    entity_ids = ancestor_entity_ids + descendant_entity_ids + previous_revision_entity_ids + next_revision_entity_ids
+                # All entity_ids in the path excluding the entity itself
+                entity_ids = ancestor_entity_ids + descendant_entity_ids + previous_revision_entity_ids + next_revision_entity_ids
 
-                    self.call_indexer(entity)
-
-                    # Reindex the rest of the entities in the list
-                    for entity_entity_id in set(entity_ids):
-                        # Retrieve the entity details
-                        node = self.call_entity_api(entity_entity_id, 'entities')
-
-                        self.call_indexer(node, True)
+                # Reindex the rest of the entities in the list
+                for entity_id in set(entity_ids):
+                    self.reindex_entity(entity_id)
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
@@ -513,7 +506,7 @@ class Translator(TranslatorInterface):
             # Index all the descendants of this donor
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Submit tasks to the thread pool
-                donor_descendants_list = [executor.submit(self.index_donor_descendant, uuid) for uuid in descendant_uuids]
+                donor_descendants_list = [executor.submit(self.index_entity, uuid) for uuid in descendant_uuids]
 
                 # The target function runs the task logs more details when f.result() gets executed
                 for f in concurrent.futures.as_completed(donor_descendants_list):
@@ -524,13 +517,22 @@ class Translator(TranslatorInterface):
             logger.error(e)
 
 
-    def index_donor_descendant(self, descendant_uuid):
-        logger.info(f"Start executing index_donor_descendant() on uuid: {descendant_uuid}")
+    def index_entity(self, uuid):
+        logger.info(f"Start executing index_entity() on uuid: {uuid}")
 
-        descendant = self.call_entity_api(descendant_uuid, 'entities')
-        self.call_indexer(descendant)
+        entity_dict = self.call_entity_api(uuid, 'entities')
+        self.call_indexer(entity_dict)
 
-        logger.info(f"Finished executing index_donor_descendant() on uuid: {descendant_uuid}")
+        logger.info(f"Finished executing index_entity() on uuid: {uuid}")
+
+
+    def reindex_entity(self, uuid):
+        logger.info(f"Start executing reindex_entity() on uuid: {uuid}")
+
+        entity_dict = self.call_entity_api(uuid, 'entities')
+        self.call_indexer(entity_dict, reindex=True)
+
+        logger.info(f"Finished executing reindex_entity() on uuid: {uuid}")
 
 
     def init_transformers(self):
@@ -722,7 +724,7 @@ class Translator(TranslatorInterface):
         if entity['entity_type'] in entity_types_with_display_subtype:
             entity['display_subtype'] = self.generate_display_subtype(entity)
 
-        logger.info("Start executing add_calculated_fields()")
+        logger.info("Finished executing add_calculated_fields()")
 
 
     # For Upload, Dataset, Donor and Sample objects:
@@ -1088,8 +1090,6 @@ class Translator(TranslatorInterface):
                 response.raise_for_status()
                 raise requests.exceptions.RequestException(response.text)
 
-            logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
-
             # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
             # For Dataset, data manipulation is performed
             # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
@@ -1101,6 +1101,8 @@ class Translator(TranslatorInterface):
                 memcached_client_instance.set(cache_key, result, expire = app.config['MEMCACHED_TTL'])
         else:
             logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
+
+        logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
 
         return result
 
@@ -1177,8 +1179,8 @@ class Translator(TranslatorInterface):
 
 
 
-# Running indexer_base.py as a script in command line
-# This approach is different from the live reindex via HTTP request
+# Running full reindex script in command line
+# This approach is different from the live /reindex-all PUT call
 # It'll delete all the existing indices and recreate then then index everything
 if __name__ == "__main__":
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
