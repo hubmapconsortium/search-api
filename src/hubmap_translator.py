@@ -506,20 +506,31 @@ class Translator(TranslatorInterface):
 
             descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
-            # Index the donor entity itself separately
+            # Index the donor entity itself
             donor = self.call_entity_api(entity_id, 'entities')
-
             self.call_indexer(donor)
 
             # Index all the descendants of this donor
-            for descendant_uuid in descendant_uuids:
-                # Retrieve the entity details
-                descendant = self.call_entity_api(descendant_uuid, 'entities')
-                self.call_indexer(descendant)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # Submit tasks to the thread pool
+                donor_descendants_list = [executor.submit(self.index_donor_descendant, uuid) for uuid in descendant_uuids]
+
+                # The target function runs the task logs more details when f.result() gets executed
+                for f in concurrent.futures.as_completed(donor_descendants_list):
+                    result = f.result()
 
             logger.info(f"Finished executing translate_donor_tree() for donor of uuid: {entity_id}")
         except Exception as e:
             logger.error(e)
+
+
+    def index_donor_descendant(self, descendant_uuid):
+        logger.info(f"Start executing index_donor_descendant() on uuid: {descendant_uuid}")
+
+        descendant = self.call_entity_api(descendant_uuid, 'entities')
+        self.call_indexer(descendant)
+
+        logger.info(f"Finished executing index_donor_descendant() on uuid: {descendant_uuid}")
 
 
     def init_transformers(self):
