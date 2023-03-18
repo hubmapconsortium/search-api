@@ -1225,6 +1225,9 @@ if __name__ == "__main__":
         # Log the full stack trace, prepend a line with our message
         logger.exception(msg)
 
+    # Delete all the old cache
+    memcached_client_instance.flush_all()
+
     # Create an instance of the indexer
     translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
     
