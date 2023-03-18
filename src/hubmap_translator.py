@@ -1045,7 +1045,7 @@ class Translator(TranslatorInterface):
             url += "?property=" + url_property
         
         result = None
-        cache_key = f'{app.config['MEMCACHED_PREFIX']}{url}'
+        cache_key = f"{app.config['MEMCACHED_PREFIX']}{url}"
 
         if self.memcached_client_instance:
             # Memcached returns None if no cached data or expired
