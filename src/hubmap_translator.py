@@ -121,7 +121,7 @@ class Translator(TranslatorInterface):
                 public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
 
                 # Only need this comparision for the live /rindex-all PUT call
-                if not skip_comparision:
+                if not self.skip_comparision:
                     # Make calls to entity-api to get a list of uuids for rest of entity types
                     sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers, self.DEFAULT_ENTITY_API_URL)
                     dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers, self.DEFAULT_ENTITY_API_URL)
