@@ -65,7 +65,11 @@ class Translator(TranslatorInterface):
     DEFAULT_ENTITY_API_URL = ''
     indexer = None
 
+    # To imporve translate_all() performance
     memcached_client_instance = None
+
+    skip_comparision = False
+
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
@@ -112,38 +116,37 @@ class Translator(TranslatorInterface):
 
                 start = time.time()
 
-                # Make calls to entity-api to get a list of uuids for each entity type
                 donor_uuids_list = get_uuids_by_entity_type("donor", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers,
-                                                             self.DEFAULT_ENTITY_API_URL)
-                dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers,
-                                                              self.DEFAULT_ENTITY_API_URL)
-                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers,
-                                                             self.DEFAULT_ENTITY_API_URL)
-                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
-                                                                        self.DEFAULT_ENTITY_API_URL)
+                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
 
-                # Merge into a big list that with no duplicates
-                all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
+                # Only need this comparision for the live /rindex-all PUT call
+                if not skip_comparision:
+                    # Make calls to entity-api to get a list of uuids for rest of entity types
+                    sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                    dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                    
+                    # Merge into a big list that with no duplicates
+                    all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
 
-                es_uuids = []
-                index_names = get_all_reindex_enabled_indice_names(self.INDICES)
+                    es_uuids = []
+                    index_names = get_all_reindex_enabled_indice_names(self.INDICES)
 
-                for index in index_names.keys():
-                    all_indices = index_names[index]
-                    # get URL for that index
-                    es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
+                    for index in index_names.keys():
+                        all_indices = index_names[index]
+                        # get URL for that index
+                        es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
 
-                    for actual_index in all_indices:
-                        es_uuids.extend(get_uuids_from_es(actual_index, es_url))
+                        for actual_index in all_indices:
+                            es_uuids.extend(get_uuids_from_es(actual_index, es_url))
 
-                es_uuids = set(es_uuids)
+                    es_uuids = set(es_uuids)
 
-                # Remove entities found in Elasticsearch but no longer in neo4j
-                for uuid in es_uuids:
-                    if uuid not in all_entities_uuids:
-                        logger.debug(f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
-                        self.delete(uuid)
+                    # Remove entities found in Elasticsearch but no longer in neo4j
+                    for uuid in es_uuids:
+                        if uuid not in all_entities_uuids:
+                            logger.debug(f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
+                            self.delete(uuid)
 
                 # Reindex in multi-treading mode for:
                 # - each public collection
@@ -1040,33 +1043,54 @@ class Translator(TranslatorInterface):
         url = self.entity_api_url + "/" + endpoint + "/" + entity_id
         if url_property:
             url += "?property=" + url_property
+        
+        result = None
+        cache_key = f'{app.config['MEMCACHED_PREFIX']}{url}'
 
-        response = requests.get(url, headers=self.request_headers, verify=False)
+        if self.memcached_client_instance:
+            # Memcached returns None if no cached data or expired
+            result = memcached_client_instance.get(cache_key)
 
-        # Won't store the response data in cache in the event of an HTTP error
-        if response.status_code != 200:
-            msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
+        current_datetime = datetime.now()
 
-            # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
+        if result is None:
+            if self.memcached_client_instance:
+                logger.info(f'Cache not found or expired. Making a new query to retrieve {entity_id} at time {current_datetime}')
 
-            logger.debug("======call_entity_api() status code from entity-api======")
-            logger.debug(response.status_code)
+            response = requests.get(url, headers=self.request_headers, verify=False)
 
-            logger.debug("======call_entity_api() response text from entity-api======")
-            logger.debug(response.text)
+            # Won't store the response data in cache in the event of an HTTP error
+            if response.status_code != 200:
+                msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
 
-            # Bubble up the error message from entity-api instead of sys.exit(msg)
-            # The caller will need to handle this exception
-            response.raise_for_status()
-            raise requests.exceptions.RequestException(response.text)
+                # Log the full stack trace, prepend a line with our message
+                logger.exception(msg)
 
-        logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
+                logger.debug("======call_entity_api() status code from entity-api======")
+                logger.debug(response.status_code)
 
-        # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
-        # For Dataset, data manipulation is performed
-        # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
-        return self.prepare_dataset(response.json())
+                logger.debug("======call_entity_api() response text from entity-api======")
+                logger.debug(response.text)
+
+                # Bubble up the error message from entity-api instead of sys.exit(msg)
+                # The caller will need to handle this exception
+                response.raise_for_status()
+                raise requests.exceptions.RequestException(response.text)
+
+            logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
+
+            # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
+            # For Dataset, data manipulation is performed
+            # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
+            result = self.prepare_dataset(response.json())
+
+            if self.memcached_client_instance:        
+                # Cache the result
+                memcached_client_instance.set(cache_key, result, expire = app.config['MEMCACHED_TTL'])
+        else:
+            logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
+
+        return result
 
 
     def get_public_collection(self, entity_id):
@@ -1140,63 +1164,6 @@ class Translator(TranslatorInterface):
             logger.exception(msg)
 
 
-# Only overwrite the call_entity_api() method
-class MemcachedTranslator(Translator):
-    def call_entity_api(self, entity_id, endpoint, url_property = None):
-        logger.info(f"Start executing call_entity_api() on uuid: {entity_id}")
-
-        url = self.entity_api_url + "/" + endpoint + "/" + entity_id
-        if url_property:
-            url += "?property=" + url_property
-        
-        result = None
-        cache_key = f'{app.config['MEMCACHED_PREFIX']}{url}'
-
-        if self.memcached_client_instance:
-            # Memcached returns None if no cached data or expired
-            result = memcached_client_instance.get(cache_key)
-
-        current_datetime = datetime.now()
-
-        if result is None:
-            if self.memcached_client_instance:
-                logger.info(f'Cache not found or expired. Making a new query to retrieve {entity_id} at time {current_datetime}')
-
-            response = requests.get(url, headers=self.request_headers, verify=False)
-
-            # Won't store the response data in cache in the event of an HTTP error
-            if response.status_code != 200:
-                msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
-
-                # Log the full stack trace, prepend a line with our message
-                logger.exception(msg)
-
-                logger.debug("======call_entity_api() status code from entity-api======")
-                logger.debug(response.status_code)
-
-                logger.debug("======call_entity_api() response text from entity-api======")
-                logger.debug(response.text)
-
-                # Bubble up the error message from entity-api instead of sys.exit(msg)
-                # The caller will need to handle this exception
-                response.raise_for_status()
-                raise requests.exceptions.RequestException(response.text)
-
-            logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
-
-            # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
-            # For Dataset, data manipulation is performed
-            # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
-            result = self.prepare_dataset(response.json())
-
-            if self.memcached_client_instance:        
-                # Cache the result
-                memcached_client_instance.set(cache_key, result, expire = app.config['MEMCACHED_TTL'])
-        else:
-            logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
-
-        return result
-
 
 # Running indexer_base.py as a script in command line
 # This approach is different from the live reindex via HTTP request
@@ -1245,9 +1212,11 @@ if __name__ == "__main__":
         logger.exception(msg)
 
     # Create an instance of the indexer
-    translator = MemcachedTranslator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
-    # Set the memcached instance
+    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    
+    # Use Memcached and skip the uuids comparision step that is only needed for live /reindex-all PUT call
     translator.memcached_client_instance = memcached_client_instance
+    translator.skip_comparision = True
 
     auth_helper = translator.init_auth_helper()
 
