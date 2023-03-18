@@ -606,19 +606,19 @@ class Translator(TranslatorInterface):
                     if self.is_public(entity):
                         try:
                             public_doc = self.generate_public_doc(entity)
+
+                            if transformer is not None:
+                                public_transformed = transformer.transform(json.loads(public_doc))
+                                public_transformed_doc = json.dumps(public_transformed)
+                                target_doc = public_transformed_doc
+                            else:
+                                target_doc = public_doc
+
+                            self.indexer.index(entity['uuid'], target_doc, public_index, reindex)
                         except Exception:
                             msg = f"Exception encountered during executing generate_public_doc() inside call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
                             # Log the full stack trace, prepend a line with our message
                             logger.exception(msg)
-
-                        if transformer is not None:
-                            public_transformed = transformer.transform(json.loads(public_doc))
-                            public_transformed_doc = json.dumps(public_transformed)
-                            target_doc = public_transformed_doc
-                        else:
-                            target_doc = public_doc
-
-                        self.indexer.index(entity['uuid'], target_doc, public_index, reindex)
 
                     # add it to private
                     if transformer is not None:
