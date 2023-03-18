@@ -67,6 +67,7 @@ class Translator(TranslatorInterface):
 
     # To imporve translate_all() performance
     memcached_client_instance = None
+    memcached_prefix = ''
 
     skip_comparision = False
 
@@ -100,8 +101,7 @@ class Translator(TranslatorInterface):
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
 
-        with open(Path(__file__).resolve().parent / 'hubmap_translation' / 'neo4j-to-es-attributes.json',
-                  'r') as json_file:
+        with open(Path(__file__).resolve().parent / 'hubmap_translation' / 'neo4j-to-es-attributes.json', 'r') as json_file:
             self.attr_map = json.load(json_file)
 
         # # Preload all the transformers
@@ -1056,9 +1056,9 @@ class Translator(TranslatorInterface):
             url += "?property=" + url_property
         
         result = None
-        cache_key = f"{app.config['MEMCACHED_PREFIX']}{url}"
 
         if self.memcached_client_instance:
+            cache_key = f"{self.memcached_prefix}{url}"
             # Memcached returns None if no cached data or expired
             result = memcached_client_instance.get(cache_key)
 
@@ -1097,6 +1097,7 @@ class Translator(TranslatorInterface):
 
             if self.memcached_client_instance:        
                 # Cache the result
+                cache_key = f"{self.memcached_prefix}{url}"
                 memcached_client_instance.set(cache_key, result, expire = app.config['MEMCACHED_TTL'])
         else:
             logger.info(f'Using the cache data of entity {entity_id} at time {current_datetime}')
@@ -1227,6 +1228,7 @@ if __name__ == "__main__":
     
     # Use Memcached and skip the uuids comparision step that is only needed for live /reindex-all PUT call
     translator.memcached_client_instance = memcached_client_instance
+    translator.memcached_prefix = app.config['MEMCACHED_PREFIX']
     translator.skip_comparision = True
 
     auth_helper = translator.init_auth_helper()
