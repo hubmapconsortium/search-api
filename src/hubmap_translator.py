@@ -506,10 +506,7 @@ class Translator(TranslatorInterface):
 
             # Index all the descendants of this donor
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                # Submit tasks to the thread pool
                 donor_descendants_list = [executor.submit(self.index_entity, uuid) for uuid in descendant_uuids]
-
-                # The target function runs the task logs more details when f.result() gets executed
                 for f in concurrent.futures.as_completed(donor_descendants_list):
                     result = f.result()
 
@@ -1278,9 +1275,10 @@ if __name__ == "__main__":
         print(*translator.failed_entity_ids, sep = "\n")
 
         logger.info("############# Reindex failed ids #############")
-        # Live reindex each failed one
-        for uuid in translator.failed_entity_ids:
-            translator.translate(uuid)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures_list = [executor.submit(translator.translate, uuid) for uuid in translator.failed_entity_ids]
+            for f in concurrent.futures.as_completed(futures_list):
+                result = f.result()
 
     end = time.time()
     logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
