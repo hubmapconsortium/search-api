@@ -68,8 +68,9 @@ class Translator(TranslatorInterface):
     # To imporve translate_all() performance
     memcached_client_instance = None
     memcached_prefix = ''
-
     skip_comparision = False
+    failed_entity_api_calls = []
+    failed_entity_ids = []
 
 
     def __init__(self, indices, app_client_id, app_client_secret, token):
@@ -526,6 +527,7 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished executing index_entity() on uuid: {uuid}")
 
 
+    # Used by individual PUT /reindex/<id> call
     def reindex_entity(self, uuid):
         logger.info(f"Start executing reindex_entity() on uuid: {uuid}")
 
@@ -1079,11 +1081,14 @@ class Translator(TranslatorInterface):
                 # Log the full stack trace, prepend a line with our message
                 logger.exception(msg)
 
-                logger.debug("======call_entity_api() status code from entity-api======")
-                logger.debug(response.status_code)
+                logger.debug(f"======call_entity_api() status code from entity-api: {response.status_code}======")
 
                 logger.debug("======call_entity_api() response text from entity-api======")
                 logger.debug(response.text)
+
+                # Add this uuid to the failed list
+                self.failed_entity_api_calls.append(url)
+                self.failed_entity_ids.append(entity_id)
 
                 # Bubble up the error message from entity-api instead of sys.exit(msg)
                 # The caller will need to handle this exception
@@ -1264,5 +1269,15 @@ if __name__ == "__main__":
     translator.translate_all()
 
     end = time.time()
-    logger.info(
-        f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
+    logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
+
+    # Show the failed entity-api calls and the uuids
+    if translator.failed_entity_api_calls:
+        logger.info(f"{len(translator.failed_entity_api_calls)} entity-api calls failed")
+        logger.info(translator.failed_entity_api_calls)
+        print(*translator.failed_entity_api_calls, sep = "\n")
+ 
+    if translator.failed_entity_ids:
+        logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
+        logger.info(translator.failed_entity_ids)
+        print(*translator.failed_entity_ids, sep = "\n")
