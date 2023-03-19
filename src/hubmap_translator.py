@@ -1277,8 +1277,9 @@ if __name__ == "__main__":
         logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
         print(*translator.failed_entity_ids, sep = "\n")
 
+        logger.info("############# Reindex failed ids #############")
         # Live reindex each failed one
-        for uuid in failed_entity_ids:
+        for uuid in translator.failed_entity_ids:
             translator.translate(uuid)
 
     end = time.time()
