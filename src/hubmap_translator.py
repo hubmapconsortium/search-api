@@ -1268,16 +1268,18 @@ if __name__ == "__main__":
     translator.delete_and_recreate_indices()
     translator.translate_all()
 
-    end = time.time()
-    logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
-
     # Show the failed entity-api calls and the uuids
     if translator.failed_entity_api_calls:
         logger.info(f"{len(translator.failed_entity_api_calls)} entity-api calls failed")
-        logger.info(translator.failed_entity_api_calls)
         print(*translator.failed_entity_api_calls, sep = "\n")
  
     if translator.failed_entity_ids:
         logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
-        logger.info(translator.failed_entity_ids)
         print(*translator.failed_entity_ids, sep = "\n")
+
+        # Live reindex each failed one
+        for uuid in failed_entity_ids:
+            translator.translate(uuid)
+
+    end = time.time()
+    logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
