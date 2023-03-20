@@ -8,15 +8,9 @@ import re
 import sys
 import time
 from yaml import safe_load
-from datetime import datetime
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
-
-# pymemcache.client.base.PooledClient is a thread-safe client pool 
-# that provides the same API as pymemcache.client.base.Client
-from pymemcache.client.base import PooledClient
-from pymemcache import serde
 
 # HuBMAP commons
 from hubmap_commons.hm_auth import AuthHelper
