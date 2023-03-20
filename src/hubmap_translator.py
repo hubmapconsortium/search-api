@@ -803,30 +803,20 @@ class Translator(TranslatorInterface):
                         donor = copy.copy(a)
                         break
 
-                # Get back a list of descendant uuids first
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
                 for descendant_uuid in descendant_ids:
-                    # No need to call self.prepare_dataset() here because
-                    # self.call_entity_api() already handled that
                     descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
                     descendants.append(descendant_dict)
 
-                # Calls to /parents/<id> and /children/<id> have no performance/timeout concerns
-                immediate_ancestors_list = self.call_entity_api(entity_id, 'parents')
-                for immediate_ancestor_dict in immediate_ancestors_list:
-                    # We need to call self.prepare_dataset() here because
-                    # self.call_entity_api() above returned a list of immediate ancestor dicts instead of uuids
-                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
-                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_ancestors.append(self.prepare_dataset(immediate_ancestor_dict))
+                immediate_ancestor_ids = self.call_entity_api(entity_id, 'parents', 'uuid')
+                for immediate_ancestor_uuid in immediate_ancestor_ids:
+                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'entities')
+                    immediate_ancestors.append(immediate_ancestor_dict)
 
-                immediate_descendants_list = self.call_entity_api(entity_id, 'children')
-                for immediate_descendant_dict in immediate_descendants_list:
-                    # We need to call self.prepare_dataset() here because
-                    # self.call_entity_api() above returned a list of immediate descendant dicts instead of uuids
-                    # without setting Dataset.ingest_metadata.files to empty list [] when value is empty string or 'files' field missing and
-                    # excluding any Dataset.ingest_metadata.metadata sub fields with empty string values
-                    immediate_descendants.append(self.prepare_dataset(immediate_descendant_dict))
+                immediate_descendant_ids = self.call_entity_api(entity_id, 'children', 'uuid')
+                for immediate_descendant_uuid in immediate_descendant_ids:
+                    immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'entities')
+                    immediate_descendants.append(immediate_descendant_dict)
 
                 # Add new properties to entity
                 entity['ancestors'] = ancestors
