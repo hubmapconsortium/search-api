@@ -157,14 +157,18 @@ class Translator(TranslatorInterface):
                     # Submit tasks to the thread pool
                     public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
                     upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
-                    donor_futures_list = [executor.submit(self.translate_donor_tree, uuid) for uuid in donor_uuids_list]
 
-                    # Append the above three lists into one
-                    futures_list = public_collection_futures_list + upload_futures_list + donor_futures_list
+                    # Append the above lists into one
+                    futures_list = public_collection_futures_list + upload_futures_list
 
                     # The target function runs the task logs more details when f.result() gets executed
                     for f in concurrent.futures.as_completed(futures_list):
                         result = f.result()
+
+                # Index the donor tree in a regular for loop, not the concurrent mode
+                # However, the descendants of a given donor will be indexed concurrently
+                for uuid in donor_uuids_list:
+                    self.translate_donor_tree(uuid)
 
                 end = time.time()
 
