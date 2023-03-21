@@ -235,7 +235,7 @@ class Translator(TranslatorInterface):
                 # Reindex the rest of the entities in the list
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
-                    for f in concurrent.futures.as_completed(futures):
+                    for f in concurrent.futures.as_completed(futures_list):
                         result = f.result()
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
