@@ -13,3 +13,14 @@ AWS_OBJECT_URL_EXPIRATION_IN_SECS = 60*60 # 1 hour
 # which responses will be stashed in an S3 bucket and a pre-signed URL
 # returned in the response to avoid the AWS Gateway 10Mb constraint
 LARGE_RESPONSE_THRESHOLD = 9*(2**20)
+
+PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX = {
+    'entities': {
+        'datasets': 'dataset'
+        ,'samples': 'sample'
+        ,'donors': 'donor'
+    }
+    ,'files': {
+        'files': None
+    }
+}
