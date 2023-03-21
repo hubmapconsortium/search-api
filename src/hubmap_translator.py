@@ -139,15 +139,6 @@ class Translator(TranslatorInterface):
                             logger.debug(f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
                             self.delete(uuid)
 
-                # Reindex in multi-treading mode for:
-                # - each public collection
-                # - each upload, only add to the hm_consortium_entities index (private index of the default)
-                # - each donor and its descendants in the tree
-                futures_list = []
-                results = []
-
-                # Specify a custom max number of threads doesn't make a meaningful difference
-                # I verified with using 200 and 40 - 3/16/2023 Zhou
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as: 
                     # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
@@ -227,23 +218,25 @@ class Translator(TranslatorInterface):
                 # Reindex the entity itself first
                 self.call_indexer(entity, reindex=True)
 
-                previous_revision_entity_ids = []
-                next_revision_entity_ids = []
+                previous_revision_ids = []
+                next_revision_ids = []
 
-                ancestor_entity_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-                descendant_entity_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+                ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
+                descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
                 # Only Dataset/Publication entities may have previous/next revisions
                 if entity['entity_type'] in ['Dataset', 'Publication']:
-                    previous_revision_entity_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
-                    next_revision_entity_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+                    previous_revision_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
+                    next_revision_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
 
-                # All entity_ids in the path excluding the entity itself
-                entity_ids = ancestor_entity_ids + descendant_entity_ids + previous_revision_entity_ids + next_revision_entity_ids
+                # All unique entity ids in the path excluding the entity itself
+                target_ids = set(ancestor_ids + descendant_ids + previous_revision_ids + next_revision_ids)
 
                 # Reindex the rest of the entities in the list
-                for entity_id in set(entity_ids):
-                    self.reindex_entity(entity_id)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
+                    for f in concurrent.futures.as_completed(futures):
+                        result = f.result()
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
