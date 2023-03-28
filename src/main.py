@@ -30,6 +30,7 @@ config['AWS_S3_BUCKET_NAME'] = app.config['AWS_S3_BUCKET_NAME']
 config['AWS_S3_OBJECT_PREFIX'] = app.config['AWS_S3_OBJECT_PREFIX']
 config['AWS_OBJECT_URL_EXPIRATION_IN_SECS'] = app.config['AWS_OBJECT_URL_EXPIRATION_IN_SECS']
 config['LARGE_RESPONSE_THRESHOLD'] = app.config['LARGE_RESPONSE_THRESHOLD']
+config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX'] = app.config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX']
 
 translator_module = importlib.import_module("hubmap_translator")
 
