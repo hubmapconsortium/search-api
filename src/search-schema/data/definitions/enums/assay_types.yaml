@@ -420,6 +420,13 @@ seqFish_lab_processed:
     vitessce-hints: []
     contains-pii: false
 
+SIMS-IMS:
+  description: SIMS-IMS
+  alt-names: [SIMS]
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
 snATACseq:
     description: snATAC-seq
     alt-names: []
