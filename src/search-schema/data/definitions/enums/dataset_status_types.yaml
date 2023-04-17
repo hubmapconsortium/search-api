@@ -14,3 +14,5 @@ Invalid:
   description: The data was submitted but did not pass pre-processing validation checks.
 Withdrawn:
   description: Data has been withdrawn after being published. (sign-off status has to be 1)
+Submitted:
+  description: The data has been uploaded by the data provider and submitted to the HIVE for validation, QA and processing.
