@@ -286,14 +286,6 @@ publication:
     contains-pii: false
     vitessce-hints: []
 
-publication_ancillary:
-  description: Publication Data [ancillary]
-  alt-names: []
-  primary: false
-  contains-pii: false
-  vis-only: true
-  vitessce-hints: ['json']
-
 bulk-RNA:
     description: Bulk RNA-seq
     alt-names: ['bulk RNA']
