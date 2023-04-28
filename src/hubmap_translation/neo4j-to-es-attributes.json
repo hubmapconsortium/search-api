@@ -186,6 +186,9 @@
     "publication_status": {
       "es_name": "publication_status"
     },
+    "omap_doi": {
+      "es_name": "omap_doi"
+    },
     "error_message": {
       "es_name": "error_message"
     }
