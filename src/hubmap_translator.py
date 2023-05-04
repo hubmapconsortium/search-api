@@ -649,7 +649,16 @@ class Translator(TranslatorInterface):
         if 'datasets' in entity:
             for dataset in entity['datasets']:
                 # Retrieve the entity details
-                dataset = self.call_entity_api(dataset['uuid'], 'entities')
+                try:
+                    dataset = self.call_entity_api(dataset['uuid'], 'entities')
+                except RequestException:
+                    logger.info(f"Failed to retrieve dataset {dataset['uuid']} via entity-api during executing add_datasets_to_entity(), skip and continue to next one")
+                    
+                    # This can happen when the dataset is in neo4j but the actual uuid is not found in MySQL
+                    # or somehting else is wrong with entity-api and it can't return the dataset info
+                    # In this case, we'll skip over the the current iteration, and continue with the next one - 5/3/2023 Zhou
+                    continue
+
                 dataset_doc = self.generate_doc(dataset, 'dict')
                 self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
                 datasets.append(dataset_doc)
