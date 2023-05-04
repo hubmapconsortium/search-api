@@ -52,7 +52,7 @@ def transform(doc, batch_id='unspecified'):
     '''
     >>> from pprint import pprint
     >>> transformed = transform({
-    ...    'entity_type': 'dataset',
+    ...    'entity_type': 'Dataset',
     ...    'status': 'New',
     ...    'group_name': 'EXT - Outside HuBMAP',
     ...    'origin_sample': {
@@ -123,7 +123,7 @@ def transform(doc, batch_id='unspecified'):
                'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                   'grouping_concept_preferred_term': 'Sex',
                                                   'preferred_term': 'Male'}]}},
-     'entity_type': 'dataset',
+     'entity_type': 'Dataset',
      'files': [{'description': 'OME-TIFF pyramid file',
                 'edam_term': 'EDAM_1.24.format_3727',
                 'is_qa_qc': False,

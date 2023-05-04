@@ -78,8 +78,19 @@ def _add_has_visualization(doc):
     then the UI can reserve screen space at render-time, and get the actual
     viewconf with a callback. Being able to search for datasets with
     visualizations is also useful.
+
+    >>> doc = {'entity_type': 'Dataset',
+    ...     'data_types': ['AF'],
+    ...     "metadata": {
+    ...          "dag_provenance_list": [{
+    ...              "hash": "cb8655c",
+    ...              "origin": "https://github.com/hubmapconsortium/ingest-pipeline.git"
+    ... }]}}
+    >>> _add_has_visualization(doc)
+    >>> assert 'visualization' in doc
+
     '''
-    if doc['entity_type'] == 'dataset':
+    if doc['entity_type'] == 'Dataset':
         doc['visualization'] = has_visualization(doc, lambda name: AssayType(name))
 
 

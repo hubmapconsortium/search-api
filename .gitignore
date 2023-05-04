@@ -1,7 +1,9 @@
 # Generated BUILD file
 BUILD
 
+# VS Code files
 **/.vscode/
+*.code-workspace
 
 #eclipse project files
 .project
