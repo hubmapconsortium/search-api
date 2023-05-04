@@ -660,8 +660,19 @@ class Translator(TranslatorInterface):
                     # In this case, we'll skip over the current iteration, and continue with the next one
                     # Otherwise, null will be added to the  resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
+                
+                try:
+                    dataset_doc = self.generate_doc(dataset, 'dict')
+                except Exception as e:
+                    logger.exception(e)
+                    logger.error(f"Failed to execute generate_doc() on dataset {dataset['uuid']} during executing add_datasets_to_entity(), skip and continue to next one")
 
-                dataset_doc = self.generate_doc(dataset, 'dict')
+                    # This can happen when the dataset itself is good but something failed to generate the doc
+                    # E.g., one of the descendants of this dataset exists in neo4j but no record in uuid MySQL
+                    # In this case, we'll skip over the current iteration, and continue with the next one
+                    # Otherwise, null will be added to the  resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
+                    continue
+                    
                 self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
                 datasets.append(dataset_doc)
 
