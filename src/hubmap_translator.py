@@ -960,10 +960,13 @@ class Translator(TranslatorInterface):
             logger.info(f"Finished executing generate_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
 
             return json.dumps(entity) if return_type == 'json' else entity
-        except Exception:
+        except Exception as e:
             msg = "Exceptions during executing indexer.generate_doc()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+
+            # Raise the exception so the caller can handle it properly
+            raise Exception(e)
 
 
     def generate_public_doc(self, entity):
