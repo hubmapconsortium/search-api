@@ -572,7 +572,14 @@ class Translator(TranslatorInterface):
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
         try:
             if document is None:
-                document = self.generate_doc(entity, 'json')
+                try:
+                    document = self.generate_doc(entity, 'json')
+                except Exception as e:
+                    logger.exception(e)
+                    logger.error(f"Failed to execute generate_doc() on {entity['entity_type']} {entity['uuid']} during executing call_indexer()")
+
+                    # Raise the exception so the caller can handle it properly
+                    raise Exception(e)
 
             if target_index:
                 self.indexer.index(entity['uuid'], document, target_index, reindex)
@@ -614,10 +621,11 @@ class Translator(TranslatorInterface):
                         target_doc = document
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             msg = f"Exception encountered during executing call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
+            logger.error(msg)
 
 
     # The added fields specified in `entity_properties_list` should not be added
@@ -670,7 +678,7 @@ class Translator(TranslatorInterface):
                     # This can happen when the dataset itself is good but something failed to generate the doc
                     # E.g., one of the descendants of this dataset exists in neo4j but no record in uuid MySQL
                     # In this case, we'll skip over the current iteration, and continue with the next one
-                    # Otherwise, null will be added to the  resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
+                    # Otherwise, no document is generated, null will be added to the resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
                     
                 self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
