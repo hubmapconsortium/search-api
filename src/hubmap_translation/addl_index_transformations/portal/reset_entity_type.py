@@ -13,8 +13,18 @@ def reset_entity_type(doc):
     >>> doc['entity_type']
     'Support'
 
+    >>> doc = {
+    ...     'data_types': ['publication_ancillary'],
+    ...     'entity_type': 'Dataset'
+    ... }
+    >>> reset_entity_type(doc)
+    >>> doc['entity_type']
+    'Support'
+
     '''
     if 'data_types' not in doc:
         return
     if 'image_pyramid' in doc['data_types']:
+        doc['entity_type'] = 'Support'
+    if 'publication_ancillary' in doc['data_types']:
         doc['entity_type'] = 'Support'
