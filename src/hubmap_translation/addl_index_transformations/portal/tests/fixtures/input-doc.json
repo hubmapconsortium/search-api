@@ -1,5 +1,5 @@
 {
-    "entity_type": "dataset",
+    "entity_type": "Dataset",
     "status": "New",
     "origin_sample": {
         "organ": "LY"
