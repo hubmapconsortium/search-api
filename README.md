@@ -18,7 +18,7 @@ git submodule update --init --remote
 
 Front end developers who need to work on the `portal` index should start in
 [the `addl_index_transformations/portal` subdirectory](https://github.com/hubmapconsortium/search-api/tree/main/hubmap-translation/src/hubmap_translation/addl_index_transformations/portal);
-You don't need to read the rest of this page.
+
 
 ### Local development
 After checking out the repo, installing the dependencies,
@@ -30,6 +30,12 @@ pip install -r src/requirements-dev.txt
 # on mac:
 brew tap elastic/tap
 brew install elastic/tap/elasticsearch-full
+
+## On MacOS 13, elasticsearch is not compatible with the default jdk. To workaround this, install openjdk and disable the machine learning functionality.
+brew install openjdk
+echo 'export ES_JAVA_HOME="/opt/homebrew/opt/openjdk"' >> ~/.zshrc
+echo 'xpack.ml.enabled: false' >> /opt/homebrew/etc/elasticsearch/elasticsearch.yml
+
 elasticsearch &  # Wait for it to start...
 
 ./test.sh

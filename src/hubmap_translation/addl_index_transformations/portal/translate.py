@@ -28,6 +28,8 @@ def translate(doc):
     _translate_file_description(doc)
     _translate_status(doc)
     _translate_organ(doc)
+    # _add_origin_samples_unique_mapped_organs depends on the existence of the mapped_organ field and must be performed after _translate_organ.
+    _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
     _translate_sample_category(doc)
     _translate_data_type(doc)
@@ -51,8 +53,14 @@ def _map(doc, key, map):
         _map(doc['donor'], key, map)
     if 'origin_sample' in doc:
         _map(doc['origin_sample'], key, map)
+    if 'origin_samples' in doc:
+        for sample in doc['origin_samples']:
+            _map(sample, key, map)
     if 'source_sample' in doc:
         for sample in doc['source_sample']:
+            _map(sample, key, map)
+    if 'source_samples' in doc:
+        for sample in doc['source_samples']:
             _map(sample, key, map)
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
@@ -66,8 +74,19 @@ def _add_has_visualization(doc):
     then the UI can reserve screen space at render-time, and get the actual
     viewconf with a callback. Being able to search for datasets with
     visualizations is also useful.
+
+    >>> doc = {'entity_type': 'Dataset',
+    ...     'data_types': ['AF'],
+    ...     "metadata": {
+    ...          "dag_provenance_list": [{
+    ...              "hash": "cb8655c",
+    ...              "origin": "https://github.com/hubmapconsortium/ingest-pipeline.git"
+    ... }]}}
+    >>> _add_has_visualization(doc)
+    >>> assert 'visualization' in doc
+
     '''
-    if doc['entity_type'] == 'dataset':
+    if doc['entity_type'] == 'Dataset':
         doc['visualization'] = has_visualization(doc, lambda name: AssayType(name))
 
 
@@ -379,3 +398,17 @@ def _donor_metadata_map(metadata):
         mapped_metadata[f'{key}_unit'].append(kv['units'])
 
     return dict(mapped_metadata)
+
+
+def _get_unique_mapped_organs(samples):
+    '''
+    >>> samples = [{'mapped_organ': 'Lymph Node'}, {'mapped_organ': 'Small Intestine'}, {'mapped_organ': 'Lymph Node'}]
+    >>> sorted(_get_unique_mapped_organs(samples));
+    ['Lymph Node', 'Small Intestine']
+    '''
+    return list({sample['mapped_organ'] for sample in samples if 'mapped_organ' in sample})
+
+
+def _add_origin_samples_unique_mapped_organs(doc):
+    if doc['entity_type'] in ['Sample', 'Dataset'] and 'origin_samples' in doc:
+        doc['origin_samples_unique_mapped_organs'] = _get_unique_mapped_organs(doc['origin_samples'])

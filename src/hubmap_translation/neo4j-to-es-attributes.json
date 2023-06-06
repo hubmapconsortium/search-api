@@ -144,11 +144,44 @@
     "tissue_type": {
       "es_name": "tissue_type"
     },
-    "dbgap_url": {
-      "es_name": "dbgap_url"
+    "dbgap_sra_experiment_url": {
+      "es_name": "dbgap_sra_experiment_url"
+    },
+    "dbgap_study_url": {
+      "es_name": "dbgap_study_url"
     },
     "sample_category": {
       "es_name": "sample_category"
+    },
+    "publication_date": {
+      "es_name": "publication_date"
+    },
+    "publication_doi": {
+      "es_name": "publication_doi"
+    },
+    "publication_url": {
+      "es_name": "publication_url"
+    },
+    "publication_venue": {
+      "es_name": "publication_venue"
+    },
+    "volume": {
+      "es_name": "volume"
+    },
+    "issue": {
+      "es_name": "issue"
+    },
+    "pages_or_article_num": {
+      "es_name": "pages_or_article_num"
+    },
+    "publication_status": {
+      "es_name": "publication_status"
+    },
+    "omap_doi": {
+      "es_name": "omap_doi"
+    },
+    "error_message": {
+      "es_name": "error_message"
     }
   }
 }

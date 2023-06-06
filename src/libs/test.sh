@@ -7,6 +7,7 @@ cd `dirname $0`
 
 topdir=${PWD}/../..
 reldir=`realpath --relative-to $topdir .` \
+  || reldir=`grealpath --relative-to $topdir .` \
   || die 'On Mac? "brew install coreutils" to get realpath.'
 
 start libs/assay_type

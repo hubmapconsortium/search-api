@@ -78,6 +78,21 @@ DART-FISH:
     vitessce-hints: []
     contains-pii: false
 
+DESI:
+  description: DESI
+  alt-names: [DESI-IMS]
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
+DESI_pyramid:
+  description: DESI [Image Pyramid]
+  alt-names: [["DESI", "Image Pyramid"], ["DESI", "image_pyramid"], ["DESI-IMS", "Image Pyramid"], ["DESI-IMS", "image_pyramid"]]
+  primary: false
+  vis-only: true
+  contains-pii: false
+  vitessce-hints: ['pyramid']
+
 image_pyramid:
     description: Image Pyramid
     alt-names: ["Image Pyramid"]
@@ -264,6 +279,21 @@ PAS_pyramid:
     vis-only: true
     vitessce-hints: ['pyramid']
 
+publication:
+    description: Publication Data
+    alt-names: []
+    primary: false
+    contains-pii: false
+    vitessce-hints: []
+
+publication_ancillary:
+  description: Publication Data [ancillary]
+  alt-names: []
+  primary: false
+  contains-pii: false
+  vis-only: true
+  vitessce-hints: ['json']
+
 bulk-RNA:
     description: Bulk RNA-seq
     alt-names: ['bulk RNA']
@@ -398,6 +428,13 @@ seqFish_lab_processed:
     vitessce-hints: []
     contains-pii: false
 
+SIMS-IMS:
+  description: SIMS-IMS
+  alt-names: [SIMS]
+  primary: true
+  contains-pii: false
+  vitessce-hints: []
+
 snATACseq:
     description: snATAC-seq
     alt-names: []
@@ -409,7 +446,7 @@ sn_atac_seq:
 #snATACseq_snapATAC:
     description: snATAC-seq [SnapATAC]
 #    alt-names: [sn_atac_seq]
-    alt-names: []
+    alt-names: [sn_atac_seq_multiome_10x]
     primary: false
     contains-pii: false
     vitessce-hints: ['is_sc', 'atac']
