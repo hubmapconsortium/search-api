@@ -268,20 +268,6 @@ sample_category:
     - sample
   enum: tissue_sample_types
   required: true
-# Removed on 12/20/2022 due to new field sample_category added - Zhou
-# specimen_type:
-#   description: For Sample entities, the type of tissue specimen.
-#   entity_types:
-#   - sample
-#   enum: tissue_sample_types
-#   required: true
-# specimen_type_other:
-#   description: If specimen_type == other, the specimen type name is specified in
-#     this field
-#   entity_types:
-#   - sample
-#   enum: null
-#   required: false
 status:
   description: The status of a Dataset.
   entity_types:

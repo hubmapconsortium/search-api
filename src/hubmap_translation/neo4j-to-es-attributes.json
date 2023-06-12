@@ -78,9 +78,6 @@
     "metadata": {
       "es_name": "metadata"
     },
-    "specimen_metadata": {
-      "es_name": "metadata"
-    },
     "image_file_metadata": {
       "es_name": "image_file_metadata"
     },
@@ -113,12 +110,6 @@
     },
     "created_by_user_email": {
       "es_name": "created_by_user_email"
-    },
-    "specimen_type": {
-      "es_name": "specimen_type"
-    },
-    "specimen_type_other": {
-      "es_name": "specimen_type_other"
     },
     "status": {
       "es_name": "status"
