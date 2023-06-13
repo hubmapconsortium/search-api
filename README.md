@@ -48,11 +48,11 @@ elasticsearch &  # Wait for it to start...
 - Developer or someone on the team who is familiar with the change will test/qa the change
 - When any current changes in the `main` have been approved after test/qa on TEST, Zhou will release to PROD using the same docker image that has been tested on TEST infrastructure.
 
-### To work on features in the development environment before ready for testing and releasing
-- Make new feature branches off the `main` branch
+### To work on features in the DEV infrastructure before ready for TEST and PROD
+- Make new feature branches off the `main` branch (the default branch)
 - Make PRs to `dev-integrate`
-- As a codeowner, Zhou is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to devel, and redeploy and reindex the DEV instance.
-- When a feature branch is ready for testing and release, make a PR to `main` for deployment and testing on the TEST infrastructure as above.
+- As a codeowner, Zhou (github username `yuanzhou`) is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to `dev-integrate`, and redeploy and reindex the DEV instance.
+- When a feature branch is ready for testing and release, Zhou will make a PR to `main` for testing on the TEST infrastructure as above.
 
 ## Updating the enumerations
 

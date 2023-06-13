@@ -31,10 +31,6 @@ def translate(doc):
     # _add_origin_samples_unique_mapped_organs depends on the existence of the mapped_organ field and must be performed after _translate_organ.
     _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
-
-    # Remove mapped_specimen_type translation due to new filed sample_category added 12/20/2022 - Zhou
-    # _translate_specimen_type(doc)
-
     _translate_sample_category(doc)
     _translate_data_type(doc)
     _translate_timestamp(doc)
@@ -268,36 +264,6 @@ _organ_dict = {
     k: v['description']
     for k, v in _enums['organ_types'].items()
 }
-
-
-# Remove mapped_specimen_type translation due to new filed sample_category added 12/20/2022 - Zhou
-
-# Specimen type:
-
-# def _translate_specimen_type(doc):
-#     '''
-#     >>> doc = {'specimen_type': 'fresh_frozen_tissue'}
-#     >>> _translate_specimen_type(doc); doc
-#     {'specimen_type': 'fresh_frozen_tissue', 'mapped_specimen_type': 'Fresh frozen tissue'}
-
-#     >>> doc = {'specimen_type': 'xyz'}
-#     >>> _translate_specimen_type(doc); doc
-#     {'specimen_type': 'xyz', 'mapped_specimen_type': 'No translation for "xyz"'}
-
-#     '''
-#     _map(doc, 'specimen_type', _specimen_types_map)
-
-
-# def _specimen_types_map(k):
-#     if k not in _specimen_types_dict:
-#         return _unexpected(k)
-#     return _specimen_types_dict[k]
-
-
-# _specimen_types_dict = {
-#     k: v['description']
-#     for k, v in _enums['tissue_sample_types'].items()
-# }
 
 
 # Sample category:
