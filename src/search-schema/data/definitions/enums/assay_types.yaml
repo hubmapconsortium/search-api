@@ -80,14 +80,14 @@ DART-FISH:
 
 DESI:
   description: DESI
-  alt-names: [DESI-IMS]
+  alt-names: ['DESI-IMS', 'DESI IMS']
   primary: true
   contains-pii: false
   vitessce-hints: []
 
 DESI_pyramid:
   description: DESI [Image Pyramid]
-  alt-names: [["DESI", "Image Pyramid"], ["DESI", "image_pyramid"], ["DESI-IMS", "Image Pyramid"], ["DESI-IMS", "image_pyramid"]]
+  alt-names: [['DESI', 'Image Pyramid'], ['DESI', 'image_pyramid'], ['DESI-IMS', 'Image Pyramid'], ['DESI-IMS', 'image_pyramid'], ['DESI IMS', 'Image Pyramid'], ['DESI IMS', 'image_pyramid']]
   primary: false
   vis-only: true
   contains-pii: false
@@ -217,7 +217,7 @@ mibi_deepcell:
   alt-names: []
   primary: false
   contains-pii: false
-  vitessce-hints: ['is_image', 'is_tiled']
+  vitessce-hints: ['is_image', 'is_tiled', 'sprm', 'anndata']
 
 NanoDESI:
   description: NanoDESI
@@ -502,7 +502,7 @@ TMT-LC-MS:
 
 WGS:
     description: Whole Genome Sequencing
-    alt-names: []
+    alt-names: ['Whole Transcriptome Sequencing', 'Whole Genome Sequencing']
     primary: true
     contains-pii: true
     vitessce-hints: []
