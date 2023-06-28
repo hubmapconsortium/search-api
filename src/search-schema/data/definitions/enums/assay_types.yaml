@@ -217,7 +217,7 @@ mibi_deepcell:
   alt-names: []
   primary: false
   contains-pii: false
-  vitessce-hints: ['is_image', 'is_tiled']
+  vitessce-hints: ['is_image', 'is_tiled', 'sprm', 'anndata']
 
 NanoDESI:
   description: NanoDESI
