@@ -404,3 +404,8 @@ error_message:
   entity_types:
     - publication
     - dataset
+associated_collection:
+  required: false
+  enums: null
+  entity_types:
+    - publication

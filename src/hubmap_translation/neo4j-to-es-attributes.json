@@ -182,6 +182,9 @@
     },
     "error_message": {
       "es_name": "error_message"
+    },
+    "associated_collection": {
+      "es_name": "associated_collection"
     }
   }
 }
