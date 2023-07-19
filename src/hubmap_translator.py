@@ -163,6 +163,36 @@ class Translator(TranslatorInterface):
             except Exception as e:
                 logger.error(e)
 
+
+    # ONLY used by collections-only reindex via script - added by Zhou 7/19/2023
+    def translate_all_collections(self):
+        with app.app_context():
+            try:
+                logger.info("Start executing translate_all_collections()")
+
+                start = time.time()
+                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # The default number of threads in the ThreadPoolExecutor is calculated as: 
+                    # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
+                    # Where the number of CPUs is determined by Python and will take hyperthreading into account
+                    logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
+
+                    # Submit tasks to the thread pool
+                    public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
+
+                    # The target function runs the task logs more details when f.result() gets executed
+                    for f in concurrent.futures.as_completed(public_collection_uuids_list):
+                        result = f.result()
+
+                end = time.time()
+
+                logger.info(f"Finished executing translate_all_collections(). Total time used: {end - start} seconds.")
+            except Exception as e:
+                logger.error(e)
+
+
     def __get_scope_list(self, entity_id, document, index, scope):
         scope_list = []
         if index == 'files':
@@ -1169,19 +1199,39 @@ if __name__ == "__main__":
         sys.exit(msg)
 
     start = time.time()
-    logger.info("############# Full index via script started #############")
 
-    translator.delete_and_recreate_indices()
-    translator.translate_all()
+    if sys.argv[2] and (sys.argv[2] == 'collections'):
+        logger.info("############# Collections reindex via script started #############")
 
-    # Show the failed entity-api calls and the uuids
-    if translator.failed_entity_api_calls:
-        logger.info(f"{len(translator.failed_entity_api_calls)} entity-api calls failed")
-        print(*translator.failed_entity_api_calls, sep = "\n")
- 
-    if translator.failed_entity_ids:
-        logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
-        print(*translator.failed_entity_ids, sep = "\n")
+        # Do NOT erase any indices, just reindex all collections
+        translator.translate_all_collections()
 
-    end = time.time()
-    logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
+        # Show the failed entity-api calls and the uuids
+        if translator.failed_entity_api_calls:
+            logger.info(f"{len(translator.failed_entity_api_calls)} entity-api calls failed")
+            print(*translator.failed_entity_api_calls, sep = "\n")
+     
+        if translator.failed_entity_ids:
+            logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
+            print(*translator.failed_entity_ids, sep = "\n")
+
+        end = time.time()
+        logger.info(f"############# ollections reindex via script completed. Total time used: {end - start} seconds. #############")
+    else:
+        logger.info("############# Full index via script started #############")
+
+        # Erase all the indices first then index all
+        translator.delete_and_recreate_indices()
+        translator.translate_all()
+
+        # Show the failed entity-api calls and the uuids
+        if translator.failed_entity_api_calls:
+            logger.info(f"{len(translator.failed_entity_api_calls)} entity-api calls failed")
+            print(*translator.failed_entity_api_calls, sep = "\n")
+     
+        if translator.failed_entity_ids:
+            logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
+            print(*translator.failed_entity_ids, sep = "\n")
+
+        end = time.time()
+        logger.info(f"############# Full index via script completed. Total time used: {end - start} seconds. #############")
