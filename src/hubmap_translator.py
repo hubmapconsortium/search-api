@@ -1186,7 +1186,7 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    if sys.argv[2] and (sys.argv[2] == 'collections'):
+    if (len(sys.argv) == 3) and (sys.argv[2] == 'collections'):
         logger.info("############# Collections reindex via script started #############")
 
         # Do NOT erase any indices, just reindex all collections
