@@ -878,20 +878,6 @@ class Translator(TranslatorInterface):
 
             self.entity_keys_rename(entity)
 
-            # Is group_uuid always set?
-            # In case if group_name not set
-            if ('group_uuid' in entity) and ('group_name' not in entity):
-                group_uuid = entity['group_uuid']
-
-                # Get the globus groups info based on the groups json file in commons package
-                auth_helper_instance = self.init_auth_helper()
-                globus_groups_info = auth_helper_instance.get_globus_groups_info()
-                groups_by_id_dict = globus_groups_info['by_id']
-                group_dict = groups_by_id_dict[group_uuid]
-
-                # Add new property
-                entity['group_name'] = group_dict['displayname']
-
             # Rename for properties that are objects
             if entity.get('donor', None):
                 self.entity_keys_rename(entity['donor'])

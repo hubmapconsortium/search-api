@@ -185,6 +185,9 @@
     },
     "associated_collection": {
       "es_name": "associated_collection"
+    },
+    "group_name": {
+      "es_name": "group_name"
     }
   }
 }
