@@ -54,9 +54,6 @@ def _map(doc, key, map):
     if 'origin_samples' in doc:
         for sample in doc['origin_samples']:
             _map(sample, key, map)
-    if 'source_sample' in doc:
-        for sample in doc['source_sample']:
-            _map(sample, key, map)
     if 'source_samples' in doc:
         for sample in doc['source_samples']:
             _map(sample, key, map)

@@ -187,7 +187,7 @@ def _map(doc, clean):
     # but better to do it everywhere than to miss one case.
     clean(doc)
 
-    single_valued_fields = ['donor', 'source_sample', 'rui_location']
+    single_valued_fields = ['donor', 'rui_location']
     multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
 
     for single_doc_field in single_valued_fields:
