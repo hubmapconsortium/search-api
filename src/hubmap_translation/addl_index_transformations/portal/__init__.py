@@ -55,9 +55,9 @@ def transform(doc, batch_id='unspecified'):
     ...    'entity_type': 'Dataset',
     ...    'status': 'New',
     ...    'group_name': 'EXT - Outside HuBMAP',
-    ...    'origin_sample': {
+    ...    'origin_samples': [{
     ...        'organ': 'LY'
-    ...    },
+    ...    }],
     ...    'create_timestamp': 1575489509656,
     ...    'ancestor_ids': ['1234', '5678'],
     ...    'ancestors': [{
@@ -107,7 +107,7 @@ def transform(doc, batch_id='unspecified'):
     >>> del transformed['mapper_metadata']
     >>> pprint(transformed)
     {'anatomy_0': ['body'],
-     'anatomy_1': ['large intestine', 'lymph node'],
+     'anatomy_1': ['large intestine'],
      'anatomy_2': ['transverse colon'],
      'ancestor_counts': {'entity_type': {}},
      'ancestor_ids': ['1234', '5678'],
@@ -145,7 +145,8 @@ def transform(doc, batch_id='unspecified'):
                                'keep_this_field': 'Yes!',
                                'should_be_float': 123.456,
                                'should_be_int': 123}},
-     'origin_sample': {'mapped_organ': 'Lymph Node', 'organ': 'LY'},
+     'origin_samples': [{'mapped_organ': 'Lymph Node', 'organ': 'LY'}],
+     'origin_samples_unique_mapped_organs': ['Lymph Node'],
      'rui_location': '{"ccf_annotations": '
                      '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
      'status': 'New',
@@ -186,7 +187,7 @@ def _map(doc, clean):
     # but better to do it everywhere than to miss one case.
     clean(doc)
 
-    single_valued_fields = ['donor', 'origin_sample', 'source_sample', 'rui_location']
+    single_valued_fields = ['donor', 'source_sample', 'rui_location']
     multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
 
     for single_doc_field in single_valued_fields:
