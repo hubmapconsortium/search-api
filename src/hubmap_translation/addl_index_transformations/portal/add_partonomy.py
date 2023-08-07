@@ -17,7 +17,7 @@ _two_letter_to_iri = {
 
 
 def _get_organ_iri(doc):
-    two_letter_code = doc.get('origin_sample', {}).get('organ')
+    two_letter_code = doc.get('origin_samples', [{}])[0].get('organ')
     return _two_letter_to_iri.get(two_letter_code)
 
 
@@ -39,21 +39,21 @@ def add_partonomy(doc):
     {'anatomy_0': ['body'], 'anatomy_1': ['large intestine'], 'anatomy_2': ['transverse colon']}
 
     >>> doc = {
-    ...     'origin_sample': {'organ': 'RK'},
+    ...     'origin_samples': [{'organ': 'RK'}],
     ... }
     >>> add_partonomy(doc)
-    >>> del doc['origin_sample']
+    >>> del doc['origin_samples']
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['kidney'], 'anatomy_2': ['right kidney']}
 
     If there are both:
 
     >>> doc = {
-    ...     'origin_sample': {'organ': 'RK'},
+    ...     'origin_samples': [{'organ': 'RK'}],
     ...     'rui_location': dumps(rui_location)
     ... }
     >>> add_partonomy(doc)
-    >>> del doc['origin_sample']
+    >>> del doc['origin_samples']
     >>> del doc['rui_location']
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['kidney', 'large intestine'], 'anatomy_2': ['right kidney', 'transverse colon']}
@@ -61,10 +61,10 @@ def add_partonomy(doc):
     New organ code: No error.
 
     >>> doc = {
-    ...     'origin_sample': {'organ': 'ZZ'},
+    ...     'origin_samples': [{'organ': 'ZZ'}],
     ... }
     >>> add_partonomy(doc)
-    >>> del doc['origin_sample']
+    >>> del doc['origin_samples']
     >>> doc
     {}
 

@@ -1,20 +1,12 @@
 {
     "entity_type": "Dataset",
     "status": "New",
-    "origin_sample": {
-        "organ": "LY"
-    },
     "origin_samples": [
         {
             "organ": "LY"
         }, 
         {
             "organ": "SI"
-        }
-    ],
-    "source_sample": [
-        {
-            "organ": "LY"
         }
     ],
     "source_samples": [

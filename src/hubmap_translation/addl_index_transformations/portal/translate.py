@@ -51,13 +51,8 @@ def _map(doc, key, map):
         doc[f'mapped_{key}'] = map(doc[key])
     if 'donor' in doc:
         _map(doc['donor'], key, map)
-    if 'origin_sample' in doc:
-        _map(doc['origin_sample'], key, map)
     if 'origin_samples' in doc:
         for sample in doc['origin_samples']:
-            _map(sample, key, map)
-    if 'source_sample' in doc:
-        for sample in doc['source_sample']:
             _map(sample, key, map)
     if 'source_samples' in doc:
         for sample in doc['source_samples']:
@@ -242,13 +237,13 @@ def _status_map(status):
 
 def _translate_organ(doc):
     '''
-    >>> doc = {'origin_sample': {'organ': 'RK'}}
+    >>> doc = {'origin_samples': [{'organ': 'RK'}]}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}}
+    {'origin_samples': [{'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}]}
 
-    >>> doc = {'origin_sample': {'organ': 'ZZ'}}
+    >>> doc = {'origin_samples': [{'organ': 'ZZ'}]}
     >>> _translate_organ(doc); doc
-    {'origin_sample': {'organ': 'ZZ', 'mapped_organ': 'No translation for "ZZ"'}}
+    {'origin_samples': [{'organ': 'ZZ', 'mapped_organ': 'No translation for "ZZ"'}]}
 
     '''
     _map(doc, 'organ', _organ_map)

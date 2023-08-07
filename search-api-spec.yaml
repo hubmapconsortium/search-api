@@ -206,7 +206,7 @@ paths:
       "filter": [
         {
           "match": {
-            "origin_sample.entity_type": "Sample"
+            "entity_type.keyword": "Sample"
           }
         }
       ]
@@ -261,7 +261,7 @@ paths:
       "filter": [
         {
           "match": {
-            "origin_sample.entity_type": "Sample"
+            "entity_type.keyword": "Sample"
           }
         }
       ]
