@@ -1,6 +1,6 @@
 settings:
   index:
-    mapping.total_fields.limit: 4000
+    mapping.total_fields.limit: 4500
     query.default_field: 2048
 
 mappings:
