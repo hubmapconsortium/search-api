@@ -151,7 +151,7 @@ GET /<index>/count
       "filter": [
         {
           "match": {
-            "origin_sample.entity_type": "Sample"
+            "entity_type.keyword": "Sample"
           }
         }
       ]
