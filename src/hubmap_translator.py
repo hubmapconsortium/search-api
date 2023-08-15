@@ -596,6 +596,8 @@ class Translator(TranslatorInterface):
     # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
     def call_indexer(self, entity, reindex=False, document=None, target_index=None):
+        logger.info(f"Start executing call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
+
         try:
             if document is None:
                 try:
@@ -647,6 +649,8 @@ class Translator(TranslatorInterface):
                         target_doc = document
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
+
+            logger.info(f"Finished executing call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
         except Exception as e:
             logger.exception(e)
             msg = f"Exception encountered during executing call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
