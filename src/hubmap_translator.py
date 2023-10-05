@@ -105,7 +105,7 @@ class Translator(TranslatorInterface):
 
                 donor_uuids_list = get_uuids_by_entity_type("donor", self.request_headers, self.DEFAULT_ENTITY_API_URL)
                 upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
 
                 # Only need this comparision for the live /rindex-all PUT call
                 if not self.skip_comparision:
@@ -114,7 +114,7 @@ class Translator(TranslatorInterface):
                     dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers, self.DEFAULT_ENTITY_API_URL)
                     
                     # Merge into a big list that with no duplicates
-                    all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + public_collection_uuids_list)
+                    all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + collection_uuids_list)
 
                     es_uuids = []
                     index_names = get_all_reindex_enabled_indice_names(self.INDICES)
@@ -142,11 +142,11 @@ class Translator(TranslatorInterface):
                     logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
 
                     # Submit tasks to the thread pool
-                    public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
+                    collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid in collection_uuids_list]
                     upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
 
                     # Append the above lists into one
-                    futures_list = public_collection_futures_list + upload_futures_list
+                    futures_list = collection_futures_list + upload_futures_list
 
                     # The target function runs the task logs more details when f.result() gets executed
                     for f in concurrent.futures.as_completed(futures_list):
@@ -171,7 +171,7 @@ class Translator(TranslatorInterface):
                 logger.info("Start executing translate_all_collections()")
 
                 start = time.time()
-                public_collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as: 
@@ -180,10 +180,10 @@ class Translator(TranslatorInterface):
                     logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
 
                     # Submit tasks to the thread pool
-                    public_collection_futures_list = [executor.submit(self.translate_public_collection, uuid, reindex=True) for uuid in public_collection_uuids_list]
+                    collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid in collection_uuids_list]
 
                     # The target function runs the task logs more details when f.result() gets executed
-                    for f in concurrent.futures.as_completed(public_collection_uuids_list):
+                    for f in concurrent.futures.as_completed(collection_uuids_list):
                         result = f.result()
 
                 end = time.time()
@@ -237,7 +237,15 @@ class Translator(TranslatorInterface):
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
             if entity['entity_type'] == 'Collection':
-                self.translate_public_collection(entity_id, reindex=True)
+                # Expect entity-api to stop update of Collections which should not be modified e.g. those which
+                # have a DOI.  But entity-api may still request such Collections be indexed, particularly right
+                # after the Collection becomes visible to the public.
+                try:
+                    self.translate_collection(   entity_id
+                                                 ,reindex=True)
+                except Exception as e:
+                    logger.error(f"Unable to index Collection due to e={str(e)}")
+
             elif entity['entity_type'] == 'Upload':
                 self.translate_upload(entity_id, reindex=True)
             else:
@@ -274,7 +282,7 @@ class Translator(TranslatorInterface):
         if index is not None and index == 'files':
             # The "else clause" is the dominion of the original flavor of OpenSearch indices, for which search-api
             # was created.  This clause is specific to 'files' indices, by virtue of the conditions and the
-            # following assumption that dataset_uuid is on the JSON body. @TODO-KBKBKB right?
+            # following assumption that dataset_uuid is on the JSON body.
             scope_list = self.__get_scope_list(entity_id, document, index, scope)
 
             response = ''
@@ -302,7 +310,7 @@ class Translator(TranslatorInterface):
         if index is not None and index == 'files':
             # The "else clause" is the dominion of the original flavor of OpenSearch indices, for which search-api
             # was created.  This clause is specific to 'files' indices, by virtue of the conditions and the
-            # following assumption that dataset_uuid is on the JSON body. @TODO-KBKBKB right?
+            # following assumption that dataset_uuid is on the JSON body.
             scope_list = self.__get_scope_list(entity_id, document, index, scope)
 
             response = ''
@@ -326,8 +334,8 @@ class Translator(TranslatorInterface):
                 response += self.indexer.index(entity_id, json.dumps(document), private_index, False)
         return response
 
-    # Collection doesn't actually have this `data_access_level` property
-    # This method is only applied to Donor/Sample/Dataset/File
+    # This method is only applied to Collection/Donor/Sample/Dataset/File
+    # Collection uses entity-api's logic for "visibility" to determine if a Collection is public or nonpublic
     # For File, if the Dataset of the dataset_uuid element has status=='Published', it may go in a public index
     # For Dataset, if status=='Published', it goes into the public index
     # For Donor/Sample, `data`if any dataset down in the tree is 'Published', they should have `data_access_level` as public,
@@ -349,6 +357,12 @@ class Translator(TranslatorInterface):
             else:
                 # Log as an error to be fixed in Neo4j
                 logger.error(f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
+        elif document['entity_type'] in ['Collection']:
+            # If this Collection meets entity-api's criteria for visibility to the world by
+            # returning the value of its schema_constants.py DataVisibilityEnum.PUBLIC,
+            # the Collection can be in the public index and retrieved by users who are not logged in.
+            entity_visibility = self.call_entity_api(document['uuid'], 'visibility')
+            is_public = (entity_visibility == "public")
         else:
             # In case 'data_access_level' not set
             if 'data_access_level' in document:
@@ -357,7 +371,6 @@ class Translator(TranslatorInterface):
             else:
                 # Log as an error to be fixed in Neo4j
                 logger.error(f"{document['entity_type']} of uuid: {document['uuid']} missing 'data_access_level' property, treat as not public, verify and set the data_access_level.")
-
         return is_public
 
     def delete_docs(self, index, scope, entity_id):
@@ -464,16 +477,15 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
-
-    def translate_public_collection(self, entity_id, reindex=False):
-        logger.info(f"Start executing translate_public_collection() for {entity_id}")
+    def translate_collection(self, entity_id, reindex=False):
+        logger.info(f"Start executing translate_collection() for {entity_id}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
         try:
-            collection = self.get_public_collection(entity_id)
+            collection = self.get_collection(entity_id=entity_id)
 
             self.add_datasets_to_entity(collection)
             self.entity_keys_rename(collection)
@@ -495,17 +507,20 @@ class Translator(TranslatorInterface):
                 else:
                     json_data = json.dumps(collection)
 
-                self.call_indexer(collection, reindex, json_data, public_index)
+                # If this Collection meets entity-api's criteria for visibility to the world by
+                # returning the value of its schema_constants.py DataVisibilityEnum.PUBLIC, put
+                # the Collection in the public index.
+                if self.is_public(collection):
+                    self.call_indexer(collection, reindex, json_data, public_index)
                 self.call_indexer(collection, reindex, json_data, private_index)
 
-            logger.info(f"Finished executing translate_public_collection() for {entity_id}")
+            logger.info(f"Finished executing translate_collection() for {entity_id}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
-            logger.error(f"translate_public_collection() failed to get public collection of uuid: {entity_id} via entity-api")
+            logger.error(f"translate_collection() failed to get collection of uuid: {entity_id} via entity-api")
         except Exception as e:
             logger.error(e)
-
 
     def translate_donor_tree(self, entity_id):
         try:
@@ -536,7 +551,6 @@ class Translator(TranslatorInterface):
 
         logger.info(f"Finished executing index_entity() on uuid: {uuid}")
 
-
     # Used by individual PUT /reindex/<id> call
     def reindex_entity(self, uuid):
         logger.info(f"Start executing reindex_entity() on uuid: {uuid}")
@@ -545,7 +559,6 @@ class Translator(TranslatorInterface):
         self.call_indexer(entity_dict, reindex=True)
 
         logger.info(f"Finished executing reindex_entity() on uuid: {uuid}")
-
 
     def init_transformers(self):
         logger.info("Start executing init_transformers()")
@@ -1071,8 +1084,8 @@ class Translator(TranslatorInterface):
         return self.prepare_dataset(response.json())
 
 
-    def get_public_collection(self, entity_id):
-        logger.info(f"Start executing get_public_collection() on uuid: {entity_id}")
+    def get_collection(self, entity_id):
+        logger.info(f"Start executing get_collection() on uuid: {entity_id}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
@@ -1082,15 +1095,15 @@ class Translator(TranslatorInterface):
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
-            msg = f"get_public_collection() failed to get entity of uuid {entity_id} via entity-api"
+            msg = f"get_collection() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-            logger.debug("======get_public_collection() status code from entity-api======")
+            logger.debug("======get_collection() status code from entity-api======")
             logger.debug(response.status_code)
 
-            logger.debug("======get_public_collection() response text from entity-api======")
+            logger.debug("======get_collection() response text from entity-api======")
             logger.debug(response.text)
 
             # Bubble up the error message from entity-api instead of sys.exit(msg)
@@ -1100,7 +1113,7 @@ class Translator(TranslatorInterface):
 
         collection_dict = response.json()
 
-        logger.info(f"Finished executing get_public_collection() on uuid: {entity_id}")
+        logger.info(f"Finished executing get_collection() on uuid: {entity_id}")
 
         return collection_dict
 
