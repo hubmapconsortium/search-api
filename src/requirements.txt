@@ -5,13 +5,18 @@ jsonschema==3.2.0
 requests==2.27.1
 PyYAML==5.4.1
 
+# Flask 2.1.3 installs the latest Werkzeug==3.0.0 (released on 9/30/2023) and causing import issues 
+# Use a pinned version 2.3.7 (the latest release before 3.0.0) to mitigate temporaryly
+# Will upgrade Flask to newer version later on across all APIs. 10/3/2023 - Zhou
+Werkzeug==2.3.7
+
 git+https://github.com/hubmapconsortium/portal-visualization.git@0.0.13#egg=portal-visualization
 
 # Use the published package from PyPI as default
 # Use the branch name of commons from github for testing new changes made in commons from different branch
 # Default is main branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
-hubmap-commons==2.1.9
+hubmap-commons==2.1.11
 
 # The use of `-r` lets us specify the transitive requirements in one place
 -r search-adaptor/src/requirements.txt
