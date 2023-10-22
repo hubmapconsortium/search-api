@@ -25,6 +25,9 @@ src/instance/search-config.yaml
 
 **/__pycache__/
 
+# Ignore docker env file
+docker/.env
+
 # Docker copied files and directories
 docker/search-api/src
 docker/search-api/VERSION
