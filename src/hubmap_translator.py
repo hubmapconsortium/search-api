@@ -1091,7 +1091,7 @@ class Translator(TranslatorInterface):
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
-        url = self.entity_api_url + "/collections/" + entity_id
+        url = self.entity_api_url + "/entities/" + entity_id
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
