@@ -57,9 +57,9 @@ class Translator(TranslatorInterface):
     skip_comparision = False
     failed_entity_api_calls = []
     failed_entity_ids = []
+    _ontology_api_dict = None
 
-
-    def __init__(self, indices, app_client_id, app_client_secret, token):
+    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_dict:dict=None):
         try:
             self.indices: dict = {}
             self.self_managed_indices: dict = {}
@@ -72,6 +72,7 @@ class Translator(TranslatorInterface):
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+            self._ontology_api_dict = ontology_api_dict
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -792,7 +793,7 @@ class Translator(TranslatorInterface):
     # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
     # Sample: if sample_category == 'organ' the display name linked to the corresponding description of organ code
-    # otherwise the display name linked to the value of the corresponding description of sample_category code
+    # otherwise sample_category code as the display name for Block, Organ, or Suspension.
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
         logger.info("Start executing generate_display_subtype()")
@@ -808,12 +809,17 @@ class Translator(TranslatorInterface):
             if 'sample_category' in entity:
                 if entity['sample_category'].lower() == 'organ':
                     if 'organ' in entity:
-                        display_subtype = get_type_description(entity['organ'], 'organ_types')
+                        known_organ_types = self.get_organ_types()
+                        if entity['organ'] in known_organ_types.keys():
+                            display_subtype = known_organ_types[entity['organ']]
+                        else:
+                            raise Exception(
+                                f"Unable retrieve organ type ontology information for organ_type_code={entity['organ']}.")
                     else:
                         logger.error(
                             f"Missing missing organ when sample_category is set of Sample with uuid: {entity['uuid']}")
                 else:
-                    display_subtype = get_type_description(entity['sample_category'], 'tissue_sample_types')
+                    display_subtype = str.capitalize(entity['sample_category'])
             else:
                 logger.error(f"Missing sample_category of Sample with uuid: {entity['uuid']}")
         elif entity_type in ['Dataset', 'Publication']:
@@ -1154,7 +1160,51 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
+    """
+    Retrieve the organ types from ontology-api
+    
+    Returns
+    -------
+    dict
+        The available organ types in the following format:
+    
+        {
+            "AO": "Aorta",
+            "BD": "Blood",
+            "BL": "Bladder",
+            "BM": "Bone Marrow",
+            "BR": "Brain",
+            "HT": "Heart",
+            ...
+        }
+    """
+    def get_organ_types(self):
+        # Count on good values in the ontology dict from error checking in main.py
+        ontology_api_url = self._ontology_api_dict['ONTOLOGY_API_BASE_URL']
+        ontology_api_app_context = self._ontology_api_dict['ONTOLOGY_API_APP_CONTEXT']
 
+        target_url = f"{ontology_api_url}/organs/by-code?application_context={ontology_api_app_context}"
+
+        # Disable ssl certificate verification, and use the read-only ontology-api without authentication.
+        response = requests.get(url=target_url, verify=False)
+
+        # Invoke .raise_for_status(), an HTTPError will be raised with certain status codes
+        response.raise_for_status()
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            # Log the full stack trace, prepend a line with our message
+            logger.exception("Unable to make a request to query the organ types via ontology-api")
+
+            logger.debug("======get_organ_types() status code from ontology-api======")
+            logger.debug(response.status_code)
+
+            logger.debug("======get_organ_types() response text from ontology-api======")
+            logger.debug(response.text)
+
+            # Also bubble up the error message from ontology-api
+            raise requests.exceptions.RequestException(response.text)
 
 # Running full reindex script in command line
 # This approach is different from the live /reindex-all PUT call

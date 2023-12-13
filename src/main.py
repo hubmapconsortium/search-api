@@ -6,7 +6,6 @@ from flask import Flask
 from yaml import safe_load
 
 sys.path.append("search-adaptor/src")
-from opensearch_helper_functions import *
 import libs.hubmap_endpoints
 search_adaptor_module = importlib.import_module("app", "search-adaptor/src")
 
@@ -31,6 +30,15 @@ config['AWS_S3_OBJECT_PREFIX'] = app.config['AWS_S3_OBJECT_PREFIX']
 config['AWS_OBJECT_URL_EXPIRATION_IN_SECS'] = app.config['AWS_OBJECT_URL_EXPIRATION_IN_SECS']
 config['LARGE_RESPONSE_THRESHOLD'] = app.config['LARGE_RESPONSE_THRESHOLD']
 config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX'] = app.config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX']
+config['ONTOLOGY_API_APP_SETTING'] = app.config['ONTOLOGY_API_APP_SETTING']
+
+
+if config['ONTOLOGY_API_APP_SETTING']['ONTOLOGY_API_BASE_URL'] is None:
+    raise Exception(f"Unable retrieve ontology information using"
+                    f" URL '{config['ONTOLOGY_API_APP_SETTING']['ONTOLOGY_API_BASE_URL']}'.")
+if config['ONTOLOGY_API_APP_SETTING']['ONTOLOGY_API_APP_CONTEXT'] is None:
+    raise Exception(f"Unable retrieve ontology information using"
+                    f" application context'{config['ONTOLOGY_API_APP_SETTING']['ONTOLOGY_API_BASE_URL']}'.")
 
 translator_module = importlib.import_module("hubmap_translator")
 
