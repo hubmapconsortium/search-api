@@ -23,7 +23,7 @@ def _unexpected(s):
 
 
 def translate(doc):
-    _add_has_visualization(doc)
+    # _add_has_visualization(doc)
     _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
@@ -32,7 +32,6 @@ def translate(doc):
     _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
     _translate_sample_category(doc)
-    _translate_data_type(doc)
     _translate_timestamp(doc)
     _translate_access_level(doc)
     _translate_external_consortium(doc)
@@ -287,41 +286,6 @@ _sample_categories_dict = {
     k: v['description']
     for k, v in _enums['tissue_sample_types'].items()
 }
-
-
-# Assay type:
-
-def _translate_data_type(doc):
-    '''
-    >>> doc = {'data_types': ['AF']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
-
-    >>> doc = {'data_types': ['image_pyramid', 'AF']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
-
-    >>> doc = {'data_types': ['salmon_rnaseq_10x_sn']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['salmon_rnaseq_10x_sn'], 'mapped_data_types': ['snRNA-seq [Salmon]']}
-
-    >>> doc = {'data_types': ['xyz', 'image_pyramid']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'image_pyramid'], 'mapped_data_types': ['No translation for "[\\'xyz\\', \\'image_pyramid\\']"']}
-
-    '''
-    _map(doc, 'data_types', _data_types_map)
-
-
-def _data_types_map(ks):
-    assert len(ks) == 1 or (len(ks) == 2 and ('image_pyramid' in ks or 'Image Pyramid' in ks)), \
-        f"Maximum 2 types, and one should be image pyramid: {ks}"
-    single_key = ks[0] if len(ks) == 1 else ks
-    try:
-        r = AssayType(single_key).description
-    except RuntimeError:
-        r = _unexpected(single_key)
-    return [r]
 
 
 # Donor metadata:

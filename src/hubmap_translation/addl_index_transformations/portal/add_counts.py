@@ -28,13 +28,13 @@ def add_counts(doc):
     ...        'entity_type': 'Sample',
     ...        'mapped_sample_category': 'Block',
     ...        'mapped_organ': 'Lymph Node',
-    ...        'mapped_data_types': ['Autofluorescence Microscopy']
+    ...        'dataset_type': 'Autofluorescence Microscopy'
     ...    }]
     ... }
     >>> add_counts(doc)
     >>> pprint(doc['descendant_counts'])
-    {'entity_type': {'Sample': 1},
-     'mapped_data_types': {'Autofluorescence Microscopy': 1},
+    {'dataset_type': {'Autofluorescence Microscopy': 1},
+     'entity_type': {'Sample': 1},
      'mapped_organ': {'Lymph Node': 1},
      'mapped_sample_category': {'Block': 1}}
 
@@ -49,7 +49,7 @@ def add_counts(doc):
             'entity_type': _count_field(doc['descendants'], 'entity_type'),
             'mapped_sample_category': _count_field(doc['descendants'], 'mapped_sample_category'),
             'mapped_organ': _count_field(doc['descendants'], 'mapped_organ'),
-            'mapped_data_types': _count_array_field(doc['descendants'], 'mapped_data_types'),
+            'dataset_type': _count_field(doc['descendants'], 'dataset_type'),
         }.items() if v}
 
 
