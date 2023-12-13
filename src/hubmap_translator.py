@@ -49,6 +49,9 @@ class Translator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_STATUS_PUBLISHED = 'published'
+    # Base URL and constants to build endpoint URLs for talking to Ontology API
+    ONTOLOGY_API_BASE_URL = 'https://ontology-api.dev.hubmapconsortium.org'.strip('/')
+    ONTOLOGY_API_ORGAN_TYPES_ENDPOINT = '/organs/by-code?application_context=HUBMAP'
     DEFAULT_INDEX_WITHOUT_PREFIX = ''
     INDICES = {}
     TRANSFORMERS = {}
@@ -57,7 +60,6 @@ class Translator(TranslatorInterface):
     skip_comparision = False
     failed_entity_api_calls = []
     failed_entity_ids = []
-    _ontology_api_dict = None
 
     def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_dict:dict=None):
         try:
@@ -72,7 +74,6 @@ class Translator(TranslatorInterface):
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-            self._ontology_api_dict = ontology_api_dict
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -793,7 +794,7 @@ class Translator(TranslatorInterface):
     # Upload: Just make it "Data Upload" for all uploads
     # Donor: "Donor"
     # Sample: if sample_category == 'organ' the display name linked to the corresponding description of organ code
-    # otherwise sample_category code as the display name for Block, Organ, or Suspension.
+    # otherwise sample_category code as the display name for Block, Section, or Suspension.
     # Dataset: the display names linked to the values in data_types as a comma separated list
     def generate_display_subtype(self, entity):
         logger.info("Start executing generate_display_subtype()")
@@ -1179,11 +1180,7 @@ class Translator(TranslatorInterface):
         }
     """
     def get_organ_types(self):
-        # Count on good values in the ontology dict from error checking in main.py
-        ontology_api_url = self._ontology_api_dict['ONTOLOGY_API_BASE_URL']
-        ontology_api_app_context = self._ontology_api_dict['ONTOLOGY_API_APP_CONTEXT']
-
-        target_url = f"{ontology_api_url}/organs/by-code?application_context={ontology_api_app_context}"
+        target_url = f"{self.ONTOLOGY_API_BASE_URL}{self.ONTOLOGY_API_ORGAN_TYPES_ENDPOINT}"
 
         # Disable ssl certificate verification, and use the read-only ontology-api without authentication.
         response = requests.get(url=target_url, verify=False)
