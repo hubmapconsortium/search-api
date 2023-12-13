@@ -52,7 +52,7 @@ def get_config():
     return load_yaml((Path(__file__).parent / 'config.yaml').read_text())
 
 
-def transform(doc, tranformation_resources, batch_id='unspecified'):
+def transform(doc, transformation_resources, batch_id='unspecified'):
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
     logging.info(f'Begin: {id_for_log}')
     doc_copy = deepcopy(doc)
@@ -61,7 +61,7 @@ def transform(doc, tranformation_resources, batch_id='unspecified'):
     _add_validation_errors(doc_copy)
     _clean(doc_copy)
     try:
-        add_assay_details(doc_copy)
+        add_assay_details(doc_copy, transformation_resources)
         translate(doc_copy)
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
