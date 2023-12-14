@@ -49,8 +49,7 @@ class Translator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_STATUS_PUBLISHED = 'published'
-    # Base URL and constants to build endpoint URLs for talking to Ontology API
-    ONTOLOGY_API_BASE_URL = 'https://ontology-api.dev.hubmapconsortium.org'.strip('/')
+    # Constants to build endpoint URLs for Ontology API
     ONTOLOGY_API_ORGAN_TYPES_ENDPOINT = '/organs/by-code?application_context=HUBMAP'
     DEFAULT_INDEX_WITHOUT_PREFIX = ''
     INDICES = {}
@@ -61,7 +60,7 @@ class Translator(TranslatorInterface):
     failed_entity_api_calls = []
     failed_entity_ids = []
 
-    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_dict:dict=None):
+    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None):
         try:
             self.indices: dict = {}
             self.self_managed_indices: dict = {}
@@ -74,6 +73,7 @@ class Translator(TranslatorInterface):
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+            self._ontology_api_base_url = ontology_api_base_url
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -1180,7 +1180,7 @@ class Translator(TranslatorInterface):
         }
     """
     def get_organ_types(self):
-        target_url = f"{self.ONTOLOGY_API_BASE_URL}{self.ONTOLOGY_API_ORGAN_TYPES_ENDPOINT}"
+        target_url = f"{self._ontology_api_base_url}{self.ONTOLOGY_API_ORGAN_TYPES_ENDPOINT}"
 
         # Disable ssl certificate verification, and use the read-only ontology-api without authentication.
         response = requests.get(url=target_url, verify=False)
