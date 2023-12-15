@@ -23,5 +23,5 @@ def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc['uuid'], transformation_resources)
         # Preserve the previous shape of assay_types.
-        doc['data_types'] = [assay_details.get('assaytype')]
-        doc['mapped_data_types'] = [assay_details.get('description')]
+        doc['description'] = assay_details.get('description')
+        doc['vitessce-hints'] = assay_details.get('vitessce-hints')
