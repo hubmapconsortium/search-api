@@ -12,20 +12,21 @@ def _get_assay_details(doc, transformation_resources):
     uuid = doc.get('uuid')
     dataset_type = doc.get('dataset_type')
     try:
-        response = requests.get(f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+        response = requests.get(
+            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
         raise
     json = response.json()
     if not json:
-        return {'description' : dataset_type, 'vitessce-hints': []}
+        return {'description': dataset_type, 'vitessce-hints': []}
     return json
 
 
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
-        # Preserve the previous shape of assay_types.
-        doc['description'] = assay_details.get('description')
+        # Preserve the previous shape of mapped_data_types.
+        doc['mapped_data_types'] = [assay_details.get('description')]
         doc['vitessce-hints'] = assay_details.get('vitessce-hints')

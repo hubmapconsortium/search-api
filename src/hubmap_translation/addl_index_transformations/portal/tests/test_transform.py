@@ -102,7 +102,8 @@ expected_output_doc = {'anatomy_0': ['body'],
                        'rui_location': '{"ccf_annotations": '
                        '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
                        'status': 'New',
-                       'uuid': '69c70762689b20308bb049ac49653342'
+                       'uuid': '69c70762689b20308bb049ac49653342',
+                       'vitessce-hints': ['is_sc', 'rna'],
                        }
 
 

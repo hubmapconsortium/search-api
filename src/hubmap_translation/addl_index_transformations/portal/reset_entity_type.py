@@ -26,4 +26,3 @@ def reset_entity_type(doc):
         return
     if 'is_support' in doc['vitessce-hints']:
         doc['entity_type'] = 'Support'
-
