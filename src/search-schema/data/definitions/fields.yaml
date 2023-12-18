@@ -59,6 +59,13 @@ data_types:
   - publication
   enum: assay_types
   required: false
+dataset_type:
+  description: 'The assay type contained in the Dataset or Publication.'
+  entity_types:
+  - dataset
+  - publication
+  enum: assay_types
+  required: true
 description:
   description: A description of the Entity, hand entered into the UI
   entity_types:
