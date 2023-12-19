@@ -20,6 +20,7 @@ def _get_assay_details(doc, transformation_resources):
         raise
     json = response.json()
     if not json:
+        logger.info(f"No soft assay information returned for dataset ${uuid}.")
         return {'description': dataset_type, 'vitessce-hints': []}
     return json
 
