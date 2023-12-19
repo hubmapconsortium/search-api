@@ -195,6 +195,9 @@
     "associated_collection": {
       "es_name": "associated_collection"
     },
+    "creation_action": {
+      "es_name": "creation_action"
+    },
     "group_name": {
       "es_name": "group_name"
     }
