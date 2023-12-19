@@ -129,3 +129,30 @@ def test_transform(mocker):
     output = transform(input_doc, transformation_resources)
     del output['mapper_metadata']
     assert output == expected_output_doc
+
+
+def mock_empty_soft_assay(uuid, headers):
+    class MockResponse():
+        def __init__(self):
+            self.status_code = 200
+            self.text = 'Logger call requires this'
+
+        def json(self):
+            return {}
+
+        def raise_for_status(self):
+            pass
+    return MockResponse()
+
+
+expected_output_doc_unknown_assay = expected_output_doc | {'mapped_data_types': [
+    'RNAseq [Salmon]'], 'visualization': False, 'vitessce-hints': ['unknown-assay']}
+
+
+def test_transform_unknown_assay(mocker):
+    mocker.patch('requests.get', side_effect=mock_empty_soft_assay)
+    transformation_resources = {
+        'ingest_api_soft_assay_url': 'abc123', 'token': 'def456'}
+    output = transform(input_doc, transformation_resources)
+    del output['mapper_metadata']
+    assert output == expected_output_doc_unknown_assay
