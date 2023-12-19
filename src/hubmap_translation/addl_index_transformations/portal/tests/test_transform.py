@@ -104,6 +104,7 @@ expected_output_doc = {'anatomy_0': ['body'],
                        'status': 'New',
                        'uuid': '69c70762689b20308bb049ac49653342',
                        'vitessce-hints': ['is_sc', 'rna'],
+                       'visualization': True,
                        }
 
 
