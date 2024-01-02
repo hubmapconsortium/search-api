@@ -66,6 +66,7 @@ expected_output_doc = {'anatomy_0': ['body'],
                        'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
                                       'mapped_sample_category': 'Section',
                                       'sample_category': 'section'}],
+                       'assay_display_name': ['scRNA-seq (10x Genomics) [Salmon]'],
                        'create_timestamp': 1575489509656,
                        'data_access_level': 'consortium',
                        'dataset_type': 'RNAseq [Salmon]',
@@ -146,6 +147,7 @@ def mock_empty_soft_assay(uuid, headers):
 
 
 expected_output_doc_unknown_assay = expected_output_doc | {'mapped_data_types': [
+    'RNAseq [Salmon]'], 'assay_display_name': [
     'RNAseq [Salmon]'], 'visualization': False, 'vitessce-hints': ['unknown-assay']}
 
 

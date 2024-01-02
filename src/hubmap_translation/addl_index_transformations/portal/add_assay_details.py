@@ -32,6 +32,8 @@ def add_assay_details(doc, transformation_resources):
         assay_details = _get_assay_details(doc, transformation_resources)
 
         # Preserve the previous shape of mapped_data_types.
+        doc['assay_display_name'] = [assay_details.get('description')]
+        # Remove once the portal-ui has transitioned to use assay_display_name.
         doc['mapped_data_types'] = [assay_details.get('description')]
         doc['vitessce-hints'] = assay_details.get('vitessce-hints')
 
