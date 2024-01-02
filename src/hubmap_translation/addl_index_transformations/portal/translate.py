@@ -20,7 +20,6 @@ def _unexpected(s):
 
 
 def translate(doc):
-    # _add_has_visualization(doc)
     _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
