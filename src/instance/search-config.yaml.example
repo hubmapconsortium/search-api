@@ -1,6 +1,10 @@
 # this file allows multiple Elasticsearch indices to be configured and accessible
 # via the search endpoints
 
+# Soft assay support via ingest-api GET /assaytype/<dataset-id> endpoint
+# Omit the <dataset-id> in this config 
+ingest_api_soft_assay_url: https://ingest-api.dev.hubmapconsortium.org/assaytype/ 
+
 # default index name for endpoints that don't specify an index
 default_index: entities
 

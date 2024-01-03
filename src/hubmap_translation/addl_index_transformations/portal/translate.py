@@ -6,12 +6,9 @@ from collections import defaultdict
 
 from yaml import safe_load as load_yaml
 
-from portal_visualization.builder_factory import has_visualization
-
 # Ignore PEP8 "E402 module level import not at top of file" with using the
 # inline comment "# noqa: E402"
 sys.path.append("search-adaptor/src")
-from libs.assay_type import AssayType  # noqa: E402
 
 
 class TranslationException(Exception):
@@ -23,7 +20,6 @@ def _unexpected(s):
 
 
 def translate(doc):
-    _add_has_visualization(doc)
     _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
@@ -32,7 +28,6 @@ def translate(doc):
     _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
     _translate_sample_category(doc)
-    _translate_data_type(doc)
     _translate_timestamp(doc)
     _translate_access_level(doc)
     _translate_external_consortium(doc)
@@ -40,8 +35,10 @@ def translate(doc):
 
 # Utils:
 
-_enums_dir = Path(__file__).parent.parent.parent.parent / 'search-schema' / 'data' / 'definitions' / 'enums'
-_enums = {path.stem: load_yaml(path.read_text()) for path in _enums_dir.iterdir()}
+_enums_dir = Path(__file__).parent.parent.parent.parent / \
+    'search-schema' / 'data' / 'definitions' / 'enums'
+_enums = {path.stem: load_yaml(path.read_text())
+          for path in _enums_dir.iterdir()}
 
 
 def _map(doc, key, map):
@@ -60,29 +57,6 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
-
-
-def _add_has_visualization(doc):
-    '''
-    Actually building the whole viewconf at index-time would be too rigid,
-    but if we add a flag to indicate whether there is a visualization,
-    then the UI can reserve screen space at render-time, and get the actual
-    viewconf with a callback. Being able to search for datasets with
-    visualizations is also useful.
-
-    >>> doc = {'entity_type': 'Dataset',
-    ...     'data_types': ['AF'],
-    ...     "metadata": {
-    ...          "dag_provenance_list": [{
-    ...              "hash": "cb8655c",
-    ...              "origin": "https://github.com/hubmapconsortium/ingest-pipeline.git"
-    ... }]}}
-    >>> _add_has_visualization(doc)
-    >>> assert 'visualization' in doc
-
-    '''
-    if doc['entity_type'] == 'Dataset':
-        doc['visualization'] = has_visualization(doc, lambda name: AssayType(name))
 
 
 def _add_metadata_metadata_placeholder(doc):
@@ -134,7 +108,8 @@ def _translate_file_description(doc):
     '''
     for file in doc.get('files', []):
         extension = file['rel_path'].split('.')[-1].upper()
-        file['mapped_description'] = file['description'] + f' ({extension} file)'
+        file['mapped_description'] = file['description'] + \
+            f' ({extension} file)'
 
 
 # Data access level:
@@ -289,41 +264,6 @@ _sample_categories_dict = {
 }
 
 
-# Assay type:
-
-def _translate_data_type(doc):
-    '''
-    >>> doc = {'data_types': ['AF']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['AF'], 'mapped_data_types': ['Autofluorescence Microscopy']}
-
-    >>> doc = {'data_types': ['image_pyramid', 'AF']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['image_pyramid', 'AF'], 'mapped_data_types': ['Autofluorescence Microscopy [Image Pyramid]']}
-
-    >>> doc = {'data_types': ['salmon_rnaseq_10x_sn']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['salmon_rnaseq_10x_sn'], 'mapped_data_types': ['snRNA-seq [Salmon]']}
-
-    >>> doc = {'data_types': ['xyz', 'image_pyramid']}
-    >>> _translate_data_type(doc); doc
-    {'data_types': ['xyz', 'image_pyramid'], 'mapped_data_types': ['No translation for "[\\'xyz\\', \\'image_pyramid\\']"']}
-
-    '''
-    _map(doc, 'data_types', _data_types_map)
-
-
-def _data_types_map(ks):
-    assert len(ks) == 1 or (len(ks) == 2 and ('image_pyramid' in ks or 'Image Pyramid' in ks)), \
-        f"Maximum 2 types, and one should be image pyramid: {ks}"
-    single_key = ks[0] if len(ks) == 1 else ks
-    try:
-        r = AssayType(single_key).description
-    except RuntimeError:
-        r = _unexpected(single_key)
-    return [r]
-
-
 # Donor metadata:
 
 def _translate_donor_metadata(doc):
@@ -374,7 +314,8 @@ def _translate_donor_metadata(doc):
 def _donor_metadata_map(metadata):
     if metadata is None:
         return {}
-    donor_metadata = metadata.get('organ_donor_data') or metadata.get('living_donor_data') or {}
+    donor_metadata = metadata.get(
+        'organ_donor_data') or metadata.get('living_donor_data') or {}
     mapped_metadata = defaultdict(list)
 
     for kv in donor_metadata:
@@ -406,4 +347,5 @@ def _get_unique_mapped_organs(samples):
 
 def _add_origin_samples_unique_mapped_organs(doc):
     if doc['entity_type'] in ['Sample', 'Dataset'] and 'origin_samples' in doc:
-        doc['origin_samples_unique_mapped_organs'] = _get_unique_mapped_organs(doc['origin_samples'])
+        doc['origin_samples_unique_mapped_organs'] = _get_unique_mapped_organs(
+            doc['origin_samples'])
