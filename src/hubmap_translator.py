@@ -1223,7 +1223,7 @@ if __name__ == "__main__":
         sys.exit(msg)
 
     # Create an instance of the indexer
-    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
+    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token, app.config['ONTOLOGY_API_BASE_URL'])
     
     # Skip the uuids comparision step that is only needed for live /reindex-all PUT call
     translator.skip_comparision = True
