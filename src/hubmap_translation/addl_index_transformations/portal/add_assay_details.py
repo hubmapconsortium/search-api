@@ -22,8 +22,9 @@ def _get_assay_details(doc, transformation_resources):
         raise
     json = response.json()
     if not json:
-        logger.info(f"No soft assay information returned for dataset ${uuid}.")
-        return {'assaytype': 'unknown', 'description': dataset_type, 'vitessce-hints': ['unknown-assay']}
+        empty_error_msg = 'No soft assay information returned.'
+        logger.info(f"${empty_error_msg} for dataset ${uuid}.")
+        return {'description': dataset_type, 'vitessce-hints': ['unknown-assay'], 'error': empty_error_msg}
     return json
 
 
@@ -36,6 +37,10 @@ def add_assay_details(doc, transformation_resources):
         # Remove once the portal-ui has transitioned to use assay_display_name.
         doc['mapped_data_types'] = [assay_details.get('description')]
         doc['vitessce-hints'] = assay_details.get('vitessce-hints')
+
+        error_msg = assay_details.get('error')
+        if error_msg:
+            doc['transformation_errors'].append(error_msg)
 
         def get_assay_type_for_viz(doc):
             return assay_details
