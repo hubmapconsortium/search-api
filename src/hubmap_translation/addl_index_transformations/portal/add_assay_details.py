@@ -23,7 +23,7 @@ def _get_assay_details(doc, transformation_resources):
     json = response.json()
     if not json:
         empty_error_msg = 'No soft assay information returned.'
-        logger.info(f"${empty_error_msg} for dataset ${uuid}.")
+        logger.info(f"${empty_error_msg} For dataset ${uuid}.")
         return {'description': dataset_type, 'vitessce-hints': ['unknown-assay'], 'error': empty_error_msg}
     return json
 
