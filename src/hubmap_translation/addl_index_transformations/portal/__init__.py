@@ -60,6 +60,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     # so make a deep copy so we don't surprise the caller.
     _add_validation_errors(doc_copy)
     _clean(doc_copy)
+    doc_copy['transformation_errors'] = []
     try:
         add_assay_details(doc_copy, transformation_resources)
         translate(doc_copy)
@@ -70,6 +71,8 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     add_counts(doc_copy)
     add_partonomy(doc_copy)
     reset_entity_type(doc_copy)
+    if len(doc_copy['transformation_errors']) == 0:
+        del doc_copy['transformation_errors']
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
