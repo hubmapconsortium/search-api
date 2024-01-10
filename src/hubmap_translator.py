@@ -795,7 +795,7 @@ class Translator(TranslatorInterface):
     # Donor: "Donor"
     # Sample: if sample_category == 'organ' the display name linked to the corresponding description of organ code
     # otherwise sample_category code as the display name for Block, Section, or Suspension.
-    # Dataset: the display names linked to the values in data_types as a comma separated list
+    # Dataset: the display names linked to the values in dataset_type as a comma separated list
     def generate_display_subtype(self, entity):
         logger.info("Start executing generate_display_subtype()")
 
@@ -824,10 +824,10 @@ class Translator(TranslatorInterface):
             else:
                 logger.error(f"Missing sample_category of Sample with uuid: {entity['uuid']}")
         elif entity_type in ['Dataset', 'Publication']:
-            if 'data_types' in entity:
-                display_subtype = ','.join(entity['data_types'])
+            if 'dataset_type' in entity:
+                display_subtype = entity['dataset_type']
             else:
-                logger.error(f"Missing data_types of Dataset with uuid: {entity['uuid']}")
+                logger.error(f"Missing dataset_type of Dataset with uuid: {entity['uuid']}")
         else:
             # Do nothing
             logger.error(
