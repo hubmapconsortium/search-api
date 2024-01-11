@@ -17,15 +17,16 @@ def _get_assay_details(doc, transformation_resources):
     try:
         response = requests.get(
             f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+        response.raise_for_status()
+        json = response.json()
+        if not json:
+            empty_error_msg = 'No soft assay information returned.'
+            logger.info(f"${empty_error_msg} For dataset ${uuid}.")
+            return {'description': dataset_type, 'vitessce-hints': ['unknown-assay'], 'error': empty_error_msg}
+        return json
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
         raise
-    json = response.json()
-    if not json:
-        empty_error_msg = 'No soft assay information returned.'
-        logger.info(f"${empty_error_msg} For dataset ${uuid}.")
-        return {'description': dataset_type, 'vitessce-hints': ['unknown-assay'], 'error': empty_error_msg}
-    return json
 
 
 def add_assay_details(doc, transformation_resources):
