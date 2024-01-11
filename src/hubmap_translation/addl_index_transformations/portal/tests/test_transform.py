@@ -148,7 +148,8 @@ def mock_empty_soft_assay(uuid, headers):
 
 expected_output_doc_unknown_assay = expected_output_doc | {'mapped_data_types': [
     'RNAseq [Salmon]'], 'assay_display_name': [
-    'RNAseq [Salmon]'], 'visualization': False, 'vitessce-hints': ['unknown-assay']}
+    'RNAseq [Salmon]'], 'visualization': False, 'vitessce-hints': ['unknown-assay'],
+    'transformation_errors': ['No soft assay information returned.']}
 
 
 def test_transform_unknown_assay(mocker):
