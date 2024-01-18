@@ -1,5 +1,6 @@
 import requests
 import logging
+import re
 
 from portal_visualization.builder_factory import has_visualization
 
@@ -33,6 +34,11 @@ def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
 
+        doc['raw_dataset_type'] = re.sub(
+            "\\[(.*?)\\]", '', doc['dataset_type']).rstrip()
+
+        if pipeline := re.search("(?<=\\[)[^][]*(?=])", doc['dataset_type']):
+            doc['pipeline'] = pipeline.group()
         # Preserve the previous shape of mapped_data_types.
         doc['assay_display_name'] = [assay_details.get('description')]
         # Remove once the portal-ui has transitioned to use assay_display_name.
