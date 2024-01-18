@@ -42,6 +42,7 @@ input_doc = {
     }],
     'metadata': {
         'metadata': {
+            'analyte_class': 'RNA',
             '_random_stuff_that_should_not_be_ui': 'No!',
             'collectiontype': 'No!',
             'data_path': 'No!',
@@ -59,7 +60,8 @@ input_doc = {
     'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
 }
 
-expected_output_doc = {'anatomy_0': ['body'],
+expected_output_doc = {'analyte_class': 'RNA',
+                       'anatomy_0': ['body'],
                        'anatomy_1': ['large intestine', 'lymph node'],
                        'anatomy_2': ['transverse colon'],
                        'ancestor_counts': {'entity_type': {}},
@@ -95,12 +97,14 @@ expected_output_doc = {'anatomy_0': ['body'],
                        'mapped_external_group_name': 'Outside HuBMAP',
                        'mapped_metadata': {},
                        'mapped_status': 'New',
-                       'metadata': {'dag_provenance_list': [],
-                                    'metadata': {'cell_barcode_size': '123',
-                                                 'is_boolean': 'TRUE',
-                                                 'keep_this_field': 'Yes!',
-                                                 'should_be_float': 123.456,
-                                                 'should_be_int': 123}},
+                       'metadata': {
+                           'dag_provenance_list': [],
+                           'metadata': {'analyte_class': 'RNA',
+                                        'cell_barcode_size': '123',
+                                        'is_boolean': 'TRUE',
+                                        'keep_this_field': 'Yes!',
+                                        'should_be_float': 123.456,
+                                        'should_be_int': 123}},
                        'origin_samples': [{'mapped_organ': 'Lymph Node', 'organ': 'LY'}],
                        'origin_samples_unique_mapped_organs': ['Lymph Node'],
                        'pipeline': 'Salmon',

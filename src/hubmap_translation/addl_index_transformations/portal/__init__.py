@@ -32,11 +32,16 @@ from hubmap_translation.addl_index_transformations.portal.add_dataset_categories
     add_dataset_categories
 )
 
+from hubmap_translation.addl_index_transformations.portal.lift_dataset_metadata_fields import (
+    lift_dataset_metadata_fields
+)
+
 
 def _get_version():
     # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
     # as Elasticsearch mapper_metadata.version
-    build_path = Path(__file__).absolute().parent.parent.parent.parent.parent / 'BUILD'
+    build_path = Path(__file__).absolute(
+    ).parent.parent.parent.parent.parent / 'BUILD'
     if build_path.is_file():
         # Use strip() to remove leading and trailing spaces, newlines, and tabs
         version = build_path.read_text().strip()
@@ -68,6 +73,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     try:
         add_assay_details(doc_copy, transformation_resources)
         add_dataset_categories(doc_copy)
+        lift_dataset_metadata_fields(doc_copy)
         translate(doc_copy)
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
@@ -97,18 +103,21 @@ def _map(doc, clean):
     clean(doc)
 
     single_valued_fields = ['donor', 'rui_location']
-    multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
+    multi_valued_fields = ['ancestors', 'descendants',
+                           'immediate_ancestors', 'immediate_descendants']
 
     for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
             fragment = doc[single_doc_field]
-            logging.debug(f'Mapping single "{single_doc_field}": {dumps(fragment)[:50]}...')
+            logging.debug(
+                f'Mapping single "{single_doc_field}": {dumps(fragment)[:50]}...')
             _map(fragment, clean)
             logging.debug(f'... done mapping "{single_doc_field}"')
     for multi_doc_field in multi_valued_fields:
         if multi_doc_field in doc:
             for fragment in doc[multi_doc_field]:
-                logging.debug(f'Mapping multi "{multi_doc_field}": {dumps(fragment)[:50]}...')
+                logging.debug(
+                    f'Mapping multi "{multi_doc_field}": {dumps(fragment)[:50]}...')
                 _map(fragment, clean)
                 logging.debug(f'... done mapping "{multi_doc_field}"')
 
@@ -132,7 +141,8 @@ def _simple_clean(doc):
 
         bad_fields = [
             'collectiontype', 'null',  # Inserted by IEC.
-            'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
+            # Only meaningful at submission time.
+            'data_path', 'metadata_path', 'version',
             'donor_id', 'tissue_id'  # For internal use only.
         ]
 
@@ -260,7 +270,8 @@ if __name__ == "__main__":
         description='Given a source document, transform it.'
     )
 
-    parser.add_argument('input', type=argparse.FileType('r'), help='Path of input YAML/JSON.')
+    parser.add_argument('input', type=argparse.FileType(
+        'r'), help='Path of input YAML/JSON.')
     args = parser.parse_args()
     input_yaml = args.input.read()
     doc = load_yaml(input_yaml)
