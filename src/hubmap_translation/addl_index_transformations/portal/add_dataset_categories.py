@@ -1,9 +1,8 @@
 from enum import Enum
-import logging
 
-logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
-                    datefmt='%Y-%m-%d %H:%M:%S')
-logger = logging.getLogger(__name__)
+from hubmap_translation.addl_index_transformations.portal.utils import (
+    _log_transformation_error
+)
 
 
 class CreationAction(str, Enum):
@@ -18,11 +17,6 @@ processing_type_map = {
     CreationAction.CENTRAL_PROCESS: 'hubmap',
     CreationAction.LAB_PROCESS: 'lab',
 }
-
-
-def _log_transformation_error(doc, msg):
-    doc['transformation_errors'].append(msg)
-    logger.info(msg)
 
 
 def _add_dataset_processing_fields(doc):
