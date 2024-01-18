@@ -28,6 +28,10 @@ from hubmap_translation.addl_index_transformations.portal.add_assay_details impo
     add_assay_details
 )
 
+from hubmap_translation.addl_index_transformations.portal.add_dataset_categories import (
+    add_dataset_categories
+)
+
 
 def _get_version():
     # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
@@ -63,6 +67,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     doc_copy['transformation_errors'] = []
     try:
         add_assay_details(doc_copy, transformation_resources)
+        add_dataset_categories(doc_copy)
         translate(doc_copy)
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
