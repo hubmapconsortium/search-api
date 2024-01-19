@@ -4,6 +4,10 @@ import re
 
 from portal_visualization.builder_factory import has_visualization
 
+from hubmap_translation.addl_index_transformations.portal.utils import (
+    _log_transformation_error
+)
+
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
@@ -22,7 +26,6 @@ def _get_assay_details(doc, transformation_resources):
         json = response.json()
         if not json:
             empty_error_msg = 'No soft assay information returned.'
-            logger.info(f"${empty_error_msg} For dataset ${uuid}.")
             return {'description': dataset_type, 'vitessce-hints': ['unknown-assay'], 'error': empty_error_msg}
         return json
     except requests.exceptions.HTTPError as e:
@@ -47,7 +50,7 @@ def add_assay_details(doc, transformation_resources):
 
         error_msg = assay_details.get('error')
         if error_msg:
-            doc['transformation_errors'].append(error_msg)
+            _log_transformation_error(doc, error_msg)
 
         def get_assay_type_for_viz(doc):
             return assay_details
