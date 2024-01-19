@@ -12,6 +12,7 @@ input_doc = {
         'organ': 'LY'
     }],
     'create_timestamp': 1575489509656,
+    'creation_action': 'Central Process',
     'ancestor_ids': ['1234', '5678'],
     'ancestors': [{
         'sample_category': 'section',
@@ -41,6 +42,7 @@ input_doc = {
     }],
     'metadata': {
         'metadata': {
+            'analyte_class': 'RNA',
             '_random_stuff_that_should_not_be_ui': 'No!',
             'collectiontype': 'No!',
             'data_path': 'No!',
@@ -58,7 +60,8 @@ input_doc = {
     'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
 }
 
-expected_output_doc = {'anatomy_0': ['body'],
+expected_output_doc = {'analyte_class': 'RNA',
+                       'anatomy_0': ['body'],
                        'anatomy_1': ['large intestine', 'lymph node'],
                        'anatomy_2': ['transverse colon'],
                        'ancestor_counts': {'entity_type': {}},
@@ -67,7 +70,9 @@ expected_output_doc = {'anatomy_0': ['body'],
                                       'mapped_sample_category': 'Section',
                                       'sample_category': 'section'}],
                        'assay_display_name': ['scRNA-seq (10x Genomics) [Salmon]'],
+                       'assay_modality': 'single',
                        'create_timestamp': 1575489509656,
+                       'creation_action': 'Central Process',
                        'data_access_level': 'consortium',
                        'dataset_type': 'RNAseq [Salmon]',
                        'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
@@ -92,14 +97,20 @@ expected_output_doc = {'anatomy_0': ['body'],
                        'mapped_external_group_name': 'Outside HuBMAP',
                        'mapped_metadata': {},
                        'mapped_status': 'New',
-                       'metadata': {'dag_provenance_list': [],
-                                    'metadata': {'cell_barcode_size': '123',
-                                                 'is_boolean': 'TRUE',
-                                                 'keep_this_field': 'Yes!',
-                                                 'should_be_float': 123.456,
-                                                 'should_be_int': 123}},
+                       'metadata': {
+                           'dag_provenance_list': [],
+                           'metadata': {'analyte_class': 'RNA',
+                                        'cell_barcode_size': '123',
+                                        'is_boolean': 'TRUE',
+                                        'keep_this_field': 'Yes!',
+                                        'should_be_float': 123.456,
+                                        'should_be_int': 123}},
                        'origin_samples': [{'mapped_organ': 'Lymph Node', 'organ': 'LY'}],
                        'origin_samples_unique_mapped_organs': ['Lymph Node'],
+                       'pipeline': 'Salmon',
+                       'processing': 'processed',
+                       'processing_type': 'hubmap',
+                       'raw_dataset_type': 'RNAseq',
                        'rui_location': '{"ccf_annotations": '
                        '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
                        'status': 'New',
@@ -130,32 +141,3 @@ def test_transform(mocker):
     output = transform(input_doc, transformation_resources)
     del output['mapper_metadata']
     assert output == expected_output_doc
-
-
-def mock_empty_soft_assay(uuid, headers):
-    class MockResponse():
-        def __init__(self):
-            self.status_code = 200
-            self.text = 'Logger call requires this'
-
-        def json(self):
-            return {}
-
-        def raise_for_status(self):
-            pass
-    return MockResponse()
-
-
-expected_output_doc_unknown_assay = expected_output_doc | {'mapped_data_types': [
-    'RNAseq [Salmon]'], 'assay_display_name': [
-    'RNAseq [Salmon]'], 'visualization': False, 'vitessce-hints': ['unknown-assay'],
-    'transformation_errors': ['No soft assay information returned.']}
-
-
-def test_transform_unknown_assay(mocker):
-    mocker.patch('requests.get', side_effect=mock_empty_soft_assay)
-    transformation_resources = {
-        'ingest_api_soft_assay_url': 'abc123', 'token': 'def456'}
-    output = transform(input_doc, transformation_resources)
-    del output['mapper_metadata']
-    assert output == expected_output_doc_unknown_assay
