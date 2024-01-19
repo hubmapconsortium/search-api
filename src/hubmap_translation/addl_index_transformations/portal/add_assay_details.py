@@ -38,9 +38,9 @@ def add_assay_details(doc, transformation_resources):
         assay_details = _get_assay_details(doc, transformation_resources)
 
         doc['raw_dataset_type'] = re.sub(
-            "\\[(.*?)\\]", '', doc['dataset_type']).rstrip()
+            "\\[(.*?)\\]", '', doc.get('dataset_type', '')).rstrip()
 
-        if pipeline := re.search("(?<=\\[)[^][]*(?=])", doc['dataset_type']):
+        if pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
             doc['pipeline'] = pipeline.group()
         # Preserve the previous shape of mapped_data_types.
         doc['assay_display_name'] = [assay_details.get('description')]
