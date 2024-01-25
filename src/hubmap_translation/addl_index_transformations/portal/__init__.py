@@ -24,11 +24,24 @@ from hubmap_translation.addl_index_transformations.portal.reset_entity_type impo
     reset_entity_type
 )
 
+from hubmap_translation.addl_index_transformations.portal.add_assay_details import (
+    add_assay_details
+)
+
+from hubmap_translation.addl_index_transformations.portal.add_dataset_categories import (
+    add_dataset_categories
+)
+
+from hubmap_translation.addl_index_transformations.portal.lift_dataset_metadata_fields import (
+    lift_dataset_metadata_fields
+)
+
 
 def _get_version():
     # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
     # as Elasticsearch mapper_metadata.version
-    build_path = Path(__file__).absolute().parent.parent.parent.parent.parent / 'BUILD'
+    build_path = Path(__file__).absolute(
+    ).parent.parent.parent.parent.parent / 'BUILD'
     if build_path.is_file():
         # Use strip() to remove leading and trailing spaces, newlines, and tabs
         version = build_path.read_text().strip()
@@ -48,111 +61,7 @@ def get_config():
     return load_yaml((Path(__file__).parent / 'config.yaml').read_text())
 
 
-def transform(doc, batch_id='unspecified'):
-    '''
-    >>> from pprint import pprint
-    >>> transformed = transform({
-    ...    'entity_type': 'Dataset',
-    ...    'status': 'New',
-    ...    'group_name': 'EXT - Outside HuBMAP',
-    ...    'origin_samples': [{
-    ...        'organ': 'LY'
-    ...    }],
-    ...    'create_timestamp': 1575489509656,
-    ...    'ancestor_ids': ['1234', '5678'],
-    ...    'ancestors': [{
-    ...        'sample_category': 'section',
-    ...        'created_by_user_displayname': 'daniel Cotter'
-    ...    }],
-    ...    'data_access_level': 'consortium',
-    ...    'data_types': ['salmon_rnaseq_10x_sn'],
-    ...    'descendants': [{'entity_type': 'Sample or Dataset'}],
-    ...    'donor': {
-    ...        "metadata": {
-    ...            "organ_donor_data": [
-    ...                {
-    ...                    "data_type": "Nominal",
-    ...                    "grouping_concept_preferred_term": "Sex",
-    ...                    "preferred_term": "Male"
-    ...                }
-    ...            ]
-    ...        }
-    ...    },
-    ...    'files': [{
-    ...        "description": "OME-TIFF pyramid file",
-    ...        "edam_term": "EDAM_1.24.format_3727",
-    ...        "is_qa_qc": False,
-    ...        "rel_path": "ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif",
-    ...        "size": 123456789,
-    ...        "type": "unknown"
-    ...    }],
-    ...    'metadata': {
-    ...        'metadata': {
-    ...            '_random_stuff_that_should_not_be_ui': 'No!',
-    ...            'collectiontype': 'No!',
-    ...            'data_path': 'No!',
-    ...            'metadata_path': 'No!',
-    ...            'tissue_id': 'No!',
-    ...            'donor_id': 'No!',
-    ...            'cell_barcode_size': '123',
-    ...            'should_be_int': '123',
-    ...            'should_be_float': '123.456',
-    ...            'keep_this_field': 'Yes!',
-    ...            'is_boolean': '1'
-    ...        },
-    ...        'dag_provenance_list': [],
-    ...    },
-    ...    'rui_location': '{"ccf_annotations": ["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
-    ... })
-    >>> del transformed['mapper_metadata']
-    >>> pprint(transformed)
-    {'anatomy_0': ['body'],
-     'anatomy_1': ['large intestine', 'lymph node'],
-     'anatomy_2': ['transverse colon'],
-     'ancestor_counts': {'entity_type': {}},
-     'ancestor_ids': ['1234', '5678'],
-     'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
-                    'mapped_sample_category': 'Section',
-                    'sample_category': 'section'}],
-     'create_timestamp': 1575489509656,
-     'data_access_level': 'consortium',
-     'data_types': ['salmon_rnaseq_10x_sn'],
-     'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
-     'descendants': [{'entity_type': 'Sample or Dataset'}],
-     'donor': {'mapped_metadata': {'sex': ['Male']},
-               'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
-                                                  'grouping_concept_preferred_term': 'Sex',
-                                                  'preferred_term': 'Male'}]}},
-     'entity_type': 'Dataset',
-     'files': [{'description': 'OME-TIFF pyramid file',
-                'edam_term': 'EDAM_1.24.format_3727',
-                'is_qa_qc': False,
-                'mapped_description': 'OME-TIFF pyramid file (TIF file)',
-                'rel_path': 'ometiff-pyramids/stitched/expressions/reg1_stitched_expressions.ome.tif',
-                'size': 123456789,
-                'type': 'unknown'}],
-     'group_name': 'EXT - Outside HuBMAP',
-     'mapped_consortium': 'Outside HuBMAP',
-     'mapped_create_timestamp': '2019-12-04 19:58:29',
-     'mapped_data_access_level': 'Consortium',
-     'mapped_data_types': ['snRNA-seq [Salmon]'],
-     'mapped_external_group_name': 'Outside HuBMAP',
-     'mapped_metadata': {},
-     'mapped_status': 'New',
-     'metadata': {'dag_provenance_list': [],
-                  'metadata': {'cell_barcode_size': '123',
-                               'is_boolean': 'TRUE',
-                               'keep_this_field': 'Yes!',
-                               'should_be_float': 123.456,
-                               'should_be_int': 123}},
-     'origin_samples': [{'mapped_organ': 'Lymph Node', 'organ': 'LY'}],
-     'origin_samples_unique_mapped_organs': ['Lymph Node'],
-     'rui_location': '{"ccf_annotations": '
-                     '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
-     'status': 'New',
-     'visualization': True}
-
-    '''
+def transform(doc, transformation_resources, batch_id='unspecified'):
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
     logging.info(f'Begin: {id_for_log}')
     doc_copy = deepcopy(doc)
@@ -160,7 +69,11 @@ def transform(doc, batch_id='unspecified'):
     # so make a deep copy so we don't surprise the caller.
     _add_validation_errors(doc_copy)
     _clean(doc_copy)
+    doc_copy['transformation_errors'] = []
     try:
+        add_assay_details(doc_copy, transformation_resources)
+        add_dataset_categories(doc_copy)
+        lift_dataset_metadata_fields(doc_copy)
         translate(doc_copy)
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
@@ -169,6 +82,8 @@ def transform(doc, batch_id='unspecified'):
     add_counts(doc_copy)
     add_partonomy(doc_copy)
     reset_entity_type(doc_copy)
+    if len(doc_copy['transformation_errors']) == 0:
+        del doc_copy['transformation_errors']
     doc_copy['mapper_metadata'].update({
         'version': _get_version(),
         'datetime': str(datetime.datetime.now()),
@@ -188,20 +103,17 @@ def _map(doc, clean):
     clean(doc)
 
     single_valued_fields = ['donor', 'rui_location']
-    multi_valued_fields = ['ancestors', 'descendants', 'immediate_ancestors', 'immediate_descendants']
+    multi_valued_fields = ['ancestors', 'descendants',
+                           'immediate_ancestors', 'immediate_descendants']
 
     for single_doc_field in single_valued_fields:
         if single_doc_field in doc:
             fragment = doc[single_doc_field]
-            logging.debug(f'Mapping single "{single_doc_field}": {dumps(fragment)[:50]}...')
             _map(fragment, clean)
-            logging.debug(f'... done mapping "{single_doc_field}"')
     for multi_doc_field in multi_valued_fields:
         if multi_doc_field in doc:
             for fragment in doc[multi_doc_field]:
-                logging.debug(f'Mapping multi "{multi_doc_field}": {dumps(fragment)[:50]}...')
                 _map(fragment, clean)
-                logging.debug(f'... done mapping "{multi_doc_field}"')
 
 
 def _simple_clean(doc):
@@ -223,7 +135,8 @@ def _simple_clean(doc):
 
         bad_fields = [
             'collectiontype', 'null',  # Inserted by IEC.
-            'data_path', 'metadata_path', 'version',  # Only meaningful at submission time.
+            # Only meaningful at submission time.
+            'data_path', 'metadata_path', 'version',
             'donor_id', 'tissue_id'  # For internal use only.
         ]
 
@@ -351,7 +264,8 @@ if __name__ == "__main__":
         description='Given a source document, transform it.'
     )
 
-    parser.add_argument('input', type=argparse.FileType('r'), help='Path of input YAML/JSON.')
+    parser.add_argument('input', type=argparse.FileType(
+        'r'), help='Path of input YAML/JSON.')
     args = parser.parse_args()
     input_yaml = args.input.read()
     doc = load_yaml(input_yaml)

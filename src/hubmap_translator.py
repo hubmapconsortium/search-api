@@ -62,6 +62,7 @@ class Translator(TranslatorInterface):
 
     def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None):
         try:
+            self.ingest_api_soft_assay_url = indices['ingest_api_soft_assay_url'].strip('/')
             self.indices: dict = {}
             self.self_managed_indices: dict = {}
             # Do not include the indexes that are self managed
@@ -89,7 +90,7 @@ class Translator(TranslatorInterface):
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
-
+        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url, 'token': token}
         with open(Path(__file__).resolve().parent / 'hubmap_translation' / 'neo4j-to-es-attributes.json', 'r') as json_file:
             self.attr_map = json.load(json_file)
 
@@ -505,7 +506,7 @@ class Translator(TranslatorInterface):
 
                 # if the index has a transformer use that else do a now load
                 if self.TRANSFORMERS.get(index):
-                    json_data = json.dumps(self.TRANSFORMERS[index].transform(collection))
+                    json_data = json.dumps(self.TRANSFORMERS[index].transform(collection, self.transformation_resources))
                 else:
                     json_data = json.dumps(collection)
 
@@ -644,7 +645,7 @@ class Translator(TranslatorInterface):
                             public_doc = self.generate_public_doc(entity)
 
                             if transformer is not None:
-                                public_transformed = transformer.transform(json.loads(public_doc))
+                                public_transformed = transformer.transform(json.loads(public_doc), self.transformation_resources)
                                 public_transformed_doc = json.dumps(public_transformed)
                                 target_doc = public_transformed_doc
                             else:
@@ -658,7 +659,7 @@ class Translator(TranslatorInterface):
 
                     # add it to private
                     if transformer is not None:
-                        private_transformed = transformer.transform(json.loads(document))
+                        private_transformed = transformer.transform(json.loads(document), self.transformation_resources)
                         target_doc = json.dumps(private_transformed)
                     else:
                         target_doc = document

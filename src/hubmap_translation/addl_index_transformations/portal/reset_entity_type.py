@@ -6,7 +6,7 @@ def reset_entity_type(doc):
     the corresponding entities here, and reset the entity_type.
 
     >>> doc = {
-    ...     'data_types': ['image_pyramid'],
+    ...     'vitessce-hints': ['is_support'],
     ...     'entity_type': 'Dataset'
     ... }
     >>> reset_entity_type(doc)
@@ -14,17 +14,15 @@ def reset_entity_type(doc):
     'Support'
 
     >>> doc = {
-    ...     'data_types': ['publication_ancillary'],
+    ...     'vitessce-hints': [],
     ...     'entity_type': 'Dataset'
     ... }
     >>> reset_entity_type(doc)
     >>> doc['entity_type']
-    'Support'
+    'Dataset'
 
     '''
-    if 'data_types' not in doc:
+    if 'vitessce-hints' not in doc:
         return
-    if 'image_pyramid' in doc['data_types']:
-        doc['entity_type'] = 'Support'
-    if 'publication_ancillary' in doc['data_types']:
+    if 'is_support' in doc['vitessce-hints']:
         doc['entity_type'] = 'Support'
