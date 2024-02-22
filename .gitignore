@@ -35,3 +35,7 @@ docker/search-api/BUILD
 
 # Portal cache
 src/hubmap_translation/addl_index_transformations/portal/cache/*.jsonld
+
+
+# python virtual environments
+**/.venv
