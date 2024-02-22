@@ -226,26 +226,26 @@ def test_creation_action(creation_action, expected_error):
 
 
 @pytest.mark.parametrize(
-    "creation_action,is_multi_assay,expected_category,expected_modality,expected_processing",
+    "creation_action,is_multi_assay,expected_component_bool,expected_modality,expected_processing",
     [
         pytest.param(
             "Create Dataset Activity", None, None, "single", "raw", id="primary single assay"
         ),
         pytest.param(
-            "Create Dataset Activity", True, "primary", "multiple", "raw", id="primary multiassay"
+            "Create Dataset Activity", True, False, "multiple", "raw", id="primary multiassay"
         ),
         pytest.param(
-            "Multi-Assay Split", None, "component", "multiple", "raw", id="component"
+            "Multi-Assay Split", None, True, "multiple", "raw", id="component"
         ),
         pytest.param(
-            "Central Process", True, "processed", "multiple", "processed", id="processed multiassay"
+            "Central Process", True, False, "multiple", "processed", id="processed multiassay"
         ),
         pytest.param(
             "Central Process", None, None, "single", "processed", id="processed single assay"
         ),
     ]
 )
-def test_assay_modality_fields(creation_action, is_multi_assay, expected_category, expected_modality, expected_processing):
+def test_assay_modality_fields(creation_action, is_multi_assay, expected_component_bool, expected_modality, expected_processing):
     input_doc = {
         'creation_action': creation_action,
         'entity_type': 'Dataset',
@@ -268,8 +268,8 @@ def test_assay_modality_fields(creation_action, is_multi_assay, expected_categor
     if expected_processing == "processed":
         output_doc['processing_type'] = "hubmap"
 
-    if expected_category:
-        output_doc['multi_assay_category'] = expected_category
+    if expected_modality == 'multiple':
+        output_doc['is_component'] = expected_component_bool
 
     _add_dataset_categories(input_doc, assay_details)
     assert input_doc == output_doc

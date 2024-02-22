@@ -65,18 +65,16 @@ def _is_component_dataset(doc):
 def _add_multi_assay_fields(doc, assay_details):
     if _is_component_dataset(doc):
         doc['assay_modality'] = 'multiple'
-        doc['multi_assay_category'] = 'component'
+        doc['is_component'] = True
         return
 
     if assay_details.get('is-multi-assay', False):
         doc['assay_modality'] = 'multiple'
         creation_action = doc.get('creation_action', None)
-        if creation_action == CreationAction.CREATE_DATASET:
-            doc['multi_assay_category'] = 'primary'
-        elif creation_action == CreationAction.CENTRAL_PROCESS:
-            doc['multi_assay_category'] = 'processed'
+        if creation_action in [CreationAction.CREATE_DATASET, CreationAction.CENTRAL_PROCESS]:
+            doc['is_component'] = False
         else:
-            error_msg = f"Unexpected creation_action={creation_action}. multi_assay_category will not be set."
+            error_msg = f"Unexpected creation_action={creation_action}. is_component will not be set."
             _log_transformation_error(doc, error_msg)
         return
 
