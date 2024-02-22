@@ -1,3 +1,5 @@
+import pytest
+
 from hubmap_translation.addl_index_transformations.portal.add_assay_details import (
     add_assay_details,
     _add_dataset_categories
@@ -193,112 +195,81 @@ def test_lab_processing():
     assert lab_processed_input_doc == lab_processed_ouput_doc
 
 
-def test_raw():
-    raw_input_doc = {
+@pytest.mark.parametrize(
+    "creation_action, expected_error",
+    [
+        pytest.param(
+            "Conjure Dataset", ['Unrecognized creation action, Conjure Dataset.'], id="unknown"
+        ),
+        pytest.param(
+            None, ['Creation action undefined.'], id="undefined"
+        ),
+    ]
+)
+def test_creation_action(creation_action, expected_error):
+    creation_action_input_doc = {
         'entity_type': 'Dataset',
-        'creation_action': 'Create Dataset Activity',
-        'descendants': []
+        'transformation_errors': [],
     }
 
-    raw_ouput_doc = {
-        'assay_modality': 'single',
-        'creation_action': 'Create Dataset Activity',
-        'descendants': [],
+    creation_action_output_doc = {
         'entity_type': 'Dataset',
-        'processing': 'raw',
-    }
-    _add_dataset_categories(raw_input_doc, {})
-    assert raw_input_doc == raw_ouput_doc
-
-
-def test_component():
-    component_input_doc = {
-        'creation_action': 'Multi-Assay Split',
-        'descendants': [],
-        'entity_type': 'Dataset',
+        'transformation_errors': expected_error,
     }
 
-    component_output_doc = {
-        'assay_modality': 'multiple',
-        'creation_action': 'Multi-Assay Split',
-        'descendants': [],
-        'entity_type': 'Dataset',
-        'multi_assay_category': 'component',
-        'processing': 'raw',
-    }
-    _add_dataset_categories(component_input_doc, {})
-    assert component_input_doc == component_output_doc
+    if creation_action:
+        creation_action_input_doc['creation_action'] = creation_action
+        creation_action_output_doc['creation_action'] = creation_action
+
+    _add_dataset_categories(creation_action_input_doc, {})
+    assert creation_action_input_doc == creation_action_output_doc
 
 
-def test_primary():
-    primary_input_doc = {
-        'creation_action': 'Create Dataset Activity',
-        'descendants': [
-            {
-                'creation_action': 'Multi-Assay Split',
-            }
-        ],
+@pytest.mark.parametrize(
+    "creation_action,is_multi_assay,expected_category,expected_modality,expected_processing",
+    [
+        pytest.param(
+            "Create Dataset Activity", None, None, "single", "raw", id="primary single assay"
+        ),
+        pytest.param(
+            "Create Dataset Activity", True, "primary", "multiple", "raw", id="primary multiassay"
+        ),
+        pytest.param(
+            "Multi-Assay Split", None, "component", "multiple", "raw", id="component"
+        ),
+        pytest.param(
+            "Central Process", True, "processed", "multiple", "processed", id="processed multiassay"
+        ),
+        pytest.param(
+            "Central Process", None, None, "single", "processed", id="processed single assay"
+        ),
+    ]
+)
+def test_assay_modality_fields(creation_action, is_multi_assay, expected_category, expected_modality, expected_processing):
+    input_doc = {
+        'creation_action': creation_action,
         'entity_type': 'Dataset',
     }
 
-    primary_output_doc = {
-        'assay_modality': 'multiple',
-        'creation_action': 'Create Dataset Activity',
-        'descendants': [
-            {
-                'creation_action': 'Multi-Assay Split',
-            }
-        ],
+    output_doc = {
+        'assay_modality': expected_modality,
+        'creation_action': creation_action,
         'entity_type': 'Dataset',
-        'multi_assay_category': 'primary',
-        'processing': 'raw',
+        'processing': expected_processing,
     }
 
     assay_details = {
-        "assaytype": "visium-no-probes",
-        "contains-pii": True,
-        "dataset-type": "Visium (no probes)",
-        "description": "Visium (No probes)",
-        "dir-schema": "visium-no-probes-v2",
-        "is-multi-assay": True,
-        "must-contain": [
-            "Histology",
-            "RNAseq"
-        ],
-        "primary": True,
         "vitessce-hints": []
     }
-    _add_dataset_categories(primary_input_doc, assay_details)
-    assert primary_input_doc == primary_output_doc
 
+    if is_multi_assay:
+        assay_details['is-multi-assay'] = is_multi_assay
 
-def test_undefined_creation_action():
-    undefined_creation_action_input_doc = {
-        'entity_type': 'Dataset',
-        'transformation_errors': [],
-    }
+    if expected_processing == "processed":
+        output_doc['processing_type'] = "hubmap"
 
-    undefined_creation_action_output_doc = {
-        'entity_type': 'Dataset',
-        'transformation_errors': ['Creation action undefined.'],
-    }
+    if expected_category:
+        output_doc['multi_assay_category'] = expected_category
 
-    _add_dataset_categories(undefined_creation_action_input_doc, assay_details={})
-    assert undefined_creation_action_input_doc == undefined_creation_action_output_doc
-
-
-def test_unknown_creation_action():
-    unknown_creation_action_input_doc = {
-        'creation_action': "Conjure Dataset",
-        'entity_type': 'Dataset',
-        'transformation_errors': [],
-    }
-
-    unknown_creation_action_output_doc = {
-        'creation_action': "Conjure Dataset",
-        'entity_type': 'Dataset',
-        'transformation_errors': ['Unrecognized creation action, Conjure Dataset.'],
-    }
-
-    _add_dataset_categories(unknown_creation_action_input_doc, {})
-    assert unknown_creation_action_input_doc == unknown_creation_action_output_doc
+    _add_dataset_categories(input_doc, assay_details)
+    assert input_doc == output_doc
