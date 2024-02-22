@@ -1,6 +1,7 @@
 import requests
 import logging
 import re
+from enum import Enum
 
 from portal_visualization.builder_factory import has_visualization
 
@@ -11,6 +12,20 @@ from hubmap_translation.addl_index_transformations.portal.utils import (
 logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
+
+
+class CreationAction(str, Enum):
+    CREATE_DATASET = 'Create Dataset Activity'
+    MULTI_ASSAY_SPLIT = 'Multi-Assay Split'
+    CENTRAL_PROCESS = 'Central Process'
+    LAB_PROCESS = 'Lab Process'
+    CREATE_PUBLICATION = 'Create Publication Activity'
+
+
+processing_type_map = {
+    CreationAction.CENTRAL_PROCESS: 'hubmap',
+    CreationAction.LAB_PROCESS: 'lab',
+}
 
 
 def _get_assay_details(doc, transformation_resources):
@@ -33,6 +48,56 @@ def _get_assay_details(doc, transformation_resources):
         raise
 
 
+def _add_dataset_processing_fields(doc):
+    if processing_type := processing_type_map.get(doc['creation_action']):
+        doc['processing'] = 'processed'
+        doc['processing_type'] = processing_type
+    else:
+        doc['processing'] = 'raw'
+
+
+def _is_component_dataset(doc):
+    if 'creation_action' in doc and doc['creation_action'] == CreationAction.MULTI_ASSAY_SPLIT:
+        return True
+    return False
+
+
+def _add_multi_assay_fields(doc, assay_details):
+    if _is_component_dataset(doc):
+        doc['assay_modality'] = 'multiple'
+        doc['is_component'] = True
+        return
+
+    if assay_details.get('is-multi-assay', False):
+        doc['assay_modality'] = 'multiple'
+        creation_action = doc.get('creation_action', None)
+        if creation_action in [CreationAction.CREATE_DATASET, CreationAction.CENTRAL_PROCESS]:
+            doc['is_component'] = False
+        else:
+            error_msg = f"Unexpected creation_action={creation_action}. is_component will not be set."
+            _log_transformation_error(doc, error_msg)
+        return
+
+    doc['assay_modality'] = 'single'
+
+
+def _add_dataset_categories(doc, assay_details):
+    if doc['entity_type'] == 'Dataset':
+        creation_action = doc.get('creation_action')
+        if not creation_action:
+            error_msg = "Creation action undefined."
+            _log_transformation_error(doc, error_msg)
+            return
+
+        if creation_action not in {enum.value for enum in CreationAction}:
+            error_msg = f"Unrecognized creation action, {creation_action}."
+            _log_transformation_error(doc, error_msg)
+            return
+
+        _add_dataset_processing_fields(doc)
+        _add_multi_assay_fields(doc, assay_details)
+
+
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
@@ -47,6 +112,8 @@ def add_assay_details(doc, transformation_resources):
         # Remove once the portal-ui has transitioned to use assay_display_name.
         doc['mapped_data_types'] = [assay_details.get('description')]
         doc['vitessce-hints'] = assay_details.get('vitessce-hints')
+
+        _add_dataset_categories(doc, assay_details)
 
         error_msg = assay_details.get('error')
         if error_msg:
