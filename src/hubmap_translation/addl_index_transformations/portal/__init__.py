@@ -28,10 +28,6 @@ from hubmap_translation.addl_index_transformations.portal.add_assay_details impo
     add_assay_details
 )
 
-from hubmap_translation.addl_index_transformations.portal.add_dataset_categories import (
-    add_dataset_categories
-)
-
 from hubmap_translation.addl_index_transformations.portal.lift_dataset_metadata_fields import (
     lift_dataset_metadata_fields
 )
@@ -72,7 +68,6 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     doc_copy['transformation_errors'] = []
     try:
         add_assay_details(doc_copy, transformation_resources)
-        add_dataset_categories(doc_copy)
         lift_dataset_metadata_fields(doc_copy)
         translate(doc_copy)
     except TranslationException as e:

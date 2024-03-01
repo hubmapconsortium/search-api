@@ -50,7 +50,7 @@ class AssayType(object):
 
     >>> a_t = AssayType('scRNA-Seq-10x')  # This one does contain PII
     >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
-    ['scRNA-Seq-10x', 'scRNA-seq (10x Genomics)', False, True]
+    ['scRNAseq-10xGenomics-v3', 'scRNA-seq (10x Genomics v3)', False, True]
 
     >>> a_t = AssayType(['PAS', 'Image Pyramid'])  # complex alt name
     >>> [a_t.name, a_t.description, a_t.vis_only, a_t.contains_pii]
