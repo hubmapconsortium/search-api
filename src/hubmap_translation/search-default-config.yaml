@@ -14,8 +14,40 @@ mappings:
           fields:
             keyword:
               type: keyword
+
     - # Handle all numeric types as float to avoid cast errors
       map_every_numeric:
         match_mapping_type: long
         mapping:
           type: float
+
+    # Added 3/8/2024 by Zhou
+    # Following expliciitly mapped fields may have values like '17' , '0',  'V11L05-326' , '' , 'Not Applicable'
+    # and the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
+    # Use explicit mapping to normalize the type
+    - library_adapter_sequence:
+        path_match: "*.library_adapter_sequence"
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            keyword:
+              type: keyword
+
+    - umi_offset:
+        path_match: "*.umi_offset"
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            keyword:
+              type: keyword
+
+    - slide_id:
+        path_match: "*.slide_id"
+        mapping:
+          copy_to: all_text
+          type: text
+          fields:
+            keyword:
+              type: keyword
