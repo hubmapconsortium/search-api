@@ -6,10 +6,10 @@ settings:
 mappings:
   date_detection: False
   dynamic_templates:
+    # Removed `copy_to: all_text` 3/8/2024 by Zhou
     - transposition_kit_number:
         path_match: "*.transposition_kit_number"
         mapping:
-          copy_to: all_text
           type: text
           fields:
             keyword:
@@ -28,7 +28,6 @@ mappings:
     - library_adapter_sequence:
         path_match: "*.library_adapter_sequence"
         mapping:
-          copy_to: all_text
           type: text
           fields:
             keyword:
@@ -37,7 +36,6 @@ mappings:
     - umi_offset:
         path_match: "*.umi_offset"
         mapping:
-          copy_to: all_text
           type: text
           fields:
             keyword:
@@ -46,7 +44,6 @@ mappings:
     - slide_id:
         path_match: "*.slide_id"
         mapping:
-          copy_to: all_text
           type: text
           fields:
             keyword:
