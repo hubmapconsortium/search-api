@@ -35,6 +35,14 @@ mappings:
             keyword:
               type: keyword
 
+    - umi_size:
+        path_match: "*.umi_size"
+        mapping:
+          type: text
+          fields:
+            keyword:
+              type: keyword
+
     - slide_id:
         path_match: "*.slide_id"
         mapping:
