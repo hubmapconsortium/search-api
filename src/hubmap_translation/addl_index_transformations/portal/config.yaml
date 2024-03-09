@@ -6,73 +6,37 @@ settings:
 mappings:
   date_detection: False
   dynamic_templates:
-    # Removed `copy_to: all_text` 3/8/2024 by Zhou 
-    - transposition_kit_number:
-        path_match: "*.transposition_kit_number"
-        mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
-
     # Added 3/8/2024 by Zhou
-    # Following expliciitly mapped fields may have values like '17' , '0',  'V11L05-326' , '' , 'Not Applicable'
+    # Expliciitly map fields may have multiple value types (like '17' , '0',  'V11L05-326' , '' , 'Not Applicable')
     # and the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
     # Use explicit mapping to normalize the type
-    - library_adapter_sequence:
-        path_match: "*.library_adapter_sequence"
+    - map_text_fields:
+        match_pattern: "regex"
+        match: "(_type|_size|_unit|_units|_value|_count|_id|_number|_offset|_sequence|_set|_num|_version|_format|_kit)$"
         mapping:
           type: text
-          fields:
-            keyword:
-              type: keyword
+          fields: 
+             type: keyword
 
-    - umi_offset:
-        path_match: "*.umi_offset"
+    - map_integer_fields:
+        match_pattern: "regex"
+        match: "(_count)$"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: integer
 
-    - umi_size:
-        path_match: "*.umi_size"
-        mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
-
-    - slide_id:
-        path_match: "*.slide_id"
-        mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
-
-    - sequencing_read_format:
-        path_match: "*.sequencing_read_format"
-        mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
-
-    - sample_indexing_set:
-        path_match: "*.sample_indexing_set"
-        mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
-
-    - # Handle all numeric types as float to avoid cast errors
-      map_every_numeric:
-        match_mapping_type: long
+    - map_float_fields:
+        match_pattern: "regex"
+        match: "(_percent)$"
         mapping:
           type: float
 
+    - map_date_and_time_fields:
+        match_pattern: "regex"
+        match: "(_timestamp|_date|_datetime)$"
+        mapping:
+          type: date
+
+    # String fields that don't match the above rules
     - map_every_string:
         match_mapping_type: string
         mapping:
