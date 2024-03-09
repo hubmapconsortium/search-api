@@ -51,6 +51,21 @@ mappings:
             keyword:
               type: keyword
 
+    - sequencing_read_format:
+        path_match: "*.sequencing_read_format"
+        mapping:
+          type: text
+          fields:
+            keyword:
+              type: keyword
+
+    - sample_indexing_set:
+        path_match: "*.sample_indexing_set"
+        mapping:
+          type: text
+          fields:
+            keyword:
+              type: keyword
     
     - # Handle all numeric types as float to avoid cast errors
       map_every_numeric:
