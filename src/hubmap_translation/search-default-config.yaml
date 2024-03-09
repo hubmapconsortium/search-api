@@ -15,12 +15,6 @@ mappings:
             keyword:
               type: keyword
 
-    - # Handle all numeric types as float to avoid cast errors
-      map_every_numeric:
-        match_mapping_type: long
-        mapping:
-          type: float
-
     # Added 3/8/2024 by Zhou
     # Following expliciitly mapped fields may have values like '17' , '0',  'V11L05-326' , '' , 'Not Applicable'
     # and the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
@@ -48,3 +42,10 @@ mappings:
           fields:
             keyword:
               type: keyword
+
+    
+    - # Handle all numeric types as float to avoid cast errors
+      map_every_numeric:
+        match_mapping_type: long
+        mapping:
+          type: float
