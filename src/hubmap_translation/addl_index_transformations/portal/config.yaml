@@ -8,31 +8,46 @@ mappings:
   dynamic_templates:
     # Added 3/8/2024 by Zhou
     # Expliciitly map fields may have multiple value types (like '17' , '0',  'V11L05-326' , '' , 'Not Applicable')
-    # and the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
-    # Use explicit mapping to normalize the type
+    # Because the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
     - map_text_fields:
-        match_pattern: "regex"
-        match: "(_type|_size|_unit|_units|_value|_count|_id|_number|_offset|_sequence|_set|_num|_version|_format|_kit)$"
+        match:
+          - "*_type"
+          - "*_size"
+          - "*_unit"
+          - "*_units"
+          - "*_value"
+          - "*_id"
+          - "*_number"
+          - "*_offset"
+          - "*_sequence"
+          - "*_set"
+          - "*_num"
+          - "*_version"
+          - "*_format"
+          - "*_kit"
         mapping:
           type: text
+          copy_to: all_text
           fields: 
              type: keyword
 
     - map_integer_fields:
-        match_pattern: "regex"
-        match: "(_count)$"
+        match:
+          - "*_count"
         mapping:
           type: integer
 
     - map_float_fields:
-        match_pattern: "regex"
-        match: "(_percent)$"
+        match:
+          - "*_percent"
         mapping:
           type: float
 
-    - map_date_and_time_fields:
-        match_pattern: "regex"
-        match: "(_timestamp|_date|_datetime)$"
+    - map_date_fields:
+        match:
+          - "*_timestamp"
+          - "*_date"
+          - "*_datetime"
         mapping:
           type: date
 
@@ -43,9 +58,6 @@ mappings:
           copy_to: all_text
           type: text
           fields:
-            # This emulates the default ES behavior,
-            # giving us a "keyword" subfield,
-            # with a "keyword" type.
             keyword:
               type: keyword
 
