@@ -1,87 +1,63 @@
 settings:
   index:
-    mapping.total_fields.limit: 7500
+    mapping.total_fields.limit: 6000
     query.default_field: 2048
 
 mappings:
   date_detection: False
   dynamic_templates:
-    # Removed `copy_to: all_text` 3/8/2024 by Zhou 
+    # Lots of fields may have multiple value types like '17' , '0',  'V11L05-326' , '' , 'Not Applicable'
+    # The default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
+    # Explicitly map these offending fields to `keyword` rather than `text` (no need for full-text search) - 3/9/2024 by Zhou
     - transposition_kit_number:
         path_match: "*.transposition_kit_number"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
-    # Added 3/8/2024 by Zhou
-    # Following expliciitly mapped fields may have values like '17' , '0',  'V11L05-326' , '' , 'Not Applicable'
-    # and the default dynamic mapping treats '17' as float but 'Not Applicable' as text, and this causes conflcits
-    # Use explicit mapping to normalize the type
     - library_adapter_sequence:
         path_match: "*.library_adapter_sequence"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
     - umi_offset:
         path_match: "*.umi_offset"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
     - umi_size:
         path_match: "*.umi_size"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
     - slide_id:
         path_match: "*.slide_id"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
     - sequencing_read_format:
         path_match: "*.sequencing_read_format"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
     - sample_indexing_set:
         path_match: "*.sample_indexing_set"
         mapping:
-          type: text
-          fields:
-            keyword:
-              type: keyword
+          type: keyword
 
-    - # Handle all numeric types as float to avoid cast errors
-      map_every_numeric:
-        match_mapping_type: long
-        mapping:
-          type: float
-
+    # Must handle the above offending fields before this "catch all" mapping
+    # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
+    # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
     - map_every_string:
         match_mapping_type: string
         mapping:
-          copy_to: all_text
           type: text
+          copy_to: all_text
           fields:
-            # This emulates the default ES behavior,
-            # giving us a "keyword" subfield,
-            # with a "keyword" type.
             keyword:
               type: keyword
 
+    # Handle all numeric types as float to avoid cast errors
+    - map_every_numeric:
+        match_mapping_type: long
+        mapping:
+          type: float
