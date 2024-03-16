@@ -17,8 +17,10 @@ _two_letter_to_iri = {
 
 
 def _get_organ_iri(doc):
-    two_letter_code = doc.get('origin_samples', [{}])[0].get('organ')
-    return _two_letter_to_iri.get(two_letter_code)
+    origin_samples = doc.get('origin_samples', [])
+    first_sample = origin_samples[0] if origin_samples else {}
+    two_letter_code = first_sample.get('organ', None)
+    return _two_letter_to_iri.get(two_letter_code) if two_letter_code else None
 
 
 def add_partonomy(doc):
