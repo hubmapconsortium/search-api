@@ -200,6 +200,12 @@
     },
     "group_name": {
       "es_name": "group_name"
+    },
+    "new_associated_multi_assay_uuid": {
+      "es_name": "new_associated_multi_assay_uuid"
+    },
+    "superseded_associated_processed_component_uuids": {
+      "es_name": "superseded_associated_processed_component_uuids"
     }
   }
 }
