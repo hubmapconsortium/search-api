@@ -5,9 +5,6 @@ from pathlib import Path
 from json import loads, dumps
 from yaml import safe_load
 
-from hubmap_translation.addl_index_transformations.portal.utils import (
-    _log_transformation_error
-)
 
 _two_letter_to_iri = {
     two_letter: organ.get('iri')
@@ -22,13 +19,10 @@ _two_letter_to_iri = {
 def _get_organ_iri(doc):
     origin_samples = doc.get('origin_samples', [])
     first_sample = origin_samples[0] if origin_samples else {}
-    two_letter_code = first_sample.get('organ', None)
-    if two_letter_code:
-        return _two_letter_to_iri.get(two_letter_code)
+    if first_sample:
+        return _two_letter_to_iri.get(first_sample.get('organ', None))
     else:
-        error_msg = f"Organ code not available. Organ fields will not be set for {doc.get('uuid')}."
-        _log_transformation_error(doc, error_msg)
-        return None
+        raise RuntimeWarning(f"Invalid document uuid={doc.get('uuid')}: Missing or empty 'origin_samples'.")
 
 
 def add_partonomy(doc):
@@ -44,9 +38,12 @@ def add_partonomy(doc):
     ...     'rui_location': dumps(rui_location)
     ... }
     >>> add_partonomy(doc)
+    Traceback (most recent call last):
+    RuntimeWarning: Invalid document uuid=None: Missing or empty 'origin_samples'.
     >>> del doc['rui_location']
     >>> doc
-    {'transformation_errors': ['Organ code not available. Organ fields will not be set for None.'], 'anatomy_0': ['body'], 'anatomy_1': ['large intestine'], 'anatomy_2': ['transverse colon']}
+    {}
+
 
     >>> doc = {
     ...     'origin_samples': [{'organ': 'RK'}],
@@ -80,10 +77,12 @@ def add_partonomy(doc):
 
     What if everything is missing?
 
-    >>> doc = {'uuid': 'testid'}
+    >>> doc = {}
     >>> add_partonomy(doc)
+    Traceback (most recent call last):
+    RuntimeWarning: Invalid document uuid=None: Missing or empty 'origin_samples'.
     >>> doc
-    {'uuid': 'testid', 'transformation_errors': ['Organ code not available. Organ fields will not be set for testid.']}
+    {}
 
     '''
     annotations = []
