@@ -11,7 +11,7 @@ from hubmap_translation.addl_index_transformations.portal.translate import Trans
             {}, None, id="empty doc does not throw exception"
         ),
         pytest.param(
-            {"uuid": "test_dataset_uuid", "entity_type": "Donor"}, None, id="Donor is expected to have missing origin_samples"
+            {"uuid": "test_uuid", "entity_type": "Donor"}, None, id="Donor is expected to have missing origin_samples"
         ),
         pytest.param(
             {"uuid": "organ_sample", "entity_type": "Sample", "sample_category": "organ"}, None, id="Organ sample is expected to have missing origin_samples"
