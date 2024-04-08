@@ -44,6 +44,17 @@ mappings:
         mapping:
           type: keyword
 
+    # Added 4/3/2024 by Zhou
+    - barcode_offset:
+        path_match: "*.barcode_offset"
+        mapping:
+          type: keyword
+
+    - barcode_size:
+        path_match: "*.barcode_size"
+        mapping:
+          type: keyword
+
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
     # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
