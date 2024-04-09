@@ -4,6 +4,7 @@ import requests
 from pathlib import Path
 from json import loads, dumps
 from yaml import safe_load
+from hubmap_translation.addl_index_transformations.portal.translate import TranslationException
 
 
 _two_letter_to_iri = {
@@ -17,7 +18,10 @@ _two_letter_to_iri = {
 
 
 def _get_organ_iri(doc):
-    two_letter_code = doc.get('origin_samples', [{}])[0].get('organ')
+    try:
+        two_letter_code = doc.get('origin_samples', [{}])[0].get('organ')
+    except IndexError:
+        raise TranslationException(f"Invalid document uuid={doc.get('uuid')}: Missing or empty 'origin_samples' for {doc.get('entity_type')}.")
     return _two_letter_to_iri.get(two_letter_code)
 
 
@@ -37,6 +41,7 @@ def add_partonomy(doc):
     >>> del doc['rui_location']
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['large intestine'], 'anatomy_2': ['transverse colon']}
+
 
     >>> doc = {
     ...     'origin_samples': [{'organ': 'RK'}],
