@@ -235,7 +235,7 @@ class Translator(TranslatorInterface):
             # Retrieve the entity details
             # This returned entity dict (if Dataset) has removed ingest_metadata.files and
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
-            entity = self.call_entity_api(entity_id, 'entities')
+            entity = self.call_entity_api(entity_id, 'documents')
 
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
@@ -349,7 +349,7 @@ class Translator(TranslatorInterface):
 
         if 'file_uuid' in document:
             # Confirm the Dataset to which the File entity belongs is published
-            dataset = self.call_entity_api(document['dataset_uuid'], 'entities')
+            dataset = self.call_entity_api(document['dataset_uuid'], 'documents')
             return self.is_public(dataset)
 
         if document['entity_type'] in ['Dataset', 'Publication']:
@@ -395,7 +395,7 @@ class Translator(TranslatorInterface):
             if entity_id:
                 try:
                     # Get the Dataset entity with the specified entity_id
-                    theEntity = self.call_entity_api(entity_id, 'entities')
+                    theEntity = self.call_entity_api(entity_id, 'documents')
                 except Exception as e:
                     # entity-api may throw an Exception if entity_id is actually the
                     # uuid of a File, so swallow the error here and process as
@@ -466,7 +466,7 @@ class Translator(TranslatorInterface):
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
-            upload = self.call_entity_api(entity_id, 'entities')
+            upload = self.call_entity_api(entity_id, 'documents')
 
             self.add_datasets_to_entity(upload)
             self.entity_keys_rename(upload)
@@ -532,7 +532,7 @@ class Translator(TranslatorInterface):
             descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
 
             # Index the donor entity itself
-            donor = self.call_entity_api(entity_id, 'entities')
+            donor = self.call_entity_api(entity_id, 'documents')
             self.call_indexer(donor)
 
             # Index all the descendants of this donor
@@ -549,7 +549,7 @@ class Translator(TranslatorInterface):
     def index_entity(self, uuid):
         logger.info(f"Start executing index_entity() on uuid: {uuid}")
 
-        entity_dict = self.call_entity_api(uuid, 'entities')
+        entity_dict = self.call_entity_api(uuid, 'documents')
         self.call_indexer(entity_dict)
 
         logger.info(f"Finished executing index_entity() on uuid: {uuid}")
@@ -558,7 +558,7 @@ class Translator(TranslatorInterface):
     def reindex_entity(self, uuid):
         logger.info(f"Start executing reindex_entity() on uuid: {uuid}")
 
-        entity_dict = self.call_entity_api(uuid, 'entities')
+        entity_dict = self.call_entity_api(uuid, 'documents')
         self.call_indexer(entity_dict, reindex=True)
 
         logger.info(f"Finished executing reindex_entity() on uuid: {uuid}")
@@ -704,7 +704,7 @@ class Translator(TranslatorInterface):
             for dataset in entity['datasets']:
                 # Retrieve the entity details
                 try:
-                    dataset = self.call_entity_api(dataset['uuid'], 'entities')
+                    dataset = self.call_entity_api(dataset['uuid'], 'documents')
                 except Exception as e:
                     logger.exception(e)
                     logger.error(f"Failed to retrieve dataset {dataset['uuid']} via entity-api during executing add_datasets_to_entity(), skip and continue to next one")
@@ -861,7 +861,7 @@ class Translator(TranslatorInterface):
                 for ancestor_uuid in ancestor_ids:
                     # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
-                    ancestor_dict = self.call_entity_api(ancestor_uuid, 'entities')
+                    ancestor_dict = self.call_entity_api(ancestor_uuid, 'documents')
                     ancestors.append(ancestor_dict)
 
                 # Find the Donor
@@ -873,17 +873,17 @@ class Translator(TranslatorInterface):
 
                 descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
                 for descendant_uuid in descendant_ids:
-                    descendant_dict = self.call_entity_api(descendant_uuid, 'entities')
+                    descendant_dict = self.call_entity_api(descendant_uuid, 'documents')
                     descendants.append(descendant_dict)
 
                 immediate_ancestor_ids = self.call_entity_api(entity_id, 'parents', 'uuid')
                 for immediate_ancestor_uuid in immediate_ancestor_ids:
-                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'entities')
+                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'documents')
                     immediate_ancestors.append(immediate_ancestor_dict)
 
                 immediate_descendant_ids = self.call_entity_api(entity_id, 'children', 'uuid')
                 for immediate_descendant_uuid in immediate_descendant_ids:
-                    immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'entities')
+                    immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
                     immediate_descendants.append(immediate_descendant_dict)
 
                 # Add new properties to entity
