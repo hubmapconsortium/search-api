@@ -55,7 +55,7 @@ class Translator(TranslatorInterface):
     failed_entity_api_calls = []
     failed_entity_ids = []
 
-    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None):
+    def __init__(self, indices, app_client_id, app_client_secret, token):
         try:
             self.ingest_api_soft_assay_url = indices['ingest_api_soft_assay_url'].strip('/')
             self.indices: dict = {}
@@ -69,7 +69,6 @@ class Translator(TranslatorInterface):
             self.DEFAULT_INDEX_WITHOUT_PREFIX: str = indices['default_index']
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-            self._ontology_api_base_url = ontology_api_base_url
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -1128,7 +1127,7 @@ if __name__ == "__main__":
         sys.exit(msg)
 
     # Create an instance of the indexer
-    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token, app.config['ONTOLOGY_API_BASE_URL'])
+    translator = Translator(INDICES, app.config['APP_CLIENT_ID'], app.config['APP_CLIENT_SECRET'], token)
     
     # Skip the uuids comparision step that is only needed for live /reindex-all PUT call
     translator.skip_comparision = True
