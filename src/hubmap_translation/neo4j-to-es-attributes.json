@@ -206,9 +206,6 @@
     },
     "superseded_associated_processed_component_uuids": {
       "es_name": "superseded_associated_processed_component_uuids"
-    },
-    "display_subtype": {
-      "es_name": "display_subtype"
     }
   }
 }
