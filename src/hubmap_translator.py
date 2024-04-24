@@ -41,9 +41,15 @@ entity_properties_list = [
     'immediate_descendants'
 ]
 
+# A map keyed by entity attribute names stored in Neo4j and retrieved from entity-api, with
+# values for the corresponding document field name in OpenSearch.  This Python dict only includes
+# attribute names which must be transformed, unlike the neo4j-to-es-attributes.json is replaces.
+neo4j_to_es_attribute_name_map = {
+    'ingest_metadata': 'metadata'
+}
+
 # Entity types that will have `display_subtype` generated ar index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
-
 
 class Translator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
@@ -91,8 +97,6 @@ class Translator(TranslatorInterface):
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
         self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url, 'token': token}
-        with open(Path(__file__).resolve().parent / 'hubmap_translation' / 'neo4j-to-es-attributes.json', 'r') as json_file:
-            self.attr_map = json.load(json_file)
 
         # # Preload all the transformers
         self.init_transformers()
@@ -469,7 +473,7 @@ class Translator(TranslatorInterface):
             upload = self.call_entity_api(entity_id, 'documents')
 
             self.add_datasets_to_entity(upload)
-            self.entity_keys_rename(upload)
+            self._entity_keys_rename(upload)
 
             # Add additional calculated fields if any applies to Upload
             self.add_calculated_fields(upload)
@@ -491,7 +495,7 @@ class Translator(TranslatorInterface):
             collection = self.get_collection(entity_id=entity_id)
 
             self.add_datasets_to_entity(collection)
-            self.entity_keys_rename(collection)
+            self._entity_keys_rename(collection)
 
             # Add additional calculated fields if any applies to Collection
             self.add_calculated_fields(collection)
@@ -652,6 +656,7 @@ class Translator(TranslatorInterface):
                                 target_doc = public_doc
 
                             self.indexer.index(entity['uuid'], target_doc, public_index, reindex)
+                            logger.info(f"Finished executing indexer.index({entity['uuid']}, 'target_doc', {public_index}, {reindex}) for entity_type: {entity['entity_type']}")
                         except Exception:
                             msg = f"Exception encountered during executing generate_public_doc() inside call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
                             # Log the full stack trace, prepend a line with our message
@@ -665,6 +670,7 @@ class Translator(TranslatorInterface):
                         target_doc = document
 
                     self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
+                    logger.info(f"Finished executing indexer.index({entity['uuid']}, 'target_doc', {private_index}, {reindex}) for entity_type: {entity['entity_type']}")
 
             logger.info(f"Finished executing call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
         except Exception as e:
@@ -734,45 +740,35 @@ class Translator(TranslatorInterface):
 
         logger.info("Finished executing add_datasets_to_entity()")
 
+    # Given a dictionary for an entity containing Neo4j and entity-api-generated data, assume all entries
+    # are to be used in OpenSearch documents.  Modify any key names specified to change, and return a dictionary of
+    # all names and values to store in an OpenSearch document.
+    def _entity_keys_rename(self, entity):
+        global neo4j_to_es_attribute_name_map
 
-    def entity_keys_rename(self, entity):
-        logger.info("Start executing entity_keys_rename()")
+        logger.info("Start executing _entity_keys_rename()")
 
-        # logger.debug("==================entity before renaming keys==================")
-        # logger.debug(entity)
+        for remapped_key in neo4j_to_es_attribute_name_map:
+            if remapped_key not in entity:
+                continue
+            attribute_value = entity[remapped_key]
+            # Since statement above assures remapped key is in entity, and the value
+            # is captured, delete the dict entry keyed by the Neo4j name.
+            del entity[remapped_key]
+            # Restore the value to a dict entry keyed by the OpenSearch name.
+            entity[neo4j_to_es_attribute_name_map[remapped_key]] = attribute_value
 
-        to_delete_keys = []
-        temp = {}
+        # Special case of Sample.rui_location
+        # To be backward compatible for API clients relying on the old version
+        # Also gives the ES consumer flexibility to change the inner structure
+        # Note: when `rui_location` is stored as json object (Python dict) in ES
+        # with the default dynamic mapping, it can cause errors due to
+        # the changing data types of some internal fields
+        # isinstance() check is to avoid json.dumps() on json string again
+        if 'rui_location' in entity and isinstance(entity['rui_location'], dict):
+            entity['rui_location'] = json.dumps(entity['rui_location'])
 
-        for key in entity:
-            to_delete_keys.append(key)
-            if key in self.attr_map['ENTITY']:
-                # Special case of Sample.rui_location
-                # To be backward compatible for API clients relying on the old version
-                # Also gives the ES consumer flexibility to change the inner structure
-                # Note: when `rui_location` is stored as json object (Python dict) in ES
-                # with the default dynamic mapping, it can cause errors due to
-                # the changing data types of some internal fields
-                # isinstance() check is to avoid json.dumps() on json string again
-                if (key == 'rui_location') and isinstance(entity[key], dict):
-                    # Convert Python dict to json string
-                    temp_val = json.dumps(entity[key])
-                else:
-                    temp_val = entity[key]
-
-                temp[self.attr_map['ENTITY'][key]['es_name']] = temp_val
-
-        for key in to_delete_keys:
-            if key not in entity_properties_list:
-                entity.pop(key)
-
-        entity.update(temp)
-
-        # logger.debug("==================entity after renaming keys==================")
-        # logger.debug(entity)
-
-        logger.info("Finished executing entity_keys_rename()")
-
+        logger.info("Finished executing _entity_keys_rename()")
 
     # These calculated fields are not stored in neo4j but will be generated
     # and added to the ES
@@ -931,30 +927,30 @@ class Translator(TranslatorInterface):
                     # Remove those added fields specified in `entity_properties_list` from source_samples
                     self.exclude_added_top_level_properties(entity['source_samples'])
 
-            self.entity_keys_rename(entity)
+            self._entity_keys_rename(entity)
 
             # Rename for properties that are objects
             if entity.get('donor', None):
-                self.entity_keys_rename(entity['donor'])
+                self._entity_keys_rename(entity['donor'])
 
             if entity.get('origin_samples', None):
                 for o in entity.get('origin_samples', None):
-                    self.entity_keys_rename(o)
+                    self._entity_keys_rename(o)
             if entity.get('source_samples', None):
                 for s in entity.get('source_samples', None):
-                    self.entity_keys_rename(s)
+                    self._entity_keys_rename(s)
             if entity.get('ancestors', None):
                 for a in entity.get('ancestors', None):
-                    self.entity_keys_rename(a)
+                    self._entity_keys_rename(a)
             if entity.get('descendants', None):
                 for d in entity.get('descendants', None):
-                    self.entity_keys_rename(d)
+                    self._entity_keys_rename(d)
             if entity.get('immediate_descendants', None):
                 for parent in entity.get('immediate_descendants', None):
-                    self.entity_keys_rename(parent)
+                    self._entity_keys_rename(parent)
             if entity.get('immediate_ancestors', None):
                 for child in entity.get('immediate_ancestors', None):
-                    self.entity_keys_rename(child)
+                    self._entity_keys_rename(child)
 
             remove_specific_key_entry(entity, "other_metadata")
 
@@ -971,7 +967,6 @@ class Translator(TranslatorInterface):
 
             # Raise the exception so the caller can handle it properly
             raise Exception(e)
-
 
     def generate_public_doc(self, entity):
         logger.info(f"Start executing generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
