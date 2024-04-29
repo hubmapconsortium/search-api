@@ -911,23 +911,21 @@ class Translator(TranslatorInterface):
                 
                 # `source_samples` field is only avaiable to Dataset
                 if entity['entity_type'] in ['Dataset', 'Publication']:
-                    entity['source_samples'] = None
-                    e = entity
+                    parent_sample_doc = None
 
-                    while entity['source_samples'] is None:
-                        parents = self.call_entity_api(e['uuid'], 'parents')
-
-                        try:
-                            if parents[0]['entity_type'] == 'Sample':
-                                # Inside of this method, only the form of an entity suitable for indexing is supported.
-                                # So use the uuid of the parent Sample to retrieve an indexable document for the Sample.
-                                parent_sample_dict = self.call_entity_api(entity_id=parents[0]['uuid']
-                                                                          ,endpoint='documents')
-
-                                entity['source_samples'] = [parent_sample_dict]
-                            e = parents[0]
-                        except IndexError:
-                            entity['source_samples'] = []
+                    # Retrieve the identifiers of the Dataset/Publication parent Sample, so indexable
+                    # content can be retrieved for the 'source_samples' list.
+                    parent_uuids = self.call_entity_api(entity_id=e['uuid']
+                                                        ,endpoint= 'parents'
+                                                        ,url_property='uuid')
+                    for parent_uuid in parent_uuids:
+                        parent_entity_doc = self.call_entity_api(entity_id=parent_uuid
+                                                                 ,endpoint='documents')
+                        # Expect a Dataset or Publication to only have one parent Sample.
+                        if parent_entity_doc['entity_type'] == 'Sample':
+                            parent_sample_doc = parent_entity_doc
+                            break
+                    entity['source_samples'] = [parent_sample_doc] if parent_sample_doc else []
                     
                     # Remove those added fields specified in `entity_properties_list` from source_samples
                     self.exclude_added_top_level_properties(entity['source_samples'])
