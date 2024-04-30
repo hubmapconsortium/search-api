@@ -908,29 +908,28 @@ class Translator(TranslatorInterface):
 
                 # Remove those added fields specified in `entity_properties_list` from source_samples
                 self.exclude_added_top_level_properties(entity['origin_samples'])
-                
+
                 # `source_samples` field is only avaiable to Dataset
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     entity['source_samples'] = None
                     e = entity
 
                     while entity['source_samples'] is None:
-                        parents = self.call_entity_api(e['uuid'], 'parents')
+                        parent_uuids = self.call_entity_api(e['uuid'], 'parents', 'uuid')
+                        parents = []
+                        for parent_uuid in parent_uuids:
+                            parent_entity_doc = self.call_entity_api(entity_id = parent_uuid
+                                                                     ,endpoint = 'documents')
+                            parents.append(parent_entity_doc)
 
                         try:
                             if parents[0]['entity_type'] == 'Sample':
-                                # Inside of this method, only the form of an entity suitable for indexing is supported.
-                                # So use the uuid of the parent Sample to retrieve an indexable document for the Sample.
-                                parent_sample_dict = self.call_entity_api(entity_id=parents[0]['uuid']
-                                                                          ,endpoint='documents')
-
-                                entity['source_samples'] = [parent_sample_dict]
+                                # If one parent entity of this Dataset is a Sample, then all parent entities
+                                # of this Dataset must be Samples.
+                                entity['source_samples'] = parents
                             e = parents[0]
                         except IndexError:
                             entity['source_samples'] = []
-                    
-                    # Remove those added fields specified in `entity_properties_list` from source_samples
-                    self.exclude_added_top_level_properties(entity['source_samples'])
 
             self._entity_keys_rename(entity)
 
