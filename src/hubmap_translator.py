@@ -924,12 +924,9 @@ class Translator(TranslatorInterface):
 
                         try:
                             if parents[0]['entity_type'] == 'Sample':
-                                # Inside of this method, only the form of an entity suitable for indexing is supported.
-                                # So use the uuid of the parent Sample to retrieve an indexable document for the Sample.
-                                parent_sample_dict = self.call_entity_api(entity_id=parents[0]['uuid']
-                                                                          ,endpoint='documents')
-
-                                entity['source_samples'] = [parent_sample_dict]
+                                # If one parent entity of this Dataset is a Sample, then all parent entities
+                                # of this Dataset must be Samples.
+                                entity['source_samples'] = parents
                             e = parents[0]
                         except IndexError:
                             entity['source_samples'] = []
