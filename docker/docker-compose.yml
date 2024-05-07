@@ -39,7 +39,7 @@ services:
       driver: awslogs
       options:
         awslogs-region: us-east-1
-        awslogs-group: search-api-docker-logs
+        awslogs-group: ${LOG_GROUP}
         awslogs-stream: ${LOG_STREAM}
 
 networks:
