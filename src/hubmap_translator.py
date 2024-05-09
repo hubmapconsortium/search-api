@@ -243,7 +243,7 @@ class Translator(TranslatorInterface):
 
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
-            if entity['entity_type'] == 'Collection':
+            if entity['entity_type'] in ['Collection', 'Epicollection']:
                 # Expect entity-api to stop update of Collections which should not be modified e.g. those which
                 # have a DOI.  But entity-api may still request such Collections be indexed, particularly right
                 # after the Collection becomes visible to the public.
@@ -251,7 +251,7 @@ class Translator(TranslatorInterface):
                     self.translate_collection(   entity_id
                                                  ,reindex=True)
                 except Exception as e:
-                    logger.error(f"Unable to index Collection due to e={str(e)}")
+                    logger.error(f"Unable to index {entity['entity_type']} due to e={str(e)}")
 
             elif entity['entity_type'] == 'Upload':
                 self.translate_upload(entity_id, reindex=True)
@@ -364,7 +364,7 @@ class Translator(TranslatorInterface):
             else:
                 # Log as an error to be fixed in Neo4j
                 logger.error(f"{document['entity_type']} of uuid: {document['uuid']} missing 'status' property, treat as not public, verify and set the status.")
-        elif document['entity_type'] in ['Collection']:
+        elif document['entity_type'] in ['Collection', 'Epicollection']:
             # If this Collection meets entity-api's criteria for visibility to the world by
             # returning the value of its schema_constants.py DataVisibilityEnum.PUBLIC,
             # the Collection can be in the public index and retrieved by users who are not logged in.
