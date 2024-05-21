@@ -157,7 +157,7 @@ def add_assay_details(doc, transformation_resources):
                 'Published', 'QA'].count(descendant['status']) > 0]
             # Sort by the descendant's last modified timestamp, descending
             descendants.sort(
-                key=lambda x: x['last_modified_timestamp'], 
+                key=lambda x: x['last_modified_timestamp'],
                 reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
