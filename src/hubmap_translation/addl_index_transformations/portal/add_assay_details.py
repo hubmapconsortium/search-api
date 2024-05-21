@@ -97,6 +97,19 @@ def _add_dataset_categories(doc, assay_details):
         _add_dataset_processing_fields(doc)
         _add_multi_assay_fields(doc, assay_details)
 
+def _get_descendants(doc, transformation_resources):
+    descendants_url = transformation_resources.get('ingest_api_descendants_url')
+    token = transformation_resources.get('token')
+    uuid = doc.get('uuid')
+
+    try:
+        response = requests.get(
+            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logger.error(e.response.text)
+        raise
 
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
@@ -122,5 +135,27 @@ def add_assay_details(doc, transformation_resources):
         def get_assay_type_for_viz(doc):
             return assay_details
 
-        doc['visualization'] = has_visualization(
-            doc, get_assay_type_for_viz)
+        # Check if the main entity can be visualized by portal-visualization.
+        has_viz = has_visualization(doc, get_assay_type_for_viz)
+        if has_viz:
+            doc['visualization'] = True
+        else:
+            # If an entity doesn't have a visualization, 
+            # check its descendants for a supporting image pyramid.
+            parent_uuid = doc.get('uuid')
+            descendants = _get_descendants(doc, transformation_resources)
+
+            # Define a function to get the assay details for a descendant
+            def get_assay_type_for_viz(descendant):
+                return _get_assay_details(descendant, transformation_resources)
+            
+            # Filter any unpublished/non-QA descendants
+            descendants = [descendant for descendant in descendants if ['Published', 'QA'].count(descendant['status']) > 0]
+            # Sort by the descendant's last modified timestamp, descending
+            descendants.sort(key=lambda x: x['last_modified_timestamp'], reverse=True)
+            # If any remaining descendants have visualization data, set the parent's visualization to True
+            for descendant in descendants:
+                if has_visualization(descendant, get_assay_type_for_viz, parent_uuid):
+                    doc['visualization'] = True
+                    break
+

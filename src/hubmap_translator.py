@@ -69,6 +69,7 @@ class Translator(TranslatorInterface):
     def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None):
         try:
             self.ingest_api_soft_assay_url = indices['ingest_api_soft_assay_url'].strip('/')
+            self.ingest_api_descendants_url = indices['ingest_api_descendants_url'].strip('/')
             self.indices: dict = {}
             self.self_managed_indices: dict = {}
             # Do not include the indexes that are self managed
@@ -96,7 +97,9 @@ class Translator(TranslatorInterface):
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
-        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url, 'token': token}
+        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
+                                         'ingest_api_descendants_url': self.ingest_api_descendants_url,
+                                         'token': token,}
 
         # # Preload all the transformers
         self.init_transformers()

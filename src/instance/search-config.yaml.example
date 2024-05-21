@@ -4,6 +4,9 @@
 # Soft assay support via ingest-api GET /assaytype/<dataset-id> endpoint
 # Omit the <dataset-id> in this config 
 ingest_api_soft_assay_url: https://ingest-api.dev.hubmapconsortium.org/assaytype/ 
+# Descendants support via ingest-api GET /descendants/<dataset-id> endpoint
+# Omit the <dataset-id> in this config 
+ingest_api_descendants_url: https://ingest-api.dev.hubmapconsortium.org/descendants/ 
 
 # default index name for endpoints that don't specify an index
 default_index: entities
