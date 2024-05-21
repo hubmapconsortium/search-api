@@ -97,8 +97,10 @@ def _add_dataset_categories(doc, assay_details):
         _add_dataset_processing_fields(doc)
         _add_multi_assay_fields(doc, assay_details)
 
+
 def _get_descendants(doc, transformation_resources):
-    descendants_url = transformation_resources.get('ingest_api_descendants_url')
+    descendants_url = transformation_resources.get(
+        'ingest_api_descendants_url')
     token = transformation_resources.get('token')
     uuid = doc.get('uuid')
 
@@ -110,6 +112,7 @@ def _get_descendants(doc, transformation_resources):
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
         raise
+
 
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
@@ -140,7 +143,7 @@ def add_assay_details(doc, transformation_resources):
         if has_viz:
             doc['visualization'] = True
         else:
-            # If an entity doesn't have a visualization, 
+            # If an entity doesn't have a visualization,
             # check its descendants for a supporting image pyramid.
             parent_uuid = doc.get('uuid')
             descendants = _get_descendants(doc, transformation_resources)
@@ -148,14 +151,16 @@ def add_assay_details(doc, transformation_resources):
             # Define a function to get the assay details for a descendant
             def get_assay_type_for_viz(descendant):
                 return _get_assay_details(descendant, transformation_resources)
-            
+
             # Filter any unpublished/non-QA descendants
-            descendants = [descendant for descendant in descendants if ['Published', 'QA'].count(descendant['status']) > 0]
+            descendants = [descendant for descendant in descendants if [
+                'Published', 'QA'].count(descendant['status']) > 0]
             # Sort by the descendant's last modified timestamp, descending
-            descendants.sort(key=lambda x: x['last_modified_timestamp'], reverse=True)
+            descendants.sort(
+                key=lambda x: x['last_modified_timestamp'], 
+                reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
                 if has_visualization(descendant, get_assay_type_for_viz, parent_uuid):
                     doc['visualization'] = True
                     break
-
