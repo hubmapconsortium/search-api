@@ -6,10 +6,31 @@ from hubmap_translation.addl_index_transformations.portal.add_assay_details impo
 )
 
 transformation_resources = {
-    'ingest_api_soft_assay_url': 'abc123', 'token': 'def456'}
+    'ingest_api_soft_assay_url': 'abc123',
+    'ingest_api_descendants_url': 'ghi789',
+    'token': 'def456'
+}
 
 
-def mock_raw_soft_assay(uuid, headers):
+def mock_descendants(descendants_to_mock):
+    class MockDescendantsResponse():
+        def __init__(self):
+            self.status_code = 200
+            self.text = 'Logger call requires this'
+
+        def json(self):
+            return descendants_to_mock
+
+        def raise_for_status(self):
+            pass
+    return MockDescendantsResponse()
+
+
+def empty_descendants():
+    return mock_descendants([])
+
+
+def mock_raw_soft_assay(uuid=None, headers=None):
     class MockResponse():
         def __init__(self):
             self.status_code = 200
@@ -32,7 +53,7 @@ def mock_raw_soft_assay(uuid, headers):
 
 
 def test_raw_dataset_type(mocker):
-    mocker.patch('requests.get', side_effect=mock_raw_soft_assay)
+    mocker.patch('requests.get', side_effect=[mock_raw_soft_assay(), empty_descendants()])
     input_raw_doc = {
         'uuid': '421007293469db7b528ce6478c00348d',
         'dataset_type': 'RNAseq',
@@ -57,7 +78,7 @@ def test_raw_dataset_type(mocker):
     assert input_raw_doc == expected_raw_output_doc
 
 
-def mock_processed_soft_assay(uuid, headers):
+def mock_processed_soft_assay(uuid=None, headers=None):
     class MockResponse():
         def __init__(self):
             self.status_code = 200
@@ -81,7 +102,7 @@ def mock_processed_soft_assay(uuid, headers):
 
 
 def test_processed_dataset_type(mocker):
-    mocker.patch('requests.get', side_effect=mock_processed_soft_assay)
+    mocker.patch('requests.get', side_effect=[mock_processed_soft_assay(), empty_descendants()])
     input_processed_doc = {
         'uuid': '22684b9011fc5aea5cb3f89670a461e8',
         'dataset_type': 'RNAseq [Salmon]',
@@ -111,7 +132,7 @@ def test_processed_dataset_type(mocker):
     assert input_processed_doc == output_processed_doc
 
 
-def mock_empty_soft_assay(uuid, headers):
+def mock_empty_soft_assay(uuid=None, headers=None):
     class MockResponse():
         def __init__(self):
             self.status_code = 200
@@ -126,7 +147,7 @@ def mock_empty_soft_assay(uuid, headers):
 
 
 def test_transform_unknown_assay(mocker):
-    mocker.patch('requests.get', side_effect=mock_empty_soft_assay)
+    mocker.patch('requests.get', side_effect=[mock_empty_soft_assay(), empty_descendants()])
 
     unknown_assay_input_doc = {
         'uuid': '69c70762689b20308bb049ac49653342',

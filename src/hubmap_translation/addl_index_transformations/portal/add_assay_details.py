@@ -140,9 +140,8 @@ def add_assay_details(doc, transformation_resources):
 
         # Check if the main entity can be visualized by portal-visualization.
         has_viz = has_visualization(doc, get_assay_type_for_viz)
-        if has_viz:
-            doc['visualization'] = True
-        else:
+        doc['visualization'] = has_viz
+        if not has_viz:
             # If an entity doesn't have a visualization,
             # check its descendants for a supporting image pyramid.
             parent_uuid = doc.get('uuid')
