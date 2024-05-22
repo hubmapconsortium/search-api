@@ -45,6 +45,20 @@ def _get_assay_details(doc, transformation_resources):
         return json
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
+        raise e
+
+
+def _get_assay_details_by_uuid(uuid, transformation_resources):
+    soft_assay_url = transformation_resources.get('ingest_api_soft_assay_url')
+    token = transformation_resources.get('token')
+    try:
+        response = requests.get(
+            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+        response.raise_for_status()
+        json = response.json()
+        return json
+    except requests.exceptions.HTTPError as e:
+        logger.error(e.response.text)
         raise
 
 
@@ -147,9 +161,9 @@ def add_assay_details(doc, transformation_resources):
             parent_uuid = doc.get('uuid')
             descendants = _get_descendants(doc, transformation_resources)
 
-            # Define a function to get the assay details for a descendant
-            def get_assay_type_for_viz(descendant):
-                return _get_assay_details(descendant, transformation_resources)
+            # Define a function to get the assay details by UUID only to handle parent uuid case
+            def get_assay_type_for_descendants(descendant):
+                return _get_assay_details_by_uuid(descendant, transformation_resources)
 
             # Filter any unpublished/non-QA descendants
             descendants = [descendant for descendant in descendants if [
@@ -160,6 +174,6 @@ def add_assay_details(doc, transformation_resources):
                 reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
-                if has_visualization(descendant, get_assay_type_for_viz, parent_uuid):
+                if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
                     break

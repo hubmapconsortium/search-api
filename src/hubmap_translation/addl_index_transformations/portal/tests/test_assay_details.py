@@ -53,7 +53,9 @@ def mock_raw_soft_assay(uuid=None, headers=None):
 
 
 def test_raw_dataset_type(mocker):
-    mocker.patch('requests.get', side_effect=[mock_raw_soft_assay(), empty_descendants()])
+    mocker.patch('requests.get', side_effect=[
+                 mock_raw_soft_assay(),
+                 empty_descendants()])
     input_raw_doc = {
         'uuid': '421007293469db7b528ce6478c00348d',
         'dataset_type': 'RNAseq',
@@ -102,7 +104,9 @@ def mock_processed_soft_assay(uuid=None, headers=None):
 
 
 def test_processed_dataset_type(mocker):
-    mocker.patch('requests.get', side_effect=[mock_processed_soft_assay(), empty_descendants()])
+    mocker.patch('requests.get', side_effect=[
+                 mock_processed_soft_assay(),
+                 empty_descendants()])
     input_processed_doc = {
         'uuid': '22684b9011fc5aea5cb3f89670a461e8',
         'dataset_type': 'RNAseq [Salmon]',
@@ -147,7 +151,9 @@ def mock_empty_soft_assay(uuid=None, headers=None):
 
 
 def test_transform_unknown_assay(mocker):
-    mocker.patch('requests.get', side_effect=[mock_empty_soft_assay(), empty_descendants()])
+    mocker.patch('requests.get', side_effect=[
+                 mock_empty_soft_assay(),
+                 empty_descendants()])
 
     unknown_assay_input_doc = {
         'uuid': '69c70762689b20308bb049ac49653342',
@@ -177,6 +183,125 @@ def test_transform_unknown_assay(mocker):
     assert unknown_assay_input_doc == unknown_assay_output_doc
 
 
+def mock_image_pyramid_parent(uuid=None, headers=None):
+    class MockResponse():
+        def __init__(self):
+            self.status_code = 200
+            self.text = 'Logger call requires this'
+
+        def json(self):
+            return {
+                "assaytype": "PAS",
+                "contains-pii": False,
+                "dataset-type": "Histology",
+                "description": "PAS Stained Microscopy",
+                "dir-schema": "stained-v0",
+                "primary": True,
+                "tbl-schema": "stained-v0",
+                "vitessce-hints": []
+            }
+
+        def raise_for_status(self):
+            pass
+
+    return MockResponse()
+
+
+def mock_image_pyramid_descendants(uuid=None, headers=None):
+    class MockResponse():
+        def __init__(self):
+            self.status_code = 200
+            self.text = 'Logger call requires this'
+
+        def json(self):
+            return [
+                # Newer descendant which is not published and gets ignored
+                {
+                    "uuid": "8adc3c31ca84ec4b958ed20a7c4f4920",
+                    "status": "New",
+                    "last_modified_timestamp": 1234567891,
+                },
+                # Good descendant
+                {
+                    "uuid": "8adc3c31ca84ec4b958ed20a7c4f4919",
+                    "status": "Published",
+                    "last_modified_timestamp": 1234567890,
+                },
+                # Older descendant which is published but gets ignored due to newer descendant
+                {
+                    "uuid": "8adc3c31ca84ec4b958ed20a7c4f4918",
+                    "status": "Published",
+                    "last_modified_timestamp": 1234567889,
+                }
+            ]
+
+        def raise_for_status(self):
+            pass
+
+    return MockResponse()
+
+
+def mock_image_pyramid_support(uuid=None, headers=None):
+    class MockResponse():
+        def __init__(self):
+            self.status_code = 200
+            self.text = 'Logger call requires this'
+
+        def json(self):
+            return {
+                "assaytype": "image_pyramid",
+                "contains-pii": False,
+                "description": "Image Pyramid",
+                "primary": False,
+                "vitessce-hints": [
+                    "is_image",
+                    "is_support",
+                    "pyramid"
+                ]
+            }
+
+        def raise_for_status(self):
+            pass
+    return MockResponse()
+
+
+def test_transform_image_pyramid(mocker):
+    mocker.patch('requests.get', side_effect=[
+        # initial request to has_visualization with parent entity
+        mock_image_pyramid_parent(),
+        # request to get descendants of parent entity
+        mock_image_pyramid_descendants(),
+        # request to get assay details of descendant entity
+        mock_image_pyramid_support(),
+        # portal-visualization re-requests parent entity details
+        # to determine which type of image pyramid it is
+        mock_image_pyramid_parent(),
+    ])
+    image_pyramid_input_doc = {
+        'uuid': '69c70762689b20308bb049ac49653342',
+        'dataset_type': 'PAS',
+        'entity_type': 'Dataset',
+        'creation_action': 'Create Dataset Activity'
+    }
+
+    image_pyramid_output_doc = {
+        'assay_display_name': ['PAS Stained Microscopy'],
+        'assay_modality': 'single',
+        'creation_action': 'Create Dataset Activity',
+        'dataset_type': 'PAS',
+        'mapped_data_types': ['PAS Stained Microscopy'],
+        "processing": "raw",
+        'raw_dataset_type': 'PAS',
+        'uuid': '69c70762689b20308bb049ac49653342',
+        'vitessce-hints': [],
+        'visualization': True,
+        'entity_type': 'Dataset',
+    }
+
+    add_assay_details(image_pyramid_input_doc, transformation_resources)
+    assert image_pyramid_input_doc == image_pyramid_output_doc
+
+
 def test_hubmap_processing():
     hubmap_processed_input_doc = {
         'creation_action': 'Central Process',
@@ -184,7 +309,7 @@ def test_hubmap_processing():
         'entity_type': 'Dataset',
     }
 
-    hubmap_processed_ouput_doc = {
+    hubmap_processed_output_doc = {
         'assay_modality': 'single',
         'creation_action': 'Central Process',
         'descendants': [],
@@ -194,7 +319,7 @@ def test_hubmap_processing():
     }
 
     _add_dataset_categories(hubmap_processed_input_doc, {})
-    assert hubmap_processed_input_doc == hubmap_processed_ouput_doc
+    assert hubmap_processed_input_doc == hubmap_processed_output_doc
 
 
 def test_lab_processing():
@@ -204,7 +329,7 @@ def test_lab_processing():
         'entity_type': 'Dataset',
     }
 
-    lab_processed_ouput_doc = {
+    lab_processed_output_doc = {
         'assay_modality': 'single',
         'creation_action': 'Lab Process',
         'descendants': [],
@@ -213,7 +338,7 @@ def test_lab_processing():
         'processing_type': 'lab',
     }
     _add_dataset_categories(lab_processed_input_doc, {})
-    assert lab_processed_input_doc == lab_processed_ouput_doc
+    assert lab_processed_input_doc == lab_processed_output_doc
 
 
 @pytest.mark.parametrize(
