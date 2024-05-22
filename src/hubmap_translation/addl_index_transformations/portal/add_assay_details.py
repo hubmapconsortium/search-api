@@ -154,7 +154,7 @@ def add_assay_details(doc, transformation_resources):
 
             # Filter any unpublished/non-QA descendants
             descendants = [descendant for descendant in descendants if [
-                'Published', 'QA'].count(descendant['status']) > 0]
+                'Published', 'QA'].count(descendant.get('status')) > 0]
             # Sort by the descendant's last modified timestamp, descending
             descendants.sort(
                 key=lambda x: x['last_modified_timestamp'],
