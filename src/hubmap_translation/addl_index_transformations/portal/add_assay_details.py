@@ -120,7 +120,7 @@ def _get_descendants(doc, transformation_resources):
 
     try:
         response = requests.get(
-            f'{descendants_url}/{uuid}?property=uuid', headers={'Authorization': f'Bearer {token}'})
+            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
