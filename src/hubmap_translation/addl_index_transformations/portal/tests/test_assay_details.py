@@ -12,7 +12,7 @@ transformation_resources = {
 }
 
 
-def mock_response(response_to_mock, status_code = 200, text = 'Logger call requires this'):
+def mock_response(response_to_mock, status_code=200, text='Logger call requires this'):
     class MockResponse():
         def __init__(self):
             self.status_code = status_code
