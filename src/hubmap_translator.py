@@ -96,9 +96,7 @@ class Translator(TranslatorInterface):
         self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
-        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
-                                         'descendants_url': f'{self.entity_api_url}"/descendants"',
-                                         'token': token,}
+        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url, 'token': token}
 
         # # Preload all the transformers
         self.init_transformers()
