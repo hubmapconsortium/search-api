@@ -8,7 +8,7 @@ PyYAML==5.4.1
 # Flask 2.1.3 installs the latest Werkzeug==3.0.0 (released on 9/30/2023) and causing import issues 
 # Use a pinned version 2.3.7 (the latest release before 3.0.0) to mitigate temporaryly
 # Will upgrade Flask to newer version later on across all APIs. 10/3/2023 - Zhou
-Werkzeug==2.3.7
+Werkzeug==3.0.3
 
 git+https://github.com/hubmapconsortium/portal-visualization.git@0.2.5#egg=portal-visualization
 
