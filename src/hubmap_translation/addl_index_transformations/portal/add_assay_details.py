@@ -114,13 +114,13 @@ def _add_dataset_categories(doc, assay_details):
 
 def _get_descendants(doc, transformation_resources):
     descendants_url = transformation_resources.get(
-        'ingest_api_descendants_url')
+        'descendants_url')
     token = transformation_resources.get('token')
     uuid = doc.get('uuid')
 
     try:
         response = requests.get(
-            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+            f'{descendants_url}/{uuid}?property=uuid', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:

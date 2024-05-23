@@ -7,7 +7,7 @@ from hubmap_translation.addl_index_transformations.portal.add_assay_details impo
 
 transformation_resources = {
     'ingest_api_soft_assay_url': 'abc123',
-    'ingest_api_descendants_url': 'ghi789',
+    'descendants_url': 'ghi789',
     'token': 'def456'
 }
 
