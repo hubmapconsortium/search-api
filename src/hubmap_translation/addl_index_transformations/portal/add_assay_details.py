@@ -165,7 +165,7 @@ def add_assay_details(doc, transformation_resources):
             def get_assay_type_for_descendants(descendant):
                 try:
                     uuid = descendant.get('uuid')
-                except:
+                except AttributeError:
                     uuid = descendant
                 return _get_assay_details_by_uuid(uuid, transformation_resources)
 
