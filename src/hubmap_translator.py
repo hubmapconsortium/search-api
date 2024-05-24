@@ -97,7 +97,7 @@ class Translator(TranslatorInterface):
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
         self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
-                                         'descendants_url': f'{self.entity_api_url}"/descendants"',
+                                         'descendants_url': f'{self.entity_api_url}/descendants',
                                          'token': token,}
 
         # # Preload all the transformers
