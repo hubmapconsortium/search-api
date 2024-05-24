@@ -163,7 +163,11 @@ def add_assay_details(doc, transformation_resources):
 
             # Define a function to get the assay details by UUID only to handle parent uuid case
             def get_assay_type_for_descendants(descendant):
-                return _get_assay_details_by_uuid(descendant, transformation_resources)
+                try:
+                    uuid = descendant.get('uuid')
+                except:
+                    uuid = descendant
+                return _get_assay_details_by_uuid(uuid, transformation_resources)
 
             # Filter any unpublished/non-QA descendants
             descendants = [descendant for descendant in descendants if [
