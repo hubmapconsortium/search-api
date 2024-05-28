@@ -120,7 +120,7 @@ def _get_descendants(doc, transformation_resources):
 
     try:
         response = requests.get(
-            f'{descendants_url}/{uuid}?property=uuid', headers={'Authorization': f'Bearer {token}'})
+            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -163,7 +163,11 @@ def add_assay_details(doc, transformation_resources):
 
             # Define a function to get the assay details by UUID only to handle parent uuid case
             def get_assay_type_for_descendants(descendant):
-                return _get_assay_details_by_uuid(descendant, transformation_resources)
+                try:
+                    uuid = descendant.get('uuid')
+                except AttributeError:
+                    uuid = descendant
+                return _get_assay_details_by_uuid(uuid, transformation_resources)
 
             # Filter any unpublished/non-QA descendants
             descendants = [descendant for descendant in descendants if [
