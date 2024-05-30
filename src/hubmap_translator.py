@@ -12,7 +12,7 @@ from yaml import safe_load
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
 
-# HuBMAP commons
+# Local modules
 from hubmap_commons.hm_auth import AuthHelper
 
 sys.path.append("search-adaptor/src")
@@ -83,6 +83,16 @@ class Translator(TranslatorInterface):
             self._ontology_api_base_url = ontology_api_base_url
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
+
+            # Form a comma-separated string of names from the configuration YAML for indices which hold
+            # entities which may need updates.  Strings are for use in GET & POST queries which support
+            # multiple indices via a single API call.
+            self.entities_index_list_string =   f"{self.INDICES['indices']['entities']['public']}" \
+                                                f",{self.INDICES['indices']['entities']['private']}"
+            # We will not be making _update QDSL calls for documents in the portal indices initially,
+            # but will continue with reindex calls for them. Form string just for future operations.
+            self.portal_index_list_string = f"{self.INDICES['indices']['portal']['public']}" \
+                                            f",{self.INDICES['indices']['portal']['private']}"
 
             logger.debug("=========== INDICES config ===========")
             logger.debug(self.INDICES)
@@ -234,6 +244,256 @@ class Translator(TranslatorInterface):
                 scope_list = ['public', 'private']
         return scope_list
 
+    def _relationships_unchanged_since_indexed( self, neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str],
+                                                existing_oss_doc:json):
+        # Start with the safe assumption that relationships have changed, and
+        # only toggle if verified unchanged below
+        relationships_unchanged = False
+
+        # Get the ancestors and descendants of this entity as they exist in OpenSearch.
+        oss_ancestor_ids = existing_oss_doc[
+            'ancestor_ids'] if existing_oss_doc and 'ancestor_ids' in existing_oss_doc else []
+        oss_descendant_ids = existing_oss_doc[
+            'descendant_ids'] if existing_oss_doc and 'descendant_ids' in existing_oss_doc else []
+
+        # If the ancestor list and descendant list on the OpenSearch document for this entity are
+        # not both exactly the same set of IDs as in Neo4j, relationships have changed and this
+        # entity must be re-indexed rather than just updating existing documents for associated entities.
+        #
+        # These lists are implicitly sets, as they do not have duplicates and order does not mean anything.
+        # Leave algorithmic efficiency to Python's implementation of sets.
+        neo4j_descendant_id_set = frozenset(neo4j_descendant_ids)
+        oss_descendant_id_set = frozenset(oss_descendant_ids)
+
+        if not neo4j_descendant_id_set.symmetric_difference(oss_descendant_id_set):
+            # Since the descendants are unchanged, check the ancestors to decide if re-indexing must be done.
+            neo4j_ancestor_id_set = frozenset(neo4j_ancestor_ids)
+            oss_ancestor_id_set = frozenset(oss_ancestor_ids)
+
+            if not neo4j_ancestor_id_set.symmetric_difference(oss_ancestor_id_set):
+                relationships_unchanged = True
+
+        return relationships_unchanged
+
+    def _get_existing_filtered_entity_doc(self, entity_uuid:str, es_url:str, target_index:str):
+        # Form a simple match query, and retrieve an existing OpenSearch document for entity_id, if it exists.
+        # N.B. This query does not pass through the AWS Gateway, so we will not have to retrieve the
+        #      result from an AWS S3 Bucket.  If it is larger than 10Mb, we will get it directly.
+        QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN = '{ "query": {  "bool": { "filter": [ {"terms": {"uuid": ["<TARGET_SEARCH_UUID>"]}} ] } } }'
+        # KBKBKB-Also, is there any need to wait for OSS to finish before pulling back OSS's document for
+        # KBKBKB-this entity?  What OSS document fields can be checked which may indicate processing, stale, etc?
+        qdsl_search_query_payload_string = QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN.replace('<TARGET_SEARCH_UUID>'
+                                                                                           , entity_uuid)
+        json_query_dict = json.loads(qdsl_search_query_payload_string)
+        opensearch_response = execute_opensearch_query(query_against='_search'
+                                                       , request=None
+                                                       , index=target_index
+                                                       , es_url=es_url
+                                                       , query=json_query_dict
+                                                       , request_params={'filter_path': 'hits.hits._source'})
+
+        # Verify the expected response was returned.  If no document was returned, proceed with a re-indexing.
+        # If exactly one document is returned, distill it down to JSON used to update document fields.
+        if opensearch_response.status_code != 200:
+            logger.error(f"Unable to return ['hits']['hits'] content of opensearch_response for"
+                         f" es_url={es_url}, with"
+                         f" status_code={opensearch_response.status_code}.")
+            raise Exception(f"OpenSearch query return a status code of '{opensearch_response.status_code}'."
+                            f" See logs.")
+
+        resp_json = opensearch_response.json()
+        existing_entity_json = None
+
+        if not resp_json or \
+                'hits' not in resp_json or \
+                'hits' not in resp_json['hits']:
+            # If OpenSearch does not have an existing document for this entity, drop down to reindexing.
+            # Anything else Falsy JSON could be an unexpected result for an existing entity, but fall back to
+            # reindexing under those circumstances, too.
+            pass  # KBKBKB-@TODO or should we continue to next index???
+        elif len(resp_json['hits']['hits']) != 1 or \
+                '_source' not in resp_json['hits']['hits'][0]:
+            # From the index populated with everything, raise an exception if exactly one document for the
+            # currententity is not what is returned.
+            logger.error(f"Found {len(resp_json['hits']['hits'])} documents instead"
+                         f" of a single document searching resp_json['hits']['hits'] from"
+                         f" opensearch_response with es_url={es_url}.")
+            raise Exception(f"Unexpected response to OpenSearch query for a single entity document."
+                            f" See logs.")
+        else:
+            # Strip away whatever remains of OpenSearch artifacts, such as _source, to get to the
+            # exact JSON of this entity's existing, so that can become a part of the other documents which
+            # retain a snapshot of this entity, such as this entity's ancestors, this entity's descendants,
+            # Collection entity's containing this entity, etc.
+            # N.B. Many such artifacts should have already been stripped through usage of the filter_path.
+            existing_entity_json = resp_json['hits']['hits'][0]['_source']
+
+    def _reindex_related_entities(  self, entity_id:str, entity_type:str, neo4j_ancestor_ids:list[str]
+                                    ,neo4j_descendant_ids:list[str]):
+        # If entity is new or Neo4j relationships for entity have changed, do a reindex with each ID
+        # which has entity as an ancestor or descendant.  This is a costlier operation than
+        # directly updating documents for related entities.
+        previous_revision_ids = []
+        next_revision_ids = []
+
+        # Only Dataset/Publication entities may have previous/next revisions
+        if entity_type in ['Dataset', 'Publication']:
+            previous_revision_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
+            next_revision_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+
+        # All unique entity ids in the path excluding the entity itself
+        target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
+
+        # Reindex the rest of the entities in the list
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
+            for f in concurrent.futures.as_completed(futures_list):
+                result = f.result()
+
+    def _directly_modify_related_entities(  self, es_url:str, target_index:str, entity_id:str
+                                            ,neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str]):
+        # Directly update the OpenSearch documents for each associated entity with a current snapshot of
+        # this entity, since relationships graph of this entity is unchanged in Neo4j since the
+        # last time this entity was indexed.
+        #
+        # Given updated JSON for the OpenSearch document of this entity, replace the snapshot of
+        # this entity's JSON in every OpenSearch document it appears in.
+        # Each document for an identifier in the 'ancestors' list of this entity will need to have one
+        # member of its 'descendants' list updated. Similarly, each OpenSearch document for a descendant
+        # entity will need one member of its 'ancestors' list updated.
+        # 'immediate_ancestors' will be updated for every entity which is an 'immediate_descendant'.
+        # 'immediate_descendants' will be updated for every entity which is an 'immediate_ancestor'.
+        # 'KBKBKB_some_collections_keyname" will be updated on each OpenSearch document for a
+        # Collection which contains this entity.
+        # 'KBKBKB_some_uploads_keyname" will be updated on each OpenSearch document for a
+        # Upload which contains this entity.
+
+        # Retrieve the entity details
+        # This returned entity dict (if Dataset) has removed ingest_metadata.files and
+        # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
+        revised_entity_doc_dict = self.call_entity_api(entity_id=entity_id
+                                                       , endpoint='documents')
+        logger.debug(f"KBKBKB direct updates should get json.dumps(entity)={json.dumps(revised_entity_doc_dict)}")
+
+        painless_query = f'for (prop in <TARGET_DOC_ELEMENT_LIST>)' \
+                         f' {{if (ctx._source.containsKey(prop))' \
+                         f'  {{for (int i = 0; i < ctx._source[prop].length; ++i)' \
+                         f'   {{if (ctx._source[prop][i][\'uuid\'] == params.modified_entity_uuid)' \
+                         f'    {{ctx._source[prop][i] = params.revised_related_entity}} }} }} }}'
+        QDSL_UPDATE_ENDPOINT_WITH_ID_PARAM = \
+            f'{{\"script\": {{' \
+            f'  \"lang\": \"painless\",' \
+            f'  \"source\": \"{painless_query}\",' \
+            f'  \"params\": {{' \
+            f'   \"modified_entity_uuid\": \"<TARGET_MODIFIED_ENTITY_UUID>\",' \
+            f'   \"revised_related_entity\": <THIS_REVISED_ENTITY>' \
+            f'  }}' \
+            f' }} }}'
+        # Eliminate taking advantage of our knowledge that an ancestor only needs its descendants lists
+        # updated and a descendant only needs its ancestor lists updated.  Instead, focus upon consolidating
+        # updates into a single query for the related entity's document to avoid HTTP 409 Conflict
+        # problems if too many queries post for a single document.
+        related_entity_target_elements = [  'immediate_descendants'
+                                            , 'descendants'
+                                            , 'immediate_ancestors'
+                                            , 'ancestors'
+                                            , 'KBKBKB-@TODO_RemoveThisBadName']
+
+        related_entity_ids = neo4j_ancestor_ids + neo4j_descendant_ids
+
+        for related_entity_id in related_entity_ids:
+            qdsl_update_payload_string = QDSL_UPDATE_ENDPOINT_WITH_ID_PARAM \
+                .replace('<TARGET_MODIFIED_ENTITY_UUID>', entity_id) \
+                .replace('<TARGET_DOC_ELEMENT_LIST>', str(related_entity_target_elements)) \
+                .replace('<THIS_REVISED_ENTITY>', json.dumps(revised_entity_doc_dict))
+            json_query_dict = json.loads(qdsl_update_payload_string)
+
+            opensearch_response = execute_opensearch_query(query_against=f"_update/{related_entity_id}"
+                                                           , request=None
+                                                           , index=target_index
+                                                           , es_url=es_url
+                                                           , query=json_query_dict)
+            # Expect an HTTP 200 on a successful update, and an HTTP 404 if target_index does not
+            # contain a document for related_entity_id.  Other response codes are errors.
+            if opensearch_response.status_code not in [200, 404]:
+                logger.error(f"Unable to directly update elements of document with"
+                             f" related_entity_target_elements={related_entity_target_elements},"
+                             f" related_entity_id={related_entity_id}."
+                             f" Got status_code={opensearch_response.status_code} at"
+                             f" es_url={es_url},"
+                             f" endoint '_update/{related_entity_id}' with"
+                             f" qdsl_update_payload_string={qdsl_update_payload_string}.")
+                raise Exception(f"OpenSearch query return a status code of "
+                                f" '{opensearch_response.status_code}'. See logs.")
+            elif opensearch_response.status_code == 404:
+                logger.info(f"Call to QDSL _update got HTTP response code"
+                            f" {opensearch_response.status_code}, which is ignored because it"
+                            f" should indicate"
+                            f" related_entity_target_elements={related_entity_target_elements}"
+                            f" is not in target_index={target_index}.")
+
+    def _reindex_transformed_entities_to_portal(self, entity:dict):
+        # Even though we were able to skip reindexing for the "entities" indices, we still need to
+        # reindex for the "portaL" indices due to their requirement to hold documents from the output of
+        # transformer.transform()
+        #
+        # Repeat some code from call_indexer() which does "portal transformation" and indexing, but
+        # target for refactoring when portal indexing may work with direct updates for performance, like
+        # the "entities" indices handled above.
+
+        # Grab index name and the transform which support the 'portal'
+        public_index = self.INDICES['indices']['portal']['public']
+        private_index = self.INDICES['indices']['portal']['private']
+        # check to see if the index has a transformer, default to None if not found
+        transformer = self.TRANSFORMERS.get('portal', None)
+        if transformer is None:
+            logger.error(f"Unable to find 'portal' transformer for direct reindexing.")
+
+        try:
+            document = self.generate_doc(entity=entity
+                                         , return_type='json')
+        except Exception as e:
+            msg = f"Exception during executing generate_doc() inside Translator.translate()" \
+                  f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
+                  f" for direct 'portal' reindex."
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
+
+        private_transformed = transformer.transform(json.loads(document),
+                                                    self.transformation_resources)
+        docs_to_write_dict = {
+            private_index: json.dumps(private_transformed),
+            public_index: None
+        }
+        if self.is_public(entity):
+            try:
+                public_doc = self.generate_public_doc(entity)
+            except Exception as e:
+                msg = f"Exception during executing generate_public_doc() inside Translator.translate()" \
+                      f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
+                      f" for direct 'portal' reindex."
+                # Log the full stack trace, prepend a line with our message
+                logger.exception(msg)
+
+            public_transformed = transformer.transform(json.loads(public_doc),
+                                                       self.transformation_resources)
+            docs_to_write_dict[public_index] = json.dumps(public_transformed)
+
+        for index_name in docs_to_write_dict.keys():
+            if docs_to_write_dict[index_name] is None:
+                continue
+            self.indexer.index(entity_id=entity['uuid']
+                               , document=docs_to_write_dict[index_name]
+                               , index_name=index_name
+                               , reindex=True)
+            logger.info(f"Finished executing indexer.index() during direct 'portal' reindexing with" \
+                        f" entity['uuid']={entity['uuid']}," \
+                        f" entity['entity_type']={entity['entity_type']}," \
+                        f" index_name={index_name}.")
+
+        logger.info(f"Finished direct 'portal' updates for"
+                    f"entity['uuid']={entity['uuid']},"
+                    f" entity['entity_type']={entity['entity_type']}")
 
     # Used by individual live reindex call
     def translate(self, entity_id):
@@ -241,7 +501,8 @@ class Translator(TranslatorInterface):
             # Retrieve the entity details
             # This returned entity dict (if Dataset) has removed ingest_metadata.files and
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
-            entity = self.call_entity_api(entity_id, 'documents')
+            entity = self.call_entity_api(  entity_id=entity_id
+                                            , endpoint='documents')
 
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
@@ -258,28 +519,62 @@ class Translator(TranslatorInterface):
             elif entity['entity_type'] == 'Upload':
                 self.translate_upload(entity_id, reindex=True)
             else:
-                # Reindex the entity itself first
-                self.call_indexer(entity, reindex=True)
+                # For newly created entities and entities whose relationships in Neo4j have changed since the
+                # entity was indexed into OpenSearch, use "reindex" code to bring the OpenSearch document
+                # up-to-date for the entity and all the entities it relates to.
+                #
+                # For entities previously indexed into OpenSearch whose relationships in Neo4j have not changed,
+                # just index the document for the entity. Then update fields belong to related entities which
+                # refer to the entity i.e. the 'ancestors' list of this entity's 'descendants', the 'descendants'
+                # list of this entity's 'ancestors', etc.
+                # N.B. As of Spring '24, this shortcut can only be done for the 'entities' indices, not for
+                #      the 'portal' indices, which hold transformed content.
 
-                previous_revision_ids = []
-                next_revision_ids = []
+                # get URL for the OpenSearch server
+                es_url = self.INDICES['indices']['entities']['elasticsearch']['url'].strip('/')
 
-                ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-                descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+                # Reindex the entity itself first before dealing with other documents for related entities.
+                # The reindex arg to call_indexer() means delete the existing document before doing a write_or_update.
+                self.call_indexer(entity=entity
+                                  , reindex=True
+                                  , document=None
+                                  , target_index=None)
 
-                # Only Dataset/Publication entities may have previous/next revisions
-                if entity['entity_type'] in ['Dataset', 'Publication']:
-                    previous_revision_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
-                    next_revision_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+                # Get the ancestors and descendants of this entity as they exist in Neo4j, and as they
+                # exist in OpenSearch.
+                neo4j_ancestor_ids = self.call_entity_api(entity_id=entity_id
+                                                          , endpoint='ancestors'
+                                                          , url_property='uuid')
+                neo4j_descendant_ids = self.call_entity_api(entity_id=entity_id
+                                                            , endpoint='descendants'
+                                                            , url_property='uuid')
 
-                # All unique entity ids in the path excluding the entity itself
-                target_ids = set(ancestor_ids + descendant_ids + previous_revision_ids + next_revision_ids)
+                for target_index in [   self.INDICES['indices']['entities']['private']
+                                        ,self.INDICES['indices']['entities']['public'] ]:
 
-                # Reindex the rest of the entities in the list
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
-                    for f in concurrent.futures.as_completed(futures_list):
-                        result = f.result()
+                    existing_entity_json = self._get_existing_filtered_entity_doc(  entity_uuid=entity['uuid']
+                                                                                    ,es_url=es_url
+                                                                                    ,target_index=target_index)
+
+                    relationships_unchanged = self._relationships_unchanged_since_indexed(  neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                                                            ,neo4j_descendant_ids=neo4j_descendant_ids
+                                                                                            ,existing_oss_doc=existing_entity_json)
+
+                    if not relationships_unchanged:
+                        # Since the entity is new or the Neo4j relationships with related entities have changed,
+                        # reindex
+                        self._reindex_related_entities( entity_id=entity_id
+                                                        ,entity_type=entity['entity_type']
+                                                        ,neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                        ,neo4j_descendant_ids=neo4j_descendant_ids)
+                    else:
+                        self._directly_modify_related_entities( es_url=es_url
+                                                                ,target_index=target_index
+                                                                ,entity_id=entity_id
+                                                                ,neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                                ,neo4j_descendant_ids=neo4j_descendant_ids)
+
+                self._reindex_transformed_entities_to_portal(entity=entity)
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
