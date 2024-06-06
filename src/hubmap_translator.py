@@ -244,17 +244,19 @@ class Translator(TranslatorInterface):
                 scope_list = ['public', 'private']
         return scope_list
 
-    def _relationships_unchanged_since_indexed( self, neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str],
+    def _relationships_changed_since_indexed( self, neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str],
                                                 existing_oss_doc:json):
         # Start with the safe assumption that relationships have changed, and
         # only toggle if verified unchanged below
-        relationships_unchanged = False
+        relationships_changed = True
 
         # Get the ancestors and descendants of this entity as they exist in OpenSearch.
-        oss_ancestor_ids = existing_oss_doc[
-            'ancestor_ids'] if existing_oss_doc and 'ancestor_ids' in existing_oss_doc else []
-        oss_descendant_ids = existing_oss_doc[
-            'descendant_ids'] if existing_oss_doc and 'descendant_ids' in existing_oss_doc else []
+        oss_ancestor_ids = []
+        if existing_oss_doc and 'fields' in existing_oss_doc and 'ancestor_ids' in existing_oss_doc['fields']:
+            oss_ancestor_ids = existing_oss_doc['fields']['ancestor_ids']
+        oss_descendant_ids = []
+        if existing_oss_doc and 'fields' in existing_oss_doc and 'descendant_ids' in existing_oss_doc['fields']:
+            oss_descendant_ids = existing_oss_doc['fields']['descendant_ids']
 
         # If the ancestor list and descendant list on the OpenSearch document for this entity are
         # not both exactly the same set of IDs as in Neo4j, relationships have changed and this
@@ -271,15 +273,20 @@ class Translator(TranslatorInterface):
             oss_ancestor_id_set = frozenset(oss_ancestor_ids)
 
             if not neo4j_ancestor_id_set.symmetric_difference(oss_ancestor_id_set):
-                relationships_unchanged = True
+                relationships_changed = False
 
-        return relationships_unchanged
+        return relationships_changed
 
-    def _get_existing_filtered_entity_doc(self, entity_uuid:str, es_url:str, target_index:str):
+    def _get_existing_entity_relationships(self, entity_uuid:str, es_url:str, target_index:str):
         # Form a simple match query, and retrieve an existing OpenSearch document for entity_id, if it exists.
         # N.B. This query does not pass through the AWS Gateway, so we will not have to retrieve the
         #      result from an AWS S3 Bucket.  If it is larger than 10Mb, we will get it directly.
-        QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN = '{ "query": {  "bool": { "filter": [ {"terms": {"uuid": ["<TARGET_SEARCH_UUID>"]}} ] } } }'
+        QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN =(
+            '{ ' + \
+            '"query": {  "bool": { "filter": [ {"terms": {"uuid": ["<TARGET_SEARCH_UUID>"]}} ] } }' + \
+            ', "fields": ["ancestor_ids", "descendant_id"] ,"_source": false' + \
+            ' }')
+
         # KBKBKB-Also, is there any need to wait for OSS to finish before pulling back OSS's document for
         # KBKBKB-this entity?  What OSS document fields can be checked which may indicate processing, stale, etc?
         qdsl_search_query_payload_string = QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN.replace('<TARGET_SEARCH_UUID>'
@@ -290,7 +297,7 @@ class Translator(TranslatorInterface):
                                                        , index=target_index
                                                        , es_url=es_url
                                                        , query=json_query_dict
-                                                       , request_params={'filter_path': 'hits.hits._source'})
+                                                       , request_params={'filter_path': 'hits.hits'})
 
         # Verify the expected response was returned.  If no document was returned, proceed with a re-indexing.
         # If exactly one document is returned, distill it down to JSON used to update document fields.
@@ -302,7 +309,6 @@ class Translator(TranslatorInterface):
                             f" See logs.")
 
         resp_json = opensearch_response.json()
-        existing_entity_json = None
 
         if not resp_json or \
                 'hits' not in resp_json or \
@@ -312,9 +318,9 @@ class Translator(TranslatorInterface):
             # reindexing under those circumstances, too.
             pass  # KBKBKB-@TODO or should we continue to next index???
         elif len(resp_json['hits']['hits']) != 1 or \
-                '_source' not in resp_json['hits']['hits'][0]:
+                'fields' not in resp_json['hits']['hits'][0]:
             # From the index populated with everything, raise an exception if exactly one document for the
-            # currententity is not what is returned.
+            # current entity is not what is returned.
             logger.error(f"Found {len(resp_json['hits']['hits'])} documents instead"
                          f" of a single document searching resp_json['hits']['hits'] from"
                          f" opensearch_response with es_url={es_url}.")
@@ -326,7 +332,7 @@ class Translator(TranslatorInterface):
             # retain a snapshot of this entity, such as this entity's ancestors, this entity's descendants,
             # Collection entity's containing this entity, etc.
             # N.B. Many such artifacts should have already been stripped through usage of the filter_path.
-            existing_entity_json = resp_json['hits']['hits'][0]['_source']
+            return resp_json['hits']['hits'][0]
 
     def _reindex_related_entities(  self, entity_id:str, entity_type:str, neo4j_ancestor_ids:list[str]
                                     ,neo4j_descendant_ids:list[str]):
@@ -549,32 +555,43 @@ class Translator(TranslatorInterface):
                                                             , endpoint='descendants'
                                                             , url_property='uuid')
 
-                for target_index in [   self.INDICES['indices']['entities']['private']
-                                        ,self.INDICES['indices']['entities']['public'] ]:
+                # Use the index with documents for all entities to determine the relationships of the
+                # current entity as stored in OpenSearch.  Consider it safe to assume documents in other
+                # indices for the same entity have exactly the same relationships unless there was an
+                #indexing problem
+                index_with_everything = self.INDICES['indices']['entities']['private']
+                existing_entity_json = self._get_existing_entity_relationships(entity_uuid=entity['uuid']
+                                                                               , es_url=es_url
+                                                                               , target_index=index_with_everything)
 
-                    existing_entity_json = self._get_existing_filtered_entity_doc(  entity_uuid=entity['uuid']
-                                                                                    ,es_url=es_url
-                                                                                    ,target_index=target_index)
-
-                    relationships_unchanged = self._relationships_unchanged_since_indexed(  neo4j_ancestor_ids=neo4j_ancestor_ids
-                                                                                            ,neo4j_descendant_ids=neo4j_descendant_ids
-                                                                                            ,existing_oss_doc=existing_entity_json)
-
-                    if not relationships_unchanged:
-                        # Since the entity is new or the Neo4j relationships with related entities have changed,
-                        # reindex
-                        self._reindex_related_entities( entity_id=entity_id
-                                                        ,entity_type=entity['entity_type']
-                                                        ,neo4j_ancestor_ids=neo4j_ancestor_ids
-                                                        ,neo4j_descendant_ids=neo4j_descendant_ids)
-                    else:
+                relationships_changed = self._relationships_changed_since_indexed(neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                                                  ,neo4j_descendant_ids=neo4j_descendant_ids
+                                                                                  ,existing_oss_doc=existing_entity_json)
+                if relationships_changed:
+                    # Since the entity is new or the Neo4j relationships with related entities have changed,
+                    # reindex the current entity
+                    self._reindex_related_entities(entity_id=entity_id
+                                                   , entity_type=entity['entity_type']
+                                                   , neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                   , neo4j_descendant_ids=neo4j_descendant_ids)
+                else:
+                    # Since the entity's relationships are identical in Neo4j and OpenSearch, just update
+                    # documents in the entities indices with a copy of the current entity.
+                    for target_index in [   self.INDICES['indices']['entities']['private']
+                                            ,self.INDICES['indices']['entities']['public'] ]:
                         self._directly_modify_related_entities( es_url=es_url
                                                                 ,target_index=target_index
                                                                 ,entity_id=entity_id
                                                                 ,neo4j_ancestor_ids=neo4j_ancestor_ids
                                                                 ,neo4j_descendant_ids=neo4j_descendant_ids)
 
-                self._reindex_transformed_entities_to_portal(entity=entity)
+                    # Until the portal indices support direct updates using correctly transformed documents,
+                    # continue doing a reindex to update documents in those indices.
+                    #self._reindex_transformed_entities_to_portal(entity=entity)
+                    self.call_indexer(entity=entity
+                                      , reindex=True
+                                      , document=None
+                                      , target_index='portal')
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
@@ -997,6 +1014,17 @@ class Translator(TranslatorInterface):
 
         logger.info("Finished executing exclude_added_top_level_properties()")
 
+    # The calculated fields added to an entity by add_calculated_fields() should not be added
+    # to themselves as subfields. Remove them, similarly to exclude_added_top_level_properties()
+    def exclude_added_calculated_fields(self, entity_data, except_properties_list = []):
+        logger.info("Start executing exclude_added_calculated_fields()")
+
+        if 'index_version' in entity_data:
+            entity_data.pop('index_version')
+        if 'display_subtype' in entity_data:
+            entity_data.pop('display_subtype')
+
+        logger.info("Finished executing exclude_added_calculated_fields()")
 
     # Used for Upload and Collection index
     def add_datasets_to_entity(self, entity):
@@ -1203,8 +1231,11 @@ class Translator(TranslatorInterface):
                         if ('sample_category' in ancestor) and (ancestor['sample_category'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
                             entity['origin_samples'].append(ancestor)
 
-                # Remove those added fields specified in `entity_properties_list` from source_samples
+                # Remove those added fields specified in `entity_properties_list` from origin_samples
                 self.exclude_added_top_level_properties(entity['origin_samples'])
+                # Remove calculated fields added to a Sample from 'origin_samples'
+                for origin_sample in entity['origin_samples']:
+                    self.exclude_added_calculated_fields(origin_sample)
 
                 # `source_samples` field is only avaiable to Dataset
                 if entity['entity_type'] in ['Dataset', 'Publication']:
