@@ -438,69 +438,6 @@ class Translator(TranslatorInterface):
                             f" related_entity_target_elements={related_entity_target_elements}"
                             f" is not in target_index={target_index}.")
 
-    def _reindex_transformed_entities_to_portal(self, entity:dict):
-        # Even though we were able to skip reindexing for the "entities" indices, we still need to
-        # reindex for the "portaL" indices due to their requirement to hold documents from the output of
-        # transformer.transform()
-        #
-        # Repeat some code from call_indexer() which does "portal transformation" and indexing, but
-        # target for refactoring when portal indexing may work with direct updates for performance, like
-        # the "entities" indices handled above.
-
-        # Grab index name and the transform which support the 'portal'
-        public_index = self.INDICES['indices']['portal']['public']
-        private_index = self.INDICES['indices']['portal']['private']
-        # check to see if the index has a transformer, default to None if not found
-        transformer = self.TRANSFORMERS.get('portal', None)
-        if transformer is None:
-            logger.error(f"Unable to find 'portal' transformer for direct reindexing.")
-
-        try:
-            document = self.generate_doc(entity=entity
-                                         , return_type='json')
-        except Exception as e:
-            msg = f"Exception during executing generate_doc() inside Translator.translate()" \
-                  f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
-                  f" for direct 'portal' reindex."
-            # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
-
-        private_transformed = transformer.transform(json.loads(document),
-                                                    self.transformation_resources)
-        docs_to_write_dict = {
-            private_index: json.dumps(private_transformed),
-            public_index: None
-        }
-        if self.is_public(entity):
-            try:
-                public_doc = self.generate_public_doc(entity)
-            except Exception as e:
-                msg = f"Exception during executing generate_public_doc() inside Translator.translate()" \
-                      f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
-                      f" for direct 'portal' reindex."
-                # Log the full stack trace, prepend a line with our message
-                logger.exception(msg)
-
-            public_transformed = transformer.transform(json.loads(public_doc),
-                                                       self.transformation_resources)
-            docs_to_write_dict[public_index] = json.dumps(public_transformed)
-
-        for index_name in docs_to_write_dict.keys():
-            if docs_to_write_dict[index_name] is None:
-                continue
-            self.indexer.index(entity_id=entity['uuid']
-                               , document=docs_to_write_dict[index_name]
-                               , index_name=index_name
-                               , reindex=True)
-            logger.info(f"Finished executing indexer.index() during direct 'portal' reindexing with" \
-                        f" entity['uuid']={entity['uuid']}," \
-                        f" entity['entity_type']={entity['entity_type']}," \
-                        f" index_name={index_name}.")
-
-        logger.info(f"Finished direct 'portal' updates for"
-                    f"entity['uuid']={entity['uuid']},"
-                    f" entity['entity_type']={entity['entity_type']}")
-
     # Used by individual live reindex call
     def translate(self, entity_id):
         try:
@@ -587,11 +524,12 @@ class Translator(TranslatorInterface):
 
                     # Until the portal indices support direct updates using correctly transformed documents,
                     # continue doing a reindex to update documents in those indices.
-                    #self._reindex_transformed_entities_to_portal(entity=entity)
-                    self.call_indexer(entity=entity
-                                      , reindex=True
-                                      , document=None
-                                      , target_index='portal')
+                    for target_index in [   self.INDICES['indices']['portal']['private']
+                                            ,self.INDICES['indices']['portal']['public'] ]:
+                        self.call_indexer(entity=entity
+                                          , reindex=True
+                                          , document=None
+                                          , target_index=target_index)
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
