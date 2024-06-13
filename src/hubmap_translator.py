@@ -287,8 +287,6 @@ class Translator(TranslatorInterface):
             ', "fields": ["ancestor_ids", "descendant_id"] ,"_source": false' + \
             ' }')
 
-        # KBKBKB-Also, is there any need to wait for OSS to finish before pulling back OSS's document for
-        # KBKBKB-this entity?  What OSS document fields can be checked which may indicate processing, stale, etc?
         qdsl_search_query_payload_string = QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN.replace('<TARGET_SEARCH_UUID>'
                                                                                            , entity_uuid)
         json_query_dict = json.loads(qdsl_search_query_payload_string)
@@ -316,16 +314,22 @@ class Translator(TranslatorInterface):
             # If OpenSearch does not have an existing document for this entity, drop down to reindexing.
             # Anything else Falsy JSON could be an unexpected result for an existing entity, but fall back to
             # reindexing under those circumstances, too.
-            pass  # KBKBKB-@TODO or should we continue to next index???
-        elif len(resp_json['hits']['hits']) != 1 or \
-                'fields' not in resp_json['hits']['hits'][0]:
+            pass
+        elif len(resp_json['hits']['hits']) != 1:
             # From the index populated with everything, raise an exception if exactly one document for the
             # current entity is not what is returned.
             logger.error(f"Found {len(resp_json['hits']['hits'])} documents instead"
-                         f" of a single document searching resp_json['hits']['hits'] from"
-                         f" opensearch_response with es_url={es_url}.")
+                         f" of a single document searching resp_json['hits']['hits'] from opensearch_response with"
+                         f" es_url={es_url},"
+                         f" json_query_dict={json_query_dict}.")
             raise Exception(f"Unexpected response to OpenSearch query for a single entity document."
                             f" See logs.")
+        elif 'fields' not in resp_json['hits']['hits'][0]:
+            # The QDSL query may return exactly one resp_json['hits']['hits'] if called for an
+            # entity which has a document but not the fields searched for e.g. a Donor being
+            # created with no ancestors or descendants yet. Return empty
+            # JSON rather than indicating this is an error.
+            return {}
         else:
             # Strip away whatever remains of OpenSearch artifacts, such as _source, to get to the
             # exact JSON of this entity's existing, so that can become a part of the other documents which
@@ -344,8 +348,8 @@ class Translator(TranslatorInterface):
 
         # Only Dataset/Publication entities may have previous/next revisions
         if entity_type in ['Dataset', 'Publication']:
-            previous_revision_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
-            next_revision_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+            previous_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='previous_revisions', endpoint_suffix=None, url_property='uuid')
+            next_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='next_revisions', endpoint_suffix=None, url_property='uuid')
 
         # All unique entity ids in the path excluding the entity itself
         target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
@@ -369,17 +373,12 @@ class Translator(TranslatorInterface):
         # entity will need one member of its 'ancestors' list updated.
         # 'immediate_ancestors' will be updated for every entity which is an 'immediate_descendant'.
         # 'immediate_descendants' will be updated for every entity which is an 'immediate_ancestor'.
-        # 'KBKBKB_some_collections_keyname" will be updated on each OpenSearch document for a
-        # Collection which contains this entity.
-        # 'KBKBKB_some_uploads_keyname" will be updated on each OpenSearch document for a
-        # Upload which contains this entity.
 
         # Retrieve the entity details
         # This returned entity dict (if Dataset) has removed ingest_metadata.files and
         # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
         revised_entity_doc_dict = self.call_entity_api(entity_id=entity_id
-                                                       , endpoint='documents')
-        logger.debug(f"KBKBKB direct updates should get json.dumps(entity)={json.dumps(revised_entity_doc_dict)}")
+                                                       , endpoint_base='documents')
 
         painless_query = f'for (prop in <TARGET_DOC_ELEMENT_LIST>)' \
                          f' {{if (ctx._source.containsKey(prop))' \
@@ -402,8 +401,7 @@ class Translator(TranslatorInterface):
         related_entity_target_elements = [  'immediate_descendants'
                                             , 'descendants'
                                             , 'immediate_ancestors'
-                                            , 'ancestors'
-                                            , 'KBKBKB-@TODO_RemoveThisBadName']
+                                            , 'ancestors']
 
         related_entity_ids = neo4j_ancestor_ids + neo4j_descendant_ids
 
@@ -444,8 +442,8 @@ class Translator(TranslatorInterface):
             # Retrieve the entity details
             # This returned entity dict (if Dataset) has removed ingest_metadata.files and
             # ingest_metadata.metadata sub fields with empty string values when call_entity_api() gets called
-            entity = self.call_entity_api(  entity_id=entity_id
-                                            , endpoint='documents')
+            entity = self.call_entity_api(entity_id=entity_id
+                                          , endpoint_base='documents')
 
             logger.info(f"Start executing translate() on {entity['entity_type']} of uuid: {entity_id}")
 
@@ -486,16 +484,18 @@ class Translator(TranslatorInterface):
                 # Get the ancestors and descendants of this entity as they exist in Neo4j, and as they
                 # exist in OpenSearch.
                 neo4j_ancestor_ids = self.call_entity_api(entity_id=entity_id
-                                                          , endpoint='ancestors'
+                                                          , endpoint_base='ancestors'
+                                                          , endpoint_suffix=None
                                                           , url_property='uuid')
                 neo4j_descendant_ids = self.call_entity_api(entity_id=entity_id
-                                                            , endpoint='descendants'
+                                                            , endpoint_base='descendants'
+                                                            , endpoint_suffix=None
                                                             , url_property='uuid')
 
                 # Use the index with documents for all entities to determine the relationships of the
                 # current entity as stored in OpenSearch.  Consider it safe to assume documents in other
                 # indices for the same entity have exactly the same relationships unless there was an
-                #indexing problem
+                # indexing problem
                 index_with_everything = self.INDICES['indices']['entities']['private']
                 existing_entity_json = self._get_existing_entity_relationships(entity_uuid=entity['uuid']
                                                                                , es_url=es_url
@@ -785,7 +785,7 @@ class Translator(TranslatorInterface):
         try:
             logger.info(f"Start executing translate_donor_tree() for donor of uuid: {entity_id}")
 
-            descendant_uuids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+            descendant_uuids = self.call_entity_api(entity_id=entity_id, endpoint_base='descendants', endpoint_suffix=None, url_property='uuid')
 
             # Index the donor entity itself
             donor = self.call_entity_api(entity_id, 'documents')
@@ -1116,7 +1116,7 @@ class Translator(TranslatorInterface):
 
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
                 # Get back a list of ancestor uuids first
-                ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
+                ancestor_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='ancestors', endpoint_suffix=None, url_property='uuid')
                 for ancestor_uuid in ancestor_ids:
                     # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
@@ -1130,17 +1130,17 @@ class Translator(TranslatorInterface):
                         donor = copy.copy(a)
                         break
 
-                descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+                descendant_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='descendants', endpoint_suffix=None, url_property='uuid')
                 for descendant_uuid in descendant_ids:
                     descendant_dict = self.call_entity_api(descendant_uuid, 'documents')
                     descendants.append(descendant_dict)
 
-                immediate_ancestor_ids = self.call_entity_api(entity_id, 'parents', 'uuid')
+                immediate_ancestor_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='parents', endpoint_suffix=None, url_property='uuid')
                 for immediate_ancestor_uuid in immediate_ancestor_ids:
                     immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'documents')
                     immediate_ancestors.append(immediate_ancestor_dict)
 
-                immediate_descendant_ids = self.call_entity_api(entity_id, 'children', 'uuid')
+                immediate_descendant_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='children', endpoint_suffix=None, url_property='uuid')
                 for immediate_descendant_uuid in immediate_descendant_ids:
                     immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
                     immediate_descendants.append(immediate_descendant_dict)
@@ -1181,11 +1181,11 @@ class Translator(TranslatorInterface):
                     e = entity
 
                     while entity['source_samples'] is None:
-                        parent_uuids = self.call_entity_api(e['uuid'], 'parents', 'uuid')
+                        parent_uuids = self.call_entity_api(entity_id=e['uuid'], endpoint_base='parents', endpoint_suffix=None, url_property='uuid')
                         parents = []
                         for parent_uuid in parent_uuids:
                             parent_entity_doc = self.call_entity_api(entity_id = parent_uuid
-                                                                     ,endpoint = 'documents')
+                                                                     , endpoint_base='documents')
                             parents.append(parent_entity_doc)
 
                         try:
@@ -1320,12 +1320,14 @@ class Translator(TranslatorInterface):
     # This method is supposed to only retrieve Dataset|Donor|Sample
     # The Collection and Upload are handled by separate calls
     # The returned data can either be an entity dict or a list of uuids (when `url_property` parameter is specified)
-    def call_entity_api(self, entity_id, endpoint, url_property = None):
+    def call_entity_api(self, entity_id, endpoint_base, endpoint_suffix=None, url_property=None):
         logger.info(f"Start executing call_entity_api() on uuid: {entity_id}")
 
-        url = self.entity_api_url + "/" + endpoint + "/" + entity_id
+        url = f"{self.entity_api_url}/{endpoint_base}/{entity_id}"
+        if endpoint_suffix:
+            url = f"{url}/{endpoint_suffix}"
         if url_property:
-            url += "?property=" + url_property
+            url = f"{url}?property={url_property}"
 
         response = requests.get(url, headers=self.request_headers, verify=False)
 
