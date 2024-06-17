@@ -284,7 +284,7 @@ class Translator(TranslatorInterface):
         QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN =(
             '{ ' + \
             '"query": {  "bool": { "filter": [ {"terms": {"uuid": ["<TARGET_SEARCH_UUID>"]}} ] } }' + \
-            ', "fields": ["ancestor_ids", "descendant_id"] ,"_source": false' + \
+            ', "fields": ["ancestor_ids", "descendant_ids"] ,"_source": false' + \
             ' }')
 
         qdsl_search_query_payload_string = QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN.replace('<TARGET_SEARCH_UUID>'
