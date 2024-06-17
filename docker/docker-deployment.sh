@@ -21,14 +21,22 @@ function get_dir_of_this_script() {
 function generate_build_version() {
     GIT_BRANCH_NAME=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
     GIT_SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+
+    # Get git submodule info
+    cd ../src/routes/validation/ingest_validation_tools
+    GIT_SUBMODULE_BRANCH_NAME=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+    GIT_SUBMODULE_SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
+    # Back to the docker directory
+    cd ../../../../docker
+
     # Clear the old BUILD version and write the new one
     truncate -s 0 ../BUILD
     # Note: echo to file appends newline
-    echo $GIT_BRANCH_NAME:$GIT_SHORT_COMMIT_HASH >> ../BUILD
+    echo "$GIT_BRANCH_NAME:$GIT_SHORT_COMMIT_HASH with submodule $GIT_SUBMODULE_BRANCH_NAME:$GIT_SUBMODULE_SHORT_COMMIT_HASH" >> ../BUILD
     # Remmove the trailing newline character
     truncate -s -1 ../BUILD
 
-    echo "BUILD(git branch name:short commit hash): $GIT_BRANCH_NAME:$GIT_SHORT_COMMIT_HASH"
+    echo "BUILD(git branch name:short commit hash): $GIT_BRANCH_NAME:$GIT_SHORT_COMMIT_HASH with submodule $GIT_SUBMODULE_BRANCH_NAME:$GIT_SUBMODULE_SHORT_COMMIT_HASH"
 }
 
 # Set the version environment variable for the docker build
