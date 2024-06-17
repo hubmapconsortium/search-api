@@ -34,11 +34,11 @@ function generate_build_version() {
     GIT_SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
 
     # Get git submodule info
-    cd ../src/routes/validation/ingest_validation_tools
+    cd ../src/search-adaptor
     GIT_SUBMODULE_BRANCH_NAME=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
     GIT_SUBMODULE_SHORT_COMMIT_HASH=$(git rev-parse --short HEAD)
     # Back to the docker directory
-    cd ../../../../docker
+    cd ../../docker
 
     # Clear the old BUILD version and write the new one
     truncate -s 0 ../BUILD
