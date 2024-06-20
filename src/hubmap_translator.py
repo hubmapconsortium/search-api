@@ -277,14 +277,14 @@ class Translator(TranslatorInterface):
 
         return relationships_changed
 
-    def _get_existing_entity_relationships(self, entity_uuid:str, es_url:str, target_index:str):
+    def _get_existing_entity_relationships(self, entity_uuid:str, es_url:str, es_index:str):
         # Form a simple match query, and retrieve an existing OpenSearch document for entity_id, if it exists.
         # N.B. This query does not pass through the AWS Gateway, so we will not have to retrieve the
         #      result from an AWS S3 Bucket.  If it is larger than 10Mb, we will get it directly.
         QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN =(
             '{ ' + \
             '"query": {  "bool": { "filter": [ {"terms": {"uuid": ["<TARGET_SEARCH_UUID>"]}} ] } }' + \
-            ', "fields": ["ancestor_ids", "descendant_id"] ,"_source": false' + \
+            ', "fields": ["ancestor_ids", "descendant_ids"] ,"_source": false' + \
             ' }')
 
         qdsl_search_query_payload_string = QDSL_SEARCH_ENDPOINT_MATCH_UUID_PATTERN.replace('<TARGET_SEARCH_UUID>'
@@ -292,7 +292,7 @@ class Translator(TranslatorInterface):
         json_query_dict = json.loads(qdsl_search_query_payload_string)
         opensearch_response = execute_opensearch_query(query_against='_search'
                                                        , request=None
-                                                       , index=target_index
+                                                       , index=es_index
                                                        , es_url=es_url
                                                        , query=json_query_dict
                                                        , request_params={'filter_path': 'hits.hits'})
@@ -338,29 +338,7 @@ class Translator(TranslatorInterface):
             # N.B. Many such artifacts should have already been stripped through usage of the filter_path.
             return resp_json['hits']['hits'][0]
 
-    def _reindex_related_entities(  self, entity_id:str, entity_type:str, neo4j_ancestor_ids:list[str]
-                                    ,neo4j_descendant_ids:list[str]):
-        # If entity is new or Neo4j relationships for entity have changed, do a reindex with each ID
-        # which has entity as an ancestor or descendant.  This is a costlier operation than
-        # directly updating documents for related entities.
-        previous_revision_ids = []
-        next_revision_ids = []
-
-        # Only Dataset/Publication entities may have previous/next revisions
-        if entity_type in ['Dataset', 'Publication']:
-            previous_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='previous_revisions', endpoint_suffix=None, url_property='uuid')
-            next_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='next_revisions', endpoint_suffix=None, url_property='uuid')
-
-        # All unique entity ids in the path excluding the entity itself
-        target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
-
-        # Reindex the rest of the entities in the list
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
-            for f in concurrent.futures.as_completed(futures_list):
-                result = f.result()
-
-    def _directly_modify_related_entities(  self, es_url:str, target_index:str, entity_id:str
+    def _directly_modify_related_entities(  self, es_url:str, es_index:str, entity_id:str
                                             ,neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str]):
         # Directly update the OpenSearch documents for each associated entity with a current snapshot of
         # this entity, since relationships graph of this entity is unchanged in Neo4j since the
@@ -401,7 +379,9 @@ class Translator(TranslatorInterface):
         related_entity_target_elements = [  'immediate_descendants'
                                             , 'descendants'
                                             , 'immediate_ancestors'
-                                            , 'ancestors']
+                                            , 'ancestors'
+                                            , 'source_samples'
+                                            , 'origin_samples' ]
 
         related_entity_ids = neo4j_ancestor_ids + neo4j_descendant_ids
 
@@ -414,10 +394,10 @@ class Translator(TranslatorInterface):
 
             opensearch_response = execute_opensearch_query(query_against=f"_update/{related_entity_id}"
                                                            , request=None
-                                                           , index=target_index
+                                                           , index=es_index
                                                            , es_url=es_url
                                                            , query=json_query_dict)
-            # Expect an HTTP 200 on a successful update, and an HTTP 404 if target_index does not
+            # Expect an HTTP 200 on a successful update, and an HTTP 404 if es_index does not
             # contain a document for related_entity_id.  Other response codes are errors.
             if opensearch_response.status_code not in [200, 404]:
                 logger.error(f"Unable to directly update elements of document with"
@@ -434,7 +414,72 @@ class Translator(TranslatorInterface):
                             f" {opensearch_response.status_code}, which is ignored because it"
                             f" should indicate"
                             f" related_entity_target_elements={related_entity_target_elements}"
-                            f" is not in target_index={target_index}.")
+                            f" is not in es_index={es_index}.")
+
+    def _get_es_indices_for_index_group(self, index_group_name:str):
+        # Index group names are dynamically loaded from YAML, so they're not elegantly
+        # constrained by an enum.  So at least verify they match an expected value.
+        if index_group_name not in self.INDICES['indices'].keys():
+            raise Exception(f"'{index_group_name}' is not a recognized index group loaded from configuration files.")
+        if not self.INDICES['indices'][index_group_name]['reindex_enabled']:
+            raise Exception(f"Expected 'reindex_enabled' to be set true in the loaded configuration files, but"
+                            f" found 'self.INDICES['indices'][index_group_name]['reindex_enabled']'.")
+        index_group_es_indices={}
+        for expected_index_group_element in ['private','public']:
+            index_group_es_indices[expected_index_group_element]=self.INDICES['indices'][index_group_name][expected_index_group_element]
+        return index_group_es_indices
+
+    def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
+        index_group_es_indices = self._get_es_indices_for_index_group(index_group_name=index_group)
+
+        try:
+            private_doc = self.generate_doc(entity=entity
+                                            , return_type='json')
+            if self.is_public(entity):
+                public_doc = self.generate_public_doc(entity=entity)
+        except Exception as e:
+            msg = f"Exception document generation" \
+                  f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
+                  f" for direct '{index_group}' reindex."
+            # Log the full stack trace, prepend a line with our message. But continue on
+            # rather than raise the Exception.
+            logger.exception(msg)
+
+        docs_to_write_dict = {
+            index_group_es_indices['private']: None,
+            index_group_es_indices['public']: None
+        }
+        # Check to see if the index_group has a transformer, default to None if not found
+        transformer = self.TRANSFORMERS.get(index_group, None)
+        if transformer is None:
+            logger.info(f"Unable to find '{index_group}' transformer, indexing documents untransformed.")
+            docs_to_write_dict[index_group_es_indices['private']] = private_doc
+            if 'public_doc' in locals() and public_doc is not None:
+                docs_to_write_dict[index_group_es_indices['public']] = public_doc
+        else:
+            private_transformed = transformer.transform(json.loads(private_doc),
+                                                        self.transformation_resources)
+            docs_to_write_dict[index_group_es_indices['private']] = json.dumps(private_transformed)
+            if 'public_doc' in locals() and public_doc is not None:
+                public_transformed = transformer.transform(json.loads(public_doc),
+                                                           self.transformation_resources)
+                docs_to_write_dict[index_group_es_indices['public']] = json.dumps(public_transformed)
+
+        for index_name in docs_to_write_dict.keys():
+            if docs_to_write_dict[index_name] is None:
+                continue
+            self.indexer.index(entity_id=entity['uuid']
+                               , document=docs_to_write_dict[index_name]
+                               , index_name=index_name
+                               , reindex=True)
+            logger.info(f"Finished executing indexer.index() during direct 'portal' reindexing with" \
+                        f" entity['uuid']={entity['uuid']}," \
+                        f" entity['entity_type']={entity['entity_type']}," \
+                        f" index_name={index_name}.")
+
+        logger.info(f"Finished direct 'portal' updates for"
+                    f"entity['uuid']={entity['uuid']},"
+                    f" entity['entity_type']={entity['entity_type']}")
 
     # Used by individual live reindex call
     def translate(self, entity_id):
@@ -475,11 +520,8 @@ class Translator(TranslatorInterface):
                 es_url = self.INDICES['indices']['entities']['elasticsearch']['url'].strip('/')
 
                 # Reindex the entity itself first before dealing with other documents for related entities.
-                # The reindex arg to call_indexer() means delete the existing document before doing a write_or_update.
-                self.call_indexer(entity=entity
-                                  , reindex=True
-                                  , document=None
-                                  , target_index=None)
+                self._call_indexer(entity=entity
+                                   , delete_existing_doc_first=True)
 
                 # Get the ancestors and descendants of this entity as they exist in Neo4j, and as they
                 # exist in OpenSearch.
@@ -499,7 +541,7 @@ class Translator(TranslatorInterface):
                 index_with_everything = self.INDICES['indices']['entities']['private']
                 existing_entity_json = self._get_existing_entity_relationships(entity_uuid=entity['uuid']
                                                                                , es_url=es_url
-                                                                               , target_index=index_with_everything)
+                                                                               , es_index=index_with_everything)
 
                 relationships_changed = self._relationships_changed_since_indexed(neo4j_ancestor_ids=neo4j_ancestor_ids
                                                                                   ,neo4j_descendant_ids=neo4j_descendant_ids
@@ -514,22 +556,42 @@ class Translator(TranslatorInterface):
                 else:
                     # Since the entity's relationships are identical in Neo4j and OpenSearch, just update
                     # documents in the entities indices with a copy of the current entity.
-                    for target_index in [   self.INDICES['indices']['entities']['private']
+                    for es_index in [   self.INDICES['indices']['entities']['private']
                                             ,self.INDICES['indices']['entities']['public'] ]:
+                        # Since _directly_modify_related_entities() will only _update documents which already
+                        # exist in an index, no need to test if this entity belongs in the public index.
                         self._directly_modify_related_entities( es_url=es_url
-                                                                ,target_index=target_index
+                                                                ,es_index=es_index
                                                                 ,entity_id=entity_id
                                                                 ,neo4j_ancestor_ids=neo4j_ancestor_ids
                                                                 ,neo4j_descendant_ids=neo4j_descendant_ids)
 
                     # Until the portal indices support direct updates using correctly transformed documents,
+                    # continue doing a reindex for the updated entity and all the related entities which
+                    # copy data from it for their documents.
+                    previous_revision_ids = []
+                    next_revision_ids = []
+
+                    # Only Dataset/Publication entities may have previous/next revisions
+                    if entity['entity_type'] in ['Dataset', 'Publication']:
+                        previous_revision_ids = self.call_entity_api(entity_id=entity_id,
+                                                                     endpoint_base='previous_revisions',
+                                                                     endpoint_suffix=None, url_property='uuid')
+                        next_revision_ids = self.call_entity_api(entity_id=entity_id,
+                                                                 endpoint_base='next_revisions',
+                                                                 endpoint_suffix=None, url_property='uuid')
+                    # All unique entity ids in the path excluding the entity itself
+                    target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
+
+                    # Until the portal indices support direct updates using correctly transformed documents,
                     # continue doing a reindex to update documents in those indices.
-                    for target_index in [   self.INDICES['indices']['portal']['private']
-                                            ,self.INDICES['indices']['portal']['public'] ]:
-                        self.call_indexer(entity=entity
-                                          , reindex=True
-                                          , document=None
-                                          , target_index=target_index)
+                    self._transform_and_write_entity_to_index_group(entity=entity
+                                                                    , index_group='portal')
+                    for related_entity_uuid in target_ids:
+                        related_entity = self.call_entity_api(  entity_id=related_entity_uuid
+                                                                , endpoint_base='documents')
+                        self._transform_and_write_entity_to_index_group(entity=related_entity
+                                                                        , index_group='portal')
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
@@ -730,7 +792,10 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields if any applies to Upload
             self.add_calculated_fields(upload)
 
-            self.call_indexer(upload, reindex, json.dumps(upload), default_private_index)
+            self._index_doc_directly_to_es_index(entity=upload
+                                                 ,document=json.dumps(upload)
+                                                 ,es_index=default_private_index
+                                                 ,delete_existing_doc_first=reindex)
 
             logger.info(f"Finished executing translate_upload() for {entity_id}")
         except Exception as e:
@@ -770,8 +835,14 @@ class Translator(TranslatorInterface):
                 # returning the value of its schema_constants.py DataVisibilityEnum.PUBLIC, put
                 # the Collection in the public index.
                 if self.is_public(collection):
-                    self.call_indexer(collection, reindex, json_data, public_index)
-                self.call_indexer(collection, reindex, json_data, private_index)
+                    self._index_doc_directly_to_es_index(entity=collection
+                                                         , document=json_data
+                                                         , es_index=public_index
+                                                         , delete_existing_doc_first=reindex)
+                self._index_doc_directly_to_es_index(entity=collection
+                                                     , document=json_data
+                                                     , es_index=private_index
+                                                     , delete_existing_doc_first=reindex)
 
             logger.info(f"Finished executing translate_collection() for {entity_id}")
         except requests.exceptions.RequestException as e:
@@ -789,7 +860,7 @@ class Translator(TranslatorInterface):
 
             # Index the donor entity itself
             donor = self.call_entity_api(entity_id, 'documents')
-            self.call_indexer(donor)
+            self._call_indexer(entity=donor)
 
             # Index all the descendants of this donor
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -806,7 +877,7 @@ class Translator(TranslatorInterface):
         logger.info(f"Start executing index_entity() on uuid: {uuid}")
 
         entity_dict = self.call_entity_api(uuid, 'documents')
-        self.call_indexer(entity_dict)
+        self._call_indexer(entity=entity_dict)
 
         logger.info(f"Finished executing index_entity() on uuid: {uuid}")
 
@@ -815,7 +886,8 @@ class Translator(TranslatorInterface):
         logger.info(f"Start executing reindex_entity() on uuid: {uuid}")
 
         entity_dict = self.call_entity_api(uuid, 'documents')
-        self.call_indexer(entity_dict, reindex=True)
+        self._call_indexer(entity=entity_dict
+                           , delete_existing_doc_first=True)
 
         logger.info(f"Finished executing reindex_entity() on uuid: {uuid}")
 
@@ -865,72 +937,62 @@ class Translator(TranslatorInterface):
 
         return headers_dict
 
+
+    def _reindex_related_entities(  self, entity_id:str, entity_type:str, neo4j_ancestor_ids:list[str]
+                                    ,neo4j_descendant_ids:list[str]):
+        # If entity is new or Neo4j relationships for entity have changed, do a reindex with each ID
+        # which has entity as an ancestor or descendant.  This is a costlier operation than
+        # directly updating documents for related entities.
+        previous_revision_ids = []
+        next_revision_ids = []
+
+        # Only Dataset/Publication entities may have previous/next revisions
+        if entity_type in ['Dataset', 'Publication']:
+            previous_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='previous_revisions', endpoint_suffix=None, url_property='uuid')
+            next_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='next_revisions', endpoint_suffix=None, url_property='uuid')
+
+        # All unique entity ids in the path excluding the entity itself
+        target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
+
+        # Reindex the rest of the entities in the list
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
+            for f in concurrent.futures.as_completed(futures_list):
+                result = f.result()
+
     # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
-    def call_indexer(self, entity, reindex=False, document=None, target_index=None):
-        logger.info(f"Start executing call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
+    def _index_doc_directly_to_es_index(self, entity:dict, document:json, es_index:str, delete_existing_doc_first:bool=False):
+        logger.info(f"Start executing _index_doc_directly_to_es_index() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
 
         try:
-            if document is None:
-                try:
-                    document = self.generate_doc(entity, 'json')
-                except Exception as e:
-                    logger.exception(e)
-                    logger.error(f"Failed to execute generate_doc() on {entity['entity_type']} {entity['uuid']} during executing call_indexer()")
-
-                    # Raise the exception so the caller can handle it properly
-                    raise Exception(e)
-
-            if target_index:
-                self.indexer.index(entity['uuid'], document, target_index, reindex)
-            elif entity['entity_type'] == 'Upload':
-                target_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
-
-                self.indexer.index(entity['uuid'], document, target_index, reindex)
-            else:
-                # write entity into indices
-                for index in self.indices.keys():
-                    public_index = self.INDICES['indices'][index]['public']
-                    private_index = self.INDICES['indices'][index]['private']
-
-                    # check to see if the index has a transformer, default to None if not found
-                    transformer = self.TRANSFORMERS.get(index, None)
-
-                    if self.is_public(entity):
-                        try:
-                            public_doc = self.generate_public_doc(entity)
-
-                            if transformer is not None:
-                                public_transformed = transformer.transform(json.loads(public_doc), self.transformation_resources)
-                                public_transformed_doc = json.dumps(public_transformed)
-                                target_doc = public_transformed_doc
-                            else:
-                                target_doc = public_doc
-
-                            self.indexer.index(entity['uuid'], target_doc, public_index, reindex)
-                            logger.info(f"Finished executing indexer.index({entity['uuid']}, 'target_doc', {public_index}, {reindex}) for entity_type: {entity['entity_type']}")
-                        except Exception:
-                            msg = f"Exception encountered during executing generate_public_doc() inside call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
-                            # Log the full stack trace, prepend a line with our message
-                            logger.exception(msg)
-
-                    # add it to private
-                    if transformer is not None:
-                        private_transformed = transformer.transform(json.loads(document), self.transformation_resources)
-                        target_doc = json.dumps(private_transformed)
-                    else:
-                        target_doc = document
-
-                    self.indexer.index(entity['uuid'], target_doc, private_index, reindex)
-                    logger.info(f"Finished executing indexer.index({entity['uuid']}, 'target_doc', {private_index}, {reindex}) for entity_type: {entity['entity_type']}")
-
-            logger.info(f"Finished executing call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
+            self.indexer.index(entity['uuid'], document, es_index, reindex=delete_existing_doc_first)
+            logger.info(f"Finished executing _index_doc_directly_to_es_index() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
         except Exception as e:
-            logger.exception(e)
-            msg = f"Exception encountered during executing call_indexer() for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
+            msg =   f"Encountered exception e={str(e)}" \
+                    f" executing _index_doc_directly_to_es_index() with" \
+                    f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
+                    f" es_index={es_index}"
             # Log the full stack trace, prepend a line with our message
-            logger.error(msg)
+            logger.exception(msg)
 
+    # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
+    # ingest_metadata.metadata sub fields with empty string values from previous call
+    def _call_indexer(self, entity, delete_existing_doc_first=False):
+        logger.info(f"Start executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
+
+        try:
+            # Generate and write a document for the entity to each index group loaded from the configuration file.
+            for index_group in self.indices.keys():
+                self._transform_and_write_entity_to_index_group(entity=entity
+                                                                , index_group=index_group)
+            logger.info(f"Finished executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
+        except Exception as e:
+            msg = f"Encountered exception e={str(e)}" \
+                  f" executing _call_indexer() with" \
+                  f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
+            # Log the full stack trace, prepend a line with our message
+            logger.exception(msg)
 
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
