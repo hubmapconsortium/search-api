@@ -84,15 +84,18 @@ class Translator(TranslatorInterface):
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
-            # Form a comma-separated string of names from the configuration YAML for indices which hold
-            # entities which may need updates.  Strings are for use in GET & POST queries which support
-            # multiple indices via a single API call.
-            self.entities_index_list_string =   f"{self.INDICES['indices']['entities']['public']}" \
-                                                f",{self.INDICES['indices']['entities']['private']}"
-            # We will not be making _update QDSL calls for documents in the portal indices initially,
-            # but will continue with reindex calls for them. Form string just for future operations.
-            self.portal_index_list_string = f"{self.INDICES['indices']['portal']['public']}" \
-                                            f",{self.INDICES['indices']['portal']['private']}"
+            # Keep a dictionary of each ElasticSearch index in an index group which may be
+            # looked up for the re-indexing process.
+            self.index_group_es_indices = {
+                'entities': {
+                    'public': f"{self.INDICES['indices']['entities']['public']}"
+                    , 'private': f"{self.INDICES['indices']['entities']['private']}"
+                }
+                ,'portal': {
+                    'public': f"{self.INDICES['indices']['portal']['public']}"
+                    , 'private': f"{self.INDICES['indices']['portal']['private']}"
+                }
+            }
 
             logger.debug("=========== INDICES config ===========")
             logger.debug(self.INDICES)
@@ -416,22 +419,18 @@ class Translator(TranslatorInterface):
                             f" related_entity_target_elements={related_entity_target_elements}"
                             f" is not in es_index={es_index}.")
 
-    def _get_es_indices_for_index_group(self, index_group_name:str):
-        # Index group names are dynamically loaded from YAML, so they're not elegantly
-        # constrained by an enum.  So at least verify they match an expected value.
-        if index_group_name not in self.INDICES['indices'].keys():
-            raise Exception(f"'{index_group_name}' is not a recognized index group loaded from configuration files.")
-        if not self.INDICES['indices'][index_group_name]['reindex_enabled']:
-            raise Exception(f"Expected 'reindex_enabled' to be set true in the loaded configuration files, but"
-                            f" found 'self.INDICES['indices'][index_group_name]['reindex_enabled']'.")
-        index_group_es_indices={}
-        for expected_index_group_element in ['private','public']:
-            index_group_es_indices[expected_index_group_element]=self.INDICES['indices'][index_group_name][expected_index_group_element]
-        return index_group_es_indices
+    def _exec_reindex_entity_to_index_group_by_id(self, executor: concurrent.futures.ThreadPoolExecutor()
+                                                  , entity_id: str(32), index_group: str):
+        logger.info(f"Start executing _exec_reindex_entity_to_index_group_by_id() on"
+                    f" entity_id: {entity_id}, index_group: {index_group}")
+
+        entity = self.call_entity_api(entity_id=entity_id
+                                      , endpoint_base='documents')
+        executor.submit(self._transform_and_write_entity_to_index_group, entity, index_group)
+
+        logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
     def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
-        index_group_es_indices = self._get_es_indices_for_index_group(index_group_name=index_group)
-
         try:
             private_doc = self.generate_doc(entity=entity
                                             , return_type='json')
@@ -446,24 +445,24 @@ class Translator(TranslatorInterface):
             logger.exception(msg)
 
         docs_to_write_dict = {
-            index_group_es_indices['private']: None,
-            index_group_es_indices['public']: None
+            self.index_group_es_indices[index_group]['private']: None,
+            self.index_group_es_indices[index_group]['public']: None
         }
         # Check to see if the index_group has a transformer, default to None if not found
         transformer = self.TRANSFORMERS.get(index_group, None)
         if transformer is None:
             logger.info(f"Unable to find '{index_group}' transformer, indexing documents untransformed.")
-            docs_to_write_dict[index_group_es_indices['private']] = private_doc
+            docs_to_write_dict[self.index_group_es_indices[index_group]['private']] = private_doc
             if 'public_doc' in locals() and public_doc is not None:
-                docs_to_write_dict[index_group_es_indices['public']] = public_doc
+                docs_to_write_dict[self.index_group_es_indices[index_group]['public']] = public_doc
         else:
             private_transformed = transformer.transform(json.loads(private_doc),
                                                         self.transformation_resources)
-            docs_to_write_dict[index_group_es_indices['private']] = json.dumps(private_transformed)
+            docs_to_write_dict[self.index_group_es_indices[index_group]['private']] = json.dumps(private_transformed)
             if 'public_doc' in locals() and public_doc is not None:
                 public_transformed = transformer.transform(json.loads(public_doc),
                                                            self.transformation_resources)
-                docs_to_write_dict[index_group_es_indices['public']] = json.dumps(public_transformed)
+                docs_to_write_dict[self.index_group_es_indices[index_group]['public']] = json.dumps(public_transformed)
 
         for index_name in docs_to_write_dict.keys():
             if docs_to_write_dict[index_name] is None:
@@ -583,15 +582,14 @@ class Translator(TranslatorInterface):
                     # All unique entity ids in the path excluding the entity itself
                     target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
 
-                    # Until the portal indices support direct updates using correctly transformed documents,
-                    # continue doing a reindex to update documents in those indices.
-                    self._transform_and_write_entity_to_index_group(entity=entity
-                                                                    , index_group='portal')
-                    for related_entity_uuid in target_ids:
-                        related_entity = self.call_entity_api(  entity_id=related_entity_uuid
-                                                                , endpoint_base='documents')
-                        self._transform_and_write_entity_to_index_group(entity=related_entity
-                                                                        , index_group='portal')
+                    # Reindex the entity, and all related entities which have details of
+                    # this entity in their document.
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        executor.submit(self._transform_and_write_entity_to_index_group, entity, 'portal')
+                        for related_entity_uuid in target_ids:
+                            self._exec_reindex_entity_to_index_group_by_id( executor=executor
+                                                                            , entity_id=related_entity_uuid
+                                                                            , index_group='portal')
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
