@@ -419,14 +419,14 @@ class Translator(TranslatorInterface):
                             f" related_entity_target_elements={related_entity_target_elements}"
                             f" is not in es_index={es_index}.")
 
-    def _exec_reindex_entity_to_index_group_by_id(self, executor: concurrent.futures.ThreadPoolExecutor()
-                                                  , entity_id: str(32), index_group: str):
+    def _exec_reindex_entity_to_index_group_by_id(self, entity_id: str(32), index_group: str):
         logger.info(f"Start executing _exec_reindex_entity_to_index_group_by_id() on"
                     f" entity_id: {entity_id}, index_group: {index_group}")
 
         entity = self.call_entity_api(entity_id=entity_id
                                       , endpoint_base='documents')
-        executor.submit(self._transform_and_write_entity_to_index_group, entity, index_group)
+        self._transform_and_write_entity_to_index_group(entity=entity
+                                                        , index_group=index_group)
 
         logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
@@ -584,12 +584,10 @@ class Translator(TranslatorInterface):
 
                     # Reindex the entity, and all related entities which have details of
                     # this entity in their document.
+                    self._transform_and_write_entity_to_index_group(entity=entity
+                                                                    , index_group='portal')
                     with concurrent.futures.ThreadPoolExecutor() as executor:
-                        executor.submit(self._transform_and_write_entity_to_index_group, entity, 'portal')
-                        for related_entity_uuid in target_ids:
-                            self._exec_reindex_entity_to_index_group_by_id( executor=executor
-                                                                            , entity_id=related_entity_uuid
-                                                                            , index_group='portal')
+                        futures_list = [executor.submit(self._exec_reindex_entity_to_index_group_by_id, related_entity_uuid, 'portal') for related_entity_uuid in target_ids]
 
                 logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
         except Exception:
