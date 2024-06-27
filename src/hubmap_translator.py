@@ -342,7 +342,8 @@ class Translator(TranslatorInterface):
             return resp_json['hits']['hits'][0]
 
     def _directly_modify_related_entities(  self, es_url:str, es_index:str, entity_id:str
-                                            ,neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str]):
+                                            , neo4j_ancestor_ids:list[str], neo4j_descendant_ids:list[str]
+                                            , neo4j_collection_ids:list[str], neo4j_upload_ids:list[str]):
         # Directly update the OpenSearch documents for each associated entity with a current snapshot of
         # this entity, since relationships graph of this entity is unchanged in Neo4j since the
         # last time this entity was indexed.
@@ -384,9 +385,10 @@ class Translator(TranslatorInterface):
                                             , 'immediate_ancestors'
                                             , 'ancestors'
                                             , 'source_samples'
-                                            , 'origin_samples' ]
+                                            , 'origin_samples'
+                                            , 'datasets']
 
-        related_entity_ids = neo4j_ancestor_ids + neo4j_descendant_ids
+        related_entity_ids = neo4j_ancestor_ids + neo4j_descendant_ids + neo4j_collection_ids + neo4j_upload_ids
 
         for related_entity_id in related_entity_ids:
             qdsl_update_payload_string = QDSL_UPDATE_ENDPOINT_WITH_ID_PARAM \
@@ -425,8 +427,13 @@ class Translator(TranslatorInterface):
 
         entity = self.call_entity_api(entity_id=entity_id
                                       , endpoint_base='documents')
-        self._transform_and_write_entity_to_index_group(entity=entity
-                                                        , index_group=index_group)
+        if entity['entity_type'] == 'Collection':
+            self.translate_collection(entity_id=entity_id, reindex=True)
+        elif entity['entity_type'] == 'Upload':
+            self.translate_upload(entity_id=entity_id, reindex=True)
+        else:
+            self._transform_and_write_entity_to_index_group(entity=entity
+                                                            , index_group=index_group)
 
         logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
@@ -532,26 +539,45 @@ class Translator(TranslatorInterface):
                                                             , endpoint_base='descendants'
                                                             , endpoint_suffix=None
                                                             , url_property='uuid')
+                # If working with a Dataset, it may be copied into ElasticSearch documents for
+                # Collections and Uploads, so identify any of those which must be reindexed.
+                neo4j_collection_ids = []
+                neo4j_upload_ids = []
+                if entity['entity_type'] == 'Dataset':
+                    neo4j_collection_ids = self.call_entity_api(entity_id=entity_id
+                                                                , endpoint_base='entities'
+                                                                , endpoint_suffix='collections'
+                                                                , url_property='uuid')
+                    neo4j_upload_ids = self.call_entity_api(entity_id=entity_id
+                                                            , endpoint_base='entities'
+                                                            , endpoint_suffix='uploads'
+                                                            , url_property='uuid')
 
                 # Use the index with documents for all entities to determine the relationships of the
                 # current entity as stored in OpenSearch.  Consider it safe to assume documents in other
                 # indices for the same entity have exactly the same relationships unless there was an
-                # indexing problem
+                # indexing problem.
+                #
+                # "Changed relationships" only applies to differences in the ancestors and descendants of
+                # an entity. Uploads and Collections which reference a Dataset entity, for example, do not
+                # indicate a change of relationships which would result in reindexing instead of directly updating.
                 index_with_everything = self.INDICES['indices']['entities']['private']
                 existing_entity_json = self._get_existing_entity_relationships(entity_uuid=entity['uuid']
                                                                                , es_url=es_url
                                                                                , es_index=index_with_everything)
 
                 relationships_changed = self._relationships_changed_since_indexed(neo4j_ancestor_ids=neo4j_ancestor_ids
-                                                                                  ,neo4j_descendant_ids=neo4j_descendant_ids
-                                                                                  ,existing_oss_doc=existing_entity_json)
+                                                                                  , neo4j_descendant_ids=neo4j_descendant_ids
+                                                                                  , existing_oss_doc=existing_entity_json)
                 if relationships_changed:
                     # Since the entity is new or the Neo4j relationships with related entities have changed,
                     # reindex the current entity
                     self._reindex_related_entities(entity_id=entity_id
                                                    , entity_type=entity['entity_type']
                                                    , neo4j_ancestor_ids=neo4j_ancestor_ids
-                                                   , neo4j_descendant_ids=neo4j_descendant_ids)
+                                                   , neo4j_descendant_ids=neo4j_descendant_ids
+                                                   , neo4j_collection_ids=neo4j_collection_ids
+                                                   , neo4j_upload_ids=neo4j_upload_ids)
                 else:
                     # Since the entity's relationships are identical in Neo4j and OpenSearch, just update
                     # documents in the entities indices with a copy of the current entity.
@@ -560,10 +586,12 @@ class Translator(TranslatorInterface):
                         # Since _directly_modify_related_entities() will only _update documents which already
                         # exist in an index, no need to test if this entity belongs in the public index.
                         self._directly_modify_related_entities( es_url=es_url
-                                                                ,es_index=es_index
-                                                                ,entity_id=entity_id
-                                                                ,neo4j_ancestor_ids=neo4j_ancestor_ids
-                                                                ,neo4j_descendant_ids=neo4j_descendant_ids)
+                                                                , es_index=es_index
+                                                                , entity_id=entity_id
+                                                                , neo4j_ancestor_ids=neo4j_ancestor_ids
+                                                                , neo4j_descendant_ids=neo4j_descendant_ids
+                                                                , neo4j_collection_ids= neo4j_collection_ids
+                                                                , neo4j_upload_ids=neo4j_upload_ids)
 
                     # Until the portal indices support direct updates using correctly transformed documents,
                     # continue doing a reindex for the updated entity and all the related entities which
@@ -579,8 +607,10 @@ class Translator(TranslatorInterface):
                         next_revision_ids = self.call_entity_api(entity_id=entity_id,
                                                                  endpoint_base='next_revisions',
                                                                  endpoint_suffix=None, url_property='uuid')
+
                     # All unique entity ids in the path excluding the entity itself
-                    target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
+                    target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids +
+                                     next_revision_ids + neo4j_collection_ids + neo4j_upload_ids)
 
                     # Reindex the entity, and all related entities which have details of
                     # this entity in their document.
@@ -780,7 +810,8 @@ class Translator(TranslatorInterface):
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
-            upload = self.call_entity_api(entity_id, 'documents')
+            upload = self.call_entity_api(entity_id=entity_id
+                                          , endpoint_base='documents')
 
             self.add_datasets_to_entity(upload)
             self._entity_keys_rename(upload)
@@ -805,7 +836,7 @@ class Translator(TranslatorInterface):
         # - no token at all
         # Here we do NOT send over the token
         try:
-            collection = self.get_collection(entity_id=entity_id)
+            collection = self.get_collection_doc(entity_id=entity_id)
 
             self.add_datasets_to_entity(collection)
             self._entity_keys_rename(collection)
@@ -935,7 +966,8 @@ class Translator(TranslatorInterface):
 
 
     def _reindex_related_entities(  self, entity_id:str, entity_type:str, neo4j_ancestor_ids:list[str]
-                                    ,neo4j_descendant_ids:list[str]):
+                                    , neo4j_descendant_ids:list[str], neo4j_collection_ids:list[str]
+                                    , neo4j_upload_ids:list[str]):
         # If entity is new or Neo4j relationships for entity have changed, do a reindex with each ID
         # which has entity as an ancestor or descendant.  This is a costlier operation than
         # directly updating documents for related entities.
@@ -947,8 +979,9 @@ class Translator(TranslatorInterface):
             previous_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='previous_revisions', endpoint_suffix=None, url_property='uuid')
             next_revision_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='next_revisions', endpoint_suffix=None, url_property='uuid')
 
-        # All unique entity ids in the path excluding the entity itself
-        target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids)
+        # All unique entity ids which might refer to the entity of entity_id
+        target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + previous_revision_ids + next_revision_ids +
+                         neo4j_collection_ids + neo4j_upload_ids)
 
         # Reindex the rest of the entities in the list
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -1417,26 +1450,26 @@ class Translator(TranslatorInterface):
         return self.prepare_dataset(response.json())
 
 
-    def get_collection(self, entity_id):
-        logger.info(f"Start executing get_collection() on uuid: {entity_id}")
+    def get_collection_doc(self, entity_id):
+        logger.info(f"Start executing get_collection_doc() on uuid: {entity_id}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
-        url = self.entity_api_url + "/entities/" + entity_id
+        url = self.entity_api_url + "/documents/" + entity_id
         response = requests.get(url, headers=self.request_headers, verify=False)
 
         if response.status_code != 200:
-            msg = f"get_collection() failed to get entity of uuid {entity_id} via entity-api"
+            msg = f"get_collection_doc() failed to get entity of uuid {entity_id} via entity-api"
 
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-            logger.debug("======get_collection() status code from entity-api======")
+            logger.debug("======get_collection_doc() status code from entity-api======")
             logger.debug(response.status_code)
 
-            logger.debug("======get_collection() response text from entity-api======")
+            logger.debug("======get_collection_doc() response text from entity-api======")
             logger.debug(response.text)
 
             # Bubble up the error message from entity-api instead of sys.exit(msg)
@@ -1446,10 +1479,9 @@ class Translator(TranslatorInterface):
 
         collection_dict = response.json()
 
-        logger.info(f"Finished executing get_collection() on uuid: {entity_id}")
+        logger.info(f"Finished executing get_collection_doc() on uuid: {entity_id}")
 
         return collection_dict
-
 
     def delete_and_recreate_indices(self):
         try:
