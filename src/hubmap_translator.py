@@ -438,6 +438,9 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
     def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
+        logger.info(f"Start executing direct '{index_group}' updates for"
+                    f"entity['uuid']={entity['uuid']},"
+                    f" entity['entity_type']={entity['entity_type']}")
         try:
             private_doc = self.generate_doc(entity=entity
                                             , return_type='json')
@@ -478,13 +481,13 @@ class Translator(TranslatorInterface):
                                , document=docs_to_write_dict[index_name]
                                , index_name=index_name
                                , reindex=True)
-            logger.info(f"Finished executing indexer.index() during direct 'portal' reindexing with" \
+            logger.info(f"Finished executing indexer.index() during direct '{index_group}' reindexing with" \
                         f" entity['uuid']={entity['uuid']}," \
                         f" entity['entity_type']={entity['entity_type']}," \
                         f" index_name={index_name}.")
 
-        logger.info(f"Finished direct 'portal' updates for"
-                    f"entity['uuid']={entity['uuid']},"
+        logger.info(f"Finished direct '{index_group}' updates for"
+                    f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
 
     # Used by individual live reindex call
