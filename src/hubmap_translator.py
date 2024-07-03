@@ -313,7 +313,8 @@ class Translator(TranslatorInterface):
 
         if not resp_json or \
                 'hits' not in resp_json or \
-                'hits' not in resp_json['hits']:
+                'hits' not in resp_json['hits'] or \
+                len(resp_json['hits']['hits']) == 0:
             # If OpenSearch does not have an existing document for this entity, drop down to reindexing.
             # Anything else Falsy JSON could be an unexpected result for an existing entity, but fall back to
             # reindexing under those circumstances, too.
@@ -528,10 +529,6 @@ class Translator(TranslatorInterface):
                 # get URL for the OpenSearch server
                 es_url = self.INDICES['indices']['entities']['elasticsearch']['url'].strip('/')
 
-                # Reindex the entity itself first before dealing with other documents for related entities.
-                self._call_indexer(entity=entity
-                                   , delete_existing_doc_first=True)
-
                 # Get the ancestors and descendants of this entity as they exist in Neo4j, and as they
                 # exist in OpenSearch.
                 neo4j_ancestor_ids = self.call_entity_api(entity_id=entity_id
@@ -572,7 +569,14 @@ class Translator(TranslatorInterface):
                 relationships_changed = self._relationships_changed_since_indexed(neo4j_ancestor_ids=neo4j_ancestor_ids
                                                                                   , neo4j_descendant_ids=neo4j_descendant_ids
                                                                                   , existing_oss_doc=existing_entity_json)
+
+                # Now that it has been determined whether relationships have changed for this entity,
+                # reindex the entity itself first before dealing with other documents for related entities.
+                self._call_indexer(entity=entity
+                                   , delete_existing_doc_first=True)
+
                 if relationships_changed:
+                    logger.info(f"Related entities for {entity_id} have changed in Neo4j. Reindexing")
                     # Since the entity is new or the Neo4j relationships with related entities have changed,
                     # reindex the current entity
                     self._reindex_related_entities(entity_id=entity_id
@@ -582,6 +586,8 @@ class Translator(TranslatorInterface):
                                                    , neo4j_collection_ids=neo4j_collection_ids
                                                    , neo4j_upload_ids=neo4j_upload_ids)
                 else:
+                    logger.info(f"Related entities for {entity_id} are unchanged in Neo4j."
+                                f" Directly updating index docs of related entities.")
                     # Since the entity's relationships are identical in Neo4j and OpenSearch, just update
                     # documents in the entities indices with a copy of the current entity.
                     for es_index in [   self.INDICES['indices']['entities']['private']
