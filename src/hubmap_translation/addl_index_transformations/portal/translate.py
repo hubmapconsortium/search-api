@@ -243,25 +243,12 @@ def _translate_sample_category(doc):
     >>> doc = {'sample_category': 'block'}
     >>> _translate_sample_category(doc); doc
     {'sample_category': 'block', 'mapped_sample_category': 'Block'}
-
-    >>> doc = {'sample_category': 'xyz'}
-    >>> _translate_sample_category(doc); doc
-    {'sample_category': 'xyz', 'mapped_sample_category': 'No translation for "xyz"'}
-
     '''
     _map(doc, 'sample_category', _sample_categories_map)
 
 
 def _sample_categories_map(k):
-    if k not in _sample_categories_dict:
-        return _unexpected(k)
-    return _sample_categories_dict[k]
-
-
-_sample_categories_dict = {
-    k: v['description']
-    for k, v in _enums['tissue_sample_types'].items()
-}
+    return k.capitalize()
 
 
 # Donor metadata:
