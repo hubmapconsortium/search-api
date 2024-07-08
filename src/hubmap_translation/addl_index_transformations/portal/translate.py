@@ -119,17 +119,11 @@ def _translate_access_level(doc):
     >>> doc = {'data_access_level': 'consortium'}
     >>> _translate_access_level(doc); doc
     {'data_access_level': 'consortium', 'mapped_data_access_level': 'Consortium'}
-    >>> doc = {'data_access_level': 'top-secret'}
-    >>> _translate_access_level(doc); doc
-    {'data_access_level': 'top-secret', 'mapped_data_access_level': 'No translation for "top-secret"'}
-
     '''
     _map(doc, 'data_access_level', _access_level_map)
 
 
 def _access_level_map(access_level):
-    if access_level not in _enums['data_access_levels'].keys():
-        return _unexpected(access_level)
     return access_level.title()
 
 
@@ -194,17 +188,11 @@ def _translate_status(doc):
     >>> doc = {'status': 'New'}
     >>> _translate_status(doc); doc
     {'status': 'New', 'mapped_status': 'New'}
-
-    >>> doc = {'status': 'Foobar'}
-    >>> _translate_status(doc); doc
-    {'status': 'Foobar', 'mapped_status': 'No translation for "Foobar"'}
     '''
     _map(doc, 'status', _status_map)
 
 
 def _status_map(status):
-    if status not in _enums['dataset_status_types'].keys():
-        return _unexpected(status)
     return status
 
 
@@ -248,7 +236,7 @@ def _translate_sample_category(doc):
 
 
 def _sample_categories_map(k):
-    return k.capitalize()
+    return k.title()
 
 
 # Donor metadata:
