@@ -1,14 +1,6 @@
-from pathlib import Path
 import re
-import sys
 from datetime import datetime
 from collections import defaultdict
-
-from yaml import safe_load as load_yaml
-
-# Ignore PEP8 "E402 module level import not at top of file" with using the
-# inline comment "# noqa: E402"
-sys.path.append("search-adaptor/src")
 
 
 class TranslationException(Exception):
@@ -19,11 +11,11 @@ def _unexpected(s):
     return f'No translation for "{s}"'
 
 
-def translate(doc):
+def translate(doc, organ_map):
     _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
-    _translate_organ(doc)
+    _translate_organ(doc, organ_map)
     # _add_origin_samples_unique_mapped_organs depends on the existence of the mapped_organ field and must be performed after _translate_organ.
     _add_origin_samples_unique_mapped_organs(doc)
     _translate_donor_metadata(doc)
@@ -31,14 +23,6 @@ def translate(doc):
     _translate_timestamp(doc)
     _translate_access_level(doc)
     _translate_external_consortium(doc)
-
-
-# Utils:
-
-_enums_dir = Path(__file__).parent.parent.parent.parent / \
-    'search-schema' / 'data' / 'definitions' / 'enums'
-_enums = {path.stem: load_yaml(path.read_text())
-          for path in _enums_dir.iterdir()}
 
 
 def _map(doc, key, map):
@@ -198,30 +182,23 @@ def _status_map(status):
 
 # Organ:
 
-def _translate_organ(doc):
+def _translate_organ(doc, organ_map):
     '''
     >>> doc = {'origin_samples': [{'organ': 'RK'}]}
-    >>> _translate_organ(doc); doc
+    >>> organ_map = {'RK': {'term': 'Kidney (Right)'}}
+    >>> _translate_organ(doc, {'RK': {'term': 'Kidney (Right)'}}); doc
     {'origin_samples': [{'organ': 'RK', 'mapped_organ': 'Kidney (Right)'}]}
 
     >>> doc = {'origin_samples': [{'organ': 'ZZ'}]}
-    >>> _translate_organ(doc); doc
+    >>> _translate_organ(doc, {}); doc
     {'origin_samples': [{'organ': 'ZZ', 'mapped_organ': 'No translation for "ZZ"'}]}
 
     '''
+    def _organ_map(k):
+        if k not in organ_map:
+            return _unexpected(k)
+        return organ_map.get(k, {}).get('term')
     _map(doc, 'organ', _organ_map)
-
-
-def _organ_map(k):
-    if k not in _organ_dict:
-        return _unexpected(k)
-    return _organ_dict[k]
-
-
-_organ_dict = {
-    k: v['description']
-    for k, v in _enums['organ_types'].items()
-}
 
 
 # Sample category:
