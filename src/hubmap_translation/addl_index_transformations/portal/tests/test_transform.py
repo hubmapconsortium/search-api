@@ -134,10 +134,6 @@ def mock_response(response_to_mock, status_code=200, text='Logger call requires 
     return MockResponse()
 
 
-def mock_organ_map():
-    return mock_response([{'rui_code': 'LY', 'organ_uberon': 'UBERON:0000029', 'term': 'Lymph Node'}])
-
-
 def mock_soft_assay(uuid=None, headers=None):
     return mock_response({'assaytype': 'salmon_rnaseq_10x',
                           'contains-pii': False,
@@ -147,9 +143,10 @@ def mock_soft_assay(uuid=None, headers=None):
 
 
 def test_transform(mocker):
-    mocker.patch('requests.get', side_effect=[mock_organ_map, mock_soft_assay])
+    mocker.patch('requests.get', side_effect=mock_soft_assay)
     transformation_resources = {
-        'ingest_api_soft_assay_url': 'abc123', 'token': 'def456'}
+        'ingest_api_soft_assay_url': 'abc123', 'token': 'def456',
+        'organ_map': {"LY": {'rui_code': 'LY', 'organ_uberon': 'UBERON:0000029', 'term': 'Lymph Node'}}}
     output = transform(input_doc, transformation_resources)
     del output['mapper_metadata']
     assert output == expected_output_doc

@@ -56,7 +56,7 @@ class Translator(TranslatorInterface):
     ACCESS_LEVEL_CONSORTIUM = 'consortium'
     DATASET_STATUS_PUBLISHED = 'published'
     # Constants to build endpoint URLs for Ontology API
-    ONTOLOGY_API_ORGAN_TYPES_ENDPOINT = '/organs/by-code?application_context=HUBMAP'
+    ONTOLOGY_API_ORGAN_TYPES_ENDPOINT = '/organs?application_context=HUBMAP'
     DEFAULT_INDEX_WITHOUT_PREFIX = ''
     INDICES = {}
     TRANSFORMERS = {}
@@ -110,7 +110,7 @@ class Translator(TranslatorInterface):
         # Add index_version by parsing the VERSION file
         self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
         self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
-                                         'ontology_url': ontology_api_base_url,
+                                         'organ_map': self.get_organ_types(),
                                          'descendants_url': f'{self.entity_api_url}/descendants',
                                          'token': token,}
 
@@ -1173,7 +1173,7 @@ class Translator(TranslatorInterface):
                     if 'organ' in entity:
                         known_organ_types = self.get_organ_types()
                         if entity['organ'] in known_organ_types.keys():
-                            display_subtype = known_organ_types[entity['organ']]
+                            display_subtype = known_organ_types[entity['organ']].get('term')
                         else:
                             raise Exception(
                                 f"Unable retrieve organ type ontology information for organ_type_code={entity['organ']}.")
@@ -1538,12 +1538,22 @@ class Translator(TranslatorInterface):
         The available organ types in the following format:
     
         {
-            "AO": "Aorta",
-            "BD": "Blood",
-            "BL": "Bladder",
-            "BM": "Bone Marrow",
-            "BR": "Brain",
-            "HT": "Heart",
+            "AO": {
+                "code": "C030042",
+                "organ_cui": "C0003483",
+                "organ_uberon": "UBERON:0000947",
+                "rui_code": "AO",
+                "sab": "HUBMAP",
+                "term": "Aorta"
+            },
+            "BL": {
+                "code": "C030043",
+                "organ_cui": "C0005682",
+                "organ_uberon": "UBERON:0001255",
+                "rui_code": "BL",
+                "sab": "HUBMAP",
+                "term": "Bladder"
+            },
             ...
         }
     """
@@ -1557,7 +1567,8 @@ class Translator(TranslatorInterface):
         response.raise_for_status()
 
         if response.status_code == 200:
-            return response.json()
+            organ_json = response.json()
+            return {o['rui_code']: o for o in organ_json}
         else:
             # Log the full stack trace, prepend a line with our message
             logger.exception("Unable to make a request to query the organ types via ontology-api")

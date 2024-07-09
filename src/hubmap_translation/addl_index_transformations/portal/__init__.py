@@ -32,10 +32,6 @@ from hubmap_translation.addl_index_transformations.portal.lift_dataset_metadata_
     lift_dataset_metadata_fields
 )
 
-from hubmap_translation.addl_index_transformations.portal.get_organ_map import (
-    get_organ_map
-)
-
 
 def _get_version():
     # Use the generated BUILD (under project root directory) version (git branch name:short commit hash)
@@ -70,7 +66,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     _add_validation_errors(doc_copy)
     _clean(doc_copy)
     doc_copy['transformation_errors'] = []
-    organ_map = get_organ_map(transformation_resources)
+    organ_map = transformation_resources.get('organ_map', {})
     try:
         add_assay_details(doc_copy, transformation_resources)
         lift_dataset_metadata_fields(doc_copy)
