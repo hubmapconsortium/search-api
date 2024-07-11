@@ -284,7 +284,6 @@ paths:
     }
   }
 }
-
       responses:
         '200':
           description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
