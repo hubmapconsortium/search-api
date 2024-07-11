@@ -200,26 +200,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/requestJsonBody'
-            example: |
-              "query": {
-                "bool": {
-                  "must": [
-                    {
-                      "match_phrase": {
-                        "donor.group_name": "Vanderbilt TMC"
-                      }
-                    }
-                  ],
-                  "filter": [
-                    {
-                      "match": {
-                        "entity_type.keyword": "Sample"
-                      }
-                    }
-                  ]
-                }
-              }
-
+            example: {
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "donor.group_name": "Vanderbilt TMC"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "match": {
+            "entity_type.keyword": "Sample"
+          }
+        }
+      ]
+    }
+  }
+}
       responses:
         '200':
             description: Returns search hits from backend Elasticsearch that match the query defined in the request JSON
@@ -261,25 +261,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/requestJsonBody'
-            example: |
-              "query": {
-                "bool": {
-                  "must": [
-                    {
-                      "match_phrase": {
-                        "donor.group_name": "Vanderbilt TMC"
-                      }
-                    }
-                  ],
-                  "filter": [
-                    {
-                      "match": {
-                        "entity_type.keyword": "Sample"
-                      }
-                    }
-                  ]
-                }
-              }
+            example: {
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "donor.group_name": "Vanderbilt TMC"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "match": {
+            "entity_type.keyword": "Sample"
+          }
+        }
+      ]
+    }
+  }
+}
 
       responses:
         '200':
