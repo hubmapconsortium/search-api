@@ -10,6 +10,9 @@ info:
   license:
     name: MIT License
     url: 'https://github.com/hubmapconsortium/entity-api/blob/master/license.txt'
+externalDocs:
+  description: Generating a HuBMAP CLT Manifest with search-api
+  url: https://docs.hubmapconsortium.org/clt/generate-manifest.html
 servers:
   - url: "https://search.api.hubmapconsortium.org/v3/"
 components:
