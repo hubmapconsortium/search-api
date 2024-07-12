@@ -54,13 +54,6 @@ elasticsearch &  # Wait for it to start...
 - As a codeowner, Zhou (github username `yuanzhou`) is automatically assigned as a reviewer to each PR. When all other reviewers have approved, he will approve as well, merge to `dev-integrate`, and redeploy and reindex the DEV instance.
 - When a feature branch is ready for testing and release, Zhou will make a PR to `main` for testing on the TEST infrastructure as above.
 
-## Updating the enumerations
-
-All codes used by the system need to be represented in
-[src/search-schema/data/definitions/](src/search-schema/data/definitions/).
-The most frequently updated is `assay_types.yaml`:
-Nils likes to review the descriptions here, so he is listed as a "[code owner](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners)".
-
 ## Search endpoint and group access check
 
 The search-api base URL for each deployment environment:
