@@ -10,6 +10,9 @@ info:
   license:
     name: MIT License
     url: 'https://github.com/hubmapconsortium/entity-api/blob/master/license.txt'
+externalDocs:
+  description: Generating a HuBMAP CLT Manifest with search-api
+  url: https://docs.hubmapconsortium.org/clt/generate-manifest.html
 servers:
   - url: "https://search.api.hubmapconsortium.org/v3/"
 components:
@@ -184,6 +187,13 @@ paths:
       tags:
         - search
       summary: Executes an Elasticsearch DSL query JSON via POST and returns hits that match the query.
+      parameters:
+        - name: produce-clt-manifest
+          in: query
+          description: An optional parameter that, when set to "true", will make the endpoint return a text representation of a manifest file that corresponds with the datasets queried rather than the original response
+          required: false
+          schema:
+            type: string
       description: To execute a query, the POST method must provide 1) a request body that specifies an [Elasticsearch Query DSL statement](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-your-data.html) 2) a bearer token in the Authorization header supplied by HuBMAP. Results are limited to those authorized by the bearer token. Uses the <strong>hm_consortium_entities</strong> index by default.
       operationId: search-post
       requestBody:
@@ -241,6 +251,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: produce-clt-manifest
+          in: query
+          description: An optional parameter that, when set to "true", will make the endpoint return a text representation of a manifest file that corresponds with the datasets queried rather than the original response
+          required: false
+          schema:
+            type: string
       requestBody:
         description: A JSON that describes a [DSL query](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html). The query will likely be a compound boolean.
         required: true
@@ -281,7 +297,40 @@ paths:
           description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
-            
+
+  '/param-search/{entity_type}':
+    get:
+      tags:
+        - param_search_index
+      summary: Executes an Elasticsearch DSL query JSON via POST and returns hits that match the query.
+      parameters:
+        - name: produce-clt-manifest
+          in: query
+          description: An optional parameter that, when set to "true", will make the endpoint return a text representation of a manifest file that corresponds with the datasets queried rather than the original response
+          required: false
+          schema:
+            type: string
+        - name: entity-type
+          in: path
+          description: The entity type to be returned
+          schema:
+            type: string
+      description: Searches datasets based on the given parameter entity-type ('donor', 'dataset', 'sample', etc). GET method must provide a bearer token in the Authorization header supplied by HuBMAP. Results are limited to those authorized by the bearer token. 
+      operationId: param-search-get
+      responses:
+        '200':
+          description: Returns search hits from backend Elasticsearch that match the parameter
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Bad request. A valid entity-type parameter is required in request
+        '401':
+          description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
+        '403':
+          description: The globus token used in the `Authorization` header doesn't have the right group access permission
+
   '/reindex/{identifier}':
     put:
       tags:
