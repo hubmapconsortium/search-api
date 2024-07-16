@@ -23,13 +23,14 @@ from hubmap_translation.addl_index_transformations.portal.translate import Trans
             {"origin_samples": [{"fake": "XX"}]}, None, id="missing organ"
         ),
         pytest.param(
-            {"uuid": "organ_sample", "entity_type": "Sample", "sample_category": "block", "origin_samples": [{"organ": "HT"}]},
+            {"uuid": "organ_sample", "entity_type": "Sample",
+                "sample_category": "block", "origin_samples": [{"organ": "HT"}]},
             "http://purl.obolibrary.org/obo/UBERON_0000948", id="Block sample with valid organ"
         ),
     ]
 )
 def test_get_organ_iri(doc, expected_organ_iri):
-    organ_iri = _get_organ_iri(doc)
+    organ_iri = _get_organ_iri(doc, {'HT': {'organ_uberon': 'UBERON_0000948'}})
     assert organ_iri == expected_organ_iri
 
 
@@ -43,6 +44,6 @@ def test_get_organ_iri(doc, expected_organ_iri):
 )
 def test_get_organ_iri_invalid_doc_handling(doc):
     with pytest.raises(TranslationException) as excinfo:
-        _get_organ_iri(doc)
+        _get_organ_iri(doc, {})
     assert "Invalid document" in str(excinfo.value)
     assert "Missing or empty" in str(excinfo.value)

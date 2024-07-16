@@ -3,29 +3,26 @@ from collections import defaultdict
 import requests
 from pathlib import Path
 from json import loads, dumps
-from yaml import safe_load
+
 from hubmap_translation.addl_index_transformations.portal.translate import TranslationException
 
 
-_two_letter_to_iri = {
-    two_letter: organ.get('iri')
-    for two_letter, organ
-    in safe_load(
-        (Path(__file__).parent.parent.parent.parent
-         / 'search-schema/data/definitions/enums/organ_types.yaml').read_text()
-    ).items()
-}
-
-
-def _get_organ_iri(doc):
+def _get_organ_iri(doc, organ_map):
     try:
         two_letter_code = doc.get('origin_samples', [{}])[0].get('organ')
     except IndexError:
-        raise TranslationException(f"Invalid document uuid={doc.get('uuid')}: Missing or empty 'origin_samples' for {doc.get('entity_type')}.")
-    return _two_letter_to_iri.get(two_letter_code)
+        raise TranslationException(
+            f"Invalid document uuid={doc.get('uuid')}: Missing or empty 'origin_samples' for {doc.get('entity_type')}.")
+
+    uberon = organ_map.get(two_letter_code, {}).get('organ_uberon')
+
+    if uberon:
+        underscore_uberon = uberon.replace(':', '_')
+        return f"http://purl.obolibrary.org/obo/{underscore_uberon}"
+    return None
 
 
-def add_partonomy(doc):
+def add_partonomy(doc, organ_map):
     '''
     >>> rui_location = {
     ...     'ccf_annotations': [
@@ -37,7 +34,7 @@ def add_partonomy(doc):
     >>> doc = {
     ...     'rui_location': dumps(rui_location)
     ... }
-    >>> add_partonomy(doc)
+    >>> add_partonomy(doc, {})
     >>> del doc['rui_location']
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['large intestine'], 'anatomy_2': ['transverse colon']}
@@ -46,7 +43,7 @@ def add_partonomy(doc):
     >>> doc = {
     ...     'origin_samples': [{'organ': 'RK'}],
     ... }
-    >>> add_partonomy(doc)
+    >>> add_partonomy(doc, {'RK': {'organ_uberon': 'UBERON:0004539'}})
     >>> del doc['origin_samples']
     >>> doc
     {'anatomy_0': ['body'], 'anatomy_1': ['kidney'], 'anatomy_2': ['right kidney']}
@@ -57,7 +54,7 @@ def add_partonomy(doc):
     ...     'origin_samples': [{'organ': 'RK'}],
     ...     'rui_location': dumps(rui_location)
     ... }
-    >>> add_partonomy(doc)
+    >>> add_partonomy(doc, {'RK': {'organ_uberon': 'UBERON:0004539'}})
     >>> del doc['origin_samples']
     >>> del doc['rui_location']
     >>> doc
@@ -68,7 +65,7 @@ def add_partonomy(doc):
     >>> doc = {
     ...     'origin_samples': [{'organ': 'ZZ'}],
     ... }
-    >>> add_partonomy(doc)
+    >>> add_partonomy(doc, {})
     >>> del doc['origin_samples']
     >>> doc
     {}
@@ -76,14 +73,12 @@ def add_partonomy(doc):
     What if everything is missing?
 
     >>> doc = {}
-    >>> add_partonomy(doc)
+    >>> add_partonomy(doc, {})
     >>> doc
     {}
-
     '''
     annotations = []
-
-    organ_iri = _get_organ_iri(doc)
+    organ_iri = _get_organ_iri(doc, organ_map)
     if organ_iri:
         annotations.append(organ_iri)
 
@@ -106,7 +101,8 @@ def _get_ancestors_of(node_id, index):
     if node_id not in index:
         return []
     node = index[node_id]
-    ancestors = _get_ancestors_of(node['parent_id'], index) if node['parent_id'] else []
+    ancestors = _get_ancestors_of(
+        node['parent_id'], index) if node['parent_id'] else []
     ancestors.append(node['value'])
     return ancestors
 
@@ -190,6 +186,6 @@ if __name__ == "__main__":
     parser.add_argument('rui_json', help='RUI-JSON as string.')
     args = parser.parse_args()
     doc = {'rui_location': args.rui_json}
-    add_partonomy(doc)
+    add_partonomy(doc, {})
     del doc['rui_location']
     print(dumps(doc, sort_keys=True, indent=2))
