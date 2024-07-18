@@ -14,9 +14,6 @@ AWS_OBJECT_URL_EXPIRATION_IN_SECS = 60*60 # 1 hour
 # returned in the response to avoid the AWS Gateway 10Mb constraint
 LARGE_RESPONSE_THRESHOLD = 9*(2**20) + 900*(2**10) #9.9Mb
 
-# ElasticSearch retry_on_conflict value. Positive integer or zero.
-ES_RETRY_ON_CONFLICT_FREQ = 5
-
 # Base URL for the Ontology API
 ONTOLOGY_API_BASE_URL = 'https://ontology-api.dev.hubmapconsortium.org'
 

@@ -66,8 +66,7 @@ class Translator(TranslatorInterface):
     failed_entity_api_calls = []
     failed_entity_ids = []
 
-    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None
-                 , es_retry_on_conflict_freq:int=0):
+    def __init__(self, indices, app_client_id, app_client_secret, token, ontology_api_base_url:str=None):
         try:
             self.ingest_api_soft_assay_url = indices['ingest_api_soft_assay_url'].strip('/')
             self.indices: dict = {}
@@ -82,7 +81,7 @@ class Translator(TranslatorInterface):
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
             self._ontology_api_base_url = ontology_api_base_url
-            self.es_retry_on_conflict_freq = es_retry_on_conflict_freq
+            self.es_retry_on_conflict_param_value = indices['es_retry_on_conflict_param_value']
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -376,7 +375,7 @@ class Translator(TranslatorInterface):
             f'  \"lang\": \"painless\",' \
             f'  \"source\": \"{painless_query}\",' \
             f'  \"params\": {{' \
-            f'   \"retry_on_conflict\": {self.es_retry_on_conflict_freq},' \
+            f'   \"retry_on_conflict\": {self.es_retry_on_conflict_param_value},' \
             f'   \"modified_entity_uuid\": \"<TARGET_MODIFIED_ENTITY_UUID>\",' \
             f'   \"revised_related_entity\": <THIS_REVISED_ENTITY>' \
             f'  }}' \
