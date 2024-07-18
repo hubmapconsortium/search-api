@@ -81,6 +81,7 @@ class Translator(TranslatorInterface):
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
             self._ontology_api_base_url = ontology_api_base_url
+            self.es_retry_on_conflict_param_value = indices['es_retry_on_conflict_param_value']
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
@@ -374,6 +375,7 @@ class Translator(TranslatorInterface):
             f'  \"lang\": \"painless\",' \
             f'  \"source\": \"{painless_query}\",' \
             f'  \"params\": {{' \
+            f'   \"retry_on_conflict\": {self.es_retry_on_conflict_param_value},' \
             f'   \"modified_entity_uuid\": \"<TARGET_MODIFIED_ENTITY_UUID>\",' \
             f'   \"revised_related_entity\": <THIS_REVISED_ENTITY>' \
             f'  }}' \
@@ -414,7 +416,10 @@ class Translator(TranslatorInterface):
                              f" es_url={es_url},"
                              f" endoint '_update/{related_entity_id}' with"
                              f" qdsl_update_payload_string={qdsl_update_payload_string}.")
-                raise Exception(f"OpenSearch query return a status code of "
+                if opensearch_response.text:
+                    logger.error(f"OpenSearch message for {opensearch_response.status_code} code:"
+                                 f" '{opensearch_response.text}'.")
+                raise Exception(f"OpenSearch query returned a status code of "
                                 f" '{opensearch_response.status_code}'. See logs.")
             elif opensearch_response.status_code == 404:
                 logger.info(f"Call to QDSL _update got HTTP response code"
