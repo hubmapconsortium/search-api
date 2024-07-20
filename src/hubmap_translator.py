@@ -81,7 +81,9 @@ class Translator(TranslatorInterface):
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
             self._ontology_api_base_url = ontology_api_base_url
-            self.es_retry_on_conflict_param_value = indices['es_retry_on_conflict_param_value']
+            
+            # Commented out by Zhou to avoid 409 conflicts - 7/20/2024
+            # self.es_retry_on_conflict_param_value = indices['es_retry_on_conflict_param_value']
 
             self.indexer = Indexer(self.indices, self.DEFAULT_INDEX_WITHOUT_PREFIX)
 
