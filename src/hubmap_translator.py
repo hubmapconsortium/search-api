@@ -375,8 +375,6 @@ class Translator(TranslatorInterface):
             f'  \"lang\": \"painless\",' \
             f'  \"source\": \"{painless_query}\",' \
             f'  \"params\": {{' \
-            f'   \"refresh\": true,' \
-            f'   \"retry_on_conflict\": {self.es_retry_on_conflict_param_value},' \
             f'   \"modified_entity_uuid\": \"<TARGET_MODIFIED_ENTITY_UUID>\",' \
             f'   \"revised_related_entity\": <THIS_REVISED_ENTITY>' \
             f'  }}' \
@@ -402,11 +400,18 @@ class Translator(TranslatorInterface):
                 .replace('<THIS_REVISED_ENTITY>', json.dumps(revised_entity_doc_dict))
             json_query_dict = json.loads(qdsl_update_payload_string)
 
+            # Try to avoid 409
+            query_params = {
+                'retry_on_conflict': self.es_retry_on_conflict_param_value,
+                'refresh': True
+            }
+
             opensearch_response = execute_opensearch_query(query_against=f"_update/{related_entity_id}"
                                                            , request=None
                                                            , index=es_index
                                                            , es_url=es_url
-                                                           , query=json_query_dict)
+                                                           , query=json_query_dict
+                                                           , request_params=query_params)
             # Expect an HTTP 200 on a successful update, and an HTTP 404 if es_index does not
             # contain a document for related_entity_id.  Other response codes are errors.
             if opensearch_response.status_code not in [200, 404]:
