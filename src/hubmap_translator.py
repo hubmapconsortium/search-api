@@ -402,7 +402,7 @@ class Translator(TranslatorInterface):
 
             # Try to avoid 409
             query_params = {
-                'retry_on_conflict': self.es_retry_on_conflict_param_value,
+                'retry_on_conflict': str(self.es_retry_on_conflict_param_value),
                 'refresh': 'true'
             }
 
