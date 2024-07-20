@@ -6,8 +6,10 @@
 ingest_api_soft_assay_url: https://ingest-api.dev.hubmapconsortium.org/assaytype/ 
 # default index name for endpoints that don't specify an index
 default_index: entities
+
+# Commented out by Zhou to avoid 409 conflicts - 7/20/2024
 # ElasticSearch retry_on_conflict value. Positive integer or zero.
-es_retry_on_conflict_param_value: 5
+# es_retry_on_conflict_param_value: 5
 
 # specify multiple indices
 indices:
