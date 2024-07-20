@@ -410,13 +410,11 @@ class Translator(TranslatorInterface):
             # Expect an HTTP 200 on a successful update, and an HTTP 404 if es_index does not
             # contain a document for related_entity_id.  Other response codes are errors.
             if opensearch_response.status_code not in [200, 404]:
-                logger.error(f"Unable to directly update elements of document with"
+                logger.error(f"Unable to directly update document of {related_entity_id} with using the latest version of {entity_id} in"
                              f" related_entity_target_elements={related_entity_target_elements},"
-                             f" related_entity_id={related_entity_id}."
-                             f" Got status_code={opensearch_response.status_code} at"
-                             f" es_url={es_url},"
-                             f" endoint '_update/{related_entity_id}' with"
-                             f" qdsl_update_payload_string={qdsl_update_payload_string}.")
+                             f" endpoint '{es_index}/_update/{related_entity_id}'"
+                             f" Got status_code={opensearch_response.status_code}.")
+
                 if opensearch_response.text:
                     logger.error(f"OpenSearch message for {opensearch_response.status_code} code:"
                                  f" '{opensearch_response.text}'.")
