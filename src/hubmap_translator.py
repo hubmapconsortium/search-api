@@ -547,13 +547,25 @@ class Translator(TranslatorInterface):
                 next_revision_ids = []
 
                 # Get the ancestors and descendants of this entity as they exist in Neo4j
-                ancestor_ids = self.call_entity_api(entity_id, 'ancestors', 'uuid')
-                descendant_ids = self.call_entity_api(entity_id, 'descendants', 'uuid')
+                ancestor_ids = self.call_entity_api(entity_id=entity_id
+                                                    , endpoint_base='ancestors'
+                                                    , endpoint_suffix=None
+                                                    , url_property='uuid')
+                descendant_ids = self.call_entity_api(entity_id=entity_id
+                                                    , endpoint_base='descendants'
+                                                    , endpoint_suffix=None
+                                                    , url_property='uuid')
 
                 # Only Dataset/Publication entities may have previous/next revisions
                 if entity['entity_type'] in ['Dataset', 'Publication']:
-                    previous_revision_ids = self.call_entity_api(entity_id, 'previous_revisions', 'uuid')
-                    next_revision_ids = self.call_entity_api(entity_id, 'next_revisions', 'uuid')
+                    previous_revision_ids = self.call_entity_api(entity_id=entity_id
+                                                                , endpoint_base='previous_revisions',
+                                                                , endpoint_suffix=None
+                                                                , url_property='uuid')
+                    next_revision_ids = self.call_entity_api(entity_id=entity_id
+                                                            , endpoint_base='next_revisions',
+                                                            , endpoint_suffix=None
+                                                            , url_property='uuid')
 
                 # All unique entity ids in the path excluding the entity itself
                 target_ids = set(ancestor_ids + descendant_ids + previous_revision_ids + next_revision_ids)
@@ -875,8 +887,7 @@ class Translator(TranslatorInterface):
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
-            upload = self.call_entity_api(entity_id=entity_id
-                                          , endpoint_base='documents')
+            upload = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
 
             self.add_datasets_to_entity(upload)
             self._entity_keys_rename(upload)
@@ -885,9 +896,9 @@ class Translator(TranslatorInterface):
             self.add_calculated_fields(upload)
 
             self._index_doc_directly_to_es_index(entity=upload
-                                                 ,document=json.dumps(upload)
-                                                 ,es_index=default_private_index
-                                                 ,delete_existing_doc_first=reindex)
+                                                , document=json.dumps(upload)
+                                                , es_index=default_private_index
+                                                , delete_existing_doc_first=reindex)
 
             logger.info(f"Finished executing translate_upload() for {entity_id}")
         except Exception as e:
@@ -948,7 +959,10 @@ class Translator(TranslatorInterface):
         try:
             logger.info(f"Start executing translate_donor_tree() for donor of uuid: {entity_id}")
 
-            descendant_uuids = self.call_entity_api(entity_id=entity_id, endpoint_base='descendants', endpoint_suffix=None, url_property='uuid')
+            descendant_uuids = self.call_entity_api(entity_id=entity_id
+                                                    , endpoint_base='descendants'
+                                                    , endpoint_suffix=None
+                                                    , url_property='uuid')
 
             # Index the donor entity itself
             donor = self.call_entity_api(entity_id, 'documents')
@@ -1275,7 +1289,10 @@ class Translator(TranslatorInterface):
 
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
                 # Get back a list of ancestor uuids first
-                ancestor_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='ancestors', endpoint_suffix=None, url_property='uuid')
+                ancestor_ids = self.call_entity_api(entity_id=entity_id
+                                                    , endpoint_base='ancestors'
+                                                    , endpoint_suffix=None
+                                                    , url_property='uuid')
                 for ancestor_uuid in ancestor_ids:
                     # No need to call self.prepare_dataset() here because
                     # self.call_entity_api() already handled that
@@ -1289,17 +1306,26 @@ class Translator(TranslatorInterface):
                         donor = copy.copy(a)
                         break
 
-                descendant_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='descendants', endpoint_suffix=None, url_property='uuid')
+                descendant_ids = self.call_entity_api(entity_id=entity_id
+                                                    , endpoint_base='descendants'
+                                                    , endpoint_suffix=None
+                                                    , url_property='uuid')
                 for descendant_uuid in descendant_ids:
                     descendant_dict = self.call_entity_api(descendant_uuid, 'documents')
                     descendants.append(descendant_dict)
 
-                immediate_ancestor_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='parents', endpoint_suffix=None, url_property='uuid')
+                immediate_ancestor_ids = self.call_entity_api(entity_id=entity_id
+                                                            , endpoint_base='parents'
+                                                            , endpoint_suffix=None
+                                                            , url_property='uuid')
                 for immediate_ancestor_uuid in immediate_ancestor_ids:
                     immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'documents')
                     immediate_ancestors.append(immediate_ancestor_dict)
 
-                immediate_descendant_ids = self.call_entity_api(entity_id=entity_id, endpoint_base='children', endpoint_suffix=None, url_property='uuid')
+                immediate_descendant_ids = self.call_entity_api(entity_id=entity_id
+                                                                , endpoint_base='children'
+                                                                , endpoint_suffix=None
+                                                                , url_property='uuid')
                 for immediate_descendant_uuid in immediate_descendant_ids:
                     immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
                     immediate_descendants.append(immediate_descendant_dict)
@@ -1340,11 +1366,14 @@ class Translator(TranslatorInterface):
                     e = entity
 
                     while entity['source_samples'] is None:
-                        parent_uuids = self.call_entity_api(entity_id=e['uuid'], endpoint_base='parents', endpoint_suffix=None, url_property='uuid')
+                        parent_uuids = self.call_entity_api(entity_id=e['uuid']
+                                                            , endpoint_base='parents'
+                                                            , endpoint_suffix=None
+                                                            , url_property='uuid')
                         parents = []
                         for parent_uuid in parent_uuids:
                             parent_entity_doc = self.call_entity_api(entity_id = parent_uuid
-                                                                     , endpoint_base='documents')
+                                                                    , endpoint_base='documents')
                             parents.append(parent_entity_doc)
 
                         try:
