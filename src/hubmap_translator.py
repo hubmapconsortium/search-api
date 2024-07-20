@@ -559,11 +559,11 @@ class Translator(TranslatorInterface):
                 # Only Dataset/Publication entities may have previous/next revisions
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     previous_revision_ids = self.call_entity_api(entity_id=entity_id
-                                                                , endpoint_base='previous_revisions',
+                                                                , endpoint_base='previous_revisions'
                                                                 , endpoint_suffix=None
                                                                 , url_property='uuid')
                     next_revision_ids = self.call_entity_api(entity_id=entity_id
-                                                            , endpoint_base='next_revisions',
+                                                            , endpoint_base='next_revisions'
                                                             , endpoint_suffix=None
                                                             , url_property='uuid')
 
