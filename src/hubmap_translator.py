@@ -375,6 +375,7 @@ class Translator(TranslatorInterface):
             f'  \"lang\": \"painless\",' \
             f'  \"source\": \"{painless_query}\",' \
             f'  \"params\": {{' \
+            f'   \"refresh\": true,' \
             f'   \"retry_on_conflict\": {self.es_retry_on_conflict_param_value},' \
             f'   \"modified_entity_uuid\": \"<TARGET_MODIFIED_ENTITY_UUID>\",' \
             f'   \"revised_related_entity\": <THIS_REVISED_ENTITY>' \
