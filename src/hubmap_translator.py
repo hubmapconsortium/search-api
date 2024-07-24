@@ -1243,7 +1243,7 @@ class Translator(TranslatorInterface):
             if 'sample_category' in entity:
                 if entity['sample_category'].lower() == 'organ':
                     if 'organ' in entity:
-                        known_organ_types = self.get_organ_types()
+                        known_organ_types = self.transformation_resources['organ_map']
                         if entity['organ'] in known_organ_types.keys():
                             display_subtype = known_organ_types[entity['organ']].get('term')
                         else:
@@ -1617,7 +1617,8 @@ class Translator(TranslatorInterface):
             logger.exception(msg)
 
     """
-    Retrieve the organ types from ontology-api
+    Retrieve the organ types from ontology-api.  Typically only used to
+    initialize self.transformation_resources['organ_map']
     
     Returns
     -------
