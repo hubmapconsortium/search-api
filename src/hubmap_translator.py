@@ -562,11 +562,11 @@ class Translator(TranslatorInterface):
                                                             , endpoint_suffix=None
                                                             , url_property='uuid')
 
-                # If working with a Dataset, it may be copied into ElasticSearch documents for
+                # If working with a Dataset or Publication, it may be copied into ElasticSearch documents for
                 # Collections and Uploads, so identify any of those which must be reindexed.
                 neo4j_collection_ids = []
                 neo4j_upload_ids = []
-                if entity['entity_type'] == 'Dataset':
+                if entity['entity_type'] in ['Dataset', 'Publication']:
                     neo4j_collection_ids = self.call_entity_api(entity_id=entity_id
                                                                 , endpoint_base='entities'
                                                                 , endpoint_suffix='collections'
