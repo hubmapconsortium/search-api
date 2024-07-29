@@ -442,24 +442,22 @@ class Translator(TranslatorInterface):
     #                         f" related_entity_target_elements={related_entity_target_elements}"
     #                         f" is not in es_index={es_index}.")
 
+    def _exec_reindex_entity_to_index_group_by_id(self, entity_id: str(32), index_groups: list):
+        logger.info(f"Start executing _exec_reindex_entity_to_index_group_by_id() on"
+                    f" entity_id: {entity_id}, index_groups: {str(index_groups)}")
 
+        entity = self.call_entity_api(entity_id=entity_id
+                                      , endpoint_base='documents')
+        if entity['entity_type'] == 'Collection':
+            self.translate_collection(entity_id=entity_id, reindex=True)
+        elif entity['entity_type'] == 'Upload':
+            self.translate_upload(entity_id=entity_id, reindex=True)
+        else:
+            for index_group in index_groups:
+                self._transform_and_write_entity_to_index_group(entity=entity
+                                                                , index_group=index_group)
 
-    # # Commented out by Zhou to avoid 409 conflicts - 7/20/2024
-    # def _exec_reindex_entity_to_index_group_by_id(self, entity_id: str(32), index_group: str):
-    #     logger.info(f"Start executing _exec_reindex_entity_to_index_group_by_id() on"
-    #                 f" entity_id: {entity_id}, index_group: {index_group}")
-
-    #     entity = self.call_entity_api(entity_id=entity_id
-    #                                   , endpoint_base='documents')
-    #     if entity['entity_type'] == 'Collection':
-    #         self.translate_collection(entity_id=entity_id, reindex=True)
-    #     elif entity['entity_type'] == 'Upload':
-    #         self.translate_upload(entity_id=entity_id, reindex=True)
-    #     else:
-    #         self._transform_and_write_entity_to_index_group(entity=entity
-    #                                                         , index_group=index_group)
-
-    #     logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
+        logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
 
     def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
@@ -474,7 +472,7 @@ class Translator(TranslatorInterface):
         except Exception as e:
             msg = f"Exception document generation" \
                   f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
-                  f" for direct '{index_group}' reindex."
+                  f" for '{index_group}' reindex caused \'{str(e)}\'"
             # Log the full stack trace, prepend a line with our message. But continue on
             # rather than raise the Exception.
             logger.exception(msg)
@@ -540,21 +538,18 @@ class Translator(TranslatorInterface):
                 # BEGIN - Below block is the original implementation prior to the direct document update
                 # against Elasticsearch. Added back by Zhou to avoid 409 conflicts - 7/20/2024
 
-                # Reindex the entity itself first
-                self._call_indexer(entity=entity, delete_existing_doc_first=True)
-
                 previous_revision_ids = []
                 next_revision_ids = []
 
                 # Get the ancestors and descendants of this entity as they exist in Neo4j
-                ancestor_ids = self.call_entity_api(entity_id=entity_id
-                                                    , endpoint_base='ancestors'
-                                                    , endpoint_suffix=None
-                                                    , url_property='uuid')
-                descendant_ids = self.call_entity_api(entity_id=entity_id
-                                                    , endpoint_base='descendants'
-                                                    , endpoint_suffix=None
-                                                    , url_property='uuid')
+                neo4j_ancestor_ids = self.call_entity_api(  entity_id=entity_id
+                                                            , endpoint_base='ancestors'
+                                                            , endpoint_suffix=None
+                                                            , url_property='uuid')
+                neo4j_descendant_ids = self.call_entity_api(    entity_id=entity_id
+                                                                , endpoint_base='descendants'
+                                                                , endpoint_suffix=None
+                                                                , url_property='uuid')
 
                 # Only Dataset/Publication entities may have previous/next revisions
                 if entity['entity_type'] in ['Dataset', 'Publication']:
@@ -567,12 +562,32 @@ class Translator(TranslatorInterface):
                                                             , endpoint_suffix=None
                                                             , url_property='uuid')
 
+                # If working with a Dataset or Publication, it may be copied into ElasticSearch documents for
+                # Collections and Uploads, so identify any of those which must be reindexed.
+                neo4j_collection_ids = []
+                neo4j_upload_ids = []
+                if entity['entity_type'] in ['Dataset', 'Publication']:
+                    neo4j_collection_ids = self.call_entity_api(entity_id=entity_id
+                                                                , endpoint_base='entities'
+                                                                , endpoint_suffix='collections'
+                                                                , url_property='uuid')
+                    neo4j_upload_ids = self.call_entity_api(entity_id=entity_id
+                                                            , endpoint_base='entities'
+                                                            , endpoint_suffix='uploads'
+                                                            , url_property='uuid')
+
+                # Reindex the entity itself first before dealing with other documents for related entities.
+                self._call_indexer(entity=entity
+                                   , delete_existing_doc_first=True)
+
                 # All unique entity ids in the path excluding the entity itself
-                target_ids = set(ancestor_ids + descendant_ids + previous_revision_ids + next_revision_ids)
+                target_ids = set(neo4j_ancestor_ids + neo4j_descendant_ids + \
+                                 previous_revision_ids + next_revision_ids + \
+                                 neo4j_collection_ids + neo4j_upload_ids)
 
                 # Reindex the rest of the entities in the list
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    futures_list = [executor.submit(self.reindex_entity, uuid) for uuid in target_ids]
+                    futures_list = [executor.submit(self._exec_reindex_entity_to_index_group_by_id, related_entity_uuid, ['entities','portal']) for related_entity_uuid in target_ids]
                     for f in concurrent.futures.as_completed(futures_list):
                         result = f.result()
                 
