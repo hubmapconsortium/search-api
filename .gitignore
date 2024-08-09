@@ -39,3 +39,11 @@ src/hubmap_translation/addl_index_transformations/portal/cache/*.jsonld
 
 # python virtual environments
 **/.venv
+
+## Full Reindex script components
+# Everything in the $EXEC_INFO_DIR configured in fresh_indices.ini
+scripts/fresh_indices/exec_info/
+
+# Actual configuration file derived from fresh_indices.ini.example
+scripts/fresh_indices/fresh_indices.ini
+scripts/fresh_indices/token_holder
