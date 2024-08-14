@@ -7,7 +7,7 @@ APP_CLIENT_SECRET = ''
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 AWS_S3_BUCKET_NAME = 'hm-api-responses'
-AWS_S3_OBJECT_PREFIX = 'Dev_service-api_unspecified-function_'
+AWS_S3_OBJECT_PREFIX = 'Dev_search-api_'
 AWS_OBJECT_URL_EXPIRATION_IN_SECS = 60*60 # 1 hour
 # Large response threshold, as determined by len() for the character set, above
 # which responses will be stashed in an S3 bucket and a pre-signed URL
