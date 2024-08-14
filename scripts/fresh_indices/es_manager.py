@@ -130,11 +130,7 @@ class ESManager:
         try:
             headers = {'Content-Type': 'application/json'}
 
-            logger.debug(f"KBKBKB url will be {self.elasticsearch_url}/{index_name}")
-            logger.debug(f"KBKBKB headers will be {str(headers)}")
-            logger.debug(f"KBKBKB data will be {json.dumps(config)}")
             rspn = requests.put(f"{self.elasticsearch_url}/{index_name}", headers=headers, data=json.dumps(config))
-            logger.debug(f"KBKBKB rspn={str(rspn)}")
             if rspn.ok:
                 logger.info(f"Created index: {index_name}")
             else:
@@ -153,8 +149,6 @@ class ESManager:
         if exists_rspn.ok:
             logger.debug(f"Not creating index_name={index_name} because it already exists.")
             return
-        logger.debug(f"KBKBKB index_name={str(index_name)}")
-        logger.debug(f"KBKBKB index_mapping_settings={str(index_mapping_settings)}")
         self.create_index(  index_name=index_name
                             , config=index_mapping_settings)
 

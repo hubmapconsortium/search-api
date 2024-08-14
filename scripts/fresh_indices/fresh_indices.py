@@ -51,7 +51,7 @@ def init():
     logging.basicConfig(    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
                             , datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG-1) # KBKBKB @TODO restore logging.INFO
+    logger.setLevel(logging.INFO)
     logger.info(f"logger initialized with effective logging level {logger.getEffectiveLevel()}.")
 
     try:
@@ -213,10 +213,8 @@ def create_new_indices():
         # get the specific mapping file for the designated index
         group_mapping_file = f"../../src/{INDICES['indices'][index_group_name]['elasticsearch']['mappings']}"
         group_mapping_settings = safe_load((Path(__file__).absolute().parent / group_mapping_file).read_text())
-        logger.debug(f"KBKBKB INDICES['indices'][{index_group_name}]={str(INDICES['indices'][index_group_name])}")
         for index_visibility in ['public','private']:
             index_name=INDICES['indices'][index_group_name][index_visibility]
-            logger.debug(f"KBKBKB index_name={str(index_name)}")
             esmanager.create_index_unless_exists(index_name, group_mapping_settings)
 
     logger.info(f"############# Full index via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
@@ -227,9 +225,6 @@ def create_new_indices():
         logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
         print(*translator.failed_entity_ids, sep="\n")
         op_data_supplement['translator_failed_entity_ids']=translator.failed_entity_ids
-    else:
-        # KBKBKB @TODO delete this whole else clause after development!
-        op_data_supplement['translator_failed_entity_ids']=['32323232323232323232323232323232','23232323232323232323232323232323']
 
     end_time = time.time()
     # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
@@ -285,7 +280,6 @@ def verify_initial_state_for_catch_up(fill_strategy:FillStrategyType, config_ind
     for source_index in op_data['index'].keys():
         for timestamp_field in ['last_modified_timestamp', 'created_timestamp']:
             try:
-                print(f"KBKBKB op_data['index'][{source_index}][{AggQueryType.MAX.value}][{timestamp_field}]={op_data['index'][source_index][AggQueryType.MAX.value][timestamp_field]}")
                 if op_data['index'][source_index][AggQueryType.MAX.value][timestamp_field] is None or \
                     not isinstance(op_data['index'][source_index][AggQueryType.MAX.value][timestamp_field], float):
                     expectation_errors.append(f"Operation data from {most_recent_file}"
@@ -326,8 +320,7 @@ def catch_up_new_index():
     for source_index in op_data['index'].keys():
         timestamp_range_json_list=[]
         for timestamp_field_name in op_data['index'][source_index][AggQueryType.MAX.value].keys():
-            KBKBKB_UNDO_DIVISOR_TO_FAKE_OUT_SOME_UUIDS_TO_REINDEX=1000
-            timestamp_value=op_data['index'][source_index][AggQueryType.MAX.value][timestamp_field_name]/KBKBKB_UNDO_DIVISOR_TO_FAKE_OUT_SOME_UUIDS_TO_REINDEX
+            timestamp_value=op_data['index'][source_index][AggQueryType.MAX.value][timestamp_field_name]
             timestamp_range_json_list.append(f'{{"range": {{"{timestamp_field_name}": {{"gt": {timestamp_value}}}}}}}')
             timestamp_data = { 'timestamp_field': timestamp_field_name
                                , 'timestamp_op': 'gt'

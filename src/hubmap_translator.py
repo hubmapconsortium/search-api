@@ -254,18 +254,9 @@ class Translator(TranslatorInterface):
                     # Ask SenNet if I can change this! KBKBKB @TODO
                     raise Exception(f"Fetching UUIDs for collections returned an HTTP {collection_uuids_list[1]} error.")
 
-                print(  f"Indexing {len(donor_uuids_list)} Donors,"
-                        f" {len(upload_uuids_list)} Uploads,"
-                        f" and {len(collection_uuids_list)} Collections.")
-
-                if True: # KBKBKB @TODO undo, but keep it quick during development
-                    donor_uuids_list=donor_uuids_list[11:12]
-                    donor_uuids_list.append('6ffb892af727ea0f36da40069437f84e')
-                    upload_uuids_list=upload_uuids_list[11:12]
-                    collection_uuids_list=collection_uuids_list[11:12]
-                    print(  f"But momentarily only indexing {len(donor_uuids_list)} Donors,"
-                            f" {len(upload_uuids_list)} Uploads,"
-                            f" and {len(collection_uuids_list)} Collections.")
+                logger.info(    f"Indexing {len(donor_uuids_list)} Donors,"
+                                f" {len(upload_uuids_list)} Uploads,"
+                                f" and {len(collection_uuids_list)} Collections.")
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # The default number of threads in the ThreadPoolExecutor is calculated as:
