@@ -225,6 +225,9 @@ def create_new_indices():
         logger.info(f"{len(translator.failed_entity_ids)} entity ids failed")
         print(*translator.failed_entity_ids, sep="\n")
         op_data_supplement['translator_failed_entity_ids']=translator.failed_entity_ids
+    else:
+        logger.info(f"No failed_entity_ids reported for the tranlator.")
+        op_data_supplement['translator_failed_entity_ids']=[]
 
     end_time = time.time()
     # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
@@ -315,7 +318,11 @@ def catch_up_new_index():
     print('Not ready to catch-up activity which took place in the Production indices during or after creation of the new indices', file=sys.stderr)
     print('But if we will be once we:', file=sys.stderr)
     print('*** reindex these uuids for documents which failed while creating the new indices:', file=sys.stderr)
-    print(f"****** {op_data['translator_failed_entity_ids']}", file=sys.stderr)
+    if 'translator_failed_entity_ids' in op_data:
+        print(f"****** {op_data['translator_failed_entity_ids']}", file=sys.stderr)
+    else:
+        print(f"****** 'translator_failed_entity_ids' not found in op_data loaded from file.  Assuming no failures.", file=sys.stderr)
+        op_data['translator_failed_entity_ids']=[]
     print('*** reindex the uuids for documents have timestamps newer than whatever document was newest in the source index when the new index was created:', file=sys.stderr)
     for source_index in op_data['index'].keys():
         timestamp_range_json_list=[]
