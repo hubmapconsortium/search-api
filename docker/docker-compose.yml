@@ -30,6 +30,8 @@ services:
       - "../src/hubmap_translation/addl_index_transformations/portal/cache:/usr/src/app/src/hubmap_translation/addl_index_transformations/portal/cache"
       # Mount the logging to container
       - "../log:/usr/src/app/log"
+      # Mount the reindex scripts to container
+      - "../scripts:/usr/src/app/scripts"
       # Mount conf.d on host machine to the nginx conf.d on container
       - "./search-api/nginx/conf.d:/etc/nginx/conf.d"
     networks:
