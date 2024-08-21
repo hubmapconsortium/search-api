@@ -1355,6 +1355,9 @@ class Translator(TranslatorInterface):
                 entity['immediate_ancestors'] = immediate_ancestors
                 entity['immediate_descendants'] = immediate_descendants
 
+                entity['immediate_ancestor_ids'] = immediate_ancestor_ids
+                entity['immediate_descendant_ids'] = immediate_descendant_ids
+
             # The `sample_category` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
                 # Add new properties
