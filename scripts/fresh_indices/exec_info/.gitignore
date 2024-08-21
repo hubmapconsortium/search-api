@@ -1,0 +1,5 @@
+# Create this folder, but don't put the conventional files it contains in Git
+*
+!*/
+!.gitignore
+!.gitkeep
