@@ -120,6 +120,41 @@ class Translator(TranslatorInterface):
         # # Preload all the transformers
         self.init_transformers()
 
+    def log_configuration(self, log_level:int=logger.getEffectiveLevel()):
+        logger.log( level=log_level
+                    , msg=f"\tingest_api_soft_assay_url={self.ingest_api_soft_assay_url}")
+        logger.log(level=log_level
+                   , msg=f"\tindices={self.indices}")
+        logger.log(level=log_level
+                   , msg=f"\tself_managed_indices={self.self_managed_indices}")
+        logger.log(level=log_level
+                   , msg=f"\tDEFAULT_INDEX_WITHOUT_PREFIX={self.DEFAULT_INDEX_WITHOUT_PREFIX}")
+        logger.log(level=log_level
+                   , msg=f"\tINDICES={self.INDICES}")
+        logger.log(level=log_level
+                   , msg=f"\tDEFAULT_ENTITY_API_URL={self.DEFAULT_ENTITY_API_URL}")
+        logger.log(level=log_level
+                   , msg=f"\t_ontology_api_base_url={self._ontology_api_base_url}")
+        logger.log(level=log_level
+                   , msg=f"\tindexer={self.indexer}")
+        logger.log(level=log_level
+                   , msg=f"\tindex_group_es_indices={self.index_group_es_indices}")
+        logger.log(level=log_level
+                   , msg=f"\tapp_client_id={self.app_client_id}")
+        logger.log(level=log_level
+                   , msg=f"\tapp_client_secret will not be logged")
+        logger.log(level=log_level
+                   , msg=f"\ttoken={self.token}")
+        logger.log(level=log_level
+                   , msg=f"\trequest_headers={self.request_headers}")
+        logger.log(level=log_level
+                   , msg=f"\tentity_api_url={self.entity_api_url}")
+        logger.log(level=log_level
+                   , msg=f"\tindex_version={self.index_version}")
+        logger.log(level=log_level
+                   , msg=f"\ttransformation_resources={self.transformation_resources}")
+        logger.log(level=log_level
+                    , msg=f"\tTRANSFORMERS={self.TRANSFORMERS}")
 
     # Used by full reindex via script and live reindex-all call
     def translate_all(self):
@@ -189,6 +224,74 @@ class Translator(TranslatorInterface):
             except Exception as e:
                 logger.error(e)
 
+    # Used by full reindex scripts only.
+    # Assumes the index named indices are already created and empty.
+    # Require Data Admin privileges to execute.
+    def translate_full(self):
+        auth_helper_instance = self.init_auth_helper()
+        if not auth_helper_instance.has_data_admin_privs(self.token):
+            raise Exception('Data admin privileges are required to fill specific indices.')
+
+        with ((app.app_context())):
+            try:
+                start_time = time.time()
+                logger.info(f"############# Start executing translate_full() at"
+                            f" {time.strftime('%H:%M:%S', time.localtime(start_time))}"
+                            f" #############")
+
+                donor_uuids_list = get_uuids_by_entity_type("donor", self.request_headers, self.DEFAULT_ENTITY_API_URL)
+                if len(donor_uuids_list) == 2 and isinstance(donor_uuids_list[1], int):
+                    # Ask SenNet if I can change this! KBKBKB @TODO
+                    raise Exception(f"Fetching UUIDs for donor returned an HTTP {donor_uuids_list[1]} error.")
+                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers,
+                                                             self.DEFAULT_ENTITY_API_URL)
+                if len(upload_uuids_list) == 2 and isinstance(upload_uuids_list[1], int):
+                    # Ask SenNet if I can change this! KBKBKB @TODO
+                    raise Exception(f"Fetching UUIDs for uploads returned an HTTP {upload_uuids_list[1]} error.")
+                collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers,
+                                                                 self.DEFAULT_ENTITY_API_URL)
+                if len(collection_uuids_list) == 2 and isinstance(collection_uuids_list[1], int):
+                    # Ask SenNet if I can change this! KBKBKB @TODO
+                    raise Exception(f"Fetching UUIDs for collections returned an HTTP {collection_uuids_list[1]} error.")
+
+                logger.info(    f"Indexing {len(donor_uuids_list)} Donors,"
+                                f" {len(upload_uuids_list)} Uploads,"
+                                f" and {len(collection_uuids_list)} Collections.")
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # The default number of threads in the ThreadPoolExecutor is calculated as:
+                    # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
+                    # Where the number of CPUs is determined by Python and will take hyperthreading into account
+                    logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
+
+                    # Submit tasks to the thread pool
+                    collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid
+                                               in collection_uuids_list]
+                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
+                                           upload_uuids_list]
+
+                    # Append the above lists into one
+                    futures_list = collection_futures_list + upload_futures_list
+
+                    # The target function runs the task logs more details when f.result() gets executed
+                    for f in concurrent.futures.as_completed(futures_list):
+                        result = f.result()
+
+                # Index the donor tree in a regular for loop, not the concurrent mode
+                # However, the descendants of a given donor will be indexed concurrently
+                for uuid in donor_uuids_list:
+                    self.translate_donor_tree(uuid)
+
+                end_time = time.time()
+                logger.info(f"############# Finished executing translate_full() at"
+                            f" {time.strftime('%H:%M:%S', time.localtime(end_time))}."
+                            f" #############")
+                elapsed_seconds = end_time - start_time
+                logger.info(f"############# Executing translate_full() took"
+                            f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
+                            f" #############")
+            except Exception as e:
+                logger.exception(e)
 
     # ONLY used by collections-only reindex via script - added by Zhou 7/19/2023
     def translate_all_collections(self):
@@ -992,7 +1095,6 @@ class Translator(TranslatorInterface):
             logger.info(f"Finished executing translate_donor_tree() for donor of uuid: {entity_id}")
         except Exception as e:
             logger.error(e)
-
 
     def index_entity(self, uuid):
         logger.info(f"Start executing index_entity() on uuid: {uuid}")
