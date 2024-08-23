@@ -1,0 +1,9 @@
+[LocalServerSettings]
+EXEC_INFO_DIR=./exec_info
+
+[FullReindexSettings]
+; from FillStrategyType.py FillStrategyType enum
+FILL_STRATEGY_ENUM=CREATE_FILL
+;FILL_STRATEGY_ENUM=CREATE_FILL_SWAP
+;FILL_STRATEGY_ENUM=CLONE_ADD_SWAP
+;FILL_STRATEGY_ENUM=EMPTY_FILL
