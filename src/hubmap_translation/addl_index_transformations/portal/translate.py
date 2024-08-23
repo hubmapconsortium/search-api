@@ -310,17 +310,14 @@ def _add_spatial_info(doc):
 
     For samples, the is_spatial field is set to True if the rui_location field is present.
     >>> doc = {'entity_type': 'Sample', 'rui_location': 'https://example.com'}
-    >>> _add_spatial_info(doc)
-    >>> doc['is_spatial']
+    >>> _add_spatial_info(doc); doc['is_spatial']
     True
 
     For datasets, the is_spatial field is set to True if any ancestor has an rui_location field.
     The rui_location field is also copied from the nearest ancestor with an rui_location field.
     >>> doc = {'entity_type': 'Dataset', 'ancestors': [{'rui_location': 'https://example.com'}, {'rui_location': 'https://example2.com'}]}
-    >>> _add_spatial_info(doc)
-    >>> doc['is_spatial']
+    >>> _add_spatial_info(doc); doc['is_spatial']; doc['rui_location']
     True
-    >>> doc['rui_location']
     'https://example2.com'
     '''
     if (doc['entity_type'] == 'Sample'):
@@ -328,7 +325,8 @@ def _add_spatial_info(doc):
     if (doc['entity_type'] == 'Dataset'):
         ancestors = doc.get('ancestors', [])
         # Find the nearest ancestor with an rui_location - the last one in the list with an rui_location field.
-        nearest_rui_location_ancestor = ancestors[::-1].find(lambda x: x.get('rui_location', None) is not None)
+        nearest_rui_location_ancestor = next(
+            (ancestor for ancestor in reversed(ancestors) if 'rui_location' in ancestor), None)
         if nearest_rui_location_ancestor is not None:
             doc['is_spatial'] = nearest_rui_location_ancestor is not None
             doc['rui_location'] = nearest_rui_location_ancestor['rui_location']
