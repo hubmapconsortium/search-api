@@ -1358,11 +1358,6 @@ class Translator(TranslatorInterface):
                 entity['immediate_ancestor_ids'] = immediate_ancestor_ids
                 entity['immediate_descendant_ids'] = immediate_descendant_ids
 
-                if (entity['entity_type'] == 'Sample'):
-                    entity['is_spatial'] = entity.get('rui_location', None) is not None
-                if (entity['entity_type'] == 'Dataset'):
-                    entity['is_spatial'] = any([a.get('rui_location', None) is not None for a in ancestors])
-
             # The `sample_category` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
                 # Add new properties
