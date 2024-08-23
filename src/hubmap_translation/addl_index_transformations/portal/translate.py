@@ -303,6 +303,7 @@ def _add_origin_samples_unique_mapped_organs(doc):
         doc['origin_samples_unique_mapped_organs'] = _get_unique_mapped_organs(
             doc['origin_samples'])
 
+
 def _add_spatial_info(doc):
     '''
     Add a boolean field "is_spatial" to the document based on the entity type and the presence of an rui_location field.
