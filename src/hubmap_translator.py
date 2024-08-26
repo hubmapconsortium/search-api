@@ -39,6 +39,8 @@ entity_properties_list = [
     'datasets',
     'immediate_ancestors',
     'immediate_descendants'
+    'immediate_ancestor_ids',
+    'immediate_descendant_ids'
 ]
 
 # A map keyed by entity attribute names stored in Neo4j and retrieved from entity-api, with
