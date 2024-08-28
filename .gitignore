@@ -49,3 +49,6 @@ scripts/fresh_indices/fresh_indices.ini
 
 # The file holding the user's token, stream into the fresh_indices.sh script
 scripts/fresh_indices/token_holder
+
+examples/*.out
+examples/.ipynb_checkpoints/**/*
