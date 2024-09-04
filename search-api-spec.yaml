@@ -908,12 +908,12 @@ paths:
                   $ref: '#/components/schemas/SearchResponse'
         '303':
             description: If the total response payload exceeds 10 MB, the response is returned via an S3 bucket.  A 303 HTTP response code will be returned with the redirect URL where the query can be retrieved.
-        '400':
-            description: Bad request. A JSON body and appropriate Content-Type header are required in request
         '401':
             description:  A valid globus token in the `Authorization` header (Bearer scheme) is required in request
         '403':
           description: The globus token used in the `Authorization` header doesn't have the right group access permission
+        '404':
+            description: Bad request or no data found. A JSON body and appropriate Content-Type header are required in request, additionally if no data has been found based on the query when the produce-clt-manifest=true option is used.
         '504':
           description: There is a maximum query and response time of 30 seconds.  If the query response takes 30 seconds or longer, a 504 HTTP response code will be returned.
 
