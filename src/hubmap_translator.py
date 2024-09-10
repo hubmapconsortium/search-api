@@ -1018,10 +1018,10 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields if any applies to Upload
             self.add_calculated_fields(upload)
 
-            self._index_doc_directly_to_es_index(entity=upload
-                                                , document=json.dumps(upload)
-                                                , es_index=default_private_index
-                                                , delete_existing_doc_first=reindex)
+            self._index_doc_directly_to_es_index(   entity=upload
+                                                    , document=json.dumps(upload)
+                                                    , es_index=default_private_index
+                                                    , delete_existing_doc_first=reindex)
 
             logger.info(f"Finished executing translate_upload() for {entity_id}")
         except Exception as e:
@@ -1402,21 +1402,26 @@ class Translator(TranslatorInterface):
 
     # Make a descendant list specific to the needs of an index groups documents
     def _relatives_for_index_group(self, relative_ids:list, index_group:str):
-        relative_for_index_group = []
+        relatives_for_index_group = []
         for relative_uuid in relative_ids:
             relative_dict = self.call_entity_api(relative_uuid, 'documents')
             # Only retain the descendant elements need for each index group
             if index_group == 'portal':
                 # Harvard will need entity_type in 'descendants', but nothing else.
-                portal_relative_dict = {'entity_type': relative_dict['entity_type'], 'uuid': relative_dict['uuid']}
-                relative_for_index_group.append(portal_relative_dict)
+                portal_relative_dict =  {'entity_type': relative_dict['entity_type'], 'uuid': relative_dict['uuid']}
+                # The 'status' attribute needs to be retained when present for the is_public() method.
+                if 'status' in relative_dict:
+                    portal_relative_dict['status'] = relative_dict['status']
+                relatives_for_index_group.append(portal_relative_dict)
             if index_group == 'entities':
                 # Only retain 'descendant' elements listed in INCLUDED_DATA_FIELDS of
                 # https://github.com/x-atlas-consortia/hra-api/blob/main/src/library/ds-graph/utils/xconsortia-fetch.js
                 entity_relative_dict = {}
                 for desc_key in [   'uuid', 'hubmap_id', 'dataset_type', 'entity_type', 'group_uuid', 'group_name'
                                     , 'last_modified_timestamp', 'created_by_user_displayname', 'thumbnail_file'
-                                    , 'sennet_id']:
+                                    , 'sennet_id'
+                                    , 'status' # Needed for is_public() calculations
+                                ]:
                     if desc_key in relative_dict.keys():
                         entity_relative_dict[desc_key] = relative_dict[desc_key]
                 if 'ingest_metadata' in relative_dict and \
@@ -1427,8 +1432,8 @@ class Translator(TranslatorInterface):
                             'tissue_id': relative_dict['ingest_metadata']['metadata']['tissue_id']
                         }
                     }
-                relative_for_index_group.append(entity_relative_dict)
-        return relative_for_index_group
+                relatives_for_index_group.append(entity_relative_dict)
+        return relatives_for_index_group
 
     # Note: this entity dict input (if Dataset) has already handled ingest_metadata.files (with empty string or missing)
     # and ingest_metadata.metadata sub fields with empty string values from previous call
@@ -1447,12 +1452,6 @@ class Translator(TranslatorInterface):
             # this entity with an entity_type of 'Donor'.
             donor = None
             if entity['entity_type'] != 'Upload':
-
-                # KBKBKB #TODO - Check on efficiency here, and offer PTR sproc to grab Donor simply.
-                # KBKBKB #TODO - Probably better off going through call_entity_api() until a Donor
-                # KBKBKB #TODO - is retrieved, then getting full ancestors when not needed (by entities
-                # KBKBKB #TODO - index group.) Should an entity-api endpoint take a list rather than
-                # KBKBKB #TODO - the single url_property, maybe?
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
                 # Get back a list of ancestor uuids first
                 ancestor_ids = self.call_entity_api(entity_id=entity_id
@@ -1460,9 +1459,8 @@ class Translator(TranslatorInterface):
                                                     , endpoint_suffix=None
                                                     , url_property='uuid')
                 for ancestor_uuid in ancestor_ids:
-                    # No need to call self.prepare_dataset() here because
-                    # self.call_entity_api() already handled that
-                    ancestor_dict = self.call_entity_api(ancestor_uuid, 'documents')
+                    ancestor_dict = self.call_entity_api(entity_id=ancestor_uuid
+                                                         , endpoint_base='documents')
                     ancestors.append(ancestor_dict)
 
                     # If the current ancestor is the first Donor encountered, save it to
@@ -1637,10 +1635,10 @@ class Translator(TranslatorInterface):
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
-        descendants = self._descendants_for_index_group([e['uuid'] for e in entity['descendants']]
+        descendants = self._relatives_for_index_group([e['uuid'] for e in entity['descendants']]
                                                         , index_group)
         entity['descendants'] = list(filter(self.is_public, descendants))
-        #KBKBKB del entity['descendants'] = list(filter(self.is_public, entity['descendants']))
+
         # Add new properties to entity only needed for documents in the 'portal' index group
         if index_group == 'portal':
             entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
