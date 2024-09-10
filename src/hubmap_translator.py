@@ -570,10 +570,12 @@ class Translator(TranslatorInterface):
                     f"entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
         try:
-            private_doc = self.generate_doc(entity=entity
-                                            , return_type='json')
+            private_doc = self._generate_doc(   entity=entity
+                                                , return_type='json'
+                                                , index_group=index_group)
             if self.is_public(entity):
-                public_doc = self.generate_public_doc(entity=entity)
+                public_doc = self._generate_public_doc( entity=entity
+                                                        , index_group=index_group)
         except Exception as e:
             msg = f"Exception document generation" \
                   f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
@@ -1009,7 +1011,8 @@ class Translator(TranslatorInterface):
             # Retrieve the upload entity details
             upload = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
 
-            self.add_datasets_to_entity(upload)
+            self._add_datasets_to_entity(   entity=upload
+                                            , index_group=self.DEFAULT_INDEX_WITHOUT_PREFIX)
             self._entity_keys_rename(upload)
 
             # Add additional calculated fields if any applies to Upload
@@ -1032,25 +1035,26 @@ class Translator(TranslatorInterface):
         # - no token at all
         # Here we do NOT send over the token
         try:
-            collection = self.get_collection_doc(entity_id=entity_id)
+            for index_group in self.indices.keys():
+                collection = self.get_collection_doc(entity_id=entity_id)
 
-            self.add_datasets_to_entity(collection)
-            self._entity_keys_rename(collection)
+                self._add_datasets_to_entity(   entity=collection
+                                                , index_group=index_group)
+                self._entity_keys_rename(collection)
 
-            # Add additional calculated fields if any applies to Collection
-            self.add_calculated_fields(collection)
+                # Add additional calculated fields if any applies to Collection
+                self.add_calculated_fields(collection)
 
-            for index in self.indices.keys():
                 # each index should have a public index
-                public_index = self.INDICES['indices'][index]['public']
-                private_index = self.INDICES['indices'][index]['private']
+                public_index = self.INDICES['indices'][index_group]['public']
+                private_index = self.INDICES['indices'][index_group]['private']
 
-                # Add the tranformed doc to the portal index
+                # Add the transformed doc to the portal index
                 json_data = ""
 
                 # if the index has a transformer use that else do a now load
-                if self.TRANSFORMERS.get(index):
-                    json_data = json.dumps(self.TRANSFORMERS[index].transform(collection, self.transformation_resources))
+                if self.TRANSFORMERS.get(index_group):
+                    json_data = json.dumps(self.TRANSFORMERS[index_group].transform(collection, self.transformation_resources))
                 else:
                     json_data = json.dumps(collection)
 
@@ -1257,8 +1261,8 @@ class Translator(TranslatorInterface):
         logger.info("Finished executing exclude_added_calculated_fields()")
 
     # Used for Upload and Collection index
-    def add_datasets_to_entity(self, entity):
-        logger.info("Start executing add_datasets_to_entity()")
+    def _add_datasets_to_entity(self, entity:dict, index_group:str):
+        logger.info("Start executing _add_datasets_to_entity()")
 
         datasets = []
         if 'datasets' in entity:
@@ -1268,7 +1272,9 @@ class Translator(TranslatorInterface):
                     dataset = self.call_entity_api(dataset['uuid'], 'documents')
                 except Exception as e:
                     logger.exception(e)
-                    logger.error(f"Failed to retrieve dataset {dataset['uuid']} via entity-api during executing add_datasets_to_entity(), skip and continue to next one")
+                    logger.error(   f"Failed to retrieve dataset {dataset['uuid']}"
+                                    f" via entity-api while executing"
+                                    f" _add_datasets_to_entity(). Skip and continue to next one")
                     
                     # This can happen when the dataset is in neo4j but the actual uuid is not found in MySQL
                     # or somehting else is wrong with entity-api and it can't return the dataset info
@@ -1277,10 +1283,14 @@ class Translator(TranslatorInterface):
                     continue
                 
                 try:
-                    dataset_doc = self.generate_doc(dataset, 'dict')
+                    dataset_doc = self._generate_doc(   entity=dataset
+                                                        , return_type='dict'
+                                                        , index_group=index_group)
                 except Exception as e:
                     logger.exception(e)
-                    logger.error(f"Failed to execute generate_doc() on dataset {dataset['uuid']} during executing add_datasets_to_entity(), skip and continue to next one")
+                    logger.error(   f"Failed to execute _generate_doc() on dataset {dataset['uuid']}"
+                                    f" while executing _add_datasets_to_entity()."
+                                    f" Skip and continue to next one")
 
                     # This can happen when the dataset itself is good but something failed to generate the doc
                     # E.g., one of the descendants of this dataset exists in neo4j but no record in uuid MySQL
@@ -1293,7 +1303,7 @@ class Translator(TranslatorInterface):
 
         entity['datasets'] = datasets
 
-        logger.info("Finished executing add_datasets_to_entity()")
+        logger.info("Finished executing _add_datasets_to_entity()")
 
     # Given a dictionary for an entity containing Neo4j and entity-api-generated data, assume all entries
     # are to be used in OpenSearch documents.  Modify any key names specified to change, and return a dictionary of
@@ -1390,22 +1400,59 @@ class Translator(TranslatorInterface):
         return display_subtype
 
 
+    # Make a descendant list specific to the needs of an index groups documents
+    def _relatives_for_index_group(self, relative_ids:list, index_group:str):
+        relative_for_index_group = []
+        for relative_uuid in relative_ids:
+            relative_dict = self.call_entity_api(relative_uuid, 'documents')
+            # Only retain the descendant elements need for each index group
+            if index_group == 'portal':
+                # Harvard will need entity_type in 'descendants', but nothing else.
+                portal_relative_dict = {'entity_type': relative_dict['entity_type'], 'uuid': relative_dict['uuid']}
+                relative_for_index_group.append(portal_relative_dict)
+            if index_group == 'entities':
+                # Only retain 'descendant' elements listed in INCLUDED_DATA_FIELDS of
+                # https://github.com/x-atlas-consortia/hra-api/blob/main/src/library/ds-graph/utils/xconsortia-fetch.js
+                entity_relative_dict = {}
+                for desc_key in [   'uuid', 'hubmap_id', 'dataset_type', 'entity_type', 'group_uuid', 'group_name'
+                                    , 'last_modified_timestamp', 'created_by_user_displayname', 'thumbnail_file'
+                                    , 'sennet_id']:
+                    if desc_key in relative_dict.keys():
+                        entity_relative_dict[desc_key] = relative_dict[desc_key]
+                if 'ingest_metadata' in relative_dict and \
+                        'metadata' in relative_dict['ingest_metadata'] and \
+                        'tissue_id' in relative_dict['ingest_metadata']['metadata']:
+                    entity_relative_dict['ingest_metadata'] = {
+                        'metadata': {
+                            'tissue_id': relative_dict['ingest_metadata']['metadata']['tissue_id']
+                        }
+                    }
+                relative_for_index_group.append(entity_relative_dict)
+        return relative_for_index_group
+
     # Note: this entity dict input (if Dataset) has already handled ingest_metadata.files (with empty string or missing)
     # and ingest_metadata.metadata sub fields with empty string values from previous call
-    def generate_doc(self, entity, return_type):
+    def _generate_doc(self, entity, return_type, index_group:str):
         try:
-            logger.info(f"Start executing generate_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+            logger.info(f"Start executing _generate_doc() for {entity['entity_type']}"
+                        f" of uuid: {entity['uuid']}"
+                        f" for the {index_group} index group.")
 
             entity_id = entity['uuid']
 
+            # Full ancestors may not be needed to populate a field in an ES index of
+            # an index group, but fill for now to calculate other fields e.g. origin_samples
+            ancestors = []
+            # The ES document top-level "donor" field will be the first ancestor of
+            # this entity with an entity_type of 'Donor'.
+            donor = None
             if entity['entity_type'] != 'Upload':
-                ancestors = []
-                descendants = []
-                ancestor_ids = []
-                descendant_ids = []
-                immediate_ancestors = []
-                immediate_descendants = []
 
+                # KBKBKB #TODO - Check on efficiency here, and offer PTR sproc to grab Donor simply.
+                # KBKBKB #TODO - Probably better off going through call_entity_api() until a Donor
+                # KBKBKB #TODO - is retrieved, then getting full ancestors when not needed (by entities
+                # KBKBKB #TODO - index group.) Should an entity-api endpoint take a list rather than
+                # KBKBKB #TODO - the single url_property, maybe?
                 # Do not call /ancestors/<id> directly to avoid performance/timeout issue
                 # Get back a list of ancestor uuids first
                 ancestor_ids = self.call_entity_api(entity_id=entity_id
@@ -1418,54 +1465,62 @@ class Translator(TranslatorInterface):
                     ancestor_dict = self.call_entity_api(ancestor_uuid, 'documents')
                     ancestors.append(ancestor_dict)
 
-                # Find the Donor
-                donor = None
-                for a in ancestors:
-                    if a['entity_type'] == 'Donor':
-                        donor = copy.copy(a)
-                        break
+                    # If the current ancestor is the first Donor encountered, save it to
+                    # populate the ES document "donor" field for this entity.
+                    if ancestor_dict['entity_type'] == 'Donor' and not donor:
+                        donor = copy.copy(ancestor_dict)
 
                 descendant_ids = self.call_entity_api(entity_id=entity_id
                                                     , endpoint_base='descendants'
                                                     , endpoint_suffix=None
                                                     , url_property='uuid')
-                for descendant_uuid in descendant_ids:
-                    descendant_dict = self.call_entity_api(descendant_uuid, 'documents')
-                    descendants.append(descendant_dict)
+                descendants = self._relatives_for_index_group(  relative_ids=descendant_ids
+                                                                , index_group=index_group)
 
                 immediate_ancestor_ids = self.call_entity_api(entity_id=entity_id
                                                             , endpoint_base='parents'
                                                             , endpoint_suffix=None
                                                             , url_property='uuid')
-                for immediate_ancestor_uuid in immediate_ancestor_ids:
-                    immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'documents')
-                    immediate_ancestors.append(immediate_ancestor_dict)
 
                 immediate_descendant_ids = self.call_entity_api(entity_id=entity_id
                                                                 , endpoint_base='children'
                                                                 , endpoint_suffix=None
                                                                 , url_property='uuid')
-                for immediate_descendant_uuid in immediate_descendant_ids:
-                    immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
-                    immediate_descendants.append(immediate_descendant_dict)
 
-                # Add new properties to entity
-                entity['ancestors'] = ancestors
+                # Add new properties to entity for documents in all indices
                 entity['descendants'] = descendants
-
                 entity['ancestor_ids'] = ancestor_ids
                 entity['descendant_ids'] = descendant_ids
-
-                entity['immediate_ancestors'] = immediate_ancestors
-                entity['immediate_descendants'] = immediate_descendants
-
                 entity['immediate_ancestor_ids'] = immediate_ancestor_ids
                 entity['immediate_descendant_ids'] = immediate_descendant_ids
+
+                # Add new properties to entity only needed for documents in the 'portal' index group
+                if index_group == 'portal':
+                    index_group_ancestors = self._relatives_for_index_group(    relative_ids=ancestor_ids
+                                                                                , index_group=index_group)
+                    entity['ancestors'] = index_group_ancestors
+                    immediate_ancestors = []
+                    immediate_descendants = []
+
+                    for immediate_ancestor_uuid in immediate_ancestor_ids:
+                        immediate_ancestor_dict = self.call_entity_api(immediate_ancestor_uuid, 'documents')
+                        immediate_ancestors.append(immediate_ancestor_dict)
+                    index_group_immediate_ancestors = self._relatives_for_index_group(  relative_ids=immediate_ancestor_ids
+                                                                                        , index_group=index_group)
+                    entity['immediate_ancestors'] = index_group_immediate_ancestors
+
+                    for immediate_descendant_uuid in immediate_descendant_ids:
+                        immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
+                        immediate_descendants.append(immediate_descendant_dict)
+                    index_group_immediate_descendants = self._relatives_for_index_group(  relative_ids=immediate_descendant_ids
+                                                                                        , index_group=index_group)
+                    entity['immediate_descendants'] = index_group_immediate_descendants
 
             # The `sample_category` is "organ" and the `organ` code is set at the same time
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
                 # Add new properties
-                entity['donor'] = donor
+                if donor:
+                    entity['donor'] = donor
 
                 # entity['origin_samples'] is a list
                 entity['origin_samples'] = []
@@ -1537,19 +1592,23 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields
             self.add_calculated_fields(entity)
 
-            logger.info(f"Finished executing generate_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+            logger.info(f"Finished executing _generate_doc() for {entity['entity_type']}"
+                        f" of uuid: {entity['uuid']}"
+                        f" for the {index_group} index group.")
 
             return json.dumps(entity) if return_type == 'json' else entity
         except Exception as e:
-            msg = "Exceptions during executing indexer.generate_doc()"
+            msg = "Exceptions during executing hubmap_translator._generate_doc()"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
             # Raise the exception so the caller can handle it properly
             raise Exception(e)
 
-    def generate_public_doc(self, entity):
-        logger.info(f"Start executing generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+    def _generate_public_doc(self, entity, index_group:str):
+        logger.info(f"Start executing _generate_public_doc() for {entity['entity_type']}"
+                    f" of uuid: {entity['uuid']}"
+                    f" for the {index_group} index group.")
 
         # Only Dataset has this 'next_revision_uuid' property
         property_key = 'next_revision_uuid'
@@ -1562,7 +1621,7 @@ class Translator(TranslatorInterface):
             response = requests.get(url, headers=self.request_headers, verify=False)
 
             if response.status_code != 200:
-                logger.error(f"generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}")
+                logger.error(f"_generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}")
                 
                 # Bubble up the error message from entity-api instead of sys.exit(msg)
                 # The caller will need to handle this exception
@@ -1578,10 +1637,15 @@ class Translator(TranslatorInterface):
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
-        entity['descendants'] = list(filter(self.is_public, entity['descendants']))
-        entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
+        descendants = self._descendants_for_index_group([e['uuid'] for e in entity['descendants']]
+                                                        , index_group)
+        entity['descendants'] = list(filter(self.is_public, descendants))
+        #KBKBKB del entity['descendants'] = list(filter(self.is_public, entity['descendants']))
+        # Add new properties to entity only needed for documents in the 'portal' index group
+        if index_group == 'portal':
+            entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
 
-        logger.info(f"Finished executing generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
+        logger.info(f"Finished executing _generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
 
         return json.dumps(entity)
 
