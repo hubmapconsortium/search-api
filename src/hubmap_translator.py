@@ -38,7 +38,7 @@ entity_properties_list = [
     'files',
     'datasets',
     'immediate_ancestors',
-    'immediate_descendants'
+    'immediate_descendants',
     'immediate_ancestor_ids',
     'immediate_descendant_ids'
 ]
@@ -52,6 +52,33 @@ neo4j_to_es_attribute_name_map = {
 
 # Entity types that will have `display_subtype` generated ar index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
+
+# For ElasticSearch documents being written to the 'entities' indices, these are the
+# fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
+INDEX_GROUP_ENTITIES_DOC_FIELDS = {
+    'uuid'
+    , 'hubmap_id'
+    , 'dataset_type'
+    , 'entity_type'
+    , 'group_uuid'
+    , 'group_name'
+    , 'last_modified_timestamp'
+    , 'created_by_user_displayname'
+    , 'thumbnail_file'
+}
+
+# Fields for entities retrieved during _generate_doc(), which must be retained on the
+# entity for use by _generate_public_doc(), but should be in the ElasticSearch document.
+FIELDS_FOR_is_public_DETERMINATION = {
+    'data_access_level' # Needed for is_public() calculations for Sample
+    , 'status' # Needed for is_public() calculations for Dataset & Publication
+}
+
+# For ElasticSearch documents being written to the 'portal' indices, these are the
+# fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
+INDEX_GROUP_PORTAL_DOC_FIELDS = {
+    'entity_type'
+}
 
 class Translator(TranslatorInterface):
     ACCESS_LEVEL_PUBLIC = 'public'
@@ -1400,7 +1427,7 @@ class Translator(TranslatorInterface):
         return display_subtype
 
 
-    # Make a descendant list specific to the needs of an index groups documents
+    # Make a descendant or ancestor list specific to the needs of an index groups documents
     def _relatives_for_index_group(self, relative_ids:list, index_group:str):
         relatives_for_index_group = []
         for relative_uuid in relative_ids:
@@ -1408,20 +1435,16 @@ class Translator(TranslatorInterface):
             # Only retain the descendant elements need for each index group
             if index_group == 'portal':
                 # Harvard will need entity_type in 'descendants', but nothing else.
-                portal_relative_dict =  {'entity_type': relative_dict['entity_type'], 'uuid': relative_dict['uuid']}
-                # The 'status' attribute needs to be retained when present for the is_public() method.
-                if 'status' in relative_dict:
-                    portal_relative_dict['status'] = relative_dict['status']
-                relatives_for_index_group.append(portal_relative_dict)
+                entity_relative_dict = {}
+                for desc_key in INDEX_GROUP_PORTAL_DOC_FIELDS | FIELDS_FOR_is_public_DETERMINATION:
+                    if desc_key in relative_dict.keys():
+                        entity_relative_dict[desc_key] = relative_dict[desc_key]
+                relatives_for_index_group.append(entity_relative_dict)
             if index_group == 'entities':
                 # Only retain 'descendant' elements listed in INCLUDED_DATA_FIELDS of
                 # https://github.com/x-atlas-consortia/hra-api/blob/main/src/library/ds-graph/utils/xconsortia-fetch.js
                 entity_relative_dict = {}
-                for desc_key in [   'uuid', 'hubmap_id', 'dataset_type', 'entity_type', 'group_uuid', 'group_name'
-                                    , 'last_modified_timestamp', 'created_by_user_displayname', 'thumbnail_file'
-                                    , 'sennet_id'
-                                    , 'status' # Needed for is_public() calculations
-                                ]:
+                for desc_key in INDEX_GROUP_ENTITIES_DOC_FIELDS | FIELDS_FOR_is_public_DETERMINATION :
                     if desc_key in relative_dict.keys():
                         entity_relative_dict[desc_key] = relative_dict[desc_key]
                 if 'ingest_metadata' in relative_dict and \
@@ -1590,11 +1613,22 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields
             self.add_calculated_fields(entity)
 
-            logger.info(f"Finished executing _generate_doc() for {entity['entity_type']}"
-                        f" of uuid: {entity['uuid']}"
+            # We need to leave 'status' and 'data_access_level' on the instance of
+            # entity we are modifying for use by _generate_public_doc(), but we also
+            # do not want these two fields in the ElasticSearch document.  So make a
+            # deepcopy of entity, remove fields from it, and use it to return a value
+            doc_entity = copy.deepcopy(entity)
+            for top_level_field in {'ancestors', 'immediate_ancestors', 'descendants', 'immediate_descendants'}:
+                if top_level_field in doc_entity:
+                    for field_of_top_level_field in FIELDS_FOR_is_public_DETERMINATION:
+                        remove_specific_key_entry(  obj=doc_entity[top_level_field]
+                                                    , key_to_remove=field_of_top_level_field)
+
+            logger.info(f"Finished executing _generate_doc() for {doc_entity['entity_type']}"
+                        f" of uuid: {doc_entity['uuid']}"
                         f" for the {index_group} index group.")
 
-            return json.dumps(entity) if return_type == 'json' else entity
+            return json.dumps(doc_entity) if return_type == 'json' else doc_entity
         except Exception as e:
             msg = "Exceptions during executing hubmap_translator._generate_doc()"
             # Log the full stack trace, prepend a line with our message
@@ -1604,6 +1638,8 @@ class Translator(TranslatorInterface):
             raise Exception(e)
 
     def _generate_public_doc(self, entity, index_group:str):
+        # N.B. This method assumes the state of the 'entity' argument has been processed by the
+        #      _generate_doc() function, so this method should always be called after that one.
         logger.info(f"Start executing _generate_public_doc() for {entity['entity_type']}"
                     f" of uuid: {entity['uuid']}"
                     f" for the {index_group} index group.")
@@ -1635,18 +1671,26 @@ class Translator(TranslatorInterface):
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
-        descendants = self._relatives_for_index_group([e['uuid'] for e in entity['descendants']]
-                                                        , index_group)
+        descendants = self._relatives_for_index_group(  relative_ids=[e['uuid'] for e in entity['descendants']]
+                                                        , index_group=index_group)
         entity['descendants'] = list(filter(self.is_public, descendants))
 
         # Add new properties to entity only needed for documents in the 'portal' index group
         if index_group == 'portal':
             entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
 
+        # Because _generate_doc() left some fields on the entity which should not be a part of the
+        # ElasticSearch document, but which were needed above for is_public() calls, remove them before
+        # returning the public document contents.
+        for top_level_field in {'ancestors', 'immediate_ancestors', 'descendants', 'immediate_descendants'}:
+            if top_level_field in entity:
+                for field_of_top_level_field in FIELDS_FOR_is_public_DETERMINATION:
+                    remove_specific_key_entry(obj=entity[top_level_field]
+                                              , key_to_remove=field_of_top_level_field)
+
         logger.info(f"Finished executing _generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
 
         return json.dumps(entity)
-
 
     # The input `dataset_dict` can be a list if the entity-api returns a list, other times it's dict
     # Only applies to Dataset, no change to other entity types:
