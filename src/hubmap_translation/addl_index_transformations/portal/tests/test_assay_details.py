@@ -279,6 +279,25 @@ def test_lab_processing():
     assert lab_processed_input_doc == lab_processed_output_doc
 
 
+def test_external_processing():
+    externally_processed_input_doc = {
+        'creation_action': 'External Process',
+        'descendants': [],
+        'entity_type': 'Dataset',
+    }
+
+    externally_processed_output_doc = {
+        'assay_modality': 'single',
+        'creation_action': 'External Process',
+        'descendants': [],
+        'entity_type': 'Dataset',
+        'processing': 'processed',
+        'processing_type': 'external',
+    }
+    _add_dataset_categories(externally_processed_input_doc, {})
+    assert externally_processed_input_doc == externally_processed_output_doc
+
+
 @pytest.mark.parametrize(
     "creation_action, expected_error",
     [
