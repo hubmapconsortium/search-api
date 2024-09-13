@@ -1624,7 +1624,8 @@ class Translator(TranslatorInterface):
 
             # Establish the list of fields which should be removed from top-level fields prior to
             # writing the entity as an ElasticSearch document.
-            unretained_key_list = [k for k, v in INDEX_GROUP_PORTAL_DOC_FIELDS.items() if v != PropertyRetentionEnum.ES_DOC]
+            ig_doc_fields=INDEX_GROUP_PORTAL_DOC_FIELDS if index_group=='portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+            unretained_key_list = [k for k, v in ig_doc_fields.items() if v != PropertyRetentionEnum.ES_DOC]
 
             # We need to leave fields in unretained_key_list on the instance of
             # entity we are modifying for use by _generate_public_doc(), but we also
@@ -1694,7 +1695,8 @@ class Translator(TranslatorInterface):
 
         # Establish the list of fields which should be removed from top-level fields prior to
         # writing the entity as an ElasticSearch document.
-        unretained_key_list = [k for k, v in INDEX_GROUP_PORTAL_DOC_FIELDS.items() if v != PropertyRetentionEnum.ES_DOC]
+        ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+        unretained_key_list = [k for k, v in ig_doc_fields.items() if v != PropertyRetentionEnum.ES_DOC]
 
         # Because _generate_doc() left some fields on the entity which should not be a part of the
         # ElasticSearch document, but which were needed for calculations prior to now, remove them before
