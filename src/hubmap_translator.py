@@ -8,6 +8,7 @@ import re
 import sys
 import time
 from yaml import safe_load
+from enum import Enum
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
@@ -53,31 +54,39 @@ neo4j_to_es_attribute_name_map = {
 # Entity types that will have `display_subtype` generated ar index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
 
+# Define an enumeration to classify the elements of a top-level property listed in entity_properties_list as
+# either retained to write into the ElasticSearch document, or only for inclusion for calculations but
+# not to be written to the ES doc.
+class PropertyRetentionEnum(Enum):
+    # Property from entity object should be written to the ElasticSearch document (and may be used for calculations.)
+    ES_DOC = 'es_doc'
+    # Property from entity object is only retained while doing calculations, and must be removed before
+    # writing the entity to an ElasticSearch document.
+    CALC_ONLY = 'calc_only'
+
 # For ElasticSearch documents being written to the 'entities' indices, these are the
 # fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
 INDEX_GROUP_ENTITIES_DOC_FIELDS = {
-    'uuid'
-    , 'hubmap_id'
-    , 'dataset_type'
-    , 'entity_type'
-    , 'group_uuid'
-    , 'group_name'
-    , 'last_modified_timestamp'
-    , 'created_by_user_displayname'
-    , 'thumbnail_file'
-}
-
-# Fields for entities retrieved during _generate_doc(), which must be retained on the
-# entity for use by _generate_public_doc(), but should be in the ElasticSearch document.
-FIELDS_FOR_is_public_DETERMINATION = {
-    'data_access_level' # Needed for is_public() calculations for Sample
-    , 'status' # Needed for is_public() calculations for Dataset & Publication
+    'uuid': PropertyRetentionEnum.ES_DOC
+    , 'hubmap_id': PropertyRetentionEnum.ES_DOC
+    , 'dataset_type': PropertyRetentionEnum.ES_DOC
+    , 'entity_type': PropertyRetentionEnum.ES_DOC
+    , 'group_uuid': PropertyRetentionEnum.ES_DOC
+    , 'group_name': PropertyRetentionEnum.ES_DOC
+    , 'last_modified_timestamp': PropertyRetentionEnum.ES_DOC
+    , 'created_by_user_displayname': PropertyRetentionEnum.ES_DOC
+    , 'thumbnail_file': PropertyRetentionEnum.ES_DOC
+    , 'data_access_level': PropertyRetentionEnum.CALC_ONLY # Needed for is_public() calculations for Sample
+    , 'status': PropertyRetentionEnum.CALC_ONLY # Needed for is_public() calculations for Dataset & Publication
 }
 
 # For ElasticSearch documents being written to the 'portal' indices, these are the
 # fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
 INDEX_GROUP_PORTAL_DOC_FIELDS = {
-    'entity_type'
+    'entity_type': PropertyRetentionEnum.ES_DOC
+    , 'data_access_level': PropertyRetentionEnum.CALC_ONLY  # Needed for is_public() calculations for Sample
+    , 'status': PropertyRetentionEnum.CALC_ONLY  # Needed for is_public() calculations for Dataset & Publication
+    , 'uuid': PropertyRetentionEnum.CALC_ONLY  # Needed for limiting ES document 'descendants' to public entities
 }
 
 class Translator(TranslatorInterface):
@@ -1436,7 +1445,7 @@ class Translator(TranslatorInterface):
             if index_group == 'portal':
                 # Harvard will need entity_type in 'descendants', but nothing else.
                 entity_relative_dict = {}
-                for desc_key in INDEX_GROUP_PORTAL_DOC_FIELDS | FIELDS_FOR_is_public_DETERMINATION:
+                for desc_key in INDEX_GROUP_PORTAL_DOC_FIELDS.keys():
                     if desc_key in relative_dict.keys():
                         entity_relative_dict[desc_key] = relative_dict[desc_key]
                 relatives_for_index_group.append(entity_relative_dict)
@@ -1444,7 +1453,7 @@ class Translator(TranslatorInterface):
                 # Only retain 'descendant' elements listed in INCLUDED_DATA_FIELDS of
                 # https://github.com/x-atlas-consortia/hra-api/blob/main/src/library/ds-graph/utils/xconsortia-fetch.js
                 entity_relative_dict = {}
-                for desc_key in INDEX_GROUP_ENTITIES_DOC_FIELDS | FIELDS_FOR_is_public_DETERMINATION :
+                for desc_key in INDEX_GROUP_ENTITIES_DOC_FIELDS.keys():
                     if desc_key in relative_dict.keys():
                         entity_relative_dict[desc_key] = relative_dict[desc_key]
                 if 'ingest_metadata' in relative_dict and \
@@ -1533,7 +1542,7 @@ class Translator(TranslatorInterface):
                     for immediate_descendant_uuid in immediate_descendant_ids:
                         immediate_descendant_dict = self.call_entity_api(immediate_descendant_uuid, 'documents')
                         immediate_descendants.append(immediate_descendant_dict)
-                    index_group_immediate_descendants = self._relatives_for_index_group(  relative_ids=immediate_descendant_ids
+                    index_group_immediate_descendants = self._relatives_for_index_group(relative_ids=immediate_descendant_ids
                                                                                         , index_group=index_group)
                     entity['immediate_descendants'] = index_group_immediate_descendants
 
@@ -1570,7 +1579,7 @@ class Translator(TranslatorInterface):
                                                             , url_property='uuid')
                         parents = []
                         for parent_uuid in parent_uuids:
-                            parent_entity_doc = self.call_entity_api(entity_id = parent_uuid
+                            parent_entity_doc = self.call_entity_api(entity_id=parent_uuid
                                                                     , endpoint_base='documents')
                             parents.append(parent_entity_doc)
 
@@ -1613,14 +1622,19 @@ class Translator(TranslatorInterface):
             # Add additional calculated fields
             self.add_calculated_fields(entity)
 
-            # We need to leave 'status' and 'data_access_level' on the instance of
+            # Establish the list of fields which should be removed from top-level fields prior to
+            # writing the entity as an ElasticSearch document.
+            ig_doc_fields=INDEX_GROUP_PORTAL_DOC_FIELDS if index_group=='portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+            unretained_key_list = [k for k, v in ig_doc_fields.items() if v != PropertyRetentionEnum.ES_DOC]
+
+            # We need to leave fields in unretained_key_list on the instance of
             # entity we are modifying for use by _generate_public_doc(), but we also
-            # do not want these two fields in the ElasticSearch document.  So make a
+            # do not want these fields in the ElasticSearch document.  So make a
             # deepcopy of entity, remove fields from it, and use it to return a value
             doc_entity = copy.deepcopy(entity)
             for top_level_field in {'ancestors', 'immediate_ancestors', 'descendants', 'immediate_descendants'}:
                 if top_level_field in doc_entity:
-                    for field_of_top_level_field in FIELDS_FOR_is_public_DETERMINATION:
+                    for field_of_top_level_field in unretained_key_list:
                         remove_specific_key_entry(  obj=doc_entity[top_level_field]
                                                     , key_to_remove=field_of_top_level_field)
 
@@ -1679,12 +1693,17 @@ class Translator(TranslatorInterface):
         if index_group == 'portal':
             entity['immediate_descendants'] = list(filter(self.is_public, entity['immediate_descendants']))
 
+        # Establish the list of fields which should be removed from top-level fields prior to
+        # writing the entity as an ElasticSearch document.
+        ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+        unretained_key_list = [k for k, v in ig_doc_fields.items() if v != PropertyRetentionEnum.ES_DOC]
+
         # Because _generate_doc() left some fields on the entity which should not be a part of the
-        # ElasticSearch document, but which were needed above for is_public() calls, remove them before
+        # ElasticSearch document, but which were needed for calculations prior to now, remove them before
         # returning the public document contents.
         for top_level_field in {'ancestors', 'immediate_ancestors', 'descendants', 'immediate_descendants'}:
             if top_level_field in entity:
-                for field_of_top_level_field in FIELDS_FOR_is_public_DETERMINATION:
+                for field_of_top_level_field in unretained_key_list:
                     remove_specific_key_entry(obj=entity[top_level_field]
                                               , key_to_remove=field_of_top_level_field)
 
