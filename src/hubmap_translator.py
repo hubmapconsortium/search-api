@@ -67,15 +67,18 @@ class PropertyRetentionEnum(Enum):
 # For ElasticSearch documents being written to the 'entities' indices, these are the
 # fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
 INDEX_GROUP_ENTITIES_DOC_FIELDS = {
-    'uuid': PropertyRetentionEnum.ES_DOC
-    , 'hubmap_id': PropertyRetentionEnum.ES_DOC
-    , 'dataset_type': PropertyRetentionEnum.ES_DOC
-    , 'entity_type': PropertyRetentionEnum.ES_DOC
-    , 'group_uuid': PropertyRetentionEnum.ES_DOC
-    , 'group_name': PropertyRetentionEnum.ES_DOC
-    , 'last_modified_timestamp': PropertyRetentionEnum.ES_DOC
-    , 'created_by_user_displayname': PropertyRetentionEnum.ES_DOC
-    , 'thumbnail_file': PropertyRetentionEnum.ES_DOC
+    'dataset_type': PropertyRetentionEnum.ES_DOC
+    , 'rui_location': PropertyRetentionEnum.ES_DOC
+    , 'uuid': PropertyRetentionEnum.ES_DOC
+    , 'hubmap_id': PropertyRetentionEnum.CALC_ONLY
+    , 'entity_type': PropertyRetentionEnum.CALC_ONLY
+    , 'group_uuid': PropertyRetentionEnum.CALC_ONLY
+    , 'group_name': PropertyRetentionEnum.CALC_ONLY
+    , 'last_modified_timestamp': PropertyRetentionEnum.CALC_ONLY
+    , 'created_by_user_displayname': PropertyRetentionEnum.CALC_ONLY
+    , 'thumbnail_file': PropertyRetentionEnum.CALC_ONLY
+    , 'sample_category': PropertyRetentionEnum.CALC_ONLY # Needed to fill origin_samples
+    , 'organ': PropertyRetentionEnum.CALC_ONLY # Needed to fill origin_samples
     , 'data_access_level': PropertyRetentionEnum.CALC_ONLY # Needed for is_public() calculations for Sample
     , 'status': PropertyRetentionEnum.CALC_ONLY # Needed for is_public() calculations for Dataset & Publication
 }
@@ -83,10 +86,10 @@ INDEX_GROUP_ENTITIES_DOC_FIELDS = {
 # For ElasticSearch documents being written to the 'portal' indices, these are the
 # fields to retain within fields which entity-api added via triggers e.g. 'descendants' and 'ancestors'
 INDEX_GROUP_PORTAL_DOC_FIELDS = {
-    'entity_type': PropertyRetentionEnum.ES_DOC
+    'uuid': PropertyRetentionEnum.ES_DOC
+    , 'entity_type': PropertyRetentionEnum.ES_DOC
     , 'data_access_level': PropertyRetentionEnum.CALC_ONLY  # Needed for is_public() calculations for Sample
     , 'status': PropertyRetentionEnum.CALC_ONLY  # Needed for is_public() calculations for Dataset & Publication
-    , 'uuid': PropertyRetentionEnum.CALC_ONLY  # Needed for limiting ES document 'descendants' to public entities
 }
 
 class Translator(TranslatorInterface):
@@ -1441,30 +1444,13 @@ class Translator(TranslatorInterface):
         relatives_for_index_group = []
         for relative_uuid in relative_ids:
             relative_dict = self.call_entity_api(relative_uuid, 'documents')
-            # Only retain the descendant elements need for each index group
-            if index_group == 'portal':
-                # Harvard will need entity_type in 'descendants', but nothing else.
-                entity_relative_dict = {}
-                for desc_key in INDEX_GROUP_PORTAL_DOC_FIELDS.keys():
-                    if desc_key in relative_dict.keys():
-                        entity_relative_dict[desc_key] = relative_dict[desc_key]
-                relatives_for_index_group.append(entity_relative_dict)
-            if index_group == 'entities':
-                # Only retain 'descendant' elements listed in INCLUDED_DATA_FIELDS of
-                # https://github.com/x-atlas-consortia/hra-api/blob/main/src/library/ds-graph/utils/xconsortia-fetch.js
-                entity_relative_dict = {}
-                for desc_key in INDEX_GROUP_ENTITIES_DOC_FIELDS.keys():
-                    if desc_key in relative_dict.keys():
-                        entity_relative_dict[desc_key] = relative_dict[desc_key]
-                if 'ingest_metadata' in relative_dict and \
-                        'metadata' in relative_dict['ingest_metadata'] and \
-                        'tissue_id' in relative_dict['ingest_metadata']['metadata']:
-                    entity_relative_dict['ingest_metadata'] = {
-                        'metadata': {
-                            'tissue_id': relative_dict['ingest_metadata']['metadata']['tissue_id']
-                        }
-                    }
-                relatives_for_index_group.append(entity_relative_dict)
+            # Only retain the elements of each relative needed for the index group
+            entity_relative_dict = {}
+            ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+            for desc_key in ig_doc_fields.keys():
+                if desc_key in relative_dict.keys():
+                    entity_relative_dict[desc_key] = relative_dict[desc_key]
+            relatives_for_index_group.append(entity_relative_dict)
         return relatives_for_index_group
 
     # Note: this entity dict input (if Dataset) has already handled ingest_metadata.files (with empty string or missing)
@@ -1490,6 +1476,9 @@ class Translator(TranslatorInterface):
                                                     , endpoint_base='ancestors'
                                                     , endpoint_suffix=None
                                                     , url_property='uuid')
+                # Fill ancestors with "full" entities, both for use in calculating 'origin_samples' below and
+                # to determine which ancestor populates 'donor'.  But after all calculations, cut 'ancestors'
+                # back to the specific needs for documents in the index group
                 for ancestor_uuid in ancestor_ids:
                     ancestor_dict = self.call_entity_api(entity_id=ancestor_uuid
                                                          , endpoint_base='documents')
@@ -1526,9 +1515,6 @@ class Translator(TranslatorInterface):
 
                 # Add new properties to entity only needed for documents in the 'portal' index group
                 if index_group == 'portal':
-                    index_group_ancestors = self._relatives_for_index_group(    relative_ids=ancestor_ids
-                                                                                , index_group=index_group)
-                    entity['ancestors'] = index_group_ancestors
                     immediate_ancestors = []
                     immediate_descendants = []
 
@@ -1567,7 +1553,7 @@ class Translator(TranslatorInterface):
                 for origin_sample in entity['origin_samples']:
                     self.exclude_added_calculated_fields(origin_sample)
 
-                # `source_samples` field is only avaiable to Dataset
+                # `source_samples` field is only available to Dataset
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     entity['source_samples'] = None
                     e = entity
@@ -1591,6 +1577,12 @@ class Translator(TranslatorInterface):
                             e = parents[0]
                         except IndexError:
                             entity['source_samples'] = []
+
+            # Now that calculations use 'ancestors' with fully populated entities are
+            # complete, set entity['ancestors'] instead to a value appropriate for
+            # the index group, prior to any renaming or removal operations.
+            entity['ancestors'] = self._relatives_for_index_group(  relative_ids=ancestor_ids
+                                                                    , index_group=index_group)
 
             self._entity_keys_rename(entity)
 
@@ -1637,6 +1629,12 @@ class Translator(TranslatorInterface):
                     for field_of_top_level_field in unretained_key_list:
                         remove_specific_key_entry(  obj=doc_entity[top_level_field]
                                                     , key_to_remove=field_of_top_level_field)
+                    # After removing unneeded entries within members of the top_level_field, remove
+                    # the member itself if it is empty. However, keep the top_level_field in
+                    # the entity even if it is empty.
+                    for index, value in enumerate(doc_entity[top_level_field]):
+                        if not value:
+                           doc_entity[top_level_field].pop(index)
 
             logger.info(f"Finished executing _generate_doc() for {doc_entity['entity_type']}"
                         f" of uuid: {doc_entity['uuid']}"
