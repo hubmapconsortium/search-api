@@ -20,11 +20,13 @@ class CreationAction(str, Enum):
     CENTRAL_PROCESS = 'Central Process'
     LAB_PROCESS = 'Lab Process'
     CREATE_PUBLICATION = 'Create Publication Activity'
+    EPIC = 'External Process'
 
 
 processing_type_map = {
     CreationAction.CENTRAL_PROCESS: 'hubmap',
     CreationAction.LAB_PROCESS: 'lab',
+    CreationAction.EPIC: 'external',
 }
 
 
