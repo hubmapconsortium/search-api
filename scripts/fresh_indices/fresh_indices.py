@@ -444,10 +444,8 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
         modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=source_index
                                                                         , timestamp_data_list=timestamp_range_json_list )
         logger.debug(f"For source_index={source_index} the touched UUIDs list is {modified_index_uuids}")
-        # @TODO-KBKBKB substitute this
         catch_up_uuids |= set(modified_index_uuids)
-        # for uuid in modified_index_uuids:
-        #     catch_up_uuids.add(uuid)
+        
     # Re-index each entity timestamped after the last command.
     logger.info(f"The set of UUIDs for entities to re-index is {str(catch_up_uuids)}")
     op_data_supplement['catchup']['touched_entity_ids']=list(catch_up_uuids)
