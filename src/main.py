@@ -6,7 +6,6 @@ from flask import Flask
 from yaml import safe_load
 
 sys.path.append("search-adaptor/src")
-import libs.hubmap_endpoints
 search_adaptor_module = importlib.import_module("app", "search-adaptor/src")
 
 config = {}
@@ -39,12 +38,9 @@ if config['ONTOLOGY_API_BASE_URL'] is None:
 
 translator_module = importlib.import_module("hubmap_translator")
 
-sys.path.append("libs")
-
-hubmap_blueprint = libs.hubmap_endpoints.hubmap_blueprint
-
 # This `app` will be imported by wsgi.py when deployed with uWSGI server
-app = search_adaptor_module.SearchAPI(config, translator_module, hubmap_blueprint).app
+app = search_adaptor_module.SearchAPI(  config=config
+                                        , translator_module=translator_module).app
 
 # For local standalone (non-docker) development/testing
 if __name__ == "__main__":
