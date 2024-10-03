@@ -37,6 +37,9 @@ class ESManager:
                 value = rspn_json['aggregations']['agg_query_result']['value']
                 if value is None or \
                    'value' not in rspn_json['aggregations']['agg_query_result']:
+                    # It is expected we will get here if the index has zero entries during development, but
+                    # no special handling for that situation.  Assume indices will have one or more documents in
+                    # other situations, and log the lack of result as an error.
                     msg = f"Unable to aggregate on agg_name_enum='{agg_name_enum}', field_name='{field_name}'"
                     logger.error(msg)
                     raise Exception(msg)
@@ -102,6 +105,9 @@ class ESManager:
                 if 'hits' in rspn_json and 'hits' in rspn_json['hits']:
                     for hit in rspn_json['hits']['hits']:
                         post_create_revised_uuids.append(hit['_id'])
+                logger.info(f"Search of {index_name}"
+                            f" returned {len(post_create_revised_uuids)} UUIDs"
+                            f" revised after the specified timestamp")
                 return post_create_revised_uuids
             else:
                 logger.error(f"Search of {index_name} for post-create revised documents failed:")
@@ -111,6 +117,7 @@ class ESManager:
                   f" with query_json '{query_json}':"
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
+            
     def delete_index(self, index_name):
         try:
             rspn = requests.delete(url=f"{self.elasticsearch_url}/{index_name}")
@@ -149,11 +156,14 @@ class ESManager:
         if exists_rspn.ok:
             logger.debug(f"Not creating index_name={index_name} because it already exists.")
             return
+        logger.debug(f"Creating index_name={index_name}.")
         self.create_index(  index_name=index_name
                             , config=index_mapping_settings)
 
+    # Expect an HTTP 200 response if index_name exists, or a 404 if it does not exist
     def verify_exists(self, index_name):
-        return requests.head(url=f"{self.elasticsearch_url}/{index_name}")
+        rspn=requests.head(url=f"{self.elasticsearch_url}/{index_name}")
+        return rspn.status_code in [200]
 
     def empty_index(self, index_name):
         headers = {'Content-Type': 'application/json'}
