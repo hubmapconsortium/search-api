@@ -410,7 +410,7 @@ components:
             - TR
             - UR
             - UT
-          description: "Organ code specifier, only set if sample_category == organ.  Valid values found in: [organ types](https://github.com/hubmapconsortium/search-api/blob/main/src/search-schema/data/definitions/enums/organ_types.yaml)"
+          description: "Organ code specifier, only set if sample_category == organ.  Valid values found using [the Ontology API](https://ontology.api.hubmapconsortium.org/organs?application_context=HUBMAP)"
         direct_ancestor_uuid:
           type: string
           writeOnly: true
