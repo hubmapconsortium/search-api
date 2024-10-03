@@ -606,7 +606,7 @@ class Translator(TranslatorInterface):
 
     def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
         logger.info(f"Start executing direct '{index_group}' updates for"
-                    f"entity['uuid']={entity['uuid']},"
+                    f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
         try:
             private_doc = self._generate_doc(   entity=entity

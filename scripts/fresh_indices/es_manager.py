@@ -37,6 +37,9 @@ class ESManager:
                 value = rspn_json['aggregations']['agg_query_result']['value']
                 if value is None or \
                    'value' not in rspn_json['aggregations']['agg_query_result']:
+                    # It is expected we will get here if the index has zero entries during development, but
+                    # no special handling for that situation.  Assume indices will have one or more documents in
+                    # other situations, and log the lack of result as an error.
                     msg = f"Unable to aggregate on agg_name_enum='{agg_name_enum}', field_name='{field_name}'"
                     logger.error(msg)
                     raise Exception(msg)
@@ -153,6 +156,7 @@ class ESManager:
         if exists_rspn.ok:
             logger.debug(f"Not creating index_name={index_name} because it already exists.")
             return
+        logger.debug(f"Creating index_name={index_name}.")
         self.create_index(  index_name=index_name
                             , config=index_mapping_settings)
 

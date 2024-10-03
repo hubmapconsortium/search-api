@@ -6,6 +6,7 @@ import sys
 import configparser
 import logging
 import importlib
+import copy
 
 from pathlib import Path
 
@@ -339,21 +340,11 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
     if fill_strategy in [FillStrategyType.CREATE_FILL]:
         #"rename" things as follows:
         # swap source_index to become "flushYYYYMMDD..." index
-        # swap destination_index to become source_index
+        # swap destination_index to become source_index            
         for source_index in index_info_dict.keys():
             destination_index=index_info_dict[source_index]['destination']
             flush_index=destination_index.replace('fill','flush')
-            if not es_mgr.verify_exists(source_index):
-                raise Exception(f"Unable to find the source_index '{source_index}' to back up as flush_index '{flush_index}', so cannot swap.")
-            if es_mgr.verify_exists(flush_index):
-                raise Exception(f"Found existing flush_index '{flush_index}', so cannot backup '{source_index}' to that name, so cannot swap.")
-            if not es_mgr.verify_exists(destination_index):
-                raise Exception(f"Unable to find destination_index '{destination_index}' to become new '{source_index}', so cannot swap.")
-            
-        for source_index in index_info_dict.keys():
-            destination_index=index_info_dict[source_index]['destination']
-            flush_index=destination_index.replace('fill','flush')
-            
+
             # Block writing on the indices, even though services which write to them should probably be down.
             logger.debug(f"Set {IndexBlockType.WRITE} block on source_index={source_index}.")
             es_mgr.set_index_block(index_name=source_index
@@ -388,7 +379,7 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             es_mgr.clone_index(source_index_name=destination_index
                                , target_index_name=source_index)
             op_data_supplement['golive']['swap_info'].append(f"Cloned {destination_index} to {source_index}")
-            # Make sure the flush_index health is "green" before proceeding.
+            # Make sure the source_index health is "green" before proceeding.
             es_mgr.wait_until_index_green(index_name=source_index
                                             ,wait_in_secs=30)
             logger.debug(f"Health of source_index={source_index} is green.")
@@ -398,6 +389,15 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             es_mgr.delete_index(index_name=destination_index)
             logger.debug(f"Deleted destination_index={destination_index}.")
             op_data_supplement['golive']['swap_info'].append(f"Deleted {destination_index}")
+
+            # Assure that the index which will be actively used by Search API and the
+            # backup of the previous version are writeable.
+            logger.debug(f"Set {IndexBlockType.NONE} block on source_index={source_index}.")
+            es_mgr.set_index_block(index_name=source_index
+                                   , block_name=IndexBlockType.NONE)
+            logger.debug(f"Set {IndexBlockType.NONE} block on flush_index={flush_index}.")
+            es_mgr.set_index_block(index_name=flush_index
+                                   , block_name=IndexBlockType.NONE)
     else:
         logger.error(f"Unable to 'rename' indices for fill_strategy={fill_strategy}")
 
@@ -483,6 +483,111 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
                                  f" unable to retrieve the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'.")
             except Exception as e:
                 logger.error(f"For the index {source_index}"
+                             f" retrieving the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'"
+                             f" caused '{str(e)}'.")
+
+    end_time = time.time()
+    # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
+    logger.info(f"############# Re-indexing entities of recently touch documents via script complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
+
+    elapsed_seconds = end_time-start_time
+    logger.info(f"############# Re-indexing via script took"
+                f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
+                f" #############")
+
+# Read the op_data file from the last 'create' command.  Read each document from
+# the flush index which was created or updated after the 'create' command started.
+# Re-index those entities into the new index, even though re-indexing is a more
+# expensive operations, so that the new index has everything the flush index had.
+def catch_up_live_index(es_mgr:ESManager)->None:
+    global op_data
+    global op_data_supplement
+
+    # Need to re-identify the indices which are now live for the service.  Rather than extract
+    # op_data['0']['index_info'].keys() and parse each key to attempt to match an entry in
+    # INDICES, reload from search-config.yaml and make a special set of indices for catching up the
+    # active indices the reindex_entity() operation should write to.
+    live_indices=copy.deepcopy(INDICES)
+    orig_indices = safe_load((Path(__file__).absolute().parent.parent / '../src/instance/search-config.yaml').read_text())
+
+    # Do not use the global INDICES or a_translator which were set up for the 'create' and
+    # old catch_up_new_index() method. Create a translator which will write to the active
+    # indices in use by Search API
+    live_indices['indices']['entities']['public'] = orig_indices['indices']['entities']['public']
+    live_indices['indices']['entities']['private'] = orig_indices['indices']['entities']['private']
+    live_indices['indices']['portal']['public'] = orig_indices['indices']['portal']['public']
+    live_indices['indices']['portal']['private'] = orig_indices['indices']['portal']['private']
+
+    live_translator = Translator(live_indices, appcfg['APP_CLIENT_ID'], appcfg['APP_CLIENT_SECRET'], token,
+                              appcfg['ONTOLOGY_API_BASE_URL'])
+    
+    start_time = time.time()
+
+    logger.info(f"############# Re-indexing entities of recently touched documents via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
+
+    # Go through each index, and identify documents whose timestamps were updated after the create command.
+    catch_up_uuids=set()
+    # At this point, the 'index_info' keys recorded during the 'create' command as "source indices" are now
+    # the "active indices" that the Search API uses, and the destination for "catch up" re-index commands.
+    for active_index in op_data['0']['index_info'].keys():
+        flush_index=op_data['0']['index_info'][active_index]['destination'].replace('fill','flush')
+        logger.debug(f"Catch-up index '{active_index}' by re-indexing entities for documents in '{flush_index}' touched after the 'create' command started.")
+        
+        # Fill a list with dictionaries for each known timestamp to be checked in source_index. Dictionary
+        # content should reflect a QDSL query.
+        timestamp_range_json_list=[]
+        for timestamp_field_name in op_data['0']['index_info'][active_index][AggQueryType.MAX.value].keys():
+            timestamp_value=op_data['0']['index_info'][active_index][AggQueryType.MAX.value][timestamp_field_name]
+            logger.debug(f"For active_index={active_index},"
+                         f" timestamp_field_name={timestamp_field_name},"
+                         f" looking for documents with timestamp_value greater than {timestamp_value}")
+            timestamp_range_json_list.append(f'{{"range": {{"{timestamp_field_name}": {{"gt": {timestamp_value}}}}}}}')
+            timestamp_data = { 'timestamp_field': timestamp_field_name
+                               , 'timestamp_op': 'gt'
+                               , 'timestamp_value': op_data['0']['index_info'][active_index][AggQueryType.MAX.value][timestamp_field_name]}
+        # Query documents with timestamps subsequent to the 'create' command which made into the original (now 'flush') index.
+        modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=flush_index
+                                                                        , timestamp_data_list=timestamp_range_json_list )
+        logger.debug(f"For flush_index={flush_index} the touched UUIDs list is {modified_index_uuids}")
+        catch_up_uuids |= set(modified_index_uuids)
+        
+    # Re-index each entity timestamped after the last command.
+    logger.info(f"The set of UUIDs for entities to re-index is {str(catch_up_uuids)}")
+    op_data_supplement['catchup']['touched_entity_ids']=list(catch_up_uuids)
+    for catch_up_uuid in catch_up_uuids:
+        logger.debug(f" reindex {catch_up_uuid}")
+        live_translator.reindex_entity(uuid=catch_up_uuid)
+
+    if live_translator.failed_entity_ids:
+        logger.info(f"{len(live_translator.failed_entity_ids)} entity ids failed")
+        logger.debug(*live_translator.failed_entity_ids, sep="\n")
+        op_data_supplement['catchup']['translator_failed_entity_ids']=live_translator.failed_entity_ids
+    else:
+        logger.info(f"No failed_entity_ids reported for the translator.")
+        op_data_supplement['catchup']['translator_failed_entity_ids']=[]
+
+    op_data_supplement['catchup']['index_info']={}
+    for active_index in op_data['0']['index_info'].keys():
+        op_data_supplement['catchup']['index_info'][active_index]={}
+        # Capture active_index document count for storage with op_data
+        index_doc_count = es_mgr.get_index_document_count(index_name=active_index)
+        logger.debug(f"index {active_index} has {index_doc_count} documents.")
+        op_data_supplement['catchup']['index_info'][active_index]['current_doc_count']=index_doc_count
+        op_data_supplement['catchup']['index_info'][active_index]['max']={'last_modified_timestamp': None
+                                                                          , 'created_timestamp': None}
+
+        # Capture the newest timestamps of this index for storage in op_data
+        for inter_cmd_values_to_capture in ['last_modified_timestamp', 'created_timestamp']:
+            try:
+                op_data_supplement['catchup']['index_info'][active_index][AggQueryType.MAX.value][inter_cmd_values_to_capture] = \
+                    es_mgr.get_document_agg_value(  index_name=active_index
+                                                    , field_name=inter_cmd_values_to_capture
+                                                    , agg_name_enum=AggQueryType.MAX)
+                if op_data_supplement['catchup']['index_info'][active_index][AggQueryType.MAX.value][inter_cmd_values_to_capture] is None:
+                    logger.error(f"For the index {active_index}"
+                                 f" unable to retrieve the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'.")
+            except Exception as e:
+                logger.error(f"For the index {active_index}"
                              f" retrieving the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'"
                              f" caused '{str(e)}'.")
 
@@ -619,8 +724,9 @@ if __name__ == "__main__":
         print('#############')
     elif command == 'catch-up':
         op_data_supplement['catchup']={}
-        catch_up_new_index(es_mgr=esmanager
-                           , op_data_key=op_data_seq)
+        # catch_up_new_index(es_mgr=esmanager
+        #                    , op_data_key=op_data_seq)
+        catch_up_live_index(es_mgr=esmanager)
         print('#############')
         print('Completed catch-up command.')
         print(f"Next either take down the service and catch-up again before"
