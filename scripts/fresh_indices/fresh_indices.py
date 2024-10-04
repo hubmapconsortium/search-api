@@ -455,7 +455,7 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
 
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*a_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
         op_data_supplement['catchup']['translator_failed_entity_ids']=a_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
@@ -560,7 +560,7 @@ def catch_up_live_index(es_mgr:ESManager)->None:
 
     if live_translator.failed_entity_ids:
         logger.info(f"{len(live_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*live_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, live_translator.failed_entity_ids)))
         op_data_supplement['catchup']['translator_failed_entity_ids']=live_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
@@ -623,7 +623,7 @@ def create_new_indices():
 
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*a_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
         op_data_supplement['create']['translator_failed_entity_ids']=a_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
