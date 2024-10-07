@@ -1,6 +1,6 @@
 [LocalServerSettings]
 EXEC_INFO_DIR=./exec_info
-MAX_EXPECTED_CATCH_UP_UUID_COUNT=20
+MAX_EXPECTED_CATCH_UP_UUID_COUNT=2000
 
 [FullReindexSettings]
 ; from FillStrategyType.py FillStrategyType enum
