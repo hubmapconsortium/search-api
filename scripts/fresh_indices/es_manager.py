@@ -3,6 +3,7 @@ import json
 import logging
 from IndexBlockType import IndexBlockType
 from AggQueryType import AggQueryType
+from TooMuchToCatchUpException import TooMuchToCatchUpException
 
 # Set logging format and level (default is warning)
 # All the API logging is forwarded to the uWSGI server and gets written into the log file `uwsgo-entity-api.log`
@@ -79,7 +80,7 @@ class ESManager:
             # Log the full stack trace, prepend a line with our message
             logger.exception(msg)
 
-    def get_document_uuids_by_timestamps(self, index_name:str, timestamp_data_list:list ) -> list:
+    def get_document_uuids_by_timestamps(self, index_name:str, timestamp_data_list:list, expected_max_hits:int ) -> list:
         replacement_str=','.join(timestamp_data_list)
         query_json='''{
                         "query": {
@@ -90,9 +91,12 @@ class ESManager:
                                 "minimum_should_match": 1
                             }
                         },
+                        "size": MAX_HITS_GO_HERE,
                         "_source": false
                     }'''
         query_json=query_json.replace('TIME_STAMP_RANGES_GO_HERE', replacement_str)
+        query_json = query_json.replace('MAX_HITS_GO_HERE', str(expected_max_hits))
+        logger.debug(f"request query payload is query_json={query_json}")
         headers = {'Content-Type': 'application/json'}
         try:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_search"
@@ -102,6 +106,18 @@ class ESManager:
                 post_create_revised_uuids = []
                 rspn_json=rspn.json()
 
+                if 'hits' in rspn_json and \
+                    'total' in rspn_json['hits'] and \
+                    'value' in rspn_json['hits']['total']:
+                    entity_count_to_catchup=int(rspn_json['hits']['total']['value'])
+                    if entity_count_to_catchup > expected_max_hits:
+                        logger.critical(f"This script is designed to work with {expected_max_hits} or fewer"
+                                        f" UUIDs to 'catch-up'. Found {entity_count_to_catchup}, so"
+                                        f" data would be lost.")
+                        logger.critical(f"You can adjust the MAX_EXPECTED_CATCH_UP_UUID_COUNT parameter of"
+                                        f" fresh_indices.ini up to the ElasticSearch product limit.")
+                        raise TooMuchToCatchUpException(f"Cannot catch-up {entity_count_to_catchup} UUIDs."
+                                                        f" Maximum expected is {expected_max_hits}.")
                 if 'hits' in rspn_json and 'hits' in rspn_json['hits']:
                     for hit in rspn_json['hits']['hits']:
                         post_create_revised_uuids.append(hit['_id'])
@@ -112,6 +128,8 @@ class ESManager:
             else:
                 logger.error(f"Search of {index_name} for post-create revised documents failed:")
                 logger.error(f"Error Message: {rspn.text}")
+        except TooMuchToCatchUpException as tmtcue:
+            raise tmtcue
         except Exception as e:
             msg = f"Exception encountered executing ESManager.get_document_uuids_by_timestamps()" \
                   f" with query_json '{query_json}':"

@@ -24,12 +24,14 @@ from FillStrategyType import FillStrategyType
 from AggQueryType import AggQueryType
 from IndexBlockType import IndexBlockType
 from es_manager import ESManager
+from TooMuchToCatchUpException import TooMuchToCatchUpException
 
 def init():
     global logger
     global fill_strategy
     global appcfg
     global EXEC_INFO_DIR
+    global MAX_EXPECTED_CATCH_UP_UUID_COUNT
 
     #
     # Read configuration from the INI file and set global constants
@@ -39,6 +41,8 @@ def init():
         config_file_name = 'fresh_indices.ini'
         Config.read(config_file_name)
         EXEC_INFO_DIR = Config.get('LocalServerSettings', 'EXEC_INFO_DIR')
+        str_MAX_EXPECTED_CATCH_UP_UUID_COUNT = Config.get('LocalServerSettings', 'MAX_EXPECTED_CATCH_UP_UUID_COUNT')
+        MAX_EXPECTED_CATCH_UP_UUID_COUNT=int(str_MAX_EXPECTED_CATCH_UP_UUID_COUNT)
         FILL_STRATEGY_ENUM = Config.get('FullReindexSettings', 'FILL_STRATEGY_ENUM')
     except Exception as e:
         logger.error(f"Reading {config_file_name}, got error'{str(e)}'.")
@@ -437,9 +441,6 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
                          f" timestamp_field_name={timestamp_field_name},"
                          f" looking for documents with timestamp_value greater than {timestamp_value}")
             timestamp_range_json_list.append(f'{{"range": {{"{timestamp_field_name}": {{"gt": {timestamp_value}}}}}}}')
-            timestamp_data = { 'timestamp_field': timestamp_field_name
-                               , 'timestamp_op': 'gt'
-                               , 'timestamp_value': op_data[previous_op_data_seq]['index_info'][source_index][AggQueryType.MAX.value][timestamp_field_name]}
         # Query documents with timestamps subsequent to the last command.
         modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=source_index
                                                                         , timestamp_data_list=timestamp_range_json_list )
@@ -455,7 +456,7 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
 
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*a_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
         op_data_supplement['catchup']['translator_failed_entity_ids']=a_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
@@ -502,6 +503,7 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
 def catch_up_live_index(es_mgr:ESManager)->None:
     global op_data
     global op_data_supplement
+    global MAX_EXPECTED_CATCH_UP_UUID_COUNT
 
     # Need to re-identify the indices which are now live for the service.  Rather than extract
     # op_data['0']['index_info'].keys() and parse each key to attempt to match an entry in
@@ -538,16 +540,21 @@ def catch_up_live_index(es_mgr:ESManager)->None:
         timestamp_range_json_list=[]
         for timestamp_field_name in op_data['0']['index_info'][active_index][AggQueryType.MAX.value].keys():
             timestamp_value=op_data['0']['index_info'][active_index][AggQueryType.MAX.value][timestamp_field_name]
-            logger.debug(f"For active_index={active_index},"
-                         f" timestamp_field_name={timestamp_field_name},"
-                         f" looking for documents with timestamp_value greater than {timestamp_value}")
+            logger.debug(f"Looking for documents in {flush_index}"
+                         f" with timestamp_value greater than {timestamp_value},"
+                         f" Captured from timestamp_field_name={timestamp_field_name}"
+                         f" of active_index={active_index}"
+                         f" during the last operation.")
             timestamp_range_json_list.append(f'{{"range": {{"{timestamp_field_name}": {{"gt": {timestamp_value}}}}}}}')
-            timestamp_data = { 'timestamp_field': timestamp_field_name
-                               , 'timestamp_op': 'gt'
-                               , 'timestamp_value': op_data['0']['index_info'][active_index][AggQueryType.MAX.value][timestamp_field_name]}
         # Query documents with timestamps subsequent to the 'create' command which made into the original (now 'flush') index.
-        modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=flush_index
-                                                                        , timestamp_data_list=timestamp_range_json_list )
+        try:
+            modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=flush_index
+                                                                            , timestamp_data_list=timestamp_range_json_list
+                                                                            , expected_max_hits=MAX_EXPECTED_CATCH_UP_UUID_COUNT)
+        except TooMuchToCatchUpException as tmtcu:
+            msg=f"catch-up command failed due to: {tmtcu.message}"
+            logger.critical(msg)
+            sys.exit(f"{msg} See logs.")
         logger.debug(f"For flush_index={flush_index} the touched UUIDs list is {modified_index_uuids}")
         catch_up_uuids |= set(modified_index_uuids)
         
@@ -560,7 +567,7 @@ def catch_up_live_index(es_mgr:ESManager)->None:
 
     if live_translator.failed_entity_ids:
         logger.info(f"{len(live_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*live_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, live_translator.failed_entity_ids)))
         op_data_supplement['catchup']['translator_failed_entity_ids']=live_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
@@ -623,7 +630,7 @@ def create_new_indices():
 
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
-        logger.debug(*a_translator.failed_entity_ids, sep="\n")
+        logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
         op_data_supplement['create']['translator_failed_entity_ids']=a_translator.failed_entity_ids
     else:
         logger.info(f"No failed_entity_ids reported for the translator.")
