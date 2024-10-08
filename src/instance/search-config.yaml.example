@@ -27,6 +27,7 @@ indices:
 
   portal: 
     active: true
+    log_query: true
     #Set to "sn_" instead of "hm_" for SenNet
     reindex_enabled: true
     public: hm_public_portal
