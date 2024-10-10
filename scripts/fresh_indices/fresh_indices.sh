@@ -48,6 +48,11 @@ Help()
    echo "            * rename the old index so it can be deleted,"
    echo "            * rename the new index for use by Production,"
    echo "            * and wait for the new index to have green health."
+   echo "go-live - Swap indices around so the results of 'create' and 'catch-up' commands becomes the indices used by the Search API."
+   echo "            * Names of current and new indices are taken from the newest exec_info/op_data*.json file."
+   echo "            * The current indices will be renamed with a 'flush' prefix."
+   echo "            * The new indices will taken on the name expected by Search API."
+   echo "            * The script will wait for 'green health' on each renamed index."
    echo
    echo "[-option]"
    echo "-h Display this help"
@@ -66,6 +71,10 @@ StartupVerifications()
     elif [[ "$arg_verbose" == true ]]; then
 	    echo Python 3 found - `python3 --version`
     fi
+
+    if [[ ! -f "./token_holder" ]]; then
+	bail_out_errors+=("The file 'token_holder' is not found in `pwd`")
+    fi
 }
 
 ################################################################################
@@ -76,7 +85,7 @@ StartupVerifications()
 printf -v date_stamp '%(%Y-%m-%d)T' -1
 
 # Commands accepted in the script arguments after the options, as described in Help()
-recognized_commands=("create","catch-up")
+recognized_commands=("create","catch-up","go-live")
 
 # Pull the names of the destination indices from the same YAML which will be
 # used for reindexing.
@@ -99,6 +108,8 @@ bail_out_errors=()
 arg_verbose=false
 # String tracking script option for severity levels.
 arg_output_dir='./exec_info' # KBKBKB @TODO get from fresh_indices.ini
+# Flag forcing a smaller set of data to be used while creating and catching-up.
+use_dev_subset=true
 # Exit codes for script outcome
 EXIT_SUCCESS=0
 EXIT_VERIFICATION_FAILURE=254
@@ -158,17 +169,19 @@ fi
 echo "Output will be in ${arg_output_dir}"
 echo
 
-MYPYPATH=../../src:../../src/search-adaptor/src:../../src/search-adaptor/src/libs:../../src/search-adaptor/src/translator
 if [[ "$cmd" == "create" ]]; then
   echo "Creating new indices to replace these configured in app.cfg:"
   for index in ${entities_portal_indices[@]%,}; do
     echo -e "\t$index "
   done
-  PYTHONPATH=$MYPYPATH python3 fresh_indices.py $cmd `cat token_holder`
 elif [[ "$cmd" == "catch-up" ]]; then
-  PYTHONPATH=$MYPYPATH python3 fresh_indices.py $cmd `cat token_holder`
+  echo "Using op_data from the most current $arg_output_dir/op_data*.json file to re-index any entities touch since the 'create' command."
+elif [[ "$cmd" == "go-live" ]]; then
+  echo "Using op_data from the most current $arg_output_dir/op_data*.json file, swapping index names so Search API can use new indices, "
 else
   echo "Unexpectedly tried to execute with cmd='$cmd'"
 fi
+MYPYPATH=../../src:../../src/search-adaptor/src:../../src/search-adaptor/src/libs:../../src/search-adaptor/src/translator
+PYTHONPATH=$MYPYPATH python3 fresh_indices.py $cmd `cat ./token_holder`
 
 exit $EXIT_SUCCESS
