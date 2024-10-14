@@ -1218,10 +1218,6 @@ class Translator(TranslatorInterface):
                 self.public_doc_exclusion_dict[k]=[]
 
     def supplement_public_doc_exclusion_dict(self):
-        # donor, origin_samples, and source_samples are definitely in the list.
-        # Collection.datasets, Epicollection.datasets, and Upload.datasets
-        # would likely contain lab_id under the metadata.
-
         # Get a snapshot of the exclusions loaded from Entity API YAML for each
         # entity type, prior to supplementing.
         base_entity_exclusions={}
