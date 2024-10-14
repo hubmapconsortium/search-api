@@ -1,14 +1,17 @@
 import concurrent.futures
 import copy
 import importlib
+import requests
 import json
 import logging
 import os
 import re
 import sys
 import time
-from yaml import safe_load
+from yaml import safe_load, YAMLError
+from http.client import HTTPException
 from enum import Enum
+from types import MappingProxyType
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
@@ -51,7 +54,7 @@ neo4j_to_es_attribute_name_map = {
     'ingest_metadata': 'metadata'
 }
 
-# Entity types that will have `display_subtype` generated ar index time
+# Entity types that will have `display_subtype` generated at index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
 
 # Define an enumeration to classify the elements of a top-level property listed in entity_properties_list as
@@ -122,7 +125,11 @@ class Translator(TranslatorInterface):
             self.INDICES: dict = {'default_index': self.DEFAULT_INDEX_WITHOUT_PREFIX, 'indices': self.indices}
             self.DEFAULT_ENTITY_API_URL = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
             self._ontology_api_base_url = ontology_api_base_url
-            
+
+            if not indices['entity_api_prov_schema_raw_url']:
+                raise Exception(f"Unable read the URL for access to Entity API's provenance_schema.yaml using the translator's"
+                                f" indices['entity_api_prov_schema_raw_url']={indices['entity_api_prov_schema_raw_url']}.")
+
             # Commented out by Zhou to avoid 409 conflicts - 7/20/2024
             # self.es_retry_on_conflict_param_value = indices['es_retry_on_conflict_param_value']
 
@@ -143,23 +150,40 @@ class Translator(TranslatorInterface):
 
             logger.debug("=========== INDICES config ===========")
             logger.debug(self.INDICES)
-        except Exception:
-            raise ValueError("Invalid indices config")
+        except Exception as e:
+            logger.error(f"Error loading configuration. e={str(e)}")
+            raise ValueError("Invalid indices config. See logs")
 
         self.app_client_id = app_client_id
         self.app_client_secret = app_client_secret
         self.token = token
-        self.request_headers = self.create_request_headers_for_auth(token)
-        self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
-        # Add index_version by parsing the VERSION file
-        self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
-        self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
-                                         'organ_map': self.get_organ_types(),
-                                         'descendants_url': f'{self.entity_api_url}/descendants',
-                                         'token': token,}
 
-        # # Preload all the transformers
-        self.init_transformers()
+        try:
+            self.request_headers = self.create_request_headers_for_auth(token)
+            self.entity_api_url = self.indices[self.DEFAULT_INDEX_WITHOUT_PREFIX]['document_source_endpoint'].strip('/')
+            # Add index_version by parsing the VERSION file
+            self.index_version = ((Path(__file__).absolute().parent.parent / 'VERSION').read_text()).strip()
+            self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
+                                             'organ_map': self.get_organ_types(),
+                                             'descendants_url': f'{self.entity_api_url}/descendants',
+                                             'token': token,}
+
+
+
+            # # Preload all the transformers
+            self.init_transformers()
+
+            # Preload the list of fields per entity type to be excluded from public index documents, from the
+            # source also used by entity-api
+            self.load_public_doc_exclusion_dict(entity_api_prov_schema_raw_url=indices['entity_api_prov_schema_raw_url'])
+            # The entity types covered by the public doc exclusion dictionary may also occur under
+            # nested fields which the loaded Entity API YAML does not know about. Supplement the
+            # dictionary so the fields are excluded throughout the document in the public index.
+            self.supplement_public_doc_exclusion_dict()
+        except Exception as e:
+            msg = 'Error configuring translator during initialization'
+            logger.error(f"{msg}, e={str(e)}")
+            raise ValueError(f"{msg}. See logs")
 
     def log_configuration(self, log_level:int=logger.getEffectiveLevel()):
         logger.log( level=log_level
@@ -1088,25 +1112,27 @@ class Translator(TranslatorInterface):
                 public_index = self.INDICES['indices'][index_group]['public']
                 private_index = self.INDICES['indices'][index_group]['private']
 
-                # Add the transformed doc to the portal index
-                json_data = ""
-
-                # if the index has a transformer use that else do a now load
-                if self.TRANSFORMERS.get(index_group):
-                    json_data = json.dumps(self.TRANSFORMERS[index_group].transform(collection, self.transformation_resources))
-                else:
-                    json_data = json.dumps(collection)
-
                 # If this Collection meets entity-api's criteria for visibility to the world by
                 # returning the value of its schema_constants.py DataVisibilityEnum.PUBLIC, put
                 # the Collection in the public index.
+                # If the index group has a transformer use to retrieve a modified version of
+                # the Collection entity to index.
+                coll_data = copy.deepcopy(collection)
+                if self.TRANSFORMERS.get(index_group):
+                    coll_data = self.TRANSFORMERS[index_group].transform(collection, self.transformation_resources)
                 if self.is_public(collection):
-                    self._index_doc_directly_to_es_index(entity=collection
-                                                         , document=json_data
+                    # Remove fields explicitly marked for excluded_properties_from_public_response per entity type in
+                    # the provenance_schema.yaml of the entity-api.
+                    pub_coll_data = copy.deepcopy(coll_data)
+                    if pub_coll_data['entity_type'] in self.public_doc_exclusion_dict:
+                        self._remove_field_from_dict(a_dict=pub_coll_data
+                                                     , obj_to_remove=self.public_doc_exclusion_dict[pub_coll_data['entity_type']])
+                    self._index_doc_directly_to_es_index(entity=pub_coll_data
+                                                         , document=json.dumps(pub_coll_data)
                                                          , es_index=public_index
                                                          , delete_existing_doc_first=reindex)
-                self._index_doc_directly_to_es_index(entity=collection
-                                                     , document=json_data
+                self._index_doc_directly_to_es_index(entity=coll_data
+                                                     , document=json.dumps(coll_data)
                                                      , es_index=private_index
                                                      , delete_existing_doc_first=reindex)
 
@@ -1157,6 +1183,81 @@ class Translator(TranslatorInterface):
         self._call_indexer(entity=entity_dict, delete_existing_doc_first=True)
 
         logger.info(f"Finished executing reindex_entity() on uuid: {uuid}")
+
+    def load_public_doc_exclusion_dict(self, entity_api_prov_schema_raw_url):
+        # Keep a semi-immutable dictionary of fields to exclude from public indices, using the
+        # same information entity-api uses for excluding fields for public entities.
+        response = requests.get(    url=entity_api_prov_schema_raw_url
+                                    , verify=False)
+        if response.status_code == 200:
+            yaml_contents = response.text
+            try:
+                provenance_schema_dict = MappingProxyType(safe_load(yaml_contents))
+            except YAMLError as ye:
+                raise YAMLError(ye)
+        else:
+            msg = f"Unable to retrieve public index field exclusion information"
+            self.logger.error(  f"{msg}."
+                                f" Got an HTTP {response.status_code}"
+                                f" retrieving {self.indices['entity_api_prov_schema_raw_url']}")
+            raise HTTPException(f"{msg}. See logs.")
+        if not provenance_schema_dict or 'ENTITIES' not in provenance_schema_dict:
+            msg = f"Unable retrieve Entity API's provenance_schema.yaml information"
+            self.logger.error(  f"{msg}."
+                                f" Not expected content using the translator's"
+                                f" self.indices['entity_api_prov_schema_raw_url']={self.indices['entity_api_prov_schema_raw_url']}.")
+            raise Exception(f"{msg}. See logs.")
+        self.public_doc_exclusion_dict={}
+        for k,v in provenance_schema_dict['ENTITIES'].items():
+            if 'excluded_properties_from_public_response' in v:
+                self.public_doc_exclusion_dict[k]=v['excluded_properties_from_public_response']
+            else:
+                # ENTITIES entries which do not have an excluded_properties_from_public_response field may
+                # still be supplemented by the supplement_public_doc_exclusion_dict() method, so need an
+                # empty list that can be appended to.
+                self.public_doc_exclusion_dict[k]=[]
+
+    def supplement_public_doc_exclusion_dict(self):
+        # donor, origin_samples, and source_samples are definitely in the list.
+        # Collection.datasets, Epicollection.datasets, and Upload.datasets
+        # would likely contain lab_id under the metadata.
+
+        # Get a snapshot of the exclusions loaded from Entity API YAML for each
+        # entity type, prior to supplementing.
+        base_entity_exclusions={}
+        for entity_type, entity_exclusions in self.public_doc_exclusion_dict.items():
+            base_entity_exclusions[entity_type] = copy.copy(entity_exclusions)
+
+        # For Samples, exclude the same fields under "origin_samples" which are
+        # excluded for the Sample entity's base fields
+        self.public_doc_exclusion_dict['Sample'].append({'origin_samples': base_entity_exclusions['Sample']})
+
+        # For Samples, exclude the same fields under "donor" which are
+        # excluded for Donor entities.
+        self.public_doc_exclusion_dict['Sample'].append({'donor': base_entity_exclusions['Donor']})
+
+        # For Datasets, exclude the same fields under "donor" which are
+        # excluded for Donor entities.
+        self.public_doc_exclusion_dict['Dataset'].append({'donor': base_entity_exclusions['Donor']})
+
+        # For Datasets, exclude the same fields under "origin_samples" which are
+        # excluded for the Sample entity's base fields
+        self.public_doc_exclusion_dict['Dataset'].append({'origin_samples': base_entity_exclusions['Sample']})
+
+        # For Datasets, exclude the same fields under "source_samples" which are
+        # excluded for the Sample entity's base fields
+        self.public_doc_exclusion_dict['Dataset'].append({'source_samples': base_entity_exclusions['Sample']})
+
+        # For EPICollection, Collection, and Upload entities, exclude the same fields under "datasets" which are
+        # excluded for Dataset entities
+        self.public_doc_exclusion_dict['Epicollection'].append({'datasets': base_entity_exclusions['Dataset']})
+        self.public_doc_exclusion_dict['Collection'].append({'datasets': base_entity_exclusions['Dataset']})
+
+
+        # self.public_doc_exclusion_dict={}
+        # for k,v in provenance_schema_dict['ENTITIES'].items():
+        #     if 'excluded_properties_from_public_response' in v:
+        #         self.public_doc_exclusion_dict[k]=v['excluded_properties_from_public_response']
 
     def init_transformers(self):
         logger.info("Start executing init_transformers()")
@@ -1696,6 +1797,12 @@ class Translator(TranslatorInterface):
         ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
         unretained_key_list = [k for k, v in ig_doc_fields.items() if v != PropertyRetentionEnum.ES_DOC]
 
+        # Remove fields explicitly marked for excluded_properties_from_public_response per entity type in
+        # the provenance_schema.yaml of the entity-api.
+        if entity['entity_type'] in self.public_doc_exclusion_dict:
+            self._remove_field_from_dict(   a_dict=entity
+                                            , obj_to_remove=self.public_doc_exclusion_dict[entity['entity_type']])
+
         # Because _generate_doc() left some fields on the entity which should not be a part of the
         # ElasticSearch document, but which were needed for calculations prior to now, remove them before
         # returning the public document contents.
@@ -1708,6 +1815,73 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished executing _generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
 
         return json.dumps(entity)
+
+    """
+    Retrieves fields designated in the provenance schema yaml under 
+    excluded_properties_from_public_response and returns the fields in a list
+
+    Parameters
+    ----------
+    normalized_class : str
+        the normalized entity type of the entity who's fields are to be removed
+
+    Returns
+    -------
+    excluded_fields
+        A list of strings where each entry is a field to be excluded
+    """
+
+    def get_fields_to_exclude(self, normalized_class=None):
+        # Determine the schema section based on class
+        excluded_fields = []
+        schema_section = self.INDICES['indices'] # _schema['ENTITIES']
+        exclude_list = schema_section[normalized_class].get('excluded_properties_from_public_response')
+        if exclude_list:
+            excluded_fields.extend(exclude_list)
+        return excluded_fields
+
+    # Remove a string field from a dictionary, or call recursively if
+    # the object passed in is a dict or list rather than a str.
+    def _remove_field_from_dict(self, a_dict:dict, obj_to_remove):
+        # Most of the code of this method is designed to work with a dict, so if
+        # given a list instead, apply obj_to_remove to each element of the list
+        if isinstance(a_dict, list):
+            # a_dict will shift during recursion, which allows assignment. But preserve
+            # pointing at the list passed in, so it can be restored after processing each
+            # element of the list
+            original_a_dict = a_dict
+            for list_entry in a_dict:
+                list_entry = self._remove_field_from_dict(  a_dict=list_entry
+                                                            , obj_to_remove=obj_to_remove)
+            a_dict = original_a_dict
+        elif isinstance(obj_to_remove, str):
+            if obj_to_remove in a_dict:
+                a_dict.pop(obj_to_remove)
+            else:
+                if obj_to_remove in neo4j_to_es_attribute_name_map.values():
+                    for k, v in neo4j_to_es_attribute_name_map.items():
+                        if v==obj_to_remove:
+                            a_dict.pop(k)
+        elif isinstance(obj_to_remove, list):
+            for obj in obj_to_remove:
+                # Recursively remove each element in the list
+                a_dict = self._remove_field_from_dict(  a_dict=a_dict
+                                                        , obj_to_remove=obj)
+        elif isinstance(obj_to_remove, dict):
+            for k, v in obj_to_remove.items():
+                # Recursively process the value for each dictionary key
+                if k in a_dict:
+                    a_dict[k] = self._remove_field_from_dict(  a_dict=a_dict[k]
+                                                            , obj_to_remove=v)
+                elif k in neo4j_to_es_attribute_name_map and neo4j_to_es_attribute_name_map[k] in a_dict:
+                    a_dict[neo4j_to_es_attribute_name_map[k]] = \
+                        self._remove_field_from_dict(   a_dict=a_dict[neo4j_to_es_attribute_name_map[k]]
+                                                        , obj_to_remove=v)
+        else:
+            logger.error(f"Unable to process obj_to_remove.type()={obj_to_remove.type()}")
+            raise Exception('Error generating public document. See logs.')
+        return a_dict
+
 
     # The input `dataset_dict` can be a list if the entity-api returns a list, other times it's dict
     # Only applies to Dataset, no change to other entity types:
