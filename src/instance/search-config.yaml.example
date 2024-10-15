@@ -6,6 +6,9 @@
 ingest_api_soft_assay_url: https://ingest-api.dev.hubmapconsortium.org/assaytype/ 
 # default index name for endpoints that don't specify an index
 default_index: entities
+# GitHub URL to the "raw" provenance_schema.yaml file for entity-api, which identifies the
+# attributes to exclude from public entities/documents.
+entity_api_prov_schema_raw_url: https://raw.githubusercontent.com/hubmapconsortium/entity-api/refs/heads/main/src/schema/provenance_schema.yaml
 
 # Commented out by Zhou to avoid 409 conflicts - 7/20/2024
 # ElasticSearch retry_on_conflict value. Positive integer or zero.
