@@ -43,7 +43,7 @@ mappings:
         path_match: "*.sample_indexing_set"
         mapping:
           type: keyword
-
+    
     # Added 4/3/2024 by Zhou
     - barcode_offset:
         path_match: "*.barcode_offset"
@@ -52,6 +52,12 @@ mappings:
 
     - barcode_size:
         path_match: "*.barcode_size"
+        mapping:
+          type: keyword
+
+    # Added 10/15/2024 by Zhou
+    - segment_id:
+        path_match: "*.segment_id"
         mapping:
           type: keyword
 
