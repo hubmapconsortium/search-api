@@ -32,7 +32,7 @@ config['CONSORTIUM_ID'] = app.config['CONSORTIUM_ID']
 config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX'] = app.config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX']
 config['ONTOLOGY_API_BASE_URL'] = app.config['ONTOLOGY_API_BASE_URL'].strip('/')
 
-if config['ONTOLOGY_API_BASE_URL'] is None:
+if not config['ONTOLOGY_API_BASE_URL']:
     raise Exception(f"Unable retrieve ontology information using"
                     f" URL '{config['ONTOLOGY_API_BASE_URL']}'.")
 
