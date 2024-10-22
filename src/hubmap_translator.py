@@ -616,7 +616,7 @@ class Translator(TranslatorInterface):
 
         entity = self.call_entity_api(entity_id=entity_id
                                       , endpoint_base='documents')
-        if entity['entity_type'] == 'Collection':
+        if entity['entity_type'] in ['Collection','Epicollection']:
             self.translate_collection(entity_id=entity_id, reindex=True)
         elif entity['entity_type'] == 'Upload':
             self.translate_upload(entity_id=entity_id, reindex=True)
@@ -632,13 +632,19 @@ class Translator(TranslatorInterface):
         logger.info(f"Start executing direct '{index_group}' updates for"
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
+
         try:
-            private_doc = self._generate_doc(   entity=entity
+            # The entity dictionary will be changed by the document generation methods, and
+            # _generate_public_doc() needs _generate_doc() to make changes first. So make
+            # a copy of the entity for these methods, leaving the original argument intact
+            doc_entity=copy.deepcopy(entity)
+            private_doc = self._generate_doc(   entity=doc_entity
                                                 , return_type='json'
                                                 , index_group=index_group)
             if self.is_public(entity):
-                public_doc = self._generate_public_doc( entity=entity
+                public_doc = self._generate_public_doc( entity=doc_entity
                                                         , index_group=index_group)
+            del doc_entity
         except Exception as e:
             msg = f"Exception document generation" \
                   f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
@@ -646,6 +652,10 @@ class Translator(TranslatorInterface):
             # Log the full stack trace, prepend a line with our message. But continue on
             # rather than raise the Exception.
             logger.exception(msg)
+
+        if 'private_doc' not in locals() or  private_doc is None:
+            logger.error(   f"For {entity['entity_type']} {entity['uuid']},"
+                            f" failed to generate document for consortium indices.")
 
         docs_to_write_dict = {
             self.index_group_es_indices[index_group]['private']: None,
@@ -1222,7 +1232,7 @@ class Translator(TranslatorInterface):
         # entity type, prior to supplementing.
         base_entity_exclusions={}
         for entity_type, entity_exclusions in self.public_doc_exclusion_dict.items():
-            base_entity_exclusions[entity_type] = copy.copy(entity_exclusions)
+            base_entity_exclusions[entity_type] = copy.deepcopy(entity_exclusions)
 
         # For Samples, exclude the same fields under "origin_samples" which are
         # excluded for the Sample entity's base fields
@@ -1584,7 +1594,7 @@ class Translator(TranslatorInterface):
                     # If the current ancestor is the first Donor encountered, save it to
                     # populate the ES document "donor" field for this entity.
                     if ancestor_dict['entity_type'] == 'Donor' and not donor:
-                        donor = copy.copy(ancestor_dict)
+                        donor = copy.deepcopy(ancestor_dict)
 
                 descendant_ids = self.call_entity_api(entity_id=entity_id
                                                     , endpoint_base='descendants'
@@ -1638,7 +1648,7 @@ class Translator(TranslatorInterface):
                 # entity['origin_samples'] is a list
                 entity['origin_samples'] = []
                 if ('sample_category' in entity) and (entity['sample_category'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
-                    entity['origin_samples'].append(copy.copy(entity))
+                    entity['origin_samples'].append(copy.deepcopy(entity))
                 else:
                     for ancestor in ancestors:
                         if ('sample_category' in ancestor) and (ancestor['sample_category'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
