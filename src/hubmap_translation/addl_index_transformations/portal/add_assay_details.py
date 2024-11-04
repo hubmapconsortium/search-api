@@ -137,8 +137,13 @@ def add_assay_details(doc, transformation_resources):
         doc['raw_dataset_type'] = re.sub(
             "\\[(.*?)\\]", '', doc.get('dataset_type', '')).rstrip()
 
-        if pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
+        if pipeline := assay_details.get('pipeline-shorthand'):
+            doc['pipeline'] = pipeline
+        elif pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
             doc['pipeline'] = pipeline.group()
+
+        if soft_assaytype := assay_details.get('assaytype'):
+            doc['soft_assaytype'] = soft_assaytype
         # Preserve the previous shape of mapped_data_types.
         doc['assay_display_name'] = [assay_details.get('description')]
         # Remove once the portal-ui has transitioned to use assay_display_name.
