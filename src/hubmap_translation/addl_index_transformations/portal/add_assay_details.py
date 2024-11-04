@@ -135,7 +135,7 @@ def _add_pipeline(doc, assay_details):
         doc['pipeline'] = pipeline
     #  pipeline-shorthand is not returned for EPICs.
     elif doc.get('processing_type') == 'external':
-        doc[pipeline] = assay_details.get('description')
+        doc['pipeline'] = assay_details.get('description')
     #  pipeline-shorthand is not returned for Image Pyramids.
     elif set(['pyramid', 'is_image']).issubset(set(assay_details.get('vitessce-hints'))):
         doc['pipeline'] = 'Image Pyramid'

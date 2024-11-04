@@ -282,6 +282,58 @@ def test_transform_image_pyramid_support(mocker):
     assert image_pyramid_input_doc == image_pyramid_output_doc
 
 
+def mock_epic(uuid=None, headers=None):
+    return mock_response({
+        "assaytype": None,
+        "description": "Segmentation Mask",
+        "is-multi-assay": False,
+        "pipeline-shorthand": "",
+        "primary": False,
+        "vitessce-hints": [
+            "segmentation_mask",
+            "is_image",
+            "pyramid"
+        ]
+    })
+
+
+def test_transform_epic(mocker):
+    mocker.patch('requests.get', side_effect=[
+        mock_epic(),
+        mock_empty_descendants(),
+    ])
+    epic_input_doc = {
+        'uuid': 'abc123',
+        'dataset_type': 'Segmentation Mask',
+        'entity_type': 'Dataset',
+        'creation_action': 'External Process'
+    }
+
+    epic_output_doc = {
+        'assay_display_name': ['Segmentation Mask'],
+        'assay_modality': 'single',
+        'creation_action': 'External Process',
+        'dataset_type': 'Segmentation Mask',
+        'mapped_data_types': ['Segmentation Mask'],
+        "processing": "processed",
+        'raw_dataset_type': 'Segmentation Mask',
+        'uuid': 'abc123',
+        'pipeline': 'Segmentation Mask',
+        'processing_type': 'external',
+        'vitessce-hints': [
+            "segmentation_mask",
+            "is_image",
+            "pyramid",
+
+        ],
+        'visualization': False,
+        'entity_type': 'Dataset',
+    }
+
+    add_assay_details(epic_input_doc, transformation_resources)
+    assert epic_input_doc == epic_output_doc
+
+
 def test_hubmap_processing():
     hubmap_processed_input_doc = {
         'creation_action': 'Central Process',
