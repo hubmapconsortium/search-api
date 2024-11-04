@@ -115,6 +115,7 @@ expected_output_doc = {'analyte_class': 'RNA',
                        '["http://purl.obolibrary.org/obo/UBERON_0001157"]}',
                        'status': 'New',
                        'uuid': '69c70762689b20308bb049ac49653342',
+                       'soft_assaytype': 'salmon_rnaseq_10x',
                        'vitessce-hints': ['is_sc', 'rna'],
                        'visualization': True,
                        }
@@ -137,6 +138,7 @@ def mock_response(response_to_mock, status_code=200, text='Logger call requires 
 def mock_soft_assay(uuid=None, headers=None):
     return mock_response({'assaytype': 'salmon_rnaseq_10x',
                           'contains-pii': False,
+                          'pipeline-shorthand': 'Salmon',
                           'description': 'scRNA-seq (10x Genomics) [Salmon]',
                           'primary': False,
                           'vitessce-hints': ['is_sc', 'rna']})

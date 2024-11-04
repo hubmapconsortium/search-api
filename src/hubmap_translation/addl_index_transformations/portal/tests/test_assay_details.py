@@ -64,7 +64,8 @@ def test_raw_dataset_type(mocker):
         'entity_type': 'Dataset',
         'assay_modality': 'single',
         'creation_action': 'Create Dataset Activity',
-        'processing': 'raw'
+        'processing': 'raw',
+        'soft_assaytype': 'sciRNAseq'
     }
     add_assay_details(input_raw_doc, transformation_resources)
     assert input_raw_doc == expected_raw_output_doc
@@ -74,6 +75,7 @@ def mock_processed_soft_assay(uuid=None, headers=None):
     return mock_response({
         "assaytype": "salmon_rnaseq_sciseq",
         "contains-pii": True,
+        "pipeline-shorthand": "Salmon",
         "description": "sciRNA-seq [Salmon]",
         "primary": False,
         "vitessce-hints": [
@@ -106,6 +108,7 @@ def test_processed_dataset_type(mocker):
         'processing': 'processed',
         'processing_type': 'hubmap',
         'uuid': '22684b9011fc5aea5cb3f89670a461e8',
+        'soft_assaytype': 'salmon_rnaseq_sciseq',
         'vitessce-hints': [
             "is_sc",
             "rna"
@@ -233,6 +236,7 @@ def test_transform_image_pyramid(mocker):
         'uuid': '69c70762689b20308bb049ac49653342',
         'vitessce-hints': [],
         'visualization': True,
+        "soft_assaytype": "PAS",
         'entity_type': 'Dataset',
     }
 
