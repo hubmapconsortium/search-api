@@ -130,6 +130,20 @@ def _get_descendants(doc, transformation_resources):
         raise
 
 
+def _add_pipeline(doc, assay_details):
+    if pipeline := assay_details.get('pipeline-shorthand'):
+        doc['pipeline'] = pipeline
+    #  pipeline-shorthand is not returned for EPICs.
+    elif doc.get('processing_type') == 'external':
+        doc[pipeline] = assay_details.get('description')
+    #  pipeline-shorthand is not returned for Image Pyramids.
+    elif set(['pyramid', 'is_image']).issubset(set(assay_details.get('vitessce-hints'))):
+        doc['pipeline'] = 'Image Pyramid'
+    # Fallback to get pipeline in the dataset_type's brackets.
+    elif pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
+        doc['pipeline'] = pipeline.group()
+
+
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
@@ -137,10 +151,8 @@ def add_assay_details(doc, transformation_resources):
         doc['raw_dataset_type'] = re.sub(
             "\\[(.*?)\\]", '', doc.get('dataset_type', '')).rstrip()
 
-        if pipeline := assay_details.get('pipeline-shorthand'):
-            doc['pipeline'] = pipeline
-        elif pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
-            doc['pipeline'] = pipeline.group()
+        _add_dataset_categories(doc, assay_details)
+        _add_pipeline(doc, assay_details)
 
         if soft_assaytype := assay_details.get('assaytype'):
             doc['soft_assaytype'] = soft_assaytype
@@ -149,8 +161,6 @@ def add_assay_details(doc, transformation_resources):
         # Remove once the portal-ui has transitioned to use assay_display_name.
         doc['mapped_data_types'] = [assay_details.get('description')]
         doc['vitessce-hints'] = assay_details.get('vitessce-hints')
-
-        _add_dataset_categories(doc, assay_details)
 
         error_msg = assay_details.get('error')
         if error_msg:

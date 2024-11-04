@@ -206,7 +206,7 @@ def mock_image_pyramid_support(uuid=None, headers=None):
     })
 
 
-def test_transform_image_pyramid(mocker):
+def test_transform_image_pyramid_parent(mocker):
     mocker.patch('requests.get', side_effect=[
         # initial request to has_visualization with parent entity
         mock_image_pyramid_parent(),
@@ -237,6 +237,44 @@ def test_transform_image_pyramid(mocker):
         'vitessce-hints': [],
         'visualization': True,
         "soft_assaytype": "PAS",
+        'entity_type': 'Dataset',
+    }
+
+    add_assay_details(image_pyramid_input_doc, transformation_resources)
+    assert image_pyramid_input_doc == image_pyramid_output_doc
+
+
+def test_transform_image_pyramid_support(mocker):
+    mocker.patch('requests.get', side_effect=[
+        mock_image_pyramid_support(),
+        mock_empty_descendants(),
+    ])
+    image_pyramid_input_doc = {
+        'uuid': '0bf9cb40adebcfb261dfbe9244607508',
+        'dataset_type': 'Histology [Image Pyramid]',
+        'entity_type': 'Dataset',
+        'creation_action': 'Central Process'
+    }
+
+    image_pyramid_output_doc = {
+        'assay_display_name': ['Image Pyramid'],
+        'assay_modality': 'single',
+        'creation_action': 'Central Process',
+        'dataset_type': 'Histology [Image Pyramid]',
+        'mapped_data_types': ['Image Pyramid'],
+        "processing": "processed",
+        'raw_dataset_type': 'Histology',
+        'uuid': '0bf9cb40adebcfb261dfbe9244607508',
+        'pipeline': 'Image Pyramid',
+        'processing_type': 'hubmap',
+        'vitessce-hints': [
+            "is_image",
+            "is_support",
+            "pyramid",
+
+        ],
+        'visualization': False,
+        "soft_assaytype": "image_pyramid",
         'entity_type': 'Dataset',
     }
 
