@@ -38,21 +38,12 @@ entity_properties_list = [
     'descendant_ids',
     'ancestors',
     'descendants',
-    # This 'files' field is either empty list [] or the files info list copied from 'Dataset.ingest_metadata.files'
-    'files',
     'datasets',
     'immediate_ancestors',
     'immediate_descendants',
     'immediate_ancestor_ids',
     'immediate_descendant_ids'
 ]
-
-# A map keyed by entity attribute names stored in Neo4j and retrieved from entity-api, with
-# values for the corresponding document field name in OpenSearch.  This Python dict only includes
-# attribute names which must be transformed, unlike the neo4j-to-es-attributes.json is replaces.
-neo4j_to_es_attribute_name_map = {
-    'ingest_metadata': 'metadata'
-}
 
 # Entity types that will have `display_subtype` generated at index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
@@ -1444,30 +1435,16 @@ class Translator(TranslatorInterface):
                     # Otherwise, no document is generated, null will be added to the resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
                     
-                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
+                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['datasets'])
                 datasets.append(dataset_doc)
 
         entity['datasets'] = datasets
 
         logger.info("Finished executing _add_datasets_to_entity()")
 
-    # Given a dictionary for an entity containing Neo4j and entity-api-generated data, assume all entries
-    # are to be used in OpenSearch documents.  Modify any key names specified to change, and return a dictionary of
-    # all names and values to store in an OpenSearch document.
+    # Modify any key names specified to change on the entity
     def _entity_keys_rename(self, entity):
-        global neo4j_to_es_attribute_name_map
-
         logger.info("Start executing _entity_keys_rename()")
-
-        for remapped_key in neo4j_to_es_attribute_name_map:
-            if remapped_key not in entity:
-                continue
-            attribute_value = entity[remapped_key]
-            # Since statement above assures remapped key is in entity, and the value
-            # is captured, delete the dict entry keyed by the Neo4j name.
-            del entity[remapped_key]
-            # Restore the value to a dict entry keyed by the OpenSearch name.
-            entity[neo4j_to_es_attribute_name_map[remapped_key]] = attribute_value
 
         # Special case of Sample.rui_location
         # To be backward compatible for API clients relying on the old version
@@ -1863,11 +1840,6 @@ class Translator(TranslatorInterface):
         elif isinstance(obj_to_remove, str):
             if obj_to_remove in a_dict:
                 a_dict.pop(obj_to_remove)
-            else:
-                if obj_to_remove in neo4j_to_es_attribute_name_map.values():
-                    for k, v in neo4j_to_es_attribute_name_map.items():
-                        if v==obj_to_remove:
-                            a_dict.pop(k)
         elif isinstance(obj_to_remove, list):
             for obj in obj_to_remove:
                 # Recursively remove each element in the list
@@ -1879,56 +1851,10 @@ class Translator(TranslatorInterface):
                 if k in a_dict:
                     a_dict[k] = self._remove_field_from_dict(  a_dict=a_dict[k]
                                                             , obj_to_remove=v)
-                elif k in neo4j_to_es_attribute_name_map and neo4j_to_es_attribute_name_map[k] in a_dict:
-                    a_dict[neo4j_to_es_attribute_name_map[k]] = \
-                        self._remove_field_from_dict(   a_dict=a_dict[neo4j_to_es_attribute_name_map[k]]
-                                                        , obj_to_remove=v)
         else:
             logger.error(f"Unable to process obj_to_remove.type()={obj_to_remove.type()}")
             raise Exception('Error generating public document. See logs.')
         return a_dict
-
-
-    # The input `dataset_dict` can be a list if the entity-api returns a list, other times it's dict
-    # Only applies to Dataset, no change to other entity types:
-    # - Add the top-level 'files' field and set to empty list [] as default
-    # - Set `ingest_metadata.files` to empty list [] when value is string (regardless empty or not) or the filed is missing
-    # - Copy the actual files info list ['ingest_metadata']['files'] to the added top-level field
-    # - Remove `ingest_metadata.metadata.*` sub fields when value is empty string
-    def prepare_dataset(self, dataset_dict):
-        logger.info("Start executing prepare_dataset()")
-
-        # Add this top-level field for Dataset and set to empty list as default
-        if (isinstance(dataset_dict, dict)) and ('entity_type' in dataset_dict) and (dataset_dict['entity_type'] in ['Dataset', 'Publication'] ):
-            dataset_dict['files'] = []
-
-            if 'ingest_metadata' in dataset_dict:
-                if 'files' in dataset_dict['ingest_metadata']:
-                    if isinstance(dataset_dict['ingest_metadata']['files'], list):
-                        # Copy the actual files info list to the added top-level field
-                        dataset_dict['files'] = dataset_dict['ingest_metadata']['files']
-                    elif isinstance(dataset_dict['ingest_metadata']['files'], str):
-                        # Set the original value to an emtpy list to avid mapping error
-                        dataset_dict['ingest_metadata']['files'] = []
-                        logger.info(f"Set ['ingest_metadata']['files'] to empty list [] due to string value {dataset_dict['ingest_metadata']['files']} found, for Dataset {dataset_dict['uuid']}")
-                    else:
-                        logger.error(f"Invalid data type of ['ingest_metadata']['files'], for Dataset {dataset_dict['uuid']}")
-                else:
-                    dataset_dict['ingest_metadata']['files'] = []
-                    logger.info(f"Add missing field ['ingest_metadata']['files'] and set to empty list [], for Dataset {dataset_dict['uuid']}")
-
-            # Remove any `ingest_metadata.metadata.*` sub fields if the value is empty string or just whitespace
-            # to to avoid dynamic mapping conflict
-            if ('ingest_metadata' in dataset_dict) and ('metadata' in dataset_dict['ingest_metadata']):
-                for key in list(dataset_dict['ingest_metadata']['metadata']):
-                    if isinstance(dataset_dict['ingest_metadata']['metadata'][key], str):
-                        if not dataset_dict['ingest_metadata']['metadata'][key] or re.search(r'^\s+$', dataset_dict['ingest_metadata']['metadata'][key]):
-                            del dataset_dict['ingest_metadata']['metadata'][key]
-                            logger.info(f"Removed ['ingest_metadata']['metadata']['{key}'] due to empty string value, for Dataset {dataset_dict['uuid']}")
-        
-        logger.info("Finished executing prepare_dataset()")
-
-        return dataset_dict
 
     # This method is supposed to only retrieve Dataset|Donor|Sample
     # The Collection and Upload are handled by separate calls
@@ -1967,10 +1893,7 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished executing call_entity_api() on uuid: {entity_id}")
 
         # The resulting data can be an entity dict or a list (when `url_property` parameter is specified)
-        # For Dataset, data manipulation is performed
-        # If result is a list or not a Dataset dict, no change - 7/13/2022 Max & Zhou
-        return self.prepare_dataset(response.json())
-
+        return response.json()
 
     def get_collection_doc(self, entity_id):
         logger.info(f"Start executing get_collection_doc() on uuid: {entity_id}")
