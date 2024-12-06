@@ -4,17 +4,19 @@ from hubmap_translation.addl_index_transformations.portal.utils import (
 
 
 def _get_analyte_class(doc):
-    metadata = doc.get('metadata', {}).get('metadata', {})
+    metadata = doc.get('metadata', {})
     return metadata.get('analyte_class')
 
 
 def _lift_analyte_class(doc):
-    if analyte_class := _get_analyte_class(doc):
+    analyte_class = _get_analyte_class(doc)
+    if analyte_class:
         doc['analyte_class'] = analyte_class
         return
 
     for ancestor_doc in doc['ancestors']:
-        if analyte_class := _get_analyte_class(ancestor_doc):
+        analyte_class = _get_analyte_class(ancestor_doc)
+        if analyte_class:
             doc['analyte_class'] = analyte_class
             return
 

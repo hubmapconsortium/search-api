@@ -61,10 +61,12 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     id_for_log = f'Batch {batch_id}; UUID {doc["uuid"] if "uuid" in doc else "missing"}'
     logging.info(f'Begin: {id_for_log}')
     doc_copy = deepcopy(doc)
+
     # We will modify in place below,
     # so make a deep copy so we don't surprise the caller.
     _add_validation_errors(doc_copy)
     _clean(doc_copy)
+
     doc_copy['transformation_errors'] = []
     organ_map = transformation_resources.get('organ_map', {})
     try:
@@ -74,6 +76,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
     except TranslationException as e:
         logging.error(f'Error: {id_for_log}: {e}')
         return None
+
     sort_files(doc_copy)
     add_counts(doc_copy)
     add_partonomy(doc_copy, organ_map)
@@ -86,6 +89,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
         'size': len(dumps(doc_copy))
     })
     logging.info(f'End: {id_for_log}')
+
     return doc_copy
 
 
@@ -126,8 +130,8 @@ def _simple_clean(doc):
         doc[name_field] = doc[name_field].title()
 
     # Clean up metadata:
-    if 'metadata' in doc and 'metadata' in doc['metadata']:
-        metadata = doc['metadata']['metadata']
+    if 'metadata' in doc:
+        metadata = doc['metadata']
 
         bad_fields = [
             'collectiontype', 'null',  # Inserted by IEC.
@@ -139,7 +143,7 @@ def _simple_clean(doc):
         # Ideally, we'd pull from https://github.com/hubmapconsortium/ingest-validation-tools/blob/main/docs/field-types.yaml
         # here, or make the TSV parsing upstream schema aware,
         # instead of trying to guess, but I think the number of special cases will be relatively small.
-        not_really_a_number = ['cell_barcode_size', 'cell_barcode_offset']
+        not_really_a_number = ['cell_barcode_size', 'cell_barcode_offset', 'organ_donor_data']
 
         # Explicitly convert items to list,
         # so we can remove keys from the metadata dict:

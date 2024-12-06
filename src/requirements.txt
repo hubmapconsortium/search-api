@@ -5,7 +5,7 @@ jsonschema==3.2.0
 requests==2.32.3
 PyYAML==5.4.1
 
-Werkzeug==3.0.3
+importlib-metadata<3.10
 
 git+https://github.com/hubmapconsortium/portal-visualization.git@0.2.7#egg=portal-visualization
 
