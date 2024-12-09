@@ -7,9 +7,7 @@ def test_dataset_with_analyte_class():
     dataset_with_analyte_class_input_doc = {
         'entity_type': 'Dataset',
         'metadata': {
-            'metadata': {
-                'analyte_class': 'RNA'
-            }
+            'analyte_class': 'RNA'
         }
     }
 
@@ -17,9 +15,7 @@ def test_dataset_with_analyte_class():
         'analyte_class': 'RNA',
         'entity_type': 'Dataset',
         'metadata': {
-            'metadata': {
-                'analyte_class': 'RNA'
-            }
+            'analyte_class': 'RNA'
         }
     }
 
@@ -32,9 +28,7 @@ def test_dataset_with_analyte_class_ancestor():
         'ancestors': [
             {
                 'metadata': {
-                    'metadata': {
-                        'analyte_class': 'RNA'
-                    }
+                    'analyte_class': 'RNA'
                 }
             }
         ],
@@ -46,9 +40,7 @@ def test_dataset_with_analyte_class_ancestor():
         'ancestors': [
             {
                 'metadata': {
-                    'metadata': {
-                        'analyte_class': 'RNA'
-                    }
+                    'analyte_class': 'RNA'
                 }
             }
         ],

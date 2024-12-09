@@ -12,7 +12,6 @@ def _unexpected(s):
 
 
 def translate(doc, organ_map):
-    _add_metadata_metadata_placeholder(doc)
     _translate_file_description(doc)
     _translate_status(doc)
     _translate_organ(doc, organ_map)
@@ -42,30 +41,6 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
-
-
-def _add_metadata_metadata_placeholder(doc):
-    '''
-    For datasets, the "metadata" used by the portal is actually at
-    "metadata.metadata" and in dev-search, there is a boolean facet
-    that looks for this path. Samples and Donors don't follow this pattern,
-    but to enable the boolean facet, we add a placeholder.
-
-    >>> doc = {'entity_type': 'Donor', 'metadata': {}}
-    >>> _add_metadata_metadata_placeholder(doc)
-    >>> assert 'metadata' in doc['metadata']
-
-    >>> doc = {'entity_type': 'Donor'}
-    >>> _add_metadata_metadata_placeholder(doc)
-    >>> assert 'metadata' not in doc
-
-    >>> doc = {'entity_type': 'Dataset', 'metadata': {}}
-    >>> _add_metadata_metadata_placeholder(doc)
-    >>> assert 'metadata' not in doc['metadata']
-
-    '''
-    if doc['entity_type'] in ['Donor', 'Sample'] and 'metadata' in doc:
-        doc['metadata']['metadata'] = {'has_metadata': True}
 
 
 # File description:
