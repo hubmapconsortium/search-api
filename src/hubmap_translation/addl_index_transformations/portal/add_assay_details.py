@@ -65,8 +65,7 @@ def _get_assay_details_by_uuid(uuid, transformation_resources):
 
 
 def _add_dataset_processing_fields(doc):
-    processing_type = processing_type_map.get(doc['creation_action'])
-    if processing_type:
+    if processing_type := processing_type_map.get(doc['creation_action']):
         doc['processing'] = 'processed'
         doc['processing_type'] = processing_type
     else:
@@ -132,18 +131,16 @@ def _get_descendants(doc, transformation_resources):
 
 
 def _add_pipeline(doc, assay_details):
-    pipeline = assay_details.get('pipeline-shorthand')
-
-    if pipeline:
+    if pipeline := assay_details.get('pipeline-shorthand'):
         doc['pipeline'] = pipeline
     #  pipeline-shorthand is not returned for EPICs.
     elif doc.get('processing_type') == 'external':
         doc['pipeline'] = assay_details.get('description')
     #  pipeline-shorthand is not returned for Image Pyramids.
-    elif set(['pyramid', 'is_image']).issubset(set(assay_details.get('vitessce-hints', []))):
+    elif set(['pyramid', 'is_image']).issubset(set(assay_details.get('vitessce-hints'))):
         doc['pipeline'] = 'Image Pyramid'
     # Fallback to get pipeline in the dataset_type's brackets.
-    elif (pipeline := re.search(r"(?<=\[)[^][]*(?=\])", doc.get('dataset_type', ''))):
+    elif pipeline := re.search("(?<=\\[)[^][]*(?=])", doc.get('dataset_type', '')):
         doc['pipeline'] = pipeline.group()
 
 
@@ -157,8 +154,7 @@ def add_assay_details(doc, transformation_resources):
         _add_dataset_categories(doc, assay_details)
         _add_pipeline(doc, assay_details)
 
-        soft_assaytype = assay_details.get('assaytype')
-        if soft_assaytype:
+        if soft_assaytype := assay_details.get('assaytype'):
             doc['soft_assaytype'] = soft_assaytype
         # Preserve the previous shape of mapped_data_types.
         doc['assay_display_name'] = [assay_details.get('description')]

@@ -9,14 +9,12 @@ def _get_analyte_class(doc):
 
 
 def _lift_analyte_class(doc):
-    analyte_class = _get_analyte_class(doc)
-    if analyte_class:
+    if analyte_class := _get_analyte_class(doc):
         doc['analyte_class'] = analyte_class
         return
 
     for ancestor_doc in doc['ancestors']:
-        analyte_class = _get_analyte_class(ancestor_doc)
-        if analyte_class:
+        if analyte_class := _get_analyte_class(ancestor_doc):
             doc['analyte_class'] = analyte_class
             return
 
