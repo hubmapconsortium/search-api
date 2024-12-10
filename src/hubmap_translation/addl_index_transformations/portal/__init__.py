@@ -126,8 +126,8 @@ def _simple_clean(doc):
         doc[name_field] = doc[name_field].title()
 
     # Clean up metadata:
-    if 'metadata' in doc and 'metadata' in doc['metadata']:
-        metadata = doc['metadata']['metadata']
+    if 'metadata' in doc:
+        metadata = doc['metadata']
 
         bad_fields = [
             'collectiontype', 'null',  # Inserted by IEC.
@@ -158,7 +158,10 @@ def _simple_clean(doc):
                     metadata[k] = 'TRUE'
                 continue
 
-            if k not in not_really_a_number:
+            # Convert numeric strings to numbers, but only if they look like numbers.
+            # Some organ metadata fields are lists, which raise TypeErrors when we try
+            # to convert them to numbers.
+            if k not in not_really_a_number and not isinstance(v, list):
                 try:
                     as_number = int(v)
                 except ValueError:
