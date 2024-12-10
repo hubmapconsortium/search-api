@@ -4,7 +4,7 @@ from hubmap_translation.addl_index_transformations.portal.utils import (
 
 
 def _get_analyte_class(doc):
-    metadata = doc.get('metadata', {}).get('metadata', {})
+    metadata = doc.get('metadata', {})
     return metadata.get('analyte_class')
 
 
