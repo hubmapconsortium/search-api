@@ -40,7 +40,6 @@ entity_properties_list = [
     'descendants',
     # This 'files' field is either empty list [] or the files info list copied from 'Dataset.ingest_metadata.files'
     'files',
-    'datasets',
     'immediate_ancestors',
     'immediate_descendants',
     'immediate_ancestor_ids',
@@ -56,6 +55,10 @@ neo4j_to_es_attribute_name_map = {
 
 # Entity types that will have `display_subtype` generated at index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
+
+# A list of fields to be excluded from the contents of top-level fields of
+# Collection and Upload entities when indexing these entities into ElasticSearch documents.
+NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS = ['ingest_metadata','metadata','files']
 
 # Define an enumeration to classify the elements of a top-level property listed in entity_properties_list as
 # either retained to write into the ElasticSearch document, or only for inclusion for calculations but
@@ -1416,6 +1419,12 @@ class Translator(TranslatorInterface):
                 # Retrieve the entity details
                 try:
                     dataset = self.call_entity_api(dataset['uuid'], 'documents')
+                    # Remove large fields that cause poor performance and are not used, both for current
+                    # implementation and ingest_metadata reorganization is coordinated for Production release,
+                    # will also remove 'files' here, and delete the call to exclude_added_top_level_properties() below.
+                    for large_field_name in NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS:
+                        if large_field_name in dataset:
+                            dataset.pop(large_field_name)
                 except Exception as e:
                     logger.exception(e)
                     logger.error(   f"Failed to retrieve dataset {dataset['uuid']}"
@@ -1423,9 +1432,9 @@ class Translator(TranslatorInterface):
                                     f" _add_datasets_to_entity(). Skip and continue to next one")
                     
                     # This can happen when the dataset is in neo4j but the actual uuid is not found in MySQL
-                    # or somehting else is wrong with entity-api and it can't return the dataset info
+                    # or something else is wrong with entity-api and it can't return the dataset info
                     # In this case, we'll skip over the current iteration, and continue with the next one
-                    # Otherwise, null will be added to the  resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
+                    # Otherwise, null will be added to the resulting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
                 
                 try:
@@ -1443,8 +1452,9 @@ class Translator(TranslatorInterface):
                     # In this case, we'll skip over the current iteration, and continue with the next one
                     # Otherwise, no document is generated, null will be added to the resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
-                    
-                self.exclude_added_top_level_properties(dataset_doc, except_properties_list = ['files', 'datasets'])
+
+                self.exclude_added_top_level_properties(dataset_doc)
+
                 datasets.append(dataset_doc)
 
         entity['datasets'] = datasets
