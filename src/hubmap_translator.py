@@ -56,6 +56,10 @@ neo4j_to_es_attribute_name_map = {
 # Entity types that will have `display_subtype` generated at index time
 entity_types_with_display_subtype = ['Upload', 'Donor', 'Sample', 'Dataset', 'Publication']
 
+# A list of fields to be excluded from the contents of top-level fields of
+# Collection and Upload entities when indexing these entities into ElasticSearch documents.
+NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS = ['ingest_metadata','metadata','files']
+
 # Define an enumeration to classify the elements of a top-level property listed in entity_properties_list as
 # either retained to write into the ElasticSearch document, or only for inclusion for calculations but
 # not to be written to the ES doc.
@@ -1418,7 +1422,7 @@ class Translator(TranslatorInterface):
                     # Remove large fields that cause poor performance and are not used, both for current
                     # implementation and ingest_metadata reorganization is coordinated for Production release,
                     # will also remove 'files' here, and delete the call to exclude_added_top_level_properties() below.
-                    for large_field_name in ['ingest_metadata','metadata','files']:
+                    for large_field_name in NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS:
                         if large_field_name in dataset:
                             dataset.pop(large_field_name)
                 except Exception as e:
