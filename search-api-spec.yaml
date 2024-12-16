@@ -578,9 +578,15 @@ components:
           readOnly: true
           type: string
           description: "The email address of the user who published the provided by the authorization mechanism for the person or process authenticated when published."
-        metadata:
+        ingest_metadata:
           type: object
           description: "The metadata returned from the ingest pipeline processing at data submission time.  Provided as json. For details on querying metadata see the [Detailed Param Search Docs](https://docs.hubmapconsortium.org/param-search).  For details of the metadata schemas by data set types see the [HuBMAP Metadata Attributes Documentation](https://docs.hubmapconsortium.org/assays/metadata/)"
+        metadata:
+          type: object
+          description: "Metadata associated with the ingested experimental data."
+        files:
+          type: object
+          description: "Files associated with the ingested experimental data."
         local_directory_rel_path:
           type: string
           readOnly: true
@@ -737,7 +743,13 @@ components:
           description: "The email address of the user who published the provided by the authorization mechanism for the person or process authenticated when published."
         ingest_metadata:
           type: object
-          description: "The metadata returned from the ingest pipeline processing at data submission time.  Provided as json."
+          description: "The metadata returned from the ingest pipeline processing at data submission time.  Provided as json. For details on querying metadata see the [Detailed Param Search Docs](https://docs.hubmapconsortium.org/param-search).  For details of the metadata schemas by data set types see the [HuBMAP Metadata Attributes Documentation](https://docs.hubmapconsortium.org/assays/metadata/)"
+        metadata:
+          type: object
+          description: "Metadata associated with the ingested experimental data."
+        files:
+          type: object
+          description: "Files associated with the ingested experimental data."
         local_directory_rel_path:
           type: string
           readOnly: true
