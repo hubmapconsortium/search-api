@@ -60,7 +60,18 @@ mappings:
         path_match: "*.segment_id"
         mapping:
           type: keyword
-
+    
+    # Added 1/9/2025 by Zhou
+    - warm_ischemia_time_value:
+        path_match: "*.warm_ischemia_time_value"
+        mapping:
+          type: keyword
+    
+    - library_input_amount_value:
+        path_match: "*.library_input_amount_value"
+        mapping:
+          type: keyword
+          
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
     # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
