@@ -1,6 +1,6 @@
 settings:
   index:
-    mapping.total_fields.limit: 6000
+    mapping.total_fields.limit: 2000
     query.default_field: 2048
 
 mappings:
@@ -71,7 +71,7 @@ mappings:
         path_match: "*.library_input_amount_value"
         mapping:
           type: keyword
-          
+
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
     # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
