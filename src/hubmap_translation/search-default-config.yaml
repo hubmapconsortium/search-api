@@ -71,6 +71,12 @@ mappings:
         path_match: "*.library_input_amount_value"
         mapping:
           type: keyword
+    
+    # Use full path since 'value' may be available under other fields
+    - workflow_parameter_value:
+        path_match: "ingest_metadata.dag_provenance_list.input_parameters.value"
+        mapping:
+          type: keyword
 
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
