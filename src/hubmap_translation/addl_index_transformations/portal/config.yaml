@@ -1,6 +1,6 @@
 settings:
   index:
-    mapping.total_fields.limit: 6000
+    mapping.total_fields.limit: 2000
     query.default_field: 2048
 
 mappings:
@@ -58,6 +58,23 @@ mappings:
     # Added 10/15/2024 by Zhou
     - segment_id:
         path_match: "*.segment_id"
+        mapping:
+          type: keyword
+    
+    # Added 1/9/2025 by Zhou
+    - warm_ischemia_time_value:
+        path_match: "*.warm_ischemia_time_value"
+        mapping:
+          type: keyword
+    
+    - library_input_amount_value:
+        path_match: "*.library_input_amount_value"
+        mapping:
+          type: keyword
+
+    # Use full path since 'value' may be available under other fields
+    - workflow_parameter_value:
+        path_match: "ingest_metadata.dag_provenance_list.input_parameters.value"
         mapping:
           type: keyword
 
