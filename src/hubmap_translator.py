@@ -1443,7 +1443,6 @@ class Translator(TranslatorInterface):
                     # In this case, we'll skip over the current iteration, and continue with the next one
                     # Otherwise, no document is generated, null will be added to the resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
                     continue
-
                 self.exclude_added_top_level_properties(dataset_doc)
                 datasets.append(dataset_doc)
 
