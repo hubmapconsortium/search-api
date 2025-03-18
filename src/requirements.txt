@@ -3,7 +3,7 @@ urllib3==1.26.19
 jsonschema==3.2.0
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
 requests==2.32.3
-PyYAML==5.4.1
+PyYAML==6.0
 
 Werkzeug==3.0.3
 
