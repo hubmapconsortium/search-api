@@ -77,12 +77,6 @@ mappings:
         path_match: "ingest_metadata.dag_provenance_list.input_parameters.value"
         mapping:
           type: keyword
-          
-    # Use full path since 'value' may be available under other fields
-    - workflow_parameter_value:
-        path_match: "ingest_metadata.dag_provenance_list.input_parameters.value"
-        mapping:
-          type: keyword
 
     # Added 3/18/2025
     # Epoch timestamps should be treated as long fields as 
