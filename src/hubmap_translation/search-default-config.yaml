@@ -81,18 +81,22 @@ mappings:
     # Added 3/18/2025
     # Epoch timestamps should be treated as long fields as 
     # defaulting to floats produces rounding errors on sort
+    # match at any level, but do not include the mapped_ versions
     - published_timestamp:
-        path_match: "*.published_timestamp"
+        path_match: "*published_timestamp"
+        path_unmatch: "*mapped_published_timestamp"
         mapping:
           type: long
 
     - created_timestamp:
-        path_match: "*.created_timestamp"
+        path_match: "*created_timestamp"
+        path_unmatch: "*mapped_created_timestamp"
         mapping:
           type: long
 
     - last_modified_timestamp:
-        path_match: "*.last_modified_timestamp"
+        path_match: "*last_modified_timestamp"
+        path_unmatch: "*mapped_last_modified_timestamp"
         mapping:
           type: long   
 
