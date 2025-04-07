@@ -78,6 +78,24 @@ mappings:
         mapping:
           type: keyword
 
+    # Added 3/18/2025
+    # Epoch timestamps should be treated as long fields as 
+    # defaulting to floats produces rounding errors on sort
+    - published_timestamp:
+        path_match: "*published_timestamp"
+        mapping:
+          type: long
+
+    - created_timestamp:
+        path_match: "*created_timestamp"
+        mapping:
+          type: long
+
+    - last_modified_timestamp:
+        path_match: "*last_modified_timestamp"
+        mapping:
+          type: long   
+
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
     # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
