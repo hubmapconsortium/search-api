@@ -16,5 +16,5 @@ git+https://github.com/hubmapconsortium/portal-visualization.git@0.2.7#egg=porta
 hubmap-commons==2.1.18
 
 # The use of `-r` lets us specify the transitive requirements in one place
-# -r search-adaptor/src/requirements.txt
+-r search-adaptor/src/requirements.txt
 
