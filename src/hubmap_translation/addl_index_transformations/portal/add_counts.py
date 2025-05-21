@@ -39,7 +39,6 @@ def add_counts(doc):
      'mapped_sample_category': {'Block': 1}}
 
     '''
-
     # Collections do not have ancestors or descendants.
     if 'ancestors' in doc:
         doc['ancestor_counts'] = {
