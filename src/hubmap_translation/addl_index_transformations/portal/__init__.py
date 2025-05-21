@@ -14,6 +14,9 @@ from hubmap_translation.addl_index_transformations.portal.translate import (
 from hubmap_translation.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from hubmap_translation.addl_index_transformations.portal.add_publication_status import (
+    add_publication_status
+)
 from hubmap_translation.addl_index_transformations.portal.add_partonomy import (
     add_partonomy
 )
@@ -76,6 +79,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    add_publication_status(doc_copy)
     add_partonomy(doc_copy, organ_map)
     reset_entity_type(doc_copy)
     if len(doc_copy['transformation_errors']) == 0:

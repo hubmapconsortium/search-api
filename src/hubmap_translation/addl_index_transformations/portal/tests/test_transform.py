@@ -20,7 +20,7 @@ input_doc = {
     }],
     'data_access_level': 'consortium',
     'dataset_type': 'RNAseq [Salmon]',
-    'descendants': [{'entity_type': 'Sample or Dataset'}],
+    'descendants': [{'entity_type': 'Sample or Dataset'}, {'entity_type': 'Publication'}],
     'donor': {
         "metadata": {
             "organ_donor_data": [
@@ -75,8 +75,8 @@ expected_output_doc = {'analyte_class': 'RNA',
                        'creation_action': 'Central Process',
                        'data_access_level': 'consortium',
                        'dataset_type': 'RNAseq [Salmon]',
-                       'descendant_counts': {'entity_type': {'Sample or Dataset': 1}},
-                       'descendants': [{'entity_type': 'Sample or Dataset'}],
+                       'descendant_counts': {'entity_type': {'Sample or Dataset': 1, 'Publication': 1}},
+                       'descendants': [{'entity_type': 'Sample or Dataset'}, {'entity_type': 'Publication'}],
                        'donor': {'mapped_metadata': {'sex': ['Male']},
                                  'metadata': {'organ_donor_data': [{'data_type': 'Nominal',
                                                                     'grouping_concept_preferred_term': 'Sex',
@@ -90,6 +90,7 @@ expected_output_doc = {'analyte_class': 'RNA',
                                   'size': 123456789,
                                   'type': 'unknown'}],
                        'group_name': 'EXT - Outside HuBMAP',
+                       'has_publication': True,
                        'ingest_metadata': {
                            'dag_provenance_list': [],
                        },
