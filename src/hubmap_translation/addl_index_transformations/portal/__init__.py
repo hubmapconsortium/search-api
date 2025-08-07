@@ -126,7 +126,7 @@ def _simple_clean(doc):
         doc[name_field] = doc[name_field].title()
 
     # Clean up metadata:
-    if 'metadata' in doc:
+    if doc.get('metadata') is not None:
         metadata = doc['metadata']
 
         bad_fields = [
