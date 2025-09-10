@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 
-. test-utils.sh
-
 cd `dirname $0`
 
 start portal/flake8
