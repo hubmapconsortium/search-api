@@ -14,7 +14,6 @@ if __name__ == "__main__":
     if len(paths) == 0:
         print('Provide paths to JSON or YAML files as arguments')
         sys.exit(1)
-    logging.basicConfig(level=logging.DEBUG)
     for path in paths:
         doc = load_yaml(Path(path).read_text())
         new_name = f'{path}.transformed.yaml'
