@@ -107,6 +107,12 @@ mappings:
         path_match: "*.tiled_image_count"
         mapping:
           type: keyword
+    
+    # Added 10/26/2025 by Zhou
+    - roi_label:
+        path_match: "*.roi_label"
+        mapping:
+          type: keyword
 
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
