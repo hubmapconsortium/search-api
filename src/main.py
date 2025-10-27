@@ -31,6 +31,7 @@ config['LARGE_RESPONSE_THRESHOLD'] = app.config['LARGE_RESPONSE_THRESHOLD']
 config['CONSORTIUM_ID'] = app.config['CONSORTIUM_ID']
 config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX'] = app.config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX']
 config['ONTOLOGY_API_BASE_URL'] = app.config['ONTOLOGY_API_BASE_URL'].strip('/')
+config['DEBUG_MODE'] = app.config['DEBUG_MODE']
 
 if not config['ONTOLOGY_API_BASE_URL']:
     raise Exception(f"Unable retrieve ontology information using"

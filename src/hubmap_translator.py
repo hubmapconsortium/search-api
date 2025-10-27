@@ -25,8 +25,6 @@ from opensearch_helper_functions import *
 from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface
 
-logging.basicConfig(format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s', level=logging.DEBUG,
-                    datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 # This list contains fields that are added to the top-level at index runtime

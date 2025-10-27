@@ -28,3 +28,5 @@ PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX = {
         'files': None
     }
 }
+
+DEBUG_MODE = False
