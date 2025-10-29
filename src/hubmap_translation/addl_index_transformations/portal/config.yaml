@@ -112,6 +112,18 @@ mappings:
         mapping:
           type: keyword
 
+    # Added 10/26/2025 by Zhou
+    - roi_label:
+        path_match: "*.roi_label"
+        mapping:
+          type: keyword
+    
+    # Added 10/29/2025 by Zhou
+    - tiled_image_columns:
+        path_match: "*.tiled_image_columns"
+        mapping:
+          type: keyword
+
     # Must handle the above offending fields before this "catch all" mapping
     # This emulates the default ES behavior, giving us a "keyword" subfield, with a "keyword" type
     # Also copy the value of each mapped field to "all_text", which can then be queried as a single field
