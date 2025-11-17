@@ -8,7 +8,7 @@ The most recent operation will have the maximum key value, and hopefully will co
 
 The results of commands which "do nothing" are written to the file as well i.e. when the 'catch-up' command is executed, but no entities are determined to need re-indexing.
 
-Because of initial use of filenames, implicity assumption that one 'create' command is executed per day.  Otherwise, need to clean up files & indices before trying another 'create' on the same day.
+As designed for initial release, filenames implicitly assume one 'create' command is executed per day.  Otherwise, files & indices need to be cleaned up before trying another 'create' on the same day.
 
 Each op_data*.json file in exec_info should have the operation data for a 'create' command at entry '0'. Currently, all other entries will be for subsequent 'catch-up' operations.
 

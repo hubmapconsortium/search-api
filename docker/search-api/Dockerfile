@@ -38,22 +38,6 @@ EOF
 # 9 - Clean the dnf/yum cache and other locations to reduce Docker Image layer size.
 # Assume the base image has upgraded dnf and installed its dnf-plugins-core
 
-# Deliberately install packages needed by downstream projects to
-# build or run uWSGI services
-# remove packages which were only needed by the preceding steps and not to
-# run or build uWSGI services.
-RUN set -eux && \
-    # Install what is needed, including packages used as dependencies by
-    # previous layers.
-    dnf install --assumeyes gcc git && \
-    dnf autoremove --assumeyes && \
-    dnf clean all && \
-    rm -rf /tmp/su-exec \
-           /var/cache/dnf \
-           /var/log/dnf \
-           /var/log/yum \
-	   /root/.cache
-
  RUN dnf install --assumeyes nginx && \
      # Push aside nginx default.conf files that may exist on the system
      [ ! -f /etc/nginx/conf.d/default.conf ] || mv /etc/nginx/conf.d/default.conf /tmp/etc_nginx_conf.d_default.conf.ORIGINAL && \
@@ -65,14 +49,8 @@ RUN set -eux && \
      # Push aside the verification file from the base image which will
      # no longer report correctly once uWSGI is started for the service.
      [ ! -f /tmp/verify_uwsgi.sh ] || mv /tmp/verify_uwsgi.sh /tmp/verify_uwsgi.sh.ORIGINAL && \
-     # Install packages needed to install dependencies in
-     # this services requirements.txt files
-     dnf install --assumeyes gcc gcc-c++ && \
      # Install the requirements.txt file for the service
      pip3.13 install --no-cache-dir --upgrade pip -r src/requirements.txt && \
-     # Clean up packages which were only needed to install dependencies in
-     # this service's requirements.txt files
-     dnf remove -y gcc gcc-c++ && \
      dnf autoremove -y && \
      # Make the script referenced in the CMD directive below executable.
      chmod a+x start.sh && \
