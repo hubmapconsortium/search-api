@@ -114,7 +114,7 @@ else
         cp ../VERSION search-api
         cp ../BUILD search-api
 
-        docker compose -f docker-compose.yml -f docker-compose.development.yml -p search-api build
+        docker compose -f docker-compose.yml -f docker-compose.development.yml -p search-api build --no-cache
     elif [ "$1" = "start" ]; then
         docker compose -f docker-compose.yml -f docker-compose.development.yml -p search-api up -d
     elif [ "$1" = "stop" ]; then
