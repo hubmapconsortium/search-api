@@ -193,6 +193,11 @@ def add_assay_details(doc, transformation_resources):
                 reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
+                soft_assay_info = get_assay_type_for_descendants(descendant)
+
+                descendant['soft_assaytype'] = soft_assay_info.get('assaytype')
+                descendant['vitessce-hints'] = soft_assay_info.get('vitessce-hints', [])
+
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
                     break
