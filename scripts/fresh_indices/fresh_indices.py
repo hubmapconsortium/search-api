@@ -230,6 +230,7 @@ def get_translator():
 
     a_translator = Translator(INDICES, appcfg['APP_CLIENT_ID'], appcfg['APP_CLIENT_SECRET'], token,
                               appcfg['ONTOLOGY_API_BASE_URL'])
+    a_translator.log_configuration()
 
     # Skip the uuids comparision step that is only needed for live /reindex-all PUT call
     a_translator.skip_comparision = True
@@ -350,12 +351,12 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             flush_index=destination_index.replace('fill','flush')
 
             # Block writing on the indices, even though services which write to them should probably be down.
-            logger.debug(f"Set {IndexBlockType.WRITE} block on source_index={source_index}.")
+            logger.debug(f"Set {IndexBlockType.WRITE.value} block on source_index={source_index}.")
             es_mgr.set_index_block(index_name=source_index
-                                   , block_name=IndexBlockType.WRITE)
-            logger.debug(f"Set {IndexBlockType.WRITE} block on destination_index={destination_index}.")
+                                   , block_type_enum=IndexBlockType.WRITE)
+            logger.debug(f"Set {IndexBlockType.WRITE.value} block on destination_index={destination_index}.")
             es_mgr.set_index_block(index_name=destination_index
-                                   , block_name=IndexBlockType.WRITE)
+                                   , block_type_enum=IndexBlockType.WRITE)
             # Make sure the source_index health is "green" before proceeding.
             es_mgr.wait_until_index_green(index_name=source_index
                                           ,wait_in_secs=30)
@@ -370,9 +371,9 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             es_mgr.wait_until_index_green(index_name=flush_index
                                             ,wait_in_secs=30)
             logger.debug(f"Health of flush_index={flush_index} is green.")
-            logger.debug(f"Set {IndexBlockType.NONE} block on source_index={source_index}.")
+            logger.debug(f"Set {IndexBlockType.NONE.value} block on source_index={source_index}.")
             es_mgr.set_index_block(index_name=source_index
-                                   , block_name=IndexBlockType.NONE)
+                                   , block_type_enum=IndexBlockType.NONE)
             es_mgr.delete_index(index_name=source_index)
             logger.debug(f"Deleted source_index={source_index}.")
             op_data_supplement['golive']['swap_info'].append(f"Deleted {source_index}")
@@ -387,21 +388,21 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             es_mgr.wait_until_index_green(index_name=source_index
                                             ,wait_in_secs=30)
             logger.debug(f"Health of source_index={source_index} is green.")
-            logger.debug(f"Set {IndexBlockType.NONE} block on destination_index={destination_index}.")
+            logger.debug(f"Set {IndexBlockType.NONE.value} block on destination_index={destination_index}.")
             es_mgr.set_index_block(index_name=destination_index
-                                   , block_name=IndexBlockType.NONE)
+                                   , block_type_enum=IndexBlockType.NONE)
             es_mgr.delete_index(index_name=destination_index)
             logger.debug(f"Deleted destination_index={destination_index}.")
             op_data_supplement['golive']['swap_info'].append(f"Deleted {destination_index}")
 
             # Assure that the index which will be actively used by Search API and the
             # backup of the previous version are writeable.
-            logger.debug(f"Set {IndexBlockType.NONE} block on source_index={source_index}.")
+            logger.debug(f"Set {IndexBlockType.NONE.value} block on source_index={source_index}.")
             es_mgr.set_index_block(index_name=source_index
-                                   , block_name=IndexBlockType.NONE)
-            logger.debug(f"Set {IndexBlockType.NONE} block on flush_index={flush_index}.")
+                                   , block_type_enum=IndexBlockType.NONE)
+            logger.debug(f"Set {IndexBlockType.NONE.value} block on flush_index={flush_index}.")
             es_mgr.set_index_block(index_name=flush_index
-                                   , block_name=IndexBlockType.NONE)
+                                   , block_type_enum=IndexBlockType.NONE)
     else:
         logger.error(f"Unable to 'rename' indices for fill_strategy={fill_strategy}")
 

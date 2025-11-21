@@ -28,7 +28,7 @@ class ESManager:
             raise Exception(f"agg_name_enum='{agg_name_enum}' is not a supported aggregation.")
 
         headers = {'Content-Type': 'application/json'}
-        agg_field_query = f'{{ "aggs": {{"agg_query_result": {{"{agg_name_enum}": {{"field": "{field_name}"}}}}}}}}'
+        agg_field_query = f'{{ "aggs": {{"agg_query_result": {{"{agg_name_enum.value}": {{"field": "{field_name}"}}}}}}}}'
         try:
             rspn = requests.post(f"{self.elasticsearch_url}/{index_name}/_search?size=0"
                                  ,headers=headers
@@ -205,18 +205,18 @@ class ESManager:
     # e.g. PUT your_index/_settings {"index": {"blocks.read_only": false}}
     # https://opensearch.org/docs/latest/api-reference/cluster-api/cluster-settings/
     # https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules-blocks.html
-    def set_index_block(self, index_name, block_name):
-        if block_name not in IndexBlockType:
-            raise ValueError(f"'{block_name}' is not a block name supported by IndexBlockType")
+    def set_index_block(self, index_name: str, block_type_enum: IndexBlockType) -> None:
+        if block_type_enum not in IndexBlockType:
+            raise ValueError(f"'{block_type_enum}' is not a block name supported by IndexBlockType")
         try:
-            if block_name is IndexBlockType.NONE:
+            if block_type_enum is IndexBlockType.NONE:
                 headers = {'Content-Type': 'application/json'}
                 payload_json = '{"index": {"blocks.write": false, "blocks.read_only": false,  "blocks.read_only_allow_delete": false}}'
                 rspn = requests.put(url=f"{self.elasticsearch_url}/{index_name}/_settings"
                                     ,headers=headers
                                     ,data=payload_json)
             else:
-                rspn = requests.put(url=f"{self.elasticsearch_url}/{index_name}/_block/{block_name}")
+                rspn = requests.put(url=f"{self.elasticsearch_url}/{index_name}/_block/{block_type_enum.value}")
         except Exception as e:
             msg = "Exception encountered during executing ESManager.set_index_block()"
             # Log the full stack trace, prepend a line with our message
@@ -233,12 +233,12 @@ class ESManager:
             #         "blocked": true
             #     }]
             # }
-            logger.info(f"Set '{block_name}' block on index: {index_name}")
+            logger.info(f"Set '{block_type_enum.value}' block on index: {index_name}")
             return
         else:
-            logger.error(f"Failed to set '{block_name}' block on index: {index_name}")
+            logger.error(f"Failed to set '{block_type_enum.value}' block on index: {index_name}")
             logger.error(f"Error Message: {rspn.text}")
-            raise Exception(f"Failed to set '{block_name}' block on"
+            raise Exception(f"Failed to set '{block_type_enum.value}' block on"
                             f" index: {index_name}, with"
                             f" status_code {rspn.status_code}.  See logs.")
 

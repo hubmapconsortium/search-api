@@ -19,28 +19,6 @@ git submodule update --init --remote
 Front end developers who need to work on the `portal` index should start in
 [the `addl_index_transformations/portal` subdirectory](https://github.com/hubmapconsortium/search-api/tree/main/hubmap-translation/src/hubmap_translation/addl_index_transformations/portal);
 
-
-### Local development
-After checking out the repo, installing the dependencies,
-and starting a local Elasticsearch instance, tests should pass:
-```shell
-pip install -r src/requirements.txt
-pip install -r src/requirements-dev.txt
-
-# on mac:
-brew tap elastic/tap
-brew install elastic/tap/elasticsearch-full
-
-## On MacOS 13, elasticsearch is not compatible with the default jdk. To workaround this, install openjdk and disable the machine learning functionality.
-brew install openjdk
-echo 'export ES_JAVA_HOME="/opt/homebrew/opt/openjdk"' >> ~/.zshrc
-echo 'xpack.ml.enabled: false' >> /opt/homebrew/etc/elasticsearch/elasticsearch.yml
-
-elasticsearch &  # Wait for it to start...
-
-./test.sh
-```
-
 ### To release via TEST infrastructure
 - Make new feature or bug fix branches from `main` branch (the default branch)
 - Make PRs to `main`
@@ -58,9 +36,9 @@ elasticsearch &  # Wait for it to start...
 
 The search-api base URL for each deployment environment:
 
-- DEV: `https://search-api.dev.hubmapconsortium.org`
-- TEST: `https://search-api.test.hubmapconsortium.org`
-- PROD: `https://search.api.hubmapconsortium.org`
+- DEV: `https://search-api.dev.hubmapconsortium.org/v3/`
+- TEST: `https://search-api.test.hubmapconsortium.org/v3/`
+- PROD: `https://search.api.hubmapconsortium.org/v3/`
 
 ## Request endpoints
 
@@ -162,7 +140,7 @@ query_dict = {
     }
 }
 response = requests.post(
-    'https://search-api.dev.hubmapconsortium.org/search',
+    'https://search-api.dev.hubmapconsortium.org/v3/search',
     json = query_dict,
     headers = {'Authorization': 'Bearer ' + nexus_token})
 hits = response.json()['hits']['hits']
@@ -224,7 +202,7 @@ There are a few configurable environment variables to keep in mind:
 We can set and verify the environment variable like below:
 
 ````
-export COMMONS_BRANCH=master
+export COMMONS_BRANCH=main
 echo $COMMONS_BRANCH
 ````
 
@@ -244,11 +222,6 @@ cd docker
 ./docker-deployment.sh [start|stop|down]
 ```
 
-For the Release candicate (RC) instance use a separate script:
-
-```
-./docker-rc.sh [start|stop|down]
-```
 
 ## Updating API Documentation
 
