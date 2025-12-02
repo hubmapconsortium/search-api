@@ -62,16 +62,45 @@ Help()
 ################################################################################
 # Verify the needs of this script are available, the version is acceptable, etc.
 ################################################################################
-StartupVerifications()
-{
-    # No version requirement for Python 3, but don't expect it to report
-    # a version if it is unavailable
-    if ! python3 --version | grep '^Python 3.[0-9]' > /dev/null; then
-	    bail_out_errors+=("Python 3 does not seem to be available")
-    elif [[ "$arg_verbose" == true ]]; then
-	    echo Python 3 found - `python3 --version`
+StartupVerifications() {
+    # Check Python version >= 3.12 using Python itself, capturing
+    # output of heredoc to python_output variable.
+    python_output="$(
+python3.13 - << 'EOF'
+import sys
+
+required = (3, 13)
+current = sys.version_info
+
+if current >= required:
+    # Print exact found version on success for the Bash wrapper to capture
+	print(f"OK {current.major}.{current.minor}.{current.micro}")
+	raise SystemExit(0)
+
+print(
+    f"Python ≥ {required[0]}.{required[1]} is required, "
+	f"but found {current.major}.{current.minor}.{current.micro}"
+)
+raise SystemExit(2)
+EOF
+    )"
+    
+    status=$?
+
+    if [[ $status -eq 0 ]]; then
+        # If verbose, print the discovered version
+        if [[ "$arg_verbose" == true ]]; then
+            # Extract version after "OK "
+            python_version=${python_output#"OK "}
+            echo "Python 3 found – $python_version"
+        fi
+    else
+        # Append failure message to the global error array
+        bail_out_errors+=("$python_output")
     fi
 
+    # Make sure an admin group token has been placed in a file so
+    # it can be passed in on the Python command line.
     if [[ ! -f "./token_holder" ]]; then
 	bail_out_errors+=("The file 'token_holder' is not found in `pwd`")
     fi
@@ -86,17 +115,6 @@ printf -v date_stamp '%(%Y-%m-%d)T' -1
 
 # Commands accepted in the script arguments after the options, as described in Help()
 recognized_commands=("create","catch-up","go-live")
-
-# Pull the names of the destination indices from the same YAML which will be
-# used for reindexing.
-readarray -t entities_portal_indices < <(
-python -c   'import yaml,sys; \
-            y=yaml.safe_load(sys.stdin); \
-            print(y["indices"]["entities"]["public"]); \
-            print(y["indices"]["entities"]["private"]); \
-            print(y["indices"]["portal"]["public"]); \
-            print(y["indices"]["portal"]["private"])' < ../../src/instance/search-config.yaml
-)
 
 ################################################################################
 # Set internal variables used by this script
@@ -146,8 +164,63 @@ else
   esac
 fi
 
+LoadEntitiesPortableIndices() {
+
+    # Assign the argument passed in to the config_file variable
+    local config_file="$1"
+
+    # Reset the array on each call
+    entities_portal_indices=()
+
+    # Capture *stdout and stderr* from Python into python_output
+    python_output="$(
+        python3.13 - "$config_file" << 'EOF' 2>&1
+import yaml, sys
+
+try:
+    with open(sys.argv[1]) as f:
+        y = yaml.safe_load(f)
+except Exception:
+    print(f"Unable to find configuration file: {sys.argv[1]}")
+    raise SystemExit(2)
+
+try:
+    print(y["indices"]["entities"]["public"])
+    print(y["indices"]["entities"]["private"])
+    print(y["indices"]["portal"]["public"])
+    print(y["indices"]["portal"]["private"])
+except KeyError as ke:
+    raise SystemExit(f"Missing key in {sys.argv[1]}: {ke}")
+EOF
+    )"
+
+    local status=$?
+
+    if [[ $status -eq 0 ]]; then
+        # Success, split python_output into array lines
+        readarray -t entities_portal_indices <<< "$python_output"
+
+        if [[ "$arg_verbose" == true ]]; then
+            echo "Loaded indices from: $config_file"
+            for index in "${entities_portal_indices[@]%,}"; do
+                printf "\t%s\n" "$index"
+            done
+        fi
+
+        return 0
+    else
+        # Failure, add the *entire python_output* to the error array
+        bail_out_errors+=("$python_output")
+        return $status
+    fi
+}
+
 # Verify resources this script needs are available.
 StartupVerifications
+
+# Load the indices names from the YAML file for the project
+config_file="../../src/instance/search-config.yaml"
+LoadEntitiesPortableIndices "$config_file"
 
 # Verify the specified output directory is writeable.
 if [ ! -w $arg_output_dir ]; then
@@ -182,6 +255,6 @@ else
   echo "Unexpectedly tried to execute with cmd='$cmd'"
 fi
 MYPYPATH=../../src:../../src/search-adaptor/src:../../src/search-adaptor/src/libs:../../src/search-adaptor/src/translator
-PYTHONPATH=$MYPYPATH python3 fresh_indices.py $cmd `cat ./token_holder`
+PYTHONPATH=$MYPYPATH python3.13 fresh_indices.py $cmd `cat ./token_holder`
 
 exit $EXIT_SUCCESS

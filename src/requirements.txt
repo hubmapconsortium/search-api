@@ -1,13 +1,11 @@
 Flask==3.0.3
 urllib3==1.26.19
-jsonschema==3.2.0
+jsonschema==4.23.0
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
 requests==2.32.4
-PyYAML==6.0
+PyYAML==6.0.3
 
-Werkzeug==3.0.3
-
-git+https://github.com/hubmapconsortium/portal-visualization.git@0.2.7#egg=portal-visualization
+portal-visualization==0.4.20
 
 # Use the published package from PyPI as default
 # Use the branch name of commons from github for testing new changes made in commons from different branch
@@ -17,4 +15,3 @@ hubmap-commons==2.1.21
 
 # The use of `-r` lets us specify the transitive requirements in one place
 -r search-adaptor/src/requirements.txt
-
