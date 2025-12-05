@@ -1,5 +1,5 @@
 Flask==3.0.3
-urllib3==1.26.19
+urllib3==2.6.0
 jsonschema==4.23.0
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
 requests==2.32.4
