@@ -157,6 +157,7 @@ input_doc_integrated_multiple_ancestors = input_doc.copy().update(
 expected_output_doc_integrated_multiple_ancestors = expected_output_doc.copy().update(
     {
         "ancestor_counts": {"entity_type": {"Sample": 1, "Dataset": 2}},
+        "ancestors": [*expected_output_doc["ancestors"], {"entity_type": "Dataset"}, {"entity_type": "Dataset"}],
         "is_integrated": True,
     }
 )
