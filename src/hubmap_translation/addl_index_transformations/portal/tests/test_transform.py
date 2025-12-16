@@ -1,6 +1,7 @@
 from hubmap_translation.addl_index_transformations.portal import (
     transform
 )
+from hubmap_translation.addl_index_transformations.portal.add_assay_details import CreationAction
 
 
 input_doc = {
@@ -16,7 +17,8 @@ input_doc = {
     'ancestor_ids': ['1234', '5678'],
     'ancestors': [{
         'sample_category': 'section',
-        'created_by_user_displayname': 'daniel Cotter'
+        'created_by_user_displayname': 'daniel Cotter',
+        'entity_type': 'Sample'
     }],
     'data_access_level': 'consortium',
     'dataset_type': 'RNAseq [Salmon]',
@@ -64,7 +66,7 @@ expected_output_doc = {'analyte_class': 'RNA',
                        'anatomy_0': ['body'],
                        'anatomy_1': ['large intestine', 'lymph node'],
                        'anatomy_2': ['transverse colon'],
-                       'ancestor_counts': {'entity_type': {}},
+                       'ancestor_counts': {'entity_type': { 'Sample': 1 }},
                        'ancestor_ids': ['1234', '5678'],
                        'ancestors': [{'created_by_user_displayname': 'Daniel Cotter',
                                       'mapped_sample_category': 'Section',
@@ -93,6 +95,7 @@ expected_output_doc = {'analyte_class': 'RNA',
                        'ingest_metadata': {
                            'dag_provenance_list': [],
                        },
+                       'is_integrated': False,
                        'mapped_consortium': 'Outside HuBMAP',
                        'mapped_create_timestamp': '2019-12-04 19:58:29',
                        'mapped_data_access_level': 'Consortium',
@@ -124,6 +127,28 @@ expected_output_doc = {'analyte_class': 'RNA',
                        }
 
 
+
+input_doc_integrated_multiple_ancestors = input_doc.copy().update({
+    'ancestors': input_doc['ancestors'] + [{
+        'entity_type': 'Dataset'
+    }, {
+        'entity_type': 'Dataset'
+    }]
+})
+
+expected_output_doc_integrated_multiple_ancestors = expected_output_doc.copy().update({
+    'ancestor_counts': {'entity_type': { 'Sample': 1, 'Dataset': 2 }},
+    'is_integrated': True,
+})
+
+input_doc_integrated_epic = input_doc.copy().update({
+    'creation_action': CreationAction.EPIC
+})
+
+expected_output_doc_integrated_epic = expected_output_doc.copy().update({
+    'is_integrated': True,
+})
+
 def mock_response(response_to_mock, status_code=200, text='Logger call requires this'):
     class MockResponse():
         def __init__(self):
@@ -146,12 +171,21 @@ def mock_soft_assay(uuid=None, headers=None):
                           'primary': False,
                           'vitessce-hints': ['is_sc', 'rna']})
 
+# Helper function to reduce code duplication while testing above cases
+def _test_transform_helper(input, expected, resources):
+    actual = transform(input, resources)
+    del actual['mapper_metadata']
+    assert actual == expected
 
 def test_transform(mocker):
     mocker.patch('requests.get', side_effect=mock_soft_assay)
     transformation_resources = {
         'ingest_api_soft_assay_url': 'abc123', 'token': 'def456',
         'organ_map': {"LY": {'rui_code': 'LY', 'organ_uberon': 'UBERON:0000029', 'term': 'Lymph Node'}}}
-    output = transform(input_doc, transformation_resources)
-    del output['mapper_metadata']
-    assert output == expected_output_doc
+
+    _test_transform_helper(input_doc, expected_output_doc, transformation_resources)
+    _test_transform_helper(input_doc_integrated_multiple_ancestors,
+                 expected_output_doc_integrated_multiple_ancestors, transformation_resources)
+    _test_transform_helper(input_doc_integrated_epic,
+                 expected_output_doc_integrated_epic, transformation_resources)
+
