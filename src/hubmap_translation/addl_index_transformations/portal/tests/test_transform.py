@@ -172,7 +172,9 @@ input_doc_integrated_epic.update(
 expected_output_doc_integrated_epic = expected_output_doc.copy()
 expected_output_doc_integrated_epic.update(
     {
+        "creation_action": CreationAction.EPIC,
         "is_integrated": True,
+        "processing_type": "external",
     }
 )
 
