@@ -147,14 +147,16 @@ expected_output_doc = {
 }
 
 
-input_doc_integrated_multiple_ancestors = input_doc.copy().update(
+input_doc_integrated_multiple_ancestors = input_doc.copy()
+input_doc_integrated_multiple_ancestors.update(
     {
         "ancestors": input_doc["ancestors"]
         + [{"entity_type": "Dataset"}, {"entity_type": "Dataset"}]
     }
 )
 
-expected_output_doc_integrated_multiple_ancestors = expected_output_doc.copy().update(
+expected_output_doc_integrated_multiple_ancestors = expected_output_doc.copy()
+expected_output_doc_integrated_multiple_ancestors.update(
     {
         "ancestor_counts": {"entity_type": {"Sample": 1, "Dataset": 2}},
         "ancestors": [*expected_output_doc["ancestors"], {"entity_type": "Dataset"}, {"entity_type": "Dataset"}],
@@ -162,11 +164,13 @@ expected_output_doc_integrated_multiple_ancestors = expected_output_doc.copy().u
     }
 )
 
-input_doc_integrated_epic = input_doc.copy().update(
+input_doc_integrated_epic = input_doc.copy()
+input_doc_integrated_epic.update(
     {"creation_action": CreationAction.EPIC}
 )
 
-expected_output_doc_integrated_epic = expected_output_doc.copy().update(
+expected_output_doc_integrated_epic = expected_output_doc.copy()
+expected_output_doc_integrated_epic.update(
     {
         "is_integrated": True,
     }
