@@ -76,6 +76,7 @@ expected_output_doc = {
             "created_by_user_displayname": "Daniel Cotter",
             "mapped_sample_category": "Section",
             "sample_category": "section",
+            "entity_type": "Sample",
         }
     ],
     "assay_display_name": ["scRNA-seq (10x Genomics) [Salmon]"],
