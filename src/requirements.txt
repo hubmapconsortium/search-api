@@ -1,8 +1,7 @@
 Flask==3.0.3
-urllib3==1.26.19
-jsonschema==4.23.0
+jsonschema==4.25.1
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
-requests==2.32.4
+requests==2.32.5
 PyYAML==6.0.3
 
 portal-visualization==0.4.20
@@ -11,7 +10,7 @@ portal-visualization==0.4.20
 # Use the branch name of commons from github for testing new changes made in commons from different branch
 # Default is main branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
-hubmap-commons==2.1.21
+hubmap-commons==2.1.22
 
 # The use of `-r` lets us specify the transitive requirements in one place
 -r search-adaptor/src/requirements.txt
