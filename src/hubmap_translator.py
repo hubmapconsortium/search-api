@@ -27,6 +27,12 @@ from translator.translator_interface import TranslatorInterface
 
 logger = logging.getLogger(__name__)
 
+config = {}
+app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
+            instance_relative_config=True)
+app.config.from_pyfile('app.cfg')
+config['INDICES'] = safe_load((Path(__file__).absolute().parent / 'instance/search-config.yaml').read_text())
+
 # This list contains fields that are added to the top-level at index runtime
 entity_properties_list = [
     'donor',
@@ -684,6 +690,144 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished direct '{index_group}' updates for"
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
+
+    def enqueue_reindex(self, entity_id, search_queue, priority):
+        try:
+            logger.info(f"Start executing translate() on entity_id: {entity_id}")
+            entity = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
+            logger.info(f"Enqueueing reindex for {entity['entity_type']} of uuid: {entity_id}")
+            subsequent_priority = max(priority, 2)
+
+            job_id = search_queue.enqueue(
+                task_func=reindex_entity_queued_wrapper,
+                entity_id=entity_id,
+                args=[entity_id, self.token],
+                priority=priority
+            )
+            collection_associations = []
+            upload_associations = []
+            if entity['entity_type'] in ['Collection', 'Epicollection']:
+                collection = self.get_collection_doc(entity_id=entity_id)
+                if 'datasets' in collection:
+                    logger.info(f"Enqueing {len(collection['datasets'])} datasets for {entity['entity_type']} {entity_id}")
+                    dataset_ids = [ds['uuid'] for ds in collection['datasets']]
+                    for dataset_id in dataset_ids:
+                        collection_associations.append(dataset_id)
+                if 'associated_publication' in collection and collection['associated_publication']:
+                    logger.info(f"Enqueueing associated_publication for {entity['entity_type']} {entity_id}")
+                    collection_associations.append(collection['associated_publication'])
+
+                logger.info(f"Finished executing enqueue_reindex() for {entity['entity_type']} of uuid: {entity_id}")    
+                return job_id
+            
+            if entity['entity_type'] == 'Upload':
+                if 'datasets' in entity:
+                    logger.info(f"Enqueueing {len(entity['datasets'])} datasets for Upload {entity_id}")
+                    for dataset in entity['datasets']:
+                        upload_associations.append(dataset['uuid'])
+                logger.info(f"Finished executing enqueue_reindex() for Upload of uuid: {entity_id}")
+                return job_id
+
+            logger.info(f"Calculating related entities for {entity_id}")
+            
+            neo4j_ancestor_ids = self.call_entity_api(
+                entity_id=entity_id,
+                endpoint_base='ancestors',
+                endpoint_suffix=None,
+                url_property='uuid'
+            )
+            
+            neo4j_descendant_ids = self.call_entity_api(
+                entity_id=entity_id,
+                endpoint_base='descendants',
+                endpoint_suffix=None,
+                url_property='uuid'
+            )
+            
+            previous_revision_ids = []
+            next_revision_ids = []
+            neo4j_collection_ids = []
+            neo4j_upload_ids = []
+            
+            if entity['entity_type'] in ['Dataset', 'Publication']:
+                previous_revision_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='previous_revisions',
+                    endpoint_suffix=None,
+                    url_property='uuid'
+                )
+                
+                next_revision_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='next_revisions',
+                    endpoint_suffix=None,
+                    url_property='uuid'
+                )
+                
+                neo4j_collection_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='entities',
+                    endpoint_suffix='collections',
+                    url_property='uuid'
+                )
+                
+                neo4j_upload_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='entities',
+                    endpoint_suffix='uploads',
+                    url_property='uuid'
+                )
+            
+            target_ids = set(
+                neo4j_ancestor_ids + 
+                neo4j_descendant_ids + 
+                previous_revision_ids + 
+                next_revision_ids + 
+                neo4j_collection_ids + 
+                neo4j_upload_ids + 
+                upload_associations +
+                collection_associations
+            )
+            
+            logger.info(f"Enqueueing {len(target_ids)} related entities for {entity_id}")
+            
+            for related_entity_id in target_ids:
+                search_queue.enqueue(
+                    task_func=reindex_entity_queued_wrapper,
+                    entity_id=related_entity_id,
+                    args=[entity_id, self.token],
+                    priority=subsequent_priority
+                )
+            logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
+            return job_id
+        
+        except Exception:
+            msg = "Exception during executing translate()"
+            logger.exception(msg)
+            raise
+
+    def reindex_entity_queued(self, entity_id):
+        try:
+            logger.info(f"Start executing reindex_entity_queued() on uuid: {entity_id}")
+            entity = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
+            logger.info(f"Reindexing {entity['entity_type']} of uuid: {entity_id}")
+            
+            if entity['entity_type'] in ['Collection', 'Epicollection']:
+                self.translate_collection(entity_id, reindex=True)
+                
+            elif entity['entity_type'] == 'Upload':
+                self.translate_upload(entity_id, reindex=True)
+                
+            else:
+                self._call_indexer(entity=entity, delete_existing_doc_first=True)
+            
+            logger.info(f"Finished executing reindex_entity_queued() on {entity['entity_type']} of uuid: {entity_id}")
+            
+        except Exception as e:
+            msg = f"Exception during reindex_entity_queued() for uuid: {entity_id}"
+            logger.exception(msg)
+            
+            raise
 
     # Used by individual live reindex call
     def translate(self, entity_id):
@@ -2027,6 +2171,18 @@ class Translator(TranslatorInterface):
 # Running full reindex script in command line
 # This approach is different from the live /reindex-all PUT call
 # It'll delete all the existing indices and recreate then then index everything
+
+  
+def reindex_entity_queued_wrapper(entity_id, token):
+    translator = Translator(
+        indices=config['INDICES'],
+        app_client_id=app.config['APP_CLIENT_ID'],
+        app_client_secret=app.config['APP_CLIENT_SECRET'],
+        token=token,
+        ontology_api_base_url=app.config['ONTOLOGY_API_BASE_URL']
+    )
+    translator.reindex_entity_queued(entity_id)
+
 if __name__ == "__main__":
     # Specify the absolute path of the instance folder and use the config file relative to the instance path
     app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), '../src/instance'),
