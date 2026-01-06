@@ -8,6 +8,7 @@ import datetime
 from yaml import safe_load as load_yaml
 import jsonschema
 
+from hubmap_translation.addl_index_transformations.portal.add_is_integrated import add_is_integrated
 from hubmap_translation.addl_index_transformations.portal.translate import (
     translate, TranslationException
 )
@@ -76,6 +77,7 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    add_is_integrated(doc_copy)
     add_partonomy(doc_copy, organ_map)
     reset_entity_type(doc_copy)
     if len(doc_copy['transformation_errors']) == 0:
