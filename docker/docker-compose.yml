@@ -34,12 +34,12 @@ services:
     networks:
       - gateway_hubmap
     # Send docker logs to AWS CloudWatch
-    # logging: 
-    #   driver: awslogs
-    #   options:
-    #     awslogs-region: us-east-1
-    #     awslogs-group: ${LOG_GROUP}
-    #     awslogs-stream: ${LOG_STREAM}
+    logging: 
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: ${LOG_GROUP}
+        awslogs-stream: ${LOG_STREAM}
 
   jobq-redis:
     image: redis:alpine
@@ -47,9 +47,14 @@ services:
     container_name: jobq-redis
     ports:
         - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     # NOTE: The dhi image doesn't work as easily due to hardened security
     # image: dhi.io/redis:8.2.3
-
     # environment:
     #   REDIS_PASSWORD: jobq-secret
     # command:
@@ -61,9 +66,10 @@ services:
     #   ]
     # healthcheck:
     #   test: ["CMD", "redis-cli", "-a", "jobq-secret", "ping"]
-    #   interval: 5s
-    #   timeout: 3s
-    #   retries: 5
+    #   interval: 1m30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
     networks:
       - gateway_hubmap
 

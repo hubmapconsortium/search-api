@@ -691,14 +691,14 @@ class Translator(TranslatorInterface):
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
 
-    def enqueue_reindex(self, entity_id, search_queue, priority):
+    def enqueue_reindex(self, entity_id, reindex_queue, priority):
         try:
             logger.info(f"Start executing translate() on entity_id: {entity_id}")
             entity = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
             logger.info(f"Enqueueing reindex for {entity['entity_type']} of uuid: {entity_id}")
             subsequent_priority = max(priority, 2)
 
-            job_id = search_queue.enqueue(
+            job_id = reindex_queue.enqueue(
                 task_func=reindex_entity_queued_wrapper,
                 entity_id=entity_id,
                 args=[entity_id, self.token],
@@ -792,7 +792,7 @@ class Translator(TranslatorInterface):
             logger.info(f"Enqueueing {len(target_ids)} related entities for {entity_id}")
             
             for related_entity_id in target_ids:
-                search_queue.enqueue(
+                reindex_queue.enqueue(
                     task_func=reindex_entity_queued_wrapper,
                     entity_id=related_entity_id,
                     args=[entity_id, self.token],
