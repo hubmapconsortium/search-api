@@ -33,6 +33,10 @@ config['PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX'] = app.config['PARAM_SEARCH_R
 config['ONTOLOGY_API_BASE_URL'] = app.config['ONTOLOGY_API_BASE_URL'].strip('/')
 config['DEBUG_MODE'] = app.config['DEBUG_MODE']
 config['JOB_QUEUE_MODE'] = app.config['JOB_QUEUE_MODE']
+config['REDIS_HOST'] = app.config['REDIS_HOST']
+config['REDIS_PORT'] = app.config['REDIS_PORT']
+config['REDIS_DB'] = app.config['REDIS_DB']
+config['REDIS_PASSWORD'] = app.config['REDIS_PASSWORD']
 
 if not config['ONTOLOGY_API_BASE_URL']:
     raise Exception(f"Unable retrieve ontology information using"
