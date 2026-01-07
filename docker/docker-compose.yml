@@ -42,7 +42,7 @@ services:
         awslogs-stream: ${LOG_STREAM}
 
   jobq-redis:
-    image: redis:alpine
+    image: redis:8.2.3
     hostname: jobq-redis
     container_name: jobq-redis
     ports:
