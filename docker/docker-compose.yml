@@ -34,12 +34,38 @@ services:
     networks:
       - gateway_hubmap
     # Send docker logs to AWS CloudWatch
-    logging: 
-      driver: awslogs
-      options:
-        awslogs-region: us-east-1
-        awslogs-group: ${LOG_GROUP}
-        awslogs-stream: ${LOG_STREAM}
+    # logging: 
+    #   driver: awslogs
+    #   options:
+    #     awslogs-region: us-east-1
+    #     awslogs-group: ${LOG_GROUP}
+    #     awslogs-stream: ${LOG_STREAM}
+
+  jobq-redis:
+    image: redis:alpine
+    hostname: jobq-redis
+    container_name: jobq-redis
+    ports:
+        - "6379:6379"
+    # NOTE: The dhi image doesn't work as easily due to hardened security
+    # image: dhi.io/redis:8.2.3
+
+    # environment:
+    #   REDIS_PASSWORD: jobq-secret
+    # command:
+    #   [
+    #     "redis-server",
+    #     "--bind", "0.0.0.0",
+    #     "--protected-mode", "yes",
+    #     "--requirepass", "jobq-secret"
+    #   ]
+    # healthcheck:
+    #   test: ["CMD", "redis-cli", "-a", "jobq-secret", "ping"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
+    networks:
+      - gateway_hubmap
 
 networks:
   # This is the network created by gateway to enable communicaton between multiple docker-compose projects
