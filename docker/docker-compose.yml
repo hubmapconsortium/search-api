@@ -41,6 +41,38 @@ services:
         awslogs-group: ${LOG_GROUP}
         awslogs-stream: ${LOG_STREAM}
 
+  jobq-redis:
+    image: redis:8.2.3
+    hostname: jobq-redis
+    container_name: jobq-redis
+    ports:
+        - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # NOTE: The dhi image doesn't work as easily due to hardened security
+    # image: dhi.io/redis:8.2.3
+    # environment:
+    #   REDIS_PASSWORD: jobq-secret
+    # command:
+    #   [
+    #     "redis-server",
+    #     "--bind", "0.0.0.0",
+    #     "--protected-mode", "yes",
+    #     "--requirepass", "jobq-secret"
+    #   ]
+    # healthcheck:
+    #   test: ["CMD", "redis-cli", "-a", "jobq-secret", "ping"]
+    #   interval: 1m30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
+    networks:
+      - gateway_hubmap
+
 networks:
   # This is the network created by gateway to enable communicaton between multiple docker-compose projects
   gateway_hubmap:
