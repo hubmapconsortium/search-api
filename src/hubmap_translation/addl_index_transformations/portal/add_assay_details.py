@@ -200,4 +200,4 @@ def add_assay_details(doc, transformation_resources):
 
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
-                    break
+                    descendant['visualization'] = True
