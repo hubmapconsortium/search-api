@@ -166,6 +166,11 @@ def add_assay_details(doc, transformation_resources):
 
         def get_assay_type_for_viz(doc):
             return assay_details
+        
+
+        # Check if the doc's 'visualization' is already set to True
+        if doc.get('visualization') is True:
+            return
 
         # Check if the main entity can be visualized by portal-visualization.
         has_viz = has_visualization(doc, get_assay_type_for_viz)
