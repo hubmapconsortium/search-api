@@ -212,10 +212,14 @@ def test_transform_image_pyramid_parent(mocker):
         mock_image_pyramid_parent(),
         # request to get descendants of parent entity
         mock_image_pyramid_descendants(),
-        # request to get assay details of descendant entity
+        # request to get assay details of first descendant (uuid ending in 4919)
         mock_image_pyramid_support(),
         # portal-visualization re-requests parent entity details
         # to determine which type of image pyramid it is
+        mock_image_pyramid_parent(),
+        # request to get assay details of second descendant (uuid ending in 4918)
+        mock_image_pyramid_support(),
+        # portal-visualization re-requests parent entity details again
         mock_image_pyramid_parent(),
     ])
     image_pyramid_input_doc = {
