@@ -142,6 +142,15 @@ def _add_pipeline(doc, assay_details):
         doc['pipeline'] = pipeline.group()
 
 
+def _set_soft_assaytype(doc, assay_details):
+    if soft_assaytype := assay_details.get('assaytype'):
+        doc['soft_assaytype'] = soft_assaytype
+    doc['assay_display_name'] = [assay_details.get('description')]
+    # Remove once the portal-ui has transitioned to use assay_display_name.
+    doc['mapped_data_types'] = [assay_details.get('description')]
+    doc['vitessce-hints'] = assay_details.get('vitessce-hints')
+
+
 def add_assay_details(doc, transformation_resources):
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
@@ -151,14 +160,7 @@ def add_assay_details(doc, transformation_resources):
 
         _add_dataset_categories(doc, assay_details)
         _add_pipeline(doc, assay_details)
-
-        if soft_assaytype := assay_details.get('assaytype'):
-            doc['soft_assaytype'] = soft_assaytype
-        # Preserve the previous shape of mapped_data_types.
-        doc['assay_display_name'] = [assay_details.get('description')]
-        # Remove once the portal-ui has transitioned to use assay_display_name.
-        doc['mapped_data_types'] = [assay_details.get('description')]
-        doc['vitessce-hints'] = assay_details.get('vitessce-hints')
+        _set_soft_assaytype(doc, assay_details)
 
         error_msg = assay_details.get('error')
         if error_msg:
@@ -166,6 +168,10 @@ def add_assay_details(doc, transformation_resources):
 
         def get_assay_type_for_viz(doc):
             return assay_details
+
+        # Check if the doc's 'visualization' is already set to True
+        if doc.get('visualization') is True:
+            return
 
         # Check if the main entity can be visualized by portal-visualization.
         has_viz = has_visualization(doc, get_assay_type_for_viz)
@@ -195,9 +201,8 @@ def add_assay_details(doc, transformation_resources):
             for descendant in descendants:
                 soft_assay_info = get_assay_type_for_descendants(descendant)
 
-                descendant['soft_assaytype'] = soft_assay_info.get('assaytype')
-                descendant['vitessce-hints'] = soft_assay_info.get('vitessce-hints', [])
+                _set_soft_assaytype(descendant, soft_assay_info)
 
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
-                    break
+                    descendant['visualization'] = True
