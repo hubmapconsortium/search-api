@@ -8,6 +8,7 @@ import os
 import re
 import sys
 import time
+from redis import Redis, ConnectionError, RedisError
 from yaml import safe_load, YAMLError
 from http.client import HTTPException
 from enum import Enum
@@ -800,7 +801,10 @@ class Translator(TranslatorInterface):
                 )
             logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
             return job_id
-        
+        except ValueError as e:
+            raise ValueError(e)
+        except RedisError as e:
+            raise RedisError(e)
         except Exception:
             msg = "Exception during executing translate()"
             logger.exception(msg)
