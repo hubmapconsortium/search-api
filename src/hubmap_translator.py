@@ -796,7 +796,7 @@ class Translator(TranslatorInterface):
                 reindex_queue.enqueue(
                     task_func=reindex_entity_queued_wrapper,
                     entity_id=related_entity_id,
-                    args=[entity_id, self.token],
+                    args=[related_entity_id, self.token],
                     priority=subsequent_priority
                 )
             logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
