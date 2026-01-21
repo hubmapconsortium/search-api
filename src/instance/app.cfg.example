@@ -1,3 +1,6 @@
+# Set to False to use INFO logging level
+DEBUG_MODE = True
+
 # Globus app client ID and secret
 APP_CLIENT_ID = ''
 APP_CLIENT_SECRET = ''
@@ -29,4 +32,10 @@ PARAM_SEARCH_RECOGNIZED_ENTITIES_BY_INDEX = {
     }
 }
 
-DEBUG_MODE = False
+# Reindex job queue settings
+JOB_QUEUE_MODE = False
+QUEUE_WORKERS = 32
+REDIS_HOST = jobq-redis
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = None
