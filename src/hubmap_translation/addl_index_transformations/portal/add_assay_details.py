@@ -203,6 +203,23 @@ def add_assay_details(doc, transformation_resources):
 
                 _set_soft_assaytype(descendant, soft_assay_info)
 
-                if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
-                    doc['visualization'] = True
-                    descendant['visualization'] = True
+                # Determine epic_uuid for segmentation masks
+                # epic_uuid only gets set if the descendant has segmentation_mask/epic hint
+                epic_uuid = None
+                descendant_hints = descendant.get("vitessce-hints", [])
+
+                if (
+                    "segmentation_mask" in descendant_hints
+                    and "epic" in descendant_hints
+                    and descendant.get("status") != "Error"
+                ):
+                    epic_uuid = descendant.get("uuid")
+
+                if has_visualization(
+                    descendant,
+                    get_assay_type_for_descendants,
+                    parent=parent_uuid,
+                    epic_uuid=epic_uuid,
+                ):
+                    doc["visualization"] = True
+                    descendant["visualization"] = True
