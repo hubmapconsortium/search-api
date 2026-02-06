@@ -700,6 +700,7 @@ class Translator(TranslatorInterface):
             subsequent_priority = max(priority, 2)
 
             job_id = reindex_queue.enqueue(
+                job_metadata = {"uuid": entity.get('uuid'), "hubmap_id": entity.get('hubmap_id')},
                 task_func=reindex_entity_queued_wrapper,
                 entity_id=entity_id,
                 args=[entity_id, self.token],
@@ -789,11 +790,23 @@ class Translator(TranslatorInterface):
                 upload_associations +
                 collection_associations
             )
-            
+
             logger.info(f"Enqueueing {len(target_ids)} related entities for {entity_id}")
-            
+
+            url = f"{self.entity_api_url}/entities/batch-ids"
+            associated_metadata = {}
+            try:
+                response = requests.post(url, headers=self.request_headers, json=list(target_ids))
+                if response.status_code == 200:
+                    associated_metadata = response.json()
+                else:
+                    self.logger.error(f"Failed to fetch batch metadata: {response.status_code}")
+                    associated_metadata = {}
+            except Exception as e:
+                logger.error(f"Unable to retrieve uuid and hubmap_id from entity-api. Proceed with enqueuing but this info will be missing from logging and status. {e}")
             for related_entity_id in target_ids:
                 reindex_queue.enqueue(
+                    job_metadata = associated_metadata.get(related_entity_id),
                     task_func=reindex_entity_queued_wrapper,
                     entity_id=related_entity_id,
                     args=[related_entity_id, self.token],
