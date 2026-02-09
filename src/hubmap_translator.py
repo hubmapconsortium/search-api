@@ -9,10 +9,14 @@ import re
 import sys
 import time
 from redis import Redis, ConnectionError, RedisError
+from urllib3.exceptions import InsecureRequestWarning
 from yaml import safe_load, YAMLError
 from http.client import HTTPException
 from enum import Enum
 from types import MappingProxyType
+
+# Suppress InsecureRequestWarning warning when requesting status on https with ssl cert verify disabled
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 # For reusing the app.cfg configuration when running indexer_base.py as script
 from flask import Flask, Response
