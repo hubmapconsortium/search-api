@@ -1101,10 +1101,59 @@ paths:
           required: true
           schema:
             type: string
+        - name: priority
+          in: query
+          description: The priority level of the reindex 1, 2, or 3; defaults to 1. 1 is the highest priority (completed first) and 3 is the lowest (completed last). Subsequent reindexes of associated entities will be enqueued at a priority level of 2 if the initial reindex was a 1. If the initial is a priority 2, the subsequent reindexes will also be priority 2. If the initial is priority 3, the subsequent reindexes will also be priority 3.
+          required: false
+          schema:
+            type: string
+            enum: ['1', '2', '3']
       responses:
         '202':
           description: The request has been accepted and reindex is in process
-
+  '/reindex-status':
+    get:
+      summary: Retrieves a json containing information about the current reindex queue status. Including numbers in the queue at different priority levels
+      description: To retrieve infomration about the current state of the queue, including how many items are in each priority, use this endpoint. To view all current jobs in the queue, include the query parameter all-queued. To view all jobs currently being executed by a worker, include the parameter all-reindexing.
+      parameters:
+        - name: all-queued
+          in: query
+          description: A boolean that, when set to true, returns data about each item currently in the queue, but not items currently being reindexed (no longer in the queue).
+          required: false
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - name: all-reindexed
+          in: query
+          description: A boolean that, when set to true, returns data about each item currently being reindexed by a worker, but not items in the queue (not yet being reindexed).
+          required: false
+          schema:
+            type: string
+            enum: ['true', 'false']
+      responses:
+        '200':
+          description: Returns the status data as a json describing the current state of the queue.
+          content:
+            application/json:
+              type: object
+        '500':
+          description: A failure has occurred retrieving the status data from the job queue.
+  '/reindex-status/{identifier}':
+    get:
+      summary: Retrieves a json containing information about a particularitem in the queue including its priority level, and its position in the queue.
+      description: To retrieve infomration about an individual entity in the queue, include either the id used when submitting the reindex request (uuid or hubmap_id) or the job_id (returned when submitting the request) as a path variable.
+      parameters:
+        - name: identifier
+          in: path
+          description: The id of the chosen entity. Either the original id used during reindex submission (uuid or HuBMAP ID, whichever was used) or the job_id returned when the reindex was submitted.
+      responses:
+        '200':
+          description: Returns the status data as a json describing the current state of the chosen entity.
+          content:
+            application/json:
+              type: object
+        '500':
+          description: A failure has occurred retrieving the status data from the job queue.
   '/mget':
     post:
       summary: Retrieves multiple documents by their IDs in a single request.
