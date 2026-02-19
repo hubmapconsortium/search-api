@@ -712,6 +712,13 @@ class Translator(TranslatorInterface):
             )
             collection_associations = []
             upload_associations = []
+            previous_revision_ids = []
+            next_revision_ids = []
+            neo4j_collection_ids = []
+            neo4j_upload_ids = []
+            neo4j_ancestor_ids = []
+            neo4j_descendant_ids = []
+
             if entity['entity_type'] in ['Collection', 'Epicollection']:
                 collection = self.get_collection_doc(entity_id=entity_id)
                 if 'datasets' in collection:
@@ -722,38 +729,29 @@ class Translator(TranslatorInterface):
                 if 'associated_publication' in collection and collection['associated_publication']:
                     logger.info(f"Enqueueing associated_publication for {entity['entity_type']} {entity_id}")
                     collection_associations.append(collection['associated_publication'])
-
-                logger.info(f"Finished executing enqueue_reindex() for {entity['entity_type']} of uuid: {entity_id}")    
-                return job_id
             
-            if entity['entity_type'] == 'Upload':
+            elif entity['entity_type'] == 'Upload':
                 if 'datasets' in entity:
                     logger.info(f"Enqueueing {len(entity['datasets'])} datasets for Upload {entity_id}")
                     for dataset in entity['datasets']:
                         upload_associations.append(dataset['uuid'])
-                logger.info(f"Finished executing enqueue_reindex() for Upload of uuid: {entity_id}")
-                return job_id
-
-            logger.info(f"Calculating related entities for {entity_id}")
-            
-            neo4j_ancestor_ids = self.call_entity_api(
-                entity_id=entity_id,
-                endpoint_base='ancestors',
-                endpoint_suffix=None,
-                url_property='uuid'
-            )
-            
-            neo4j_descendant_ids = self.call_entity_api(
-                entity_id=entity_id,
-                endpoint_base='descendants',
-                endpoint_suffix=None,
-                url_property='uuid'
-            )
-            
-            previous_revision_ids = []
-            next_revision_ids = []
-            neo4j_collection_ids = []
-            neo4j_upload_ids = []
+                                    
+            else:
+                logger.info(f"Calculating related entities for {entity_id}")
+                
+                neo4j_ancestor_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='ancestors',
+                    endpoint_suffix=None,
+                    url_property='uuid'
+                )
+                
+                neo4j_descendant_ids = self.call_entity_api(
+                    entity_id=entity_id,
+                    endpoint_base='descendants',
+                    endpoint_suffix=None,
+                    url_property='uuid'
+                )
             
             if entity['entity_type'] in ['Dataset', 'Publication']:
                 previous_revision_ids = self.call_entity_api(
