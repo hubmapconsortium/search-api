@@ -127,6 +127,7 @@ def _get_descendants(doc, transformation_resources):
         logger.error(e.response.text)
         raise
 
+
 def _get_parents(doc, transformation_resources):
     parents_url = transformation_resources.get(
         'parents_url')
@@ -142,11 +143,13 @@ def _get_parents(doc, transformation_resources):
         logger.error(e.response.text)
         raise
 
+
 # Returns an array of all parent datasets, or an empty array if there are no parent datasets or if the parents endpoint is unavailable.
 def _get_parent_datasets(doc, transformation_resources):
     parents = _get_parents(doc, transformation_resources)
     datasets = [parent for parent in parents if parent.get('entity_type') == 'Dataset']
     return datasets
+
 
 def _add_pipeline(doc, assay_details):
     if pipeline := assay_details.get('pipeline-shorthand'):
@@ -234,8 +237,8 @@ def add_assay_details(doc, transformation_resources):
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
                     return
-        
-        # If it's still not visualizable, check if it requires a parent dataset to be visualizable 
+
+        # If it's still not visualizable, check if it requires a parent dataset to be visualizable
         # (e.g. for image pyramids and segmentation masks)
         if not doc['visualization']:
             parent_datasets = _get_parent_datasets(doc, transformation_resources)
