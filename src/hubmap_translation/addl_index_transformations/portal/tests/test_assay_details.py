@@ -31,6 +31,10 @@ def mock_empty_descendants():
     return mock_response([])
 
 
+def mock_empty_parents():
+    return mock_response([])
+
+
 def mock_raw_soft_assay(uuid=None, headers=None):
     return mock_response({
         "assaytype": "sciRNAseq",
@@ -46,7 +50,8 @@ def mock_raw_soft_assay(uuid=None, headers=None):
 def test_raw_dataset_type(mocker):
     mocker.patch('requests.get', side_effect=[
                  mock_raw_soft_assay(),
-                 mock_empty_descendants()])
+                 mock_empty_descendants(),
+                 mock_empty_parents()])
     input_raw_doc = {
         'uuid': '421007293469db7b528ce6478c00348d',
         'dataset_type': 'RNAseq',
@@ -127,7 +132,8 @@ def mock_empty_soft_assay(uuid=None, headers=None):
 def test_transform_unknown_assay(mocker):
     mocker.patch('requests.get', side_effect=[
                  mock_empty_soft_assay(),
-                 mock_empty_descendants()])
+                 mock_empty_descendants(),
+                 mock_empty_parents()])
 
     unknown_assay_input_doc = {
         'uuid': '69c70762689b20308bb049ac49653342',
@@ -253,6 +259,7 @@ def test_transform_image_pyramid_support(mocker):
     mocker.patch('requests.get', side_effect=[
         mock_image_pyramid_support(),
         mock_empty_descendants(),
+        mock_empty_parents(),
     ])
     image_pyramid_input_doc = {
         'uuid': '0bf9cb40adebcfb261dfbe9244607508',

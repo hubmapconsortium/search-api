@@ -234,6 +234,9 @@ def add_assay_details(doc, transformation_resources):
                 reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
+                # Even though the descendant doc gets dropped, the soft assay information is necessary for portal-visualization.
+                soft_assay_info = get_assay_type_for_descendants(descendant)
+                _set_soft_assaytype(descendant, soft_assay_info)
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
                     return
