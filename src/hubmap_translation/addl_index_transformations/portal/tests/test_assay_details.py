@@ -296,6 +296,7 @@ def mock_epic(uuid=None, headers=None):
         "primary": False,
         "vitessce-hints": [
             "segmentation_mask",
+            "epic",
             "is_image",
             "pyramid"
         ]
@@ -339,7 +340,7 @@ def test_transform_epic(mocker):
             "segmentation_mask",
             "is_image",
             "pyramid",
-
+            "epic",
         ],
         'visualization': True,
         'entity_type': 'Dataset',
