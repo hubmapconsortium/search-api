@@ -296,9 +296,9 @@ def mock_epic(uuid=None, headers=None):
         "primary": False,
         "vitessce-hints": [
             "segmentation_mask",
-            "epic",
             "is_image",
-            "pyramid"
+            "pyramid",
+            "epic"
         ]
     })
 
