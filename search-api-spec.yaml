@@ -1141,11 +1141,11 @@ paths:
   '/reindex-status/{identifier}':
     get:
       summary: Retrieves a json containing information about a particularitem in the queue including its priority level, and its position in the queue.
-      description: To retrieve infomration about an individual entity in the queue, include either the id used when submitting the reindex request (uuid or hubmap_id) or the job_id (returned when submitting the request) as a path variable.
+      description: To retrieve infomration about an individual entity in the queue, include either the id used when submitting the reindex request (uuid or hubmap_id) or the reference_id (returned when submitting the request) as a path variable.
       parameters:
         - name: identifier
           in: path
-          description: The id of the chosen entity. Either the original id used during reindex submission (uuid or HuBMAP ID, whichever was used) or the job_id returned when the reindex was submitted.
+          description: The id of the chosen entity. Either the original id used during reindex submission (uuid or HuBMAP ID, whichever was used) or the reference_id returned when the reindex was submitted.
       responses:
         '200':
           description: Returns the status data as a json describing the current state of the chosen entity.
