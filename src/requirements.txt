@@ -11,7 +11,7 @@ portal-visualization==0.4.22
 # Default is main branch specified in search-api's docker-compose.development.yml if not set
 # git+https://github.com/hubmapconsortium/commons.git@${COMMONS_BRANCH}#egg=hubmap-commons
 
-hubmap-commons==2.1.22
+hubmap-commons==2.1.23
 atlas-consortia-jobq>=0.1.0
 # The use of `-r` lets us specify the transitive requirements in one place
 -r search-adaptor/src/requirements.txt
