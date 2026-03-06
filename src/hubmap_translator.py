@@ -704,7 +704,7 @@ class Translator(TranslatorInterface):
             logger.info(f"Enqueueing reindex for {entity['entity_type']} of uuid: {entity_id}")
             subsequent_priority = max(priority, 2)
 
-            job_id = reindex_queue.enqueue(
+            reference_id = reindex_queue.enqueue(
                 job_metadata = {"uuid": entity.get('uuid'), "hubmap_id": entity.get('hubmap_id')},
                 task_func=reindex_entity_queued_wrapper,
                 entity_id=entity_id,
@@ -816,7 +816,7 @@ class Translator(TranslatorInterface):
                     priority=subsequent_priority
                 )
             logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
-            return job_id
+            return reference_id
         except ValueError as e:
             raise ValueError(e)
         except RedisError as e:
