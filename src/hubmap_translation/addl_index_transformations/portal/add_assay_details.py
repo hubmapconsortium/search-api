@@ -128,6 +128,29 @@ def _get_descendants(doc, transformation_resources):
         raise
 
 
+def _get_parents(doc, transformation_resources):
+    parents_url = transformation_resources.get(
+        'parents_url')
+    token = transformation_resources.get('token')
+    uuid = doc.get('uuid')
+
+    try:
+        response = requests.get(
+            f'{parents_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        logger.error(e.response.text)
+        raise
+
+
+# Returns an array of all parent datasets, or an empty array if there are no parent datasets or if the parents endpoint is unavailable.
+def _get_parent_datasets(doc, transformation_resources):
+    parents = _get_parents(doc, transformation_resources)
+    datasets = [parent for parent in parents if parent.get('entity_type') == 'Dataset']
+    return datasets
+
+
 def _add_pipeline(doc, assay_details):
     if pipeline := assay_details.get('pipeline-shorthand'):
         doc['pipeline'] = pipeline
@@ -152,6 +175,18 @@ def _set_soft_assaytype(doc, assay_details):
 
 
 def add_assay_details(doc, transformation_resources):
+    """
+    For datasets, add assay details and derived fields to the document, including:
+    - dataset categories (raw vs processed, single vs multi-assay)
+    - pipeline
+    - soft assay type (e.g. scRNA-seq, CODEX, etc.) and assay display name
+
+    These are added to the passed `doc` in-place.
+
+    Then, determine if the dataset is visualizable by portal-visualization based on its assay details and those of its descendants and parents.
+
+    Non-dataset entities do not have assay details and are skipped.
+    """
     if 'dataset_type' in doc:
         assay_details = _get_assay_details(doc, transformation_resources)
 
@@ -174,9 +209,9 @@ def add_assay_details(doc, transformation_resources):
             return
 
         # Check if the main entity can be visualized by portal-visualization.
-        has_viz = has_visualization(doc, get_assay_type_for_viz)
-        doc['visualization'] = has_viz
-        if not has_viz:
+        doc['visualization'] = has_visualization(doc, get_assay_type_for_viz)
+
+        if not doc['visualization']:
             # If an entity doesn't have a visualization,
             # check its descendants for a supporting image pyramid.
             parent_uuid = doc.get('uuid')
@@ -199,10 +234,22 @@ def add_assay_details(doc, transformation_resources):
                 reverse=True)
             # If any remaining descendants have visualization data, set the parent's visualization to True
             for descendant in descendants:
+                # Even though the descendant doc gets dropped, the soft assay information is necessary for portal-visualization.
                 soft_assay_info = get_assay_type_for_descendants(descendant)
-
                 _set_soft_assaytype(descendant, soft_assay_info)
-
                 if has_visualization(descendant, get_assay_type_for_descendants, parent_uuid):
                     doc['visualization'] = True
-                    descendant['visualization'] = True
+                    return
+
+        # If it's still not visualizable, check if it requires a parent dataset to be visualizable
+        # (e.g. for image pyramids and segmentation masks)
+        if not doc['visualization']:
+            parent_datasets = _get_parent_datasets(doc, transformation_resources)
+            for parent in parent_datasets:
+                parent_assay_info = get_assay_type_for_viz(parent)
+
+                _set_soft_assaytype(parent, parent_assay_info)
+
+                if has_visualization(parent, get_assay_type_for_viz):
+                    doc['visualization'] = True
+                    break

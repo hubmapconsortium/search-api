@@ -5,10 +5,11 @@ from hubmap_translation.addl_index_transformations.portal.add_assay_details impo
     _add_dataset_categories
 )
 
-transformation_resources = {
+mock_transformation_resources = {
     'ingest_api_soft_assay_url': 'abc123',
+    'token': 'def456',
     'descendants_url': 'ghi789',
-    'token': 'def456'
+    'parents_url': 'jkl012'
 }
 
 
@@ -30,6 +31,10 @@ def mock_empty_descendants():
     return mock_response([])
 
 
+def mock_empty_parents():
+    return mock_response([])
+
+
 def mock_raw_soft_assay(uuid=None, headers=None):
     return mock_response({
         "assaytype": "sciRNAseq",
@@ -45,7 +50,8 @@ def mock_raw_soft_assay(uuid=None, headers=None):
 def test_raw_dataset_type(mocker):
     mocker.patch('requests.get', side_effect=[
                  mock_raw_soft_assay(),
-                 mock_empty_descendants()])
+                 mock_empty_descendants(),
+                 mock_empty_parents()])
     input_raw_doc = {
         'uuid': '421007293469db7b528ce6478c00348d',
         'dataset_type': 'RNAseq',
@@ -67,7 +73,7 @@ def test_raw_dataset_type(mocker):
         'processing': 'raw',
         'soft_assaytype': 'sciRNAseq'
     }
-    add_assay_details(input_raw_doc, transformation_resources)
+    add_assay_details(input_raw_doc, mock_transformation_resources)
     assert input_raw_doc == expected_raw_output_doc
 
 
@@ -115,7 +121,7 @@ def test_processed_dataset_type(mocker):
         ],
         'visualization': True,
     }
-    add_assay_details(input_processed_doc, transformation_resources)
+    add_assay_details(input_processed_doc, mock_transformation_resources)
     assert input_processed_doc == output_processed_doc
 
 
@@ -126,7 +132,8 @@ def mock_empty_soft_assay(uuid=None, headers=None):
 def test_transform_unknown_assay(mocker):
     mocker.patch('requests.get', side_effect=[
                  mock_empty_soft_assay(),
-                 mock_empty_descendants()])
+                 mock_empty_descendants(),
+                 mock_empty_parents()])
 
     unknown_assay_input_doc = {
         'uuid': '69c70762689b20308bb049ac49653342',
@@ -152,7 +159,7 @@ def test_transform_unknown_assay(mocker):
         'visualization': False,
         'entity_type': 'Dataset',
     }
-    add_assay_details(unknown_assay_input_doc, transformation_resources)
+    add_assay_details(unknown_assay_input_doc, mock_transformation_resources)
     assert unknown_assay_input_doc == unknown_assay_output_doc
 
 
@@ -244,7 +251,7 @@ def test_transform_image_pyramid_parent(mocker):
         'entity_type': 'Dataset',
     }
 
-    add_assay_details(image_pyramid_input_doc, transformation_resources)
+    add_assay_details(image_pyramid_input_doc, mock_transformation_resources)
     assert image_pyramid_input_doc == image_pyramid_output_doc
 
 
@@ -252,6 +259,7 @@ def test_transform_image_pyramid_support(mocker):
     mocker.patch('requests.get', side_effect=[
         mock_image_pyramid_support(),
         mock_empty_descendants(),
+        mock_empty_parents(),
     ])
     image_pyramid_input_doc = {
         'uuid': '0bf9cb40adebcfb261dfbe9244607508',
@@ -282,7 +290,7 @@ def test_transform_image_pyramid_support(mocker):
         'entity_type': 'Dataset',
     }
 
-    add_assay_details(image_pyramid_input_doc, transformation_resources)
+    add_assay_details(image_pyramid_input_doc, mock_transformation_resources)
     assert image_pyramid_input_doc == image_pyramid_output_doc
 
 
@@ -296,15 +304,26 @@ def mock_epic(uuid=None, headers=None):
         "vitessce-hints": [
             "segmentation_mask",
             "is_image",
-            "pyramid"
+            "pyramid",
+            "epic"
         ]
     })
+
+
+def mock_epic_parents():
+    return mock_response([
+        {
+            "uuid": "parent_dataset_uuid_001",
+            "entity_type": "Dataset",
+        }
+    ])
 
 
 def test_transform_epic(mocker):
     mocker.patch('requests.get', side_effect=[
         mock_epic(),
         mock_empty_descendants(),
+        mock_epic_parents(),
     ])
     epic_input_doc = {
         'uuid': 'abc123',
@@ -328,13 +347,13 @@ def test_transform_epic(mocker):
             "segmentation_mask",
             "is_image",
             "pyramid",
-
+            "epic",
         ],
-        'visualization': False,
+        'visualization': True,
         'entity_type': 'Dataset',
     }
 
-    add_assay_details(epic_input_doc, transformation_resources)
+    add_assay_details(epic_input_doc, mock_transformation_resources)
     assert epic_input_doc == epic_output_doc
 
 
