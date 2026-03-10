@@ -169,6 +169,7 @@ class Translator(TranslatorInterface):
             self.transformation_resources = {'ingest_api_soft_assay_url': self.ingest_api_soft_assay_url,
                                              'organ_map': self.get_organ_types(),
                                              'descendants_url': f'{self.entity_api_url}/descendants',
+                                             'parents_url': f'{self.entity_api_url}/parents',
                                              'token': token,}
 
 
