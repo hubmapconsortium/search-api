@@ -211,6 +211,10 @@ def add_assay_details(doc, transformation_resources):
         # Check if the main entity can be visualized by portal-visualization.
         doc['visualization'] = has_visualization(doc, get_assay_type_for_viz)
 
+        # Set the 'spatial' field for search based off of the presence of the 'spatial' hint
+        if ('spatial' in assay_details.get('vitessce-hints', [])):
+            doc['spatial'] = True
+
         if not doc['visualization']:
             # If an entity doesn't have a visualization,
             # check its descendants for a supporting image pyramid.

@@ -125,6 +125,57 @@ def test_processed_dataset_type(mocker):
     assert input_processed_doc == output_processed_doc
 
 
+def mock_spatial_soft_assay(uuid=None, headers=None):
+    return mock_response({
+        "assaytype": "salmon_rnaseq_sciseq",
+        "contains-pii": True,
+        "pipeline-shorthand": "Salmon",
+        "description": "sciRNA-seq [Salmon]",
+        "primary": False,
+        "vitessce-hints": [
+            "is_sc",
+            "rna",
+            "spatial"
+        ]
+    })
+
+
+def test_spatial_dataset_type(mocker):
+    mocker.patch('requests.get', side_effect=[
+                 mock_spatial_soft_assay(),
+                 mock_empty_descendants()])
+    input_processed_doc = {
+        'uuid': '22684b9011fc5aea5cb3f89670a461e8',
+        'dataset_type': 'RNAseq [Salmon]',
+        'entity_type': 'Dataset',
+        'creation_action': 'Central Process'
+    }
+
+    output_processed_doc = {
+        'assay_display_name': ['sciRNA-seq [Salmon]'],
+        'dataset_type': 'RNAseq [Salmon]',
+        'entity_type': 'Dataset',
+        'mapped_data_types': ['sciRNA-seq [Salmon]'],
+        'pipeline': 'Salmon',
+        'raw_dataset_type': 'RNAseq',
+        'assay_modality': 'single',
+        'creation_action': 'Central Process',
+        'processing': 'processed',
+        'processing_type': 'hubmap',
+        'uuid': '22684b9011fc5aea5cb3f89670a461e8',
+        'soft_assaytype': 'salmon_rnaseq_sciseq',
+        'vitessce-hints': [
+            "is_sc",
+            "rna",
+            "spatial"
+        ],
+        'visualization': True,
+        'spatial': True,
+    }
+    add_assay_details(input_processed_doc, mock_transformation_resources)
+    assert input_processed_doc == output_processed_doc
+
+
 def mock_empty_soft_assay(uuid=None, headers=None):
     return mock_response({})
 
