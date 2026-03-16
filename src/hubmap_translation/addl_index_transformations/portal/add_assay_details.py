@@ -122,9 +122,7 @@ def _get_descendants(doc, transformation_resources):
         response = requests.get(
             f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
-        descendants = response.json()
-        # Filter any multi-assay split descendants - these are component datasets that should not be considered for visualization purposes.
-        descendants = [descendant for descendant in descendants if descendant.get('creation_action') != CreationAction.MULTI_ASSAY_SPLIT]
+        return response.json()
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
         raise
@@ -231,9 +229,9 @@ def add_assay_details(doc, transformation_resources):
                     uuid = descendant
                 return _get_assay_details_by_uuid(uuid, transformation_resources)
 
-            # Filter any unpublished/non-QA descendants
+            # Filter any unpublished/non-QA descendants and multi-assay splits
             descendants = [descendant for descendant in descendants if [
-                'Published', 'QA'].count(descendant.get('status')) > 0]
+                'Published', 'QA'].count(descendant.get('status')) > 0 and descendant.get('creation_action') != CreationAction.MULTI_ASSAY_SPLIT]
             # Sort by the descendant's last modified timestamp, descending
             descendants.sort(
                 key=lambda x: x['last_modified_timestamp'],
