@@ -122,7 +122,9 @@ def _get_descendants(doc, transformation_resources):
         response = requests.get(
             f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
         response.raise_for_status()
-        return response.json()
+        descendants = response.json()
+        # Filter any multi-assay split descendants - these are component datasets that should not be considered for visualization purposes.
+        descendants = [descendant for descendant in descendants if descendant.get('creation_action') != CreationAction.MULTI_ASSAY_SPLIT]
     except requests.exceptions.HTTPError as e:
         logger.error(e.response.text)
         raise
