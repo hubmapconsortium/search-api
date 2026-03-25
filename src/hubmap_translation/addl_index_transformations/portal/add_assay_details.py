@@ -254,6 +254,6 @@ def add_assay_details(doc, transformation_resources):
 
                 _set_soft_assaytype(parent, parent_assay_info)
 
-                if has_visualization(parent, get_assay_type_for_viz):
+                if has_visualization(doc, get_assay_type_for_viz, parent):
                     doc['visualization'] = True
                     break
