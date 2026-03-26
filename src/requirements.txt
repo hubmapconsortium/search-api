@@ -1,7 +1,7 @@
 Flask==3.1.3
 jsonschema==4.25.1
 # The commons package requires requests>=2.22.0 and PyYAML>=5.3.1
-requests==2.32.5
+requests==2.33.0
 PyYAML==6.0.3
 
 portal-visualization==0.5.1
