@@ -798,15 +798,15 @@ class Translator(TranslatorInterface):
 
             url = f"{self.entity_api_url}/entities/batch-ids"
             associated_metadata = {}
-            # try:
-            #     response = requests.post(url, headers=self.request_headers, json=list(target_ids))
-            #     if response.status_code == 200:
-            #         associated_metadata = response.json()
-            #     else:
-            #         self.logger.error(f"Failed to fetch batch metadata: {response.status_code}")
-            #         associated_metadata = {}
-            # except Exception as e:
-            #     logger.error(f"Unable to retrieve uuid and hubmap_id from entity-api. Proceed with enqueuing but this info will be missing from logging and status. {e}")
+            try:
+                response = requests.post(url, headers=self.request_headers, json=list(target_ids))
+                if response.status_code == 200:
+                    associated_metadata = response.json()
+                else:
+                    self.logger.error(f"Failed to fetch batch metadata: {response.status_code}")
+                    associated_metadata = {}
+            except Exception as e:
+                logger.error(f"Unable to retrieve uuid and hubmap_id from entity-api. Proceed with enqueuing but this info will be missing from logging and status. {e}")
             jobs = []
             for related_entity_id in target_ids:
                 meta = associated_metadata.get(related_entity_id) or {}
