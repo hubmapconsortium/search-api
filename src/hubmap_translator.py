@@ -807,15 +807,22 @@ class Translator(TranslatorInterface):
                     associated_metadata = {}
             except Exception as e:
                 logger.error(f"Unable to retrieve uuid and hubmap_id from entity-api. Proceed with enqueuing but this info will be missing from logging and status. {e}")
+            jobs = []
             for related_entity_id in target_ids:
-                reindex_queue.enqueue(
-                    job_metadata = associated_metadata.get(related_entity_id),
-                    task_func=reindex_entity_queued_wrapper,
-                    entity_id=related_entity_id,
-                    args=[related_entity_id, self.token],
+                meta = associated_metadata.get(related_entity_id) or {}
+                jobs.append({
+                    "entity_id": related_entity_id,
+                    "args": [related_entity_id, self.token],
+                    "kwargs": {},
+                    "metadata": meta,
+                })
+            if jobs:
+                reindex_queue.bulk_enqueue(
+                    task_func = reindex_entity_queued_wrapper,
+                    jobs=jobs,
                     priority=subsequent_priority
                 )
-            logger.info(f"Finished executing translate() on {entity['entity_type']} of uuid: {entity_id}")
+            logger.info(f"Bulk-enqueued {len(jobs)} related entities for {entity_id}")
             return reference_id
         except ValueError as e:
             raise ValueError(e)
