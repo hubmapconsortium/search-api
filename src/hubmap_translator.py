@@ -835,10 +835,10 @@ class Translator(TranslatorInterface):
             logger.info(f"Reindexing {entity['entity_type']} of uuid: {entity_id}")
             
             if entity['entity_type'] in ['Collection', 'Epicollection']:
-                self.translate_collection(entity_id, reindex=True)
+                self.translate_collection(entity, reindex=True)
                 
             elif entity['entity_type'] == 'Upload':
-                self.translate_upload(entity_id, reindex=True)
+                self.translate_upload(entity, reindex=True)
                 
             else:
                 self._call_indexer(entity=entity, delete_existing_doc_first=True)
@@ -1233,14 +1233,14 @@ class Translator(TranslatorInterface):
 
 
     # When indexing, Upload WILL NEVER BE PUBLIC
-    def translate_upload(self, entity_id, reindex=False):
+    def translate_upload(self, entity, reindex=False):
         try:
-            logger.info(f"Start executing translate_upload() for {entity_id}")
+            logger.info(f"Start executing translate_upload() for {entity.get('uuid')}")
 
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
-            upload = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
+            upload = entity
 
             self._add_datasets_to_entity(   entity=upload
                                             , index_group=self.DEFAULT_INDEX_WITHOUT_PREFIX)
@@ -1258,8 +1258,8 @@ class Translator(TranslatorInterface):
         except Exception as e:
             logger.error(e)
 
-    def translate_collection(self, entity_id, reindex=False):
-        logger.info(f"Start executing translate_collection() for {entity_id}")
+    def translate_collection(self, entity, reindex=False):
+        logger.info(f"Start executing translate_collection() for {entity.get('uuid')}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
@@ -1267,8 +1267,7 @@ class Translator(TranslatorInterface):
         # Here we do NOT send over the token
         try:
             for index_group in self.indices.keys():
-                collection = self.get_collection_doc(entity_id=entity_id)
-
+                collection = entity
                 self._add_datasets_to_entity(   entity=collection
                                                 , index_group=index_group)
                 self._entity_keys_rename(collection)
@@ -1521,13 +1520,8 @@ class Translator(TranslatorInterface):
         try:
             reindex_info = None
             if entity['entity_type'] not in ['Collection', 'Epicollection', 'Upload']:
-                url = f"{self.entity_api_url}/entities/{entity['uuid']}/reindex-info?entity_type={entity['entity_type']}"
-                response = requests.get(url, headers=self.request_headers, verify=False)
-                if response.status_code == 200:
-                    reindex_info = response.json()
-                else:
-                    logger.warning(f"Failed to fetch reindex-info for {entity['uuid']}, falling back to legacy path")
-
+                reindex_info = self._fetch_reindex_info(entity['uuid'])
+                
             for index_group in self.indices.keys():
                 self._transform_and_write_entity_to_index_group(entity=entity
                                                             , index_group=index_group
@@ -1539,6 +1533,25 @@ class Translator(TranslatorInterface):
                 f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             logger.exception(msg)
 
+    
+    def _fetch_reindex_info(self, entity_uuid):
+        url = f"{self.entity_api_url}/entities/{entity_uuid}/reindex-info?"
+        response = requests.get(url, headers=self.request_headers, verify=False)
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 303:
+            s3_url = response.text
+            logger.info(f"reindex-info for {entity_uuid} redirected to S3: {s3_url}")
+            s3_response = requests.get(s3_url, verify=False)
+            if s3_response.status_code == 200:
+                return s3_response.json()
+            else:
+                logger.error(f"Failed to fetch reindex-info from S3 for {entity_uuid}: {s3_response.status_code}")
+                return None
+        else:
+            logger.warning(f"Failed to fetch reindex-info for {entity_uuid}, falling back to legacy path")
+            return None
+    
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
@@ -1572,53 +1585,56 @@ class Translator(TranslatorInterface):
         logger.info("Finished executing exclude_added_calculated_fields()")
 
     # Used for Upload and Collection index
-    def _add_datasets_to_entity(self, entity:dict, index_group:str):
+    def _add_datasets_to_entity(self, entity: dict, index_group: str):
         logger.info("Start executing _add_datasets_to_entity()")
-
         datasets = []
         if 'datasets' in entity:
-            for dataset in entity['datasets']:
-                # Retrieve the entity details
+            batch_docs = None
+            try:
+                url = f"{self.entity_api_url}/entities/{entity['uuid']}/dataset-documents"
+                response = requests.get(url, headers=self.request_headers, verify=False)
+                if response.status_code == 200:
+                    batch_docs = response.json()
+                elif response.status_code == 303:
+                    s3_url = response.text
+                    logger.info(f"dataset-documents for {entity['uuid']} redirected to S3: {s3_url}")
+                    s3_response = requests.get(s3_url, verify=False)
+                    if s3_response.status_code == 200:
+                        batch_docs = s3_response.json()
+                    else:
+                        logger.error(f"Failed to fetch dataset-documents from S3: {s3_response.status_code}")
+                else:
+                    logger.error(f"Failed to fetch dataset-documents for {entity['uuid']}: {response.status_code}, falling back to individual calls")
+            except Exception as e:
+                logger.error(f"Exception fetching dataset-documents for {entity['uuid']}: {e}, falling back to individual calls")
+
+            for dataset_stub in entity['datasets']:
                 try:
-                    dataset = self.call_entity_api(dataset['uuid'], 'documents')
-                    # Remove large fields that cause poor performance and are not used, both for current
-                    # implementation and ingest_metadata reorganization is coordinated for Production release,
-                    # will also remove 'files' here, and delete the call to exclude_added_top_level_properties() below.
+                    if batch_docs and dataset_stub['uuid'] in batch_docs:
+                        dataset = batch_docs[dataset_stub['uuid']]
+                    else:
+                        dataset = self.call_entity_api(dataset_stub['uuid'], 'documents')
                     for large_field_name in NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS:
                         if large_field_name in dataset:
                             dataset.pop(large_field_name)
                 except Exception as e:
                     logger.exception(e)
-                    logger.error(   f"Failed to retrieve dataset {dataset['uuid']}"
-                                    f" via entity-api while executing"
-                                    f" _add_datasets_to_entity(). Skip and continue to next one")
-                    
-                    # This can happen when the dataset is in neo4j but the actual uuid is not found in MySQL
-                    # or something else is wrong with entity-api and it can't return the dataset info
-                    # In this case, we'll skip over the current iteration, and continue with the next one
-                    # Otherwise, null will be added to the resulting datasets list and break portal-ui rendering - 5/3/2023 Zhou
+                    logger.error(f"Failed to retrieve dataset {dataset_stub['uuid']}"
+                                f" via entity-api while executing"
+                                f" _add_datasets_to_entity(). Skip and continue to next one")
                     continue
-                
                 try:
-                    dataset_doc = self._generate_doc(   entity=dataset
-                                                        , return_type='dict'
-                                                        , index_group=index_group)
+                    self._entity_keys_rename(dataset)
+                    remove_specific_key_entry(dataset, "other_metadata")
+                    self.add_calculated_fields(dataset)
                 except Exception as e:
                     logger.exception(e)
-                    logger.error(   f"Failed to execute _generate_doc() on dataset {dataset['uuid']}"
-                                    f" while executing _add_datasets_to_entity()."
-                                    f" Skip and continue to next one")
-
-                    # This can happen when the dataset itself is good but something failed to generate the doc
-                    # E.g., one of the descendants of this dataset exists in neo4j but no record in uuid MySQL
-                    # In this case, we'll skip over the current iteration, and continue with the next one
-                    # Otherwise, no document is generated, null will be added to the resuting datasets list and break portal-ui rendering - 5/3/2023 Zhou
+                    logger.error(f"Failed to process dataset {dataset_stub['uuid']}"
+                                f" while executing _add_datasets_to_entity()."
+                                f" Skip and continue to next one")
                     continue
-                self.exclude_added_top_level_properties(dataset_doc)
-                datasets.append(dataset_doc)
-
+                datasets.append(dataset)
         entity['datasets'] = datasets
-
         logger.info("Finished executing _add_datasets_to_entity()")
 
     # Modify any key names specified to change on the entity
