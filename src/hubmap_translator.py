@@ -724,7 +724,7 @@ class Translator(TranslatorInterface):
                         collection_associations.append(dataset_id)
                 if 'associated_publication' in collection and collection['associated_publication']:
                     logger.info(f"Enqueueing associated_publication for {entity['entity_type']} {entity_id}")
-                    collection_associations.append(collection['associated_publication'])
+                    collection_associations.append(collection['associated_publication'].get('uuid'))
             
             elif entity['entity_type'] == 'Upload':
                 if 'datasets' in entity:
