@@ -1303,11 +1303,11 @@ class Translator(TranslatorInterface):
                                                      , es_index=private_index
                                                      , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_collection() for {entity_id}")
+            logger.info(f"Finished executing translate_collection() for {entity.get('uuid')}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
-            logger.error(f"translate_collection() failed to get collection of uuid: {entity_id} via entity-api")
+            logger.error(f"translate_collection() failed to get collection of uuid: {entity.get('uuid')} via entity-api")
         except Exception as e:
             logger.error(e)
 
@@ -1764,6 +1764,7 @@ class Translator(TranslatorInterface):
                     immediate_ancestor_ids = [e['uuid'] for e in immediate_ancestors_full]
                     immediate_descendant_ids = [e['uuid'] for e in immediate_descendants_full]
                     donor = copy.deepcopy(reindex_info['donor']) if reindex_info.get('donor') else None
+                    donors = copy.deepcopy(reindex_info['donors']) if reindex_info.get('donors') else None
                     origin_samples = reindex_info.get('origin_samples', [])
                     source_samples = reindex_info.get('source_samples', [])
                 else:
@@ -1849,12 +1850,13 @@ class Translator(TranslatorInterface):
                     self.exclude_added_calculated_fields(origin_sample)
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     entity['source_samples'] = source_samples
+                    entity['donors'] = donors
 
             entity['ancestors'] = filter_fields(ancestors) if reindex_info is not None else \
                                 self._relatives_for_index_group(relative_ids=ancestor_ids, index_group=index_group)
 
             self._entity_keys_rename(entity)
-            for field in ['donor', 'origin_samples', 'source_samples', 'ancestors',
+            for field in ['donor', 'donors', 'origin_samples', 'source_samples', 'ancestors',
                         'descendants', 'immediate_descendants', 'immediate_ancestors']:
                 items = entity.get(field)
                 if items is None:
