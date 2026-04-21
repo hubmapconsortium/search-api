@@ -1303,11 +1303,11 @@ class Translator(TranslatorInterface):
                                                      , es_index=private_index
                                                      , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_collection() for {entity_id}")
+            logger.info(f"Finished executing translate_collection() for {entity.get('uuid')}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
-            logger.error(f"translate_collection() failed to get collection of uuid: {entity_id} via entity-api")
+            logger.error(f"translate_collection() failed to get collection of uuid: {entity.get('uuid')} via entity-api")
         except Exception as e:
             logger.error(e)
 
