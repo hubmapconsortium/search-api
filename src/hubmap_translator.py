@@ -1263,7 +1263,7 @@ class Translator(TranslatorInterface):
             logger.error(e)
 
     def translate_collection(self, entity, reindex=False):
-        if isinstance(entity, str)
+        if isinstance(entity, str):
             # This is a legacy version which passes in a uuid for an entity rather than the 
             # entity itself. This is most often used by a full reindex
             entity = self.call_entity_api(entity_id=entity, endpoint_base='documents')
@@ -1311,11 +1311,11 @@ class Translator(TranslatorInterface):
                                                      , es_index=private_index
                                                      , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_collection() for {entity_id}")
+            logger.info(f"Finished executing translate_collection() for {entity.get('uuid')}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
-            logger.error(f"translate_collection() failed to get collection of uuid: {entity_id} via entity-api")
+            logger.error(f"translate_collection() failed to get collection of uuid: {entity.get('uuid')} via entity-api")
         except Exception as e:
             logger.error(e)
 
