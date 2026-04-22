@@ -724,7 +724,7 @@ class Translator(TranslatorInterface):
                         collection_associations.append(dataset_id)
                 if 'associated_publication' in collection and collection['associated_publication']:
                     logger.info(f"Enqueueing associated_publication for {entity['entity_type']} {entity_id}")
-                    collection_associations.append(collection['associated_publication'])
+                    collection_associations.append(collection['associated_publication'].get('uuid'))
             
             elif entity['entity_type'] == 'Upload':
                 if 'datasets' in entity:
@@ -1772,6 +1772,7 @@ class Translator(TranslatorInterface):
                     immediate_ancestor_ids = [e['uuid'] for e in immediate_ancestors_full]
                     immediate_descendant_ids = [e['uuid'] for e in immediate_descendants_full]
                     donor = copy.deepcopy(reindex_info['donor']) if reindex_info.get('donor') else None
+                    donors = copy.deepcopy(reindex_info['donors']) if reindex_info.get('donors') else None
                     origin_samples = reindex_info.get('origin_samples', [])
                     source_samples = reindex_info.get('source_samples', [])
                 else:
@@ -1857,12 +1858,13 @@ class Translator(TranslatorInterface):
                     self.exclude_added_calculated_fields(origin_sample)
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     entity['source_samples'] = source_samples
+                    entity['donors'] = donors
 
             entity['ancestors'] = filter_fields(ancestors) if reindex_info is not None else \
                                 self._relatives_for_index_group(relative_ids=ancestor_ids, index_group=index_group)
 
             self._entity_keys_rename(entity)
-            for field in ['donor', 'origin_samples', 'source_samples', 'ancestors',
+            for field in ['donor', 'donors', 'origin_samples', 'source_samples', 'ancestors',
                         'descendants', 'immediate_descendants', 'immediate_ancestors']:
                 items = entity.get(field)
                 if items is None:
