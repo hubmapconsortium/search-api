@@ -1234,6 +1234,10 @@ class Translator(TranslatorInterface):
 
     # When indexing, Upload WILL NEVER BE PUBLIC
     def translate_upload(self, entity, reindex=False):
+        if isinstance(entity, str):
+            # This is a legacy version which passes in a uuid for an entity rather than the 
+            # entity itself. This is most often used by a full reindex
+            entity = self.call_entity_api(entity_id=entity, endpoint_base='documents')
         try:
             logger.info(f"Start executing translate_upload() for {entity.get('uuid')}")
 
@@ -1254,11 +1258,15 @@ class Translator(TranslatorInterface):
                                                     , es_index=default_private_index
                                                     , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_upload() for {entity_id}")
+            logger.info(f"Finished executing translate_upload() for {entity.get('uuid')}")
         except Exception as e:
             logger.error(e)
 
     def translate_collection(self, entity, reindex=False):
+        if isinstance(entity, str):
+            # This is a legacy version which passes in a uuid for an entity rather than the 
+            # entity itself. This is most often used by a full reindex
+            entity = self.call_entity_api(entity_id=entity, endpoint_base='documents')
         logger.info(f"Start executing translate_collection() for {entity.get('uuid')}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
