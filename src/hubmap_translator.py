@@ -631,21 +631,15 @@ class Translator(TranslatorInterface):
 
         logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
-
-    def _transform_and_write_entity_to_index_group(self, entity: dict, index_group: str, reindex_info: dict = None):
+    def _transform_and_write_entity_to_index_group(self, entity: dict, index_group: str):
         logger.info(f"Start executing direct '{index_group}' updates for"
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
 
         try:
-            # The entity dictionary will be changed by the document generation methods, and
-            # _generate_public_doc() needs _generate_doc() to make changes first. So make
-            # a copy of the entity for these methods, leaving the original argument intact
+
             doc_entity=copy.deepcopy(entity)
-            private_doc = self._generate_doc(entity=doc_entity
-                                             , return_type='json'
-                                            , index_group=index_group
-                                            , reindex_info=reindex_info)
+            private_doc = self._generate_doc(entity=doc_entity, return_type='json', index_group=index_group)
             if self.is_public(entity):
                 public_doc = self._generate_public_doc(entity=doc_entity
                                                    , index_group=index_group)
@@ -1525,15 +1519,9 @@ class Translator(TranslatorInterface):
     # ingest_metadata.metadata sub fields with empty string values from previous call
     def _call_indexer(self, entity, delete_existing_doc_first=False):
         logger.info(f"Start executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
-        try:
-            reindex_info = None
-            if entity['entity_type'] not in ['Collection', 'Epicollection', 'Upload']:
-                reindex_info = self._fetch_reindex_info(entity['uuid'])
-                
+        try:            
             for index_group in self.indices.keys():
-                self._transform_and_write_entity_to_index_group(entity=entity
-                                                            , index_group=index_group
-                                                            , reindex_info=reindex_info)
+                self._transform_and_write_entity_to_index_group(entity=entity, index_group=index_group)
             logger.info(f"Finished executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
         except Exception as e:
             msg = f"Encountered exception e={str(e)}" \
@@ -1541,24 +1529,7 @@ class Translator(TranslatorInterface):
                 f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             logger.exception(msg)
 
-    
-    def _fetch_reindex_info(self, entity_uuid):
-        url = f"{self.entity_api_url}/entities/{entity_uuid}/reindex-info?"
-        response = requests.get(url, headers=self.request_headers, verify=False)
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 303:
-            s3_url = response.text
-            logger.info(f"reindex-info for {entity_uuid} redirected to S3: {s3_url}")
-            s3_response = requests.get(s3_url, verify=False)
-            if s3_response.status_code == 200:
-                return s3_response.json()
-            else:
-                logger.error(f"Failed to fetch reindex-info from S3 for {entity_uuid}: {s3_response.status_code}")
-                return None
-        else:
-            logger.warning(f"Failed to fetch reindex-info for {entity_uuid}, falling back to legacy path")
-            return None
+
     
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
@@ -1757,16 +1728,16 @@ class Translator(TranslatorInterface):
             entity_id = entity['uuid']
             included_fields = ','.join(INDEX_GROUP_ENTITIES_DOC_FIELDS.keys())
             if entity['entity_type'] != 'Upload':
-                ancestors = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='ancestor-info')
+                ancestors = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='ancestors-info')
                 ancestor_ids = [a['uuid'] for a in ancestors]
 
-                descendants = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='descendant-info')
+                descendants = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='descendants-info')
                 descendant_ids = [d['uuid'] for d in descendants]
 
-                immediate_ancestors = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='parent-info')
+                immediate_ancestors = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='parents-info')
                 immediate_ancestor_ids = [a['uuid'] for a in immediate_ancestors]
 
-                immediate_descendants = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='child-info')
+                immediate_descendants = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='children-info')
                 immediate_descendant_ids = [d['uuid'] for d in immediate_descendants]
 
                 entity['ancestor_ids'] = ancestor_ids
@@ -1781,12 +1752,15 @@ class Translator(TranslatorInterface):
                     entity['immediate_descendants'] = immediate_descendants
 
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
-                entity['donors'] = []
-                for ancestor in ancestors:
-                        if ('entity_type' in ancestor) and (ancestor['entity_type'].lower() == 'donor'):
-                            entity['donors'].append(ancestor)
-                if entity['donors']:
-                    entity['donor'] = entity['donors'][0]
+                donors = [a for a in ancestors if a.get('entity_type') == 'Donor']
+                if donors:
+                    for each_donor in donors:
+                        self._entity_keys_rename(each_donor)
+                        self.exclude_added_top_level_properties(each_donor)
+                        self.exclude_added_calculated_fields(each_donor)
+                    entity['donor'] = donors[0]
+                    entity['donors'] = donors
+
                 entity['origin_samples'] = []
                 if ('sample_category' in entity) and (entity['sample_category'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
                     entity['origin_samples'].append(copy.deepcopy(entity))
@@ -1795,14 +1769,14 @@ class Translator(TranslatorInterface):
                         if ('sample_category' in ancestor) and (ancestor['sample_category'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
                             entity['origin_samples'].append(ancestor)
 
-                # Remove those added fields specified in `entity_properties_list` from origin_samples
+
                 self.exclude_added_top_level_properties(entity['origin_samples'])
                 for origin_sample in entity['origin_samples']:
                     self.exclude_added_calculated_fields(origin_sample)
-
+                    self._entity_keys_rename(origin_sample)
 
                 if entity['entity_type'] in ['Dataset', 'Publication']:
-                    source_samples = self.call_entity_api(entity_id=entity_id + f"?include={included_fields}", endpoint_base='source-info')
+                    source_samples = self.call_entity_api(entity_id=entity_id, endpoint_base='sources-info')
                     entity['source_samples'] = source_samples if source_samples else []
                     for source_sample in entity['source_samples']:
                         self._entity_keys_rename(source_sample)
