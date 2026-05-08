@@ -632,7 +632,7 @@ class Translator(TranslatorInterface):
         logger.info(f"Finished executing _exec_reindex_entity_to_index_group_by_id()")
 
 
-    def _transform_and_write_entity_to_index_group(self, entity:dict, index_group:str):
+    def _transform_and_write_entity_to_index_group(self, entity: dict, index_group: str, reindex_info: dict = None):
         logger.info(f"Start executing direct '{index_group}' updates for"
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
@@ -642,30 +642,26 @@ class Translator(TranslatorInterface):
             # _generate_public_doc() needs _generate_doc() to make changes first. So make
             # a copy of the entity for these methods, leaving the original argument intact
             doc_entity=copy.deepcopy(entity)
-            private_doc = self._generate_doc(   entity=doc_entity
-                                                , return_type='json'
-                                                , index_group=index_group)
+            private_doc = self._generate_doc(entity=doc_entity
+                                             , return_type='json'
+                                            , index_group=index_group
+                                            , reindex_info=reindex_info)
             if self.is_public(entity):
-                public_doc = self._generate_public_doc( entity=doc_entity
-                                                        , index_group=index_group)
+                public_doc = self._generate_public_doc(entity=doc_entity
+                                                   , index_group=index_group)
             del doc_entity
         except Exception as e:
             msg = f"Exception document generation" \
-                  f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
-                  f" for '{index_group}' reindex caused \'{str(e)}\'"
-            # Log the full stack trace, prepend a line with our message. But continue on
-            # rather than raise the Exception.
+                f" for uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
+                f" for '{index_group}' reindex caused \'{str(e)}\'"
             logger.exception(msg)
-
-        if 'private_doc' not in locals() or  private_doc is None:
-            logger.error(   f"For {entity['entity_type']} {entity['uuid']},"
-                            f" failed to generate document for consortium indices.")
-
+        if 'private_doc' not in locals() or private_doc is None:
+            logger.error(f"For {entity['entity_type']} {entity['uuid']},"
+                        f" failed to generate document for consortium indices.")
         docs_to_write_dict = {
             self.index_group_es_indices[index_group]['private']: None,
             self.index_group_es_indices[index_group]['public']: None
         }
-        # Check to see if the index_group has a transformer, default to None if not found
         transformer = self.TRANSFORMERS.get(index_group, None)
         if transformer is None:
             logger.info(f"Unable to find '{index_group}' transformer, indexing documents untransformed.")
@@ -678,24 +674,23 @@ class Translator(TranslatorInterface):
             docs_to_write_dict[self.index_group_es_indices[index_group]['private']] = json.dumps(private_transformed)
             if 'public_doc' in locals() and public_doc is not None:
                 public_transformed = transformer.transform(json.loads(public_doc),
-                                                           self.transformation_resources)
+                                                        self.transformation_resources)
                 docs_to_write_dict[self.index_group_es_indices[index_group]['public']] = json.dumps(public_transformed)
-
         for index_name in docs_to_write_dict.keys():
             if docs_to_write_dict[index_name] is None:
                 continue
             self.indexer.index(entity_id=entity['uuid']
-                               , document=docs_to_write_dict[index_name]
-                               , index_name=index_name
-                               , reindex=True)
-            logger.info(f"Finished executing indexer.index() during direct '{index_group}' reindexing with" \
-                        f" entity['uuid']={entity['uuid']}," \
-                        f" entity['entity_type']={entity['entity_type']}," \
+                            , document=docs_to_write_dict[index_name]
+                            , index_name=index_name
+                            , reindex=True)
+            logger.info(f"Finished executing indexer.index() during direct '{index_group}' reindexing with"
+                        f" entity['uuid']={entity['uuid']},"
+                        f" entity['entity_type']={entity['entity_type']},"
                         f" index_name={index_name}.")
-
         logger.info(f"Finished direct '{index_group}' updates for"
                     f" entity['uuid']={entity['uuid']},"
                     f" entity['entity_type']={entity['entity_type']}")
+        
 
     def enqueue_reindex(self, entity_id, reindex_queue, priority):
         try:
@@ -729,7 +724,7 @@ class Translator(TranslatorInterface):
                         collection_associations.append(dataset_id)
                 if 'associated_publication' in collection and collection['associated_publication']:
                     logger.info(f"Enqueueing associated_publication for {entity['entity_type']} {entity_id}")
-                    collection_associations.append(collection['associated_publication'])
+                    collection_associations.append(collection['associated_publication'].get('uuid'))
             
             elif entity['entity_type'] == 'Upload':
                 if 'datasets' in entity:
@@ -840,10 +835,10 @@ class Translator(TranslatorInterface):
             logger.info(f"Reindexing {entity['entity_type']} of uuid: {entity_id}")
             
             if entity['entity_type'] in ['Collection', 'Epicollection']:
-                self.translate_collection(entity_id, reindex=True)
+                self.translate_collection(entity, reindex=True)
                 
             elif entity['entity_type'] == 'Upload':
-                self.translate_upload(entity_id, reindex=True)
+                self.translate_upload(entity, reindex=True)
                 
             else:
                 self._call_indexer(entity=entity, delete_existing_doc_first=True)
@@ -1238,14 +1233,18 @@ class Translator(TranslatorInterface):
 
 
     # When indexing, Upload WILL NEVER BE PUBLIC
-    def translate_upload(self, entity_id, reindex=False):
+    def translate_upload(self, entity, reindex=False):
+        if isinstance(entity, str):
+            # This is a legacy version which passes in a uuid for an entity rather than the 
+            # entity itself. This is most often used by a full reindex
+            entity = self.call_entity_api(entity_id=entity, endpoint_base='documents')
         try:
-            logger.info(f"Start executing translate_upload() for {entity_id}")
+            logger.info(f"Start executing translate_upload() for {entity.get('uuid')}")
 
             default_private_index = self.INDICES['indices'][self.DEFAULT_INDEX_WITHOUT_PREFIX]['private']
 
             # Retrieve the upload entity details
-            upload = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
+            upload = entity
 
             self._add_datasets_to_entity(   entity=upload
                                             , index_group=self.DEFAULT_INDEX_WITHOUT_PREFIX)
@@ -1259,12 +1258,16 @@ class Translator(TranslatorInterface):
                                                     , es_index=default_private_index
                                                     , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_upload() for {entity_id}")
+            logger.info(f"Finished executing translate_upload() for {entity.get('uuid')}")
         except Exception as e:
             logger.error(e)
 
-    def translate_collection(self, entity_id, reindex=False):
-        logger.info(f"Start executing translate_collection() for {entity_id}")
+    def translate_collection(self, entity, reindex=False):
+        if isinstance(entity, str):
+            # This is a legacy version which passes in a uuid for an entity rather than the 
+            # entity itself. This is most often used by a full reindex
+            entity = self.call_entity_api(entity_id=entity, endpoint_base='documents')
+        logger.info(f"Start executing translate_collection() for {entity.get('uuid')}")
 
         # The entity-api returns public collection with a list of connected public/published datasets, for either
         # - a valid token but not in HuBMAP-Read group or
@@ -1272,8 +1275,7 @@ class Translator(TranslatorInterface):
         # Here we do NOT send over the token
         try:
             for index_group in self.indices.keys():
-                collection = self.get_collection_doc(entity_id=entity_id)
-
+                collection = entity
                 self._add_datasets_to_entity(   entity=collection
                                                 , index_group=index_group)
                 self._entity_keys_rename(collection)
@@ -1309,11 +1311,11 @@ class Translator(TranslatorInterface):
                                                      , es_index=private_index
                                                      , delete_existing_doc_first=reindex)
 
-            logger.info(f"Finished executing translate_collection() for {entity_id}")
+            logger.info(f"Finished executing translate_collection() for {entity.get('uuid')}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
-            logger.error(f"translate_collection() failed to get collection of uuid: {entity_id} via entity-api")
+            logger.error(f"translate_collection() failed to get collection of uuid: {entity.get('uuid')} via entity-api")
         except Exception as e:
             logger.error(e)
 
@@ -1523,20 +1525,41 @@ class Translator(TranslatorInterface):
     # ingest_metadata.metadata sub fields with empty string values from previous call
     def _call_indexer(self, entity, delete_existing_doc_first=False):
         logger.info(f"Start executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
-
         try:
-            # Generate and write a document for the entity to each index group loaded from the configuration file.
+            reindex_info = None
+            if entity['entity_type'] not in ['Collection', 'Epicollection', 'Upload']:
+                reindex_info = self._fetch_reindex_info(entity['uuid'])
+                
             for index_group in self.indices.keys():
                 self._transform_and_write_entity_to_index_group(entity=entity
-                                                                , index_group=index_group)
+                                                            , index_group=index_group
+                                                            , reindex_info=reindex_info)
             logger.info(f"Finished executing _call_indexer() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
         except Exception as e:
             msg = f"Encountered exception e={str(e)}" \
-                  f" executing _call_indexer() with" \
-                  f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
-            # Log the full stack trace, prepend a line with our message
+                f" executing _call_indexer() with" \
+                f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             logger.exception(msg)
 
+    
+    def _fetch_reindex_info(self, entity_uuid):
+        url = f"{self.entity_api_url}/entities/{entity_uuid}/reindex-info?"
+        response = requests.get(url, headers=self.request_headers, verify=False)
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 303:
+            s3_url = response.text
+            logger.info(f"reindex-info for {entity_uuid} redirected to S3: {s3_url}")
+            s3_response = requests.get(s3_url, verify=False)
+            if s3_response.status_code == 200:
+                return s3_response.json()
+            else:
+                logger.error(f"Failed to fetch reindex-info from S3 for {entity_uuid}: {s3_response.status_code}")
+                return None
+        else:
+            logger.warning(f"Failed to fetch reindex-info for {entity_uuid}, falling back to legacy path")
+            return None
+    
     # The added fields specified in `entity_properties_list` should not be added
     # to themselves as sub fields
     # The `except_properties_list` is a subset of entity_properties_list
@@ -1570,9 +1593,8 @@ class Translator(TranslatorInterface):
         logger.info("Finished executing exclude_added_calculated_fields()")
 
     # Used for Upload and Collection index
-    def _add_datasets_to_entity(self, entity:dict, index_group:str):
+    def _add_datasets_to_entity(self, entity: dict, index_group: str):
         logger.info("Start executing _add_datasets_to_entity()")
-
         datasets = []
         if 'datasets' not in entity:
             entity['datasets'] = datasets
@@ -1775,7 +1797,6 @@ class Translator(TranslatorInterface):
 
                 # Remove those added fields specified in `entity_properties_list` from origin_samples
                 self.exclude_added_top_level_properties(entity['origin_samples'])
-                # Remove calculated fields added to a Sample from 'origin_samples'
                 for origin_sample in entity['origin_samples']:
                     self.exclude_added_calculated_fields(origin_sample)
 
@@ -1817,6 +1838,7 @@ class Translator(TranslatorInterface):
             msg = "Exceptions during executing hubmap_translator._generate_doc()"
             logger.exception(msg)
             raise Exception(e)    
+
 
     def _generate_public_doc(self, entity, index_group:str):
         # N.B. This method assumes the state of the 'entity' argument has been processed by the
@@ -1877,8 +1899,11 @@ class Translator(TranslatorInterface):
 
         logger.info(f"Finished executing _generate_public_doc() for {entity['entity_type']} of uuid: {entity['uuid']}")
 
+        logger.info(f"Finished executing _generate_public_doc() for {entity['entity_type']}"
+                    f" of uuid: {entity['uuid']}"
+                    f" for the {index_group} index group.")
         return json.dumps(entity)
-
+        
     """
     Retrieves fields designated in the provenance schema yaml under 
     excluded_properties_from_public_response and returns the fields in a list
