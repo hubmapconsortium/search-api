@@ -1952,14 +1952,12 @@ class Translator(TranslatorInterface):
                     entity['immediate_descendants'] = immediate_descendants
 
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
-                donors = self.call_entity_api(entity_id=entity_id, endpoint_base='donor')
-                if donors:
-                    for each_donor in donors:
-                        self._entity_keys_rename(each_donor)
-                        self.exclude_added_top_level_properties(each_donor)
-                        self.exclude_added_calculated_fields(each_donor)
-                    entity['donor'] = donors[0]
-                    entity['donors'] = donors
+                entity['donors'] = []
+                for ancestor in ancestors:
+                        if ('entity_type' in ancestor) and (ancestor['entity_type'].lower() == 'donor'):
+                            entity['donors'].append(ancestor)
+                if entity['donors']:
+                    entity['donor'] = entity['donors'][0]
                 entity['origin_samples'] = []
                 if ('sample_category' in entity) and (entity['sample_category'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
                     entity['origin_samples'].append(copy.deepcopy(entity))
