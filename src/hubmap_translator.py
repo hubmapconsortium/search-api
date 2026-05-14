@@ -1752,28 +1752,31 @@ class Translator(TranslatorInterface):
                     entity['immediate_descendants'] = immediate_descendants
 
             if entity['entity_type'] in ['Sample', 'Dataset', 'Publication']:
-                donors = [a for a in ancestors if a.get('entity_type') == 'Donor']
-                if donors:
-                    for each_donor in donors:
-                        self._entity_keys_rename(each_donor)
-                        self.exclude_added_top_level_properties(each_donor)
-                        self.exclude_added_calculated_fields(each_donor)
+                donor_uuids = [a.get('uuid') for a in ancestors if a.get('entity_type') == 'Donor']
+                donors = []
+                if donor_uuids:
+                    for each_donor_uuid in donor_uuids:
+                        donor = self.call_entity_api(entity_id=each_donor_uuid, endpoint_base='documents')
+                        donors.append(donor)
+                    for donor in donors:
+                        self._entity_keys_rename(donor)
                     entity['donor'] = donors[0]
                     entity['donors'] = donors
 
-                entity['origin_samples'] = []
+                origin_samples = []
                 if ('sample_category' in entity) and (entity['sample_category'].lower() == 'organ') and ('organ' in entity) and (entity['organ'].strip() != ''):
-                    entity['origin_samples'].append(copy.deepcopy(entity))
+                    origin_samples.append(copy.deepcopy(entity))
                 else:
                     for ancestor in ancestors:
+                        ancestor_uuid = ancestor.get('uuid')
                         if ('sample_category' in ancestor) and (ancestor['sample_category'].lower() == 'organ') and ('organ' in ancestor) and (ancestor['organ'].strip() != ''):
-                            entity['origin_samples'].append(ancestor)
-
-
-                self.exclude_added_top_level_properties(entity['origin_samples'])
-                for origin_sample in entity['origin_samples']:
-                    self.exclude_added_calculated_fields(origin_sample)
-                    self._entity_keys_rename(origin_sample)
+                            origin = self.call_entity_api(entity_id=ancestor_uuid, endpoint_base='documents')
+                            origin_samples.append(origin)
+                self.exclude_added_top_level_properties(origin_samples)
+                for origin_sample in origin_samples:
+                        self._entity_keys_rename(origin_sample)
+                        self.exclude_added_calculated_fields(origin_sample)
+                entity['origin_samples'] = origin_samples
 
                 if entity['entity_type'] in ['Dataset', 'Publication']:
                     source_samples = self.call_entity_api(entity_id=entity_id, endpoint_base='sources-info')
