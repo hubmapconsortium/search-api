@@ -1575,9 +1575,10 @@ class Translator(TranslatorInterface):
         # One batch call to entity-api for all dataset documents,
         # with triggers stripped and large fields excluded
         batch_docs = None
-        exclude_fields = ','.join(NESTED_EXCLUDED_ES_FIELDS_FOR_COLLECTIONS_AND_UPLOADS)
+        ig_doc_fields = INDEX_GROUP_ENTITIES_DOC_FIELDS
+        included_fields = ','.join(ig_doc_fields.keys())
         try:
-            url = f"{self.entity_api_url}/entities/{entity['uuid']}/dataset-documents/?exclude={exclude_fields}"
+            url = f"{self.entity_api_url}/entities/{entity['uuid']}/dataset-documents?include={included_fields}"
             response = requests.get(url, headers=self.request_headers, verify=False)
             if response.status_code == 200:
                 batch_docs = response.json()
