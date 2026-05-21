@@ -18,6 +18,7 @@ from es_writer import ESWriter
 from indexer import Indexer
 from opensearch_helper_functions import *
 from hubmap_translator import *
+from atlas_consortia_jobq import JobQueue
 
 # Import search-api/scripts resources
 from FillStrategyType import FillStrategyType
@@ -212,6 +213,8 @@ def update_op_data_state(op_data_supplement:dict, file_time_prefix:str, op_data_
 
 def get_translator():
     global a_translator
+    global fresh_indices_queue
+
     global op_data
 
     translator_module = importlib.import_module("hubmap_translator")
@@ -234,7 +237,17 @@ def get_translator():
 
     # Skip the uuids comparision step that is only needed for live /reindex-all PUT call
     a_translator.skip_comparision = True
-
+    try:
+        fresh_indices_queue = JobQueue(
+            redis_host=appcfg.get('REDIS_HOST', 'jobq-redis'),
+            redis_port=int(appcfg.get('REDIS_PORT', 6379)),
+            redis_db=1,
+            redis_password=appcfg.get('REDIS_PASSWORD')
+        )
+        logger.info("Fresh_indices JobQueue initialized on Redis DB 1")
+    except Exception as e:
+        logger.error(f"Failed to initialize fresh_indices JobQueue: {e}")
+        raise
     auth_helper = a_translator.init_auth_helper()
     # The second argument indicates to get the groups information
     user_info_dict = auth_helper.getUserInfo(token, True)
@@ -423,7 +436,6 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
     global a_translator
     global op_data
     global op_data_supplement
-
     start_time = time.time()
 
     logger.info(f"############# Re-indexing entities of recently touched documents via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
@@ -452,8 +464,8 @@ def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
     logger.info(f"The set of UUIDs for entities to re-index is {str(catch_up_uuids)}")
     op_data_supplement['catchup']['touched_entity_ids']=list(catch_up_uuids)
     for catch_up_uuid in catch_up_uuids:
-        logger.debug(f" reindex {catch_up_uuid}")
-        a_translator.reindex_entity(uuid=catch_up_uuid)
+        logger.debug(f"Enqueueing catch-up reindex for {catch_up_uuid}")
+        a_translator.enqueue_reindex(catch_up_uuid, fresh_indices_queue, priority=3, index_override=INDICES)
 
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
@@ -610,6 +622,7 @@ def catch_up_live_index(es_mgr:ESManager)->None:
 
 def create_new_indices():
     global a_translator
+    global fresh_indices_queue
     global op_data_supplement
 
     start_time = time.time()
@@ -626,9 +639,7 @@ def create_new_indices():
             esmanager.create_index_unless_exists(index_name, group_mapping_settings)
 
     logger.info(f"############# Full index via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
-
-    a_translator.translate_full()
-
+    a_translator.translate_full(reindex_queue=fresh_indices_queue, index_override=INDICES)
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
         logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
