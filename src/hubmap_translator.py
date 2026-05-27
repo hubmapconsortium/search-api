@@ -141,13 +141,13 @@ class Translator(TranslatorInterface):
             # Keep a dictionary of each ElasticSearch index in an index group which may be
             # looked up for the re-indexing process.
             self.index_group_es_indices = {
-                'df_entities': {
-                    'public': f"{self.INDICES['indices']['df_entities']['public']}"
-                    , 'private': f"{self.INDICES['indices']['df_entities']['private']}"
+                'entities': {
+                    'public': f"{self.INDICES['indices']['entities']['public']}"
+                    , 'private': f"{self.INDICES['indices']['entities']['private']}"
                 }
-                ,'df_portal': {
-                    'public': f"{self.INDICES['indices']['df_portal']['public']}"
-                    , 'private': f"{self.INDICES['indices']['df_portal']['private']}"
+                ,'portal': {
+                    'public': f"{self.INDICES['indices']['portal']['public']}"
+                    , 'private': f"{self.INDICES['indices']['portal']['private']}"
                 }
             }
 
@@ -911,7 +911,7 @@ class Translator(TranslatorInterface):
 
                 # Reindex the rest of the entities in the list
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    futures_list = [executor.submit(self._exec_reindex_entity_to_index_group_by_id, related_entity_uuid, ['df_entities','df_portal']) for related_entity_uuid in target_ids]
+                    futures_list = [executor.submit(self._exec_reindex_entity_to_index_group_by_id, related_entity_uuid, ['entities','portal']) for related_entity_uuid in target_ids]
                     for f in concurrent.futures.as_completed(futures_list):
                         result = f.result()
                 
@@ -1702,7 +1702,7 @@ class Translator(TranslatorInterface):
             relative_dict = self.call_entity_api(relative_uuid, 'documents')
             # Only retain the elements of each relative needed for the index group
             entity_relative_dict = {}
-            ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'df_portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
+            ig_doc_fields = INDEX_GROUP_PORTAL_DOC_FIELDS if index_group == 'portal' else INDEX_GROUP_ENTITIES_DOC_FIELDS
             for desc_key in ig_doc_fields.keys():
                 if desc_key in relative_dict.keys():
                     entity_relative_dict[desc_key] = relative_dict[desc_key]
