@@ -103,29 +103,29 @@ def verify_initial_state_for_create(es_mgr:ESManager, fill_strategy:FillStrategy
                             , 'file_time_prefix': file_time_prefix}}
 
     index_info_dict = {}
-    index_info_dict[config_indices['indices']['entities']['public']] = {
-        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['entities']['public']}"
+    index_info_dict[config_indices['indices']['df_entities']['public']] = {
+        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['df_entities']['public']}"
         , 'max': {
             'last_modified_timestamp': None
             , 'created_timestamp': None
         }
     }
-    index_info_dict[config_indices['indices']['entities']['private']] = {
-        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['entities']['private']}"
+    index_info_dict[config_indices['indices']['df_entities']['private']] = {
+        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['df_entities']['private']}"
         , 'max': {
             'last_modified_timestamp': None
             , 'created_timestamp': None
         }
     }
-    index_info_dict[config_indices['indices']['portal']['public']] = {
-        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['portal']['public']}"
+    index_info_dict[config_indices['indices']['df_portal']['public']] = {
+        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['df_portal']['public']}"
         , 'max': {
             'last_modified_timestamp': None
             , 'created_timestamp': None
         }
     }
-    index_info_dict[config_indices['indices']['portal']['private']] = {
-        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['portal']['private']}"
+    index_info_dict[config_indices['indices']['df_portal']['private']] = {
+        'destination': f"fill{file_time_prefix}_fresh_index_{config_indices['indices']['df_portal']['private']}"
         , 'max': {
             'last_modified_timestamp': None
             , 'created_timestamp': None
@@ -226,10 +226,10 @@ def get_translator():
     
     # Override the index names loaded from app.cfg which are used for Production by replacing them each with
     # an offline index name which can be filled without interfering with the service until it is ready to be deployed.
-    INDICES['indices']['entities']['public'] = index_info_dict[INDICES['indices']['entities']['public']]['destination']
-    INDICES['indices']['entities']['private'] = index_info_dict[INDICES['indices']['entities']['private']]['destination']
-    INDICES['indices']['portal']['public'] = index_info_dict[INDICES['indices']['portal']['public']]['destination']
-    INDICES['indices']['portal']['private'] = index_info_dict[INDICES['indices']['portal']['private']]['destination']
+    INDICES['indices']['df_entities']['public'] = index_info_dict[INDICES['indices']['df_entities']['public']]['destination']
+    INDICES['indices']['df_entities']['private'] = index_info_dict[INDICES['indices']['df_entities']['private']]['destination']
+    INDICES['indices']['df_portal']['public'] = index_info_dict[INDICES['indices']['df_portal']['public']]['destination']
+    INDICES['indices']['df_portal']['private'] = index_info_dict[INDICES['indices']['df_portal']['private']]['destination']
 
     a_translator = Translator(INDICES, appcfg['APP_CLIENT_ID'], appcfg['APP_CLIENT_SECRET'], token,
                               appcfg['ONTOLOGY_API_BASE_URL'])
@@ -528,10 +528,10 @@ def catch_up_live_index(es_mgr:ESManager)->None:
     # Do not use the global INDICES or a_translator which were set up for the 'create' and
     # old catch_up_new_index() method. Create a translator which will write to the active
     # indices in use by Search API
-    live_indices['indices']['entities']['public'] = orig_indices['indices']['entities']['public']
-    live_indices['indices']['entities']['private'] = orig_indices['indices']['entities']['private']
-    live_indices['indices']['portal']['public'] = orig_indices['indices']['portal']['public']
-    live_indices['indices']['portal']['private'] = orig_indices['indices']['portal']['private']
+    live_indices['indices']['df_entities']['public'] = orig_indices['indices']['df_entities']['public']
+    live_indices['indices']['df_entities']['private'] = orig_indices['indices']['df_entities']['private']
+    live_indices['indices']['df_portal']['public'] = orig_indices['indices']['df_portal']['public']
+    live_indices['indices']['df_portal']['private'] = orig_indices['indices']['df_portal']['private']
 
     live_translator = Translator(live_indices, appcfg['APP_CLIENT_ID'], appcfg['APP_CLIENT_SECRET'], token,
                               appcfg['ONTOLOGY_API_BASE_URL'])
@@ -629,7 +629,7 @@ def create_new_indices():
 
     # Before writing the first document to the new indices, create each of them by using the
     # existing search-api configuration and logic.
-    for index_group_name in ['entities', 'portal']:
+    for index_group_name in ['df_entities', 'df_portal']:
         # mimic a_translator.delete_and_recreate_indices()
         # get the specific mapping file for the designated index
         group_mapping_file = f"../../src/{INDICES['indices'][index_group_name]['elasticsearch']['mappings']}"
