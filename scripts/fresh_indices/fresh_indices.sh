@@ -185,10 +185,10 @@ except Exception:
     raise SystemExit(2)
 
 try:
-    print(y["indices"]["df_entities"]["public"])
-    print(y["indices"]["df_entities"]["private"])
-    print(y["indices"]["df_portal"]["public"])
-    print(y["indices"]["df_portal"]["private"])
+    print(y["indices"]["entities"]["public"])
+    print(y["indices"]["entities"]["private"])
+    print(y["indices"]["portal"]["public"])
+    print(y["indices"]["portal"]["private"])
 except KeyError as ke:
     raise SystemExit(f"Missing key in {sys.argv[1]}: {ke}")
 EOF
