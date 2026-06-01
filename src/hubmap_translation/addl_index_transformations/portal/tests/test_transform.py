@@ -99,6 +99,8 @@ expected_output_doc = {
             ]
         },
     },
+    # Aggregated across all donors; here only the single "donor" (no "donors" list).
+    "donor_demographics": {"sex": ["Male"]},
     "entity_type": "Dataset",
     "files": [
         {

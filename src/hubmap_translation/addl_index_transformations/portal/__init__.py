@@ -15,6 +15,9 @@ from hubmap_translation.addl_index_transformations.portal.translate import (
 from hubmap_translation.addl_index_transformations.portal.add_counts import (
     add_counts
 )
+from hubmap_translation.addl_index_transformations.portal.add_donor_demographics import (
+    add_donor_demographics
+)
 from hubmap_translation.addl_index_transformations.portal.add_partonomy import (
     add_partonomy
 )
@@ -77,6 +80,8 @@ def transform(doc, transformation_resources, batch_id='unspecified'):
         return None
     sort_files(doc_copy)
     add_counts(doc_copy)
+    # Depends on donor mapped_metadata produced by translate().
+    add_donor_demographics(doc_copy)
     add_is_integrated(doc_copy)
     add_partonomy(doc_copy, organ_map)
     reset_entity_type(doc_copy)
