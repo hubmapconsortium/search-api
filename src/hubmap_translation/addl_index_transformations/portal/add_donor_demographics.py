@@ -12,9 +12,14 @@ def add_donor_demographics(doc):
     into a single top-level "donor_demographics" object, so multi-donor entities
     can be accurately filtered and displayed (rather than only reflecting donor #0).
 
-    Each donor already has a "mapped_metadata" dict (produced by translate.py) that
-    follows the convention: numeric fields are "<field>_value"/"<field>_unit" lists,
-    and everything else is a list of categorical values.
+    Each donor already has a "mapped_metadata" dict (produced by
+    translate._donor_metadata_map). There a numeric field is stored as
+    "<field>_value" + "<field>_unit" lists when it has units, but under the bare
+    "<field>" key (a list of numbers) when it does not; categorical fields are stored
+    under the bare "<field>" key as a list of terms. We therefore treat a
+    "<field>_value" key -- or a bare key whose values are all numeric -- as numeric
+    (producing a range-filterable "<field>_value" array plus a min/max/mean "<field>"
+    stats object), and any other bare key as a categorical set.
 
     Categorical fields become a deduplicated, sorted set across all donors:
 
@@ -48,6 +53,22 @@ def add_donor_demographics(doc):
      'age_unit': ['years'],
      'age_value': [30.0, 50.0, 70.0]}
 
+    A numeric field with no units is stored by translate under the bare "<field>"
+    key; it is still normalized into a range-filterable array plus stats:
+
+    >>> doc = {
+    ...     'entity_type': 'Dataset',
+    ...     'donors': [
+    ...         {'mapped_metadata': {'age': [40.0]}},
+    ...         {'mapped_metadata': {'age': [60.0]}},
+    ...     ],
+    ... }
+    >>> add_donor_demographics(doc)
+    >>> doc['donor_demographics']['age_value']
+    [40.0, 60.0]
+    >>> doc['donor_demographics']['age']
+    {'min': 40.0, 'max': 60.0, 'mean': 50.0}
+
     When no "donors" list is present, it falls back to the single "donor":
 
     >>> doc = {'entity_type': 'Dataset', 'donor': {'mapped_metadata': {'sex': ['Male']}}}
@@ -78,20 +99,44 @@ def _aggregate_donor_demographics(donors):
         for key, values in mapped_metadata.items():
             collected[key].extend(values if isinstance(values, list) else [values])
 
-    demographics = {}
+    # Sort the pooled keys into numeric values, units, and categorical sets. A field
+    # may surface as "<field>_value"/"<field>_unit" (had units) or as a bare "<field>"
+    # numeric list (no units), so both must funnel into the numeric bucket.
+    numeric_values = defaultdict(list)
+    units = defaultdict(set)
+    categorical = {}
     for key, values in collected.items():
-        if key.endswith('_value'):
-            numeric = [v for v in values if isinstance(v, (int, float))]
-            if not numeric:
-                continue
-            # Keep the array (range-filterable) and add display stats.
-            demographics[key] = sorted(set(numeric))
-            demographics[key[:-len('_value')]] = {
-                'min': min(numeric),
-                'max': max(numeric),
-                'mean': round(sum(numeric) / len(numeric), 2),
-            }
+        if key.endswith('_unit'):
+            units[key[:-len('_unit')]].update(values)
+        elif key.endswith('_value'):
+            numeric_values[key[:-len('_value')]].extend(_numbers(values))
+        elif _all_numbers(values):
+            numeric_values[key].extend(_numbers(values))
         else:
-            # Units and categorical fields: deduplicated, sorted set.
-            demographics[key] = sorted(set(values))
+            categorical[key] = values
+
+    demographics = {}
+    for field, nums in numeric_values.items():
+        if not nums:
+            continue
+        # Keep the array (range-filterable) and add display stats.
+        demographics[f'{field}_value'] = sorted(set(nums))
+        demographics[field] = {
+            'min': min(nums),
+            'max': max(nums),
+            'mean': round(sum(nums) / len(nums), 2),
+        }
+        if units.get(field):
+            demographics[f'{field}_unit'] = sorted(units[field])
+    for field, values in categorical.items():
+        demographics[field] = sorted(set(values))
     return demographics
+
+
+def _numbers(values):
+    # bool is a subclass of int; exclude it so booleans aren't treated as numeric.
+    return [v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool)]
+
+
+def _all_numbers(values):
+    return bool(values) and len(_numbers(values)) == len(values)

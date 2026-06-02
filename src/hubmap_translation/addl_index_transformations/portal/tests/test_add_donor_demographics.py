@@ -81,19 +81,39 @@ def test_mean_is_rounded():
     assert doc['donor_demographics']['age']['mean'] == 41.33
 
 
-def test_duplicate_numeric_values_are_deduped_in_array_but_counted_in_mean():
+def test_numeric_field_without_units_is_normalized_to_value_array_and_stats():
+    # translate stores a unit-less numeric field under the bare "<field>" key (a float
+    # list), not "<field>_value". It must still become a range-filterable array + stats.
     doc = {
         'entity_type': 'Dataset',
         'donors': [
-            _donor({'age_value': [40.0]}),
-            _donor({'age_value': [40.0]}),
-            _donor({'age_value': [70.0]}),
+            _donor({'age': [40.0]}),
+            _donor({'age': [40.0]}),
+            _donor({'age': [70.0]}),
+        ],
+    }
+    add_donor_demographics(doc)
+    demographics = doc['donor_demographics']
+    # Duplicate values are deduped in the array but still counted in the mean.
+    assert demographics['age_value'] == [40.0, 70.0]
+    assert demographics['age'] == {'min': 40.0, 'max': 70.0, 'mean': 50.0}
+    assert 'age_unit' not in demographics
+
+
+def test_same_field_with_and_without_units_merges():
+    # One donor reports units, another does not -> both values feed one numeric field.
+    doc = {
+        'entity_type': 'Dataset',
+        'donors': [
+            _donor({'age_value': [40.0], 'age_unit': ['years']}),
+            _donor({'age': [70.0]}),
         ],
     }
     add_donor_demographics(doc)
     demographics = doc['donor_demographics']
     assert demographics['age_value'] == [40.0, 70.0]
-    assert demographics['age'] == {'min': 40.0, 'max': 70.0, 'mean': 50.0}
+    assert demographics['age'] == {'min': 40.0, 'max': 70.0, 'mean': 55.0}
+    assert demographics['age_unit'] == ['years']
 
 
 def test_falls_back_to_single_donor_when_no_donors_list():
