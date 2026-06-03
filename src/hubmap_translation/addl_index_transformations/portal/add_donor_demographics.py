@@ -69,9 +69,9 @@ def add_donor_demographics(doc):
     >>> doc['donor_demographics']['age']
     {'min': 40.0, 'max': 60.0, 'mean': 50.0}
 
-    When no "donors" list is present, it falls back to the single "donor":
+    A single-donor entity is simply a "donors" list of length one:
 
-    >>> doc = {'entity_type': 'Dataset', 'donor': {'mapped_metadata': {'sex': ['Male']}}}
+    >>> doc = {'entity_type': 'Dataset', 'donors': [{'mapped_metadata': {'sex': ['Male']}}]}
     >>> add_donor_demographics(doc)
     >>> doc['donor_demographics']
     {'sex': ['Male']}
@@ -85,7 +85,7 @@ def add_donor_demographics(doc):
     '''
     if doc.get('entity_type') not in DEMOGRAPHIC_ENTITY_TYPES:
         return
-    donors = doc.get('donors') or ([doc['donor']] if 'donor' in doc else [])
+    donors = doc.get('donors', [])
     if not donors:
         return
     doc['donor_demographics'] = _aggregate_donor_demographics(donors)

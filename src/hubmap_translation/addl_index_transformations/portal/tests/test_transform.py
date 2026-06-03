@@ -34,6 +34,19 @@ input_doc = {
             ]
         }
     },
+    "donors": [
+        {
+            "metadata": {
+                "organ_donor_data": [
+                    {
+                        "data_type": "Nominal",
+                        "grouping_concept_preferred_term": "Sex",
+                        "preferred_term": "Male",
+                    }
+                ]
+            }
+        }
+    ],
     "files": [
         {
             "description": "OME-TIFF pyramid file",
@@ -99,7 +112,21 @@ expected_output_doc = {
             ]
         },
     },
-    # Aggregated across all donors; here only the single "donor" (no "donors" list).
+    "donors": [
+        {
+            "mapped_metadata": {"sex": ["Male"]},
+            "metadata": {
+                "organ_donor_data": [
+                    {
+                        "data_type": "Nominal",
+                        "grouping_concept_preferred_term": "Sex",
+                        "preferred_term": "Male",
+                    }
+                ]
+            },
+        }
+    ],
+    # Aggregated across every donor in the "donors" list.
     "donor_demographics": {"sex": ["Male"]},
     "entity_type": "Dataset",
     "files": [

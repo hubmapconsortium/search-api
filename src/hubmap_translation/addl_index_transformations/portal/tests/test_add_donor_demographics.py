@@ -116,19 +116,19 @@ def test_same_field_with_and_without_units_merges():
     assert demographics['age_unit'] == ['years']
 
 
-def test_falls_back_to_single_donor_when_no_donors_list():
+def test_single_donor_is_a_donors_list_of_one():
     doc = {
         'entity_type': 'Dataset',
-        'donor': _donor({'sex': ['Male'], 'race': ['White']}),
+        'donors': [_donor({'sex': ['Male'], 'race': ['White']})],
     }
     add_donor_demographics(doc)
     assert doc['donor_demographics'] == {'race': ['White'], 'sex': ['Male']}
 
 
-def test_donors_list_takes_precedence_over_single_donor():
+def test_aggregates_only_from_donors_list_ignoring_single_donor_key():
     doc = {
         'entity_type': 'Dataset',
-        'donor': _donor({'sex': ['Male']}),
+        'donor': _donor({'sex': ['Other']}),  # legacy key must be ignored
         'donors': [
             _donor({'sex': ['Male']}),
             _donor({'sex': ['Female']}),
@@ -149,7 +149,7 @@ def test_applies_to_sample_and_publication():
 
 
 def test_empty_metadata_produces_empty_demographics():
-    doc = {'entity_type': 'Dataset', 'donor': _donor({})}
+    doc = {'entity_type': 'Dataset', 'donors': [_donor({})]}
     add_donor_demographics(doc)
     assert doc['donor_demographics'] == {}
 
@@ -160,7 +160,7 @@ def test_skips_non_demographic_entity_types():
     assert 'donor_demographics' not in doc
 
 
-def test_skips_when_no_donor_present():
-    doc = {'entity_type': 'Dataset'}
-    add_donor_demographics(doc)
-    assert 'donor_demographics' not in doc
+def test_skips_when_donors_list_is_empty_or_absent():
+    for doc in ({'entity_type': 'Dataset'}, {'entity_type': 'Dataset', 'donors': []}):
+        add_donor_demographics(doc)
+        assert 'donor_demographics' not in doc
