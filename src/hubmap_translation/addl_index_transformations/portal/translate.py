@@ -41,6 +41,9 @@ def _map(doc, key, map):
     if 'ancestors' in doc:
         for ancestor in doc['ancestors']:
             _map(ancestor, key, map)
+    if 'donors' in doc:
+        for donor in doc['donors']:
+            _map(donor, key, map)
 
 
 # File description:
