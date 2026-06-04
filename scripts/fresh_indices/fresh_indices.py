@@ -18,6 +18,7 @@ from es_writer import ESWriter
 from indexer import Indexer
 from opensearch_helper_functions import *
 from hubmap_translator import *
+from atlas_consortia_jobq import JobQueue
 
 # Import search-api/scripts resources
 from FillStrategyType import FillStrategyType
@@ -212,6 +213,8 @@ def update_op_data_state(op_data_supplement:dict, file_time_prefix:str, op_data_
 
 def get_translator():
     global a_translator
+    global fresh_indices_queue
+
     global op_data
 
     translator_module = importlib.import_module("hubmap_translator")
@@ -234,7 +237,17 @@ def get_translator():
 
     # Skip the uuids comparision step that is only needed for live /reindex-all PUT call
     a_translator.skip_comparision = True
-
+    try:
+        fresh_indices_queue = JobQueue(
+            redis_host=appcfg.get('REDIS_HOST', 'jobq-redis'),
+            redis_port=int(appcfg.get('REDIS_PORT', 6379)),
+            redis_db=1,
+            redis_password=appcfg.get('REDIS_PASSWORD')
+        )
+        logger.info("Fresh_indices JobQueue initialized on Redis DB 1")
+    except Exception as e:
+        logger.error(f"Failed to initialize fresh_indices JobQueue: {e}")
+        raise
     auth_helper = a_translator.init_auth_helper()
     # The second argument indicates to get the groups information
     user_info_dict = auth_helper.getUserInfo(token, True)
@@ -416,86 +429,6 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
                 f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
                 f" #############")
 
-# Read the op_data file from the last 'create' command.  While the search-api is down, read each document from
-# the source index which was created or updated after the 'create' command started.  Re-index those entities into
-# the destination index, so it becomes an exact match of the source index.
-def catch_up_new_index(es_mgr:ESManager,op_data_key:int)->None:
-    global a_translator
-    global op_data
-    global op_data_supplement
-
-    start_time = time.time()
-
-    logger.info(f"############# Re-indexing entities of recently touched documents via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
-
-    # Go through each index, and identify documents whose timestamps were updated after the
-    # last command e.g. after create or after catch-up.
-    previous_op_data_seq=str(int(op_data_seq)-1)
-    catch_up_uuids=set()
-    for source_index in op_data[previous_op_data_seq]['index_info'].keys():
-        # Fill a list with dictionaries for each known timestamp to be checked in source_index. Dictionary
-        # content should reflect a QDSL query.
-        timestamp_range_json_list=[]
-        for timestamp_field_name in op_data[previous_op_data_seq]['index_info'][source_index][AggQueryType.MAX.value].keys():
-            timestamp_value=op_data[previous_op_data_seq]['index_info'][source_index][AggQueryType.MAX.value][timestamp_field_name]
-            logger.debug(f"For source_index={source_index},"
-                         f" timestamp_field_name={timestamp_field_name},"
-                         f" looking for documents with timestamp_value greater than {timestamp_value}")
-            timestamp_range_json_list.append(f'{{"range": {{"{timestamp_field_name}": {{"gt": {timestamp_value}}}}}}}')
-        # Query documents with timestamps subsequent to the last command.
-        modified_index_uuids=esmanager.get_document_uuids_by_timestamps(index_name=source_index
-                                                                        , timestamp_data_list=timestamp_range_json_list )
-        logger.debug(f"For source_index={source_index} the touched UUIDs list is {modified_index_uuids}")
-        catch_up_uuids |= set(modified_index_uuids)
-        
-    # Re-index each entity timestamped after the last command.
-    logger.info(f"The set of UUIDs for entities to re-index is {str(catch_up_uuids)}")
-    op_data_supplement['catchup']['touched_entity_ids']=list(catch_up_uuids)
-    for catch_up_uuid in catch_up_uuids:
-        logger.debug(f" reindex {catch_up_uuid}")
-        a_translator.reindex_entity(uuid=catch_up_uuid)
-
-    if a_translator.failed_entity_ids:
-        logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
-        logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
-        op_data_supplement['catchup']['translator_failed_entity_ids']=a_translator.failed_entity_ids
-    else:
-        logger.info(f"No failed_entity_ids reported for the translator.")
-        op_data_supplement['catchup']['translator_failed_entity_ids']=[]
-
-    op_data_supplement['catchup']['index_info']={}
-    for source_index in op_data[previous_op_data_seq]['index_info'].keys():
-        op_data_supplement['catchup']['index_info'][source_index]={}
-        # Capture source_index document count for storage with op_data
-        index_doc_count = es_mgr.get_index_document_count(index_name=source_index)
-        logger.debug(f"index {source_index} has {index_doc_count} documents.")
-        op_data_supplement['catchup']['index_info'][source_index]['current_doc_count']=index_doc_count
-        op_data_supplement['catchup']['index_info'][source_index]['max']={'last_modified_timestamp': None
-                                                                          , 'created_timestamp': None}
-
-        # Capture the newest timestamps of this index for storage in op_data
-        for inter_cmd_values_to_capture in ['last_modified_timestamp', 'created_timestamp']:
-            try:
-                op_data_supplement['catchup']['index_info'][source_index][AggQueryType.MAX.value][inter_cmd_values_to_capture] = \
-                    es_mgr.get_document_agg_value(  index_name=source_index
-                                                    , field_name=inter_cmd_values_to_capture
-                                                    , agg_name_enum=AggQueryType.MAX)
-                if op_data_supplement['catchup']['index_info'][source_index][AggQueryType.MAX.value][inter_cmd_values_to_capture] is None:
-                    logger.error(f"For the index {source_index}"
-                                 f" unable to retrieve the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'.")
-            except Exception as e:
-                logger.error(f"For the index {source_index}"
-                             f" retrieving the {AggQueryType.MAX.value} '{inter_cmd_values_to_capture}'"
-                             f" caused '{str(e)}'.")
-
-    end_time = time.time()
-    # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
-    logger.info(f"############# Re-indexing entities of recently touch documents via script complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
-
-    elapsed_seconds = end_time-start_time
-    logger.info(f"############# Re-indexing via script took"
-                f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
-                f" #############")
 
 # Read the op_data file from the last 'create' command.  Read each document from
 # the flush index which was created or updated after the 'create' command started.
@@ -563,8 +496,8 @@ def catch_up_live_index(es_mgr:ESManager)->None:
     logger.info(f"The set of UUIDs for entities to re-index is {str(catch_up_uuids)}")
     op_data_supplement['catchup']['touched_entity_ids']=list(catch_up_uuids)
     for catch_up_uuid in catch_up_uuids:
-        logger.debug(f" reindex {catch_up_uuid}")
-        live_translator.reindex_entity(uuid=catch_up_uuid)
+        logger.debug(f"Enqueueing catch-up reindex for {catch_up_uuid}")
+        live_translator.enqueue_reindex(catch_up_uuid, fresh_indices_queue, priority=3, index_override=live_indices)
 
     if live_translator.failed_entity_ids:
         logger.info(f"{len(live_translator.failed_entity_ids)} entity ids failed")
@@ -610,6 +543,7 @@ def catch_up_live_index(es_mgr:ESManager)->None:
 
 def create_new_indices():
     global a_translator
+    global fresh_indices_queue
     global op_data_supplement
 
     start_time = time.time()
@@ -626,9 +560,7 @@ def create_new_indices():
             esmanager.create_index_unless_exists(index_name, group_mapping_settings)
 
     logger.info(f"############# Full index via script started at {time.strftime('%H:%M:%S',time.localtime(start_time))} #############")
-
-    a_translator.translate_full()
-
+    a_translator.translate_full(reindex_queue=fresh_indices_queue, index_override=INDICES)
     if a_translator.failed_entity_ids:
         logger.info(f"{len(a_translator.failed_entity_ids)} entity ids failed")
         logger.debug("\n".join(map(str, a_translator.failed_entity_ids)))
