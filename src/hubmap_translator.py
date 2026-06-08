@@ -296,7 +296,7 @@ class Translator(TranslatorInterface):
     # Used by full reindex scripts only.
     # Assumes the index named indices are already created and empty.
     # Require Data Admin privileges to execute.
-    def translate_full(self):
+    def translate_full(self, reindex_queue=None, index_override=None):
         auth_helper_instance = self.init_auth_helper()
         if not auth_helper_instance.has_data_admin_privs(self.token):
             raise Exception('Data admin privileges are required to fill specific indices.')
@@ -326,31 +326,20 @@ class Translator(TranslatorInterface):
                 logger.info(    f"Indexing {len(donor_uuids_list)} Donors,"
                                 f" {len(upload_uuids_list)} Uploads,"
                                 f" and {len(collection_uuids_list)} Collections.")
-
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    # The default number of threads in the ThreadPoolExecutor is calculated as:
-                    # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
-                    # Where the number of CPUs is determined by Python and will take hyperthreading into account
-                    logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
-
-                    # Submit tasks to the thread pool
-                    collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid
-                                               in collection_uuids_list]
-                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in
-                                           upload_uuids_list]
-
-                    # Append the above lists into one
-                    futures_list = collection_futures_list + upload_futures_list
-
-                    # The target function runs the task logs more details when f.result() gets executed
-                    for f in concurrent.futures.as_completed(futures_list):
-                        result = f.result()
-
-                # Index the donor tree in a regular for loop, not the concurrent mode
-                # However, the descendants of a given donor will be indexed concurrently
-                for uuid in donor_uuids_list:
-                    self.translate_donor_tree(uuid)
-
+                if reindex_queue is not None:
+                    all_uuids = donor_uuids_list + upload_uuids_list + collection_uuids_list
+                    for uuid in all_uuids:
+                        self.enqueue_reindex(uuid, reindex_queue, priority=1, index_override=index_override)
+                else:
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
+                        collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid in collection_uuids_list]
+                        upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
+                        futures_list = collection_futures_list + upload_futures_list
+                        for f in concurrent.futures.as_completed(futures_list):
+                            result = f.result()
+                    for uuid in donor_uuids_list:
+                        self.translate_donor_tree(uuid)
                 end_time = time.time()
                 logger.info(f"############# Finished executing translate_full() at"
                             f" {time.strftime('%H:%M:%S', time.localtime(end_time))}."
@@ -686,18 +675,21 @@ class Translator(TranslatorInterface):
                     f" entity['entity_type']={entity['entity_type']}")
         
 
-    def enqueue_reindex(self, entity_id, reindex_queue, priority):
+    def enqueue_reindex(self, entity_id, reindex_queue, priority, index_override=None):
         try:
             logger.info(f"Start executing translate() on entity_id: {entity_id}")
             entity = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
             logger.info(f"Enqueueing reindex for {entity['entity_type']} of uuid: {entity_id}")
             subsequent_priority = max(priority, 2)
-
+            kwargs_for_job = {}
+            if index_override:
+                kwargs_for_job['index_override'] = index_override
             reference_id = reindex_queue.enqueue(
                 job_metadata = {"uuid": entity.get('uuid'), "hubmap_id": entity.get('hubmap_id')},
                 task_func=reindex_entity_queued_wrapper,
                 entity_id=entity_id,
                 args=[entity_id, self.token],
+                kwargs=kwargs_for_job,
                 priority=priority
             )
             collection_associations = []
@@ -802,7 +794,7 @@ class Translator(TranslatorInterface):
                 jobs.append({
                     "entity_id": related_entity_id,
                     "args": [related_entity_id, self.token],
-                    "kwargs": {},
+                    "kwargs": {"index_override": index_override} if index_override else {},
                     "metadata": meta,
                 })
             if jobs:
@@ -2105,10 +2097,10 @@ class Translator(TranslatorInterface):
 # This approach is different from the live /reindex-all PUT call
 # It'll delete all the existing indices and recreate then then index everything
 
-  
-def reindex_entity_queued_wrapper(entity_id, token):
+def reindex_entity_queued_wrapper(entity_id, token, index_override=None):
+    indices = index_override if index_override else config['INDICES']
     translator = Translator(
-        indices=config['INDICES'],
+        indices=indices,
         app_client_id=app.config['APP_CLIENT_ID'],
         app_client_secret=app.config['APP_CLIENT_SECRET'],
         token=token,
