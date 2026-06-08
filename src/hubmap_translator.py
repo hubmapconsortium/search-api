@@ -1115,7 +1115,7 @@ class Translator(TranslatorInterface):
         if document['entity_type'] in ['Dataset', 'Publication']:
             # In case 'status' not set
             if 'status' in document:
-                if document['status'].lower() == self.DATASET_STATUS_PUBLISHED:
+                if document['status'].lower() not in [self.DATASET_STATUS_PUBLISHED, 'retracted']:
                     is_public = True
             else:
                 # Log as an error to be fixed in Neo4j
@@ -1840,7 +1840,7 @@ class Translator(TranslatorInterface):
 
             # Check the `next_revision_uuid` and if the dataset is not published,
             # pop the `next_revision_uuid` from this entity
-            if dataset_status != self.DATASET_STATUS_PUBLISHED:
+            if dataset_status not in [self.DATASET_STATUS_PUBLISHED, 'retracted']:
                 logger.debug(f"Remove the {property_key} property from {entity['uuid']}")
                 entity.pop(property_key)
 
