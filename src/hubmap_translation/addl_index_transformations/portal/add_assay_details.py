@@ -231,7 +231,7 @@ def add_assay_details(doc, transformation_resources):
 
             # Filter any unpublished/non-QA descendants and multi-assay splits
             descendants = [descendant for descendant in descendants if [
-                'Published', 'QA', 'Approval'].count(descendant.get('status')) > 0 and descendant.get('creation_action') != CreationAction.MULTI_ASSAY_SPLIT]
+                'Published', 'QA', 'Approval', 'Retracted'].count(descendant.get('status')) > 0 and descendant.get('creation_action') != CreationAction.MULTI_ASSAY_SPLIT]
             # Sort by the descendant's last modified timestamp, descending
             descendants.sort(
                 key=lambda x: x['last_modified_timestamp'],
