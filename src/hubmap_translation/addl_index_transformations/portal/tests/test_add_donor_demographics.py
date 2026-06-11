@@ -116,6 +116,47 @@ def test_same_field_with_and_without_units_merges():
     assert demographics['age_unit'] == ['years']
 
 
+def test_age_in_months_is_converted_to_years():
+    doc = {
+        'entity_type': 'Dataset',
+        'donors': [_donor({'age_value': [30.0], 'age_unit': ['months']})],
+    }
+    add_donor_demographics(doc)
+    demographics = doc['donor_demographics']
+    # 30 months / 12 = 2.5 years; the unit is relabeled.
+    assert demographics['age_value'] == [2.5]
+    assert demographics['age'] == {'min': 2.5, 'max': 2.5, 'mean': 2.5}
+    assert demographics['age_unit'] == ['years']
+
+
+def test_mixed_age_units_are_normalized_to_years_before_aggregating():
+    # One donor in years, one in months, one infant in months -> all comparable in years.
+    doc = {
+        'entity_type': 'Dataset',
+        'donors': [
+            _donor({'age_value': [30.0], 'age_unit': ['years']}),
+            _donor({'age_value': [24.0], 'age_unit': ['months']}),
+            _donor({'age_value': [6.0], 'age_unit': ['months']}),
+        ],
+    }
+    add_donor_demographics(doc)
+    demographics = doc['donor_demographics']
+    # 24 months -> 2.0 years, 6 months -> 0.5 years.
+    assert demographics['age_value'] == [0.5, 2.0, 30.0]
+    assert demographics['age'] == {'min': 0.5, 'max': 30.0, 'mean': round((30 + 2 + 0.5) / 3, 2)}
+    assert demographics['age_unit'] == ['years']
+
+
+def test_age_unit_match_is_case_insensitive():
+    doc = {
+        'entity_type': 'Dataset',
+        'donors': [_donor({'age_value': [12.0], 'age_unit': ['Months']})],
+    }
+    add_donor_demographics(doc)
+    assert doc['donor_demographics']['age_value'] == [1.0]
+    assert doc['donor_demographics']['age_unit'] == ['years']
+
+
 def test_single_donor_is_a_donors_list_of_one():
     doc = {
         'entity_type': 'Dataset',
