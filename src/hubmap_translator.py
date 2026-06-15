@@ -1115,7 +1115,7 @@ class Translator(TranslatorInterface):
         if document['entity_type'] in ['Dataset', 'Publication']:
             # In case 'status' not set
             if 'status' in document:
-                if document['status'].lower() not in [self.DATASET_STATUS_PUBLISHED, 'retracted']:
+                if document['status'].lower() in [self.DATASET_STATUS_PUBLISHED, 'retracted']:
                     is_public = True
             else:
                 # Log as an error to be fixed in Neo4j
