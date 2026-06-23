@@ -793,7 +793,7 @@ class Translator(TranslatorInterface):
                 if response.status_code == 200:
                     associated_metadata = response.json()
                 else:
-                    self.logger.error(f"Failed to fetch batch metadata: {response.status_code}")
+                    logger.error(f"Failed to fetch batch metadata: {response.status_code}")
                     associated_metadata = {}
             except Exception as e:
                 logger.error(f"Unable to retrieve uuid and hubmap_id from entity-api. Proceed with enqueuing but this info will be missing from logging and status. {e}")
