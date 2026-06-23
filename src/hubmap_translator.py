@@ -1,5 +1,6 @@
 import concurrent.futures
 import copy
+import contextvars
 import importlib
 import requests
 import json
@@ -31,7 +32,14 @@ from translator.tranlation_helper_functions import *
 from translator.translator_interface import TranslatorInterface
 
 logger = logging.getLogger(__name__)
+job_context = contextvars.ContextVar('job_context', default='LIVE')
 
+class JobContextFilter(logging.Filter):
+    def filter(self, record):
+        record.msg = f"[{job_context.get()}] {record.msg}"
+        return True
+
+logger.addFilter(JobContextFilter())
 config = {}
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
             instance_relative_config=True)
@@ -329,7 +337,7 @@ class Translator(TranslatorInterface):
                 if reindex_queue is not None:
                     all_uuids = donor_uuids_list + upload_uuids_list + collection_uuids_list
                     for uuid in all_uuids:
-                        self.enqueue_reindex(uuid, reindex_queue, priority=1, index_override=index_override)
+                        self.enqueue_reindex(uuid, reindex_queue, priority=1, index_override=index_override, job_type='FULL')
                 else:
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
@@ -675,13 +683,14 @@ class Translator(TranslatorInterface):
                     f" entity['entity_type']={entity['entity_type']}")
         
 
-    def enqueue_reindex(self, entity_id, reindex_queue, priority, index_override=None):
+    def enqueue_reindex(self, entity_id, reindex_queue, priority, index_override=None, job_type='LIVE'):
+        job_context.set(job_type)
         try:
             logger.info(f"Start executing translate() on entity_id: {entity_id}")
             entity = self.call_entity_api(entity_id=entity_id, endpoint_base='documents')
             logger.info(f"Enqueueing reindex for {entity['entity_type']} of uuid: {entity_id}")
             subsequent_priority = max(priority, 2)
-            kwargs_for_job = {}
+            kwargs_for_job = {'job_type': job_type}
             if index_override:
                 kwargs_for_job['index_override'] = index_override
             reference_id = reindex_queue.enqueue(
@@ -794,7 +803,7 @@ class Translator(TranslatorInterface):
                 jobs.append({
                     "entity_id": related_entity_id,
                     "args": [related_entity_id, self.token],
-                    "kwargs": {"index_override": index_override} if index_override else {},
+                    "kwargs": {"index_override": index_override, "job_type": job_type} if index_override else {"job_type": job_type},
                     "metadata": meta,
                 })
             if jobs:
@@ -2097,7 +2106,8 @@ class Translator(TranslatorInterface):
 # This approach is different from the live /reindex-all PUT call
 # It'll delete all the existing indices and recreate then then index everything
 
-def reindex_entity_queued_wrapper(entity_id, token, index_override=None):
+def reindex_entity_queued_wrapper(entity_id, token, index_override=None, job_type='LIVE'):
+    job_context.set(job_type)
     indices = index_override if index_override else config['INDICES']
     translator = Translator(
         indices=indices,
