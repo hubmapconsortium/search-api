@@ -233,74 +233,6 @@ class Translator(TranslatorInterface):
         logger.log(level=log_level
                     , msg=f"\tTRANSFORMERS={self.TRANSFORMERS}")
 
-    # Used by full reindex via script and live reindex-all call
-    def translate_all(self):
-        with app.app_context():
-            try:
-                logger.info("Start executing translate_all()")
-
-                start = time.time()
-
-                donor_uuids_list = get_uuids_by_entity_type("donor", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                upload_uuids_list = get_uuids_by_entity_type("upload", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                collection_uuids_list = get_uuids_by_entity_type("collection", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-
-                # Only need this comparision for the live /rindex-all PUT call
-                if not self.skip_comparision:
-                    # Make calls to entity-api to get a list of uuids for rest of entity types
-                    sample_uuids_list = get_uuids_by_entity_type("sample", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                    dataset_uuids_list = get_uuids_by_entity_type("dataset", self.request_headers, self.DEFAULT_ENTITY_API_URL)
-                    
-                    # Merge into a big list that with no duplicates
-                    all_entities_uuids = set(donor_uuids_list + sample_uuids_list + dataset_uuids_list + upload_uuids_list + collection_uuids_list)
-
-                    es_uuids = []
-                    index_names = get_all_reindex_enabled_indice_names(self.INDICES)
-
-                    for index in index_names.keys():
-                        all_indices = index_names[index]
-                        # get URL for that index
-                        es_url = self.INDICES['indices'][index]['elasticsearch']['url'].strip('/')
-
-                        for actual_index in all_indices:
-                            es_uuids.extend(get_uuids_from_es(actual_index, es_url))
-
-                    es_uuids = set(es_uuids)
-
-                    # Remove entities found in Elasticsearch but no longer in neo4j
-                    for uuid in es_uuids:
-                        if uuid not in all_entities_uuids:
-                            logger.debug(f"Entity of uuid: {uuid} found in Elasticsearch but no longer in neo4j. Delete it from Elasticsearch.")
-                            self.delete(uuid)
-
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    # The default number of threads in the ThreadPoolExecutor is calculated as: 
-                    # From 3.8 onwards default value is min(32, os.cpu_count() + 4)
-                    # Where the number of CPUs is determined by Python and will take hyperthreading into account
-                    logger.info(f"The number of worker threads being used by default: {executor._max_workers}")
-
-                    # Submit tasks to the thread pool
-                    collection_futures_list = [executor.submit(self.translate_collection, uuid, reindex=True) for uuid in collection_uuids_list]
-                    upload_futures_list = [executor.submit(self.translate_upload, uuid, reindex=True) for uuid in upload_uuids_list]
-
-                    # Append the above lists into one
-                    futures_list = collection_futures_list + upload_futures_list
-
-                    # The target function runs the task logs more details when f.result() gets executed
-                    for f in concurrent.futures.as_completed(futures_list):
-                        result = f.result()
-
-                # Index the donor tree in a regular for loop, not the concurrent mode
-                # However, the descendants of a given donor will be indexed concurrently
-                for uuid in donor_uuids_list:
-                    self.translate_donor_tree(uuid)
-
-                end = time.time()
-
-                logger.info(f"Finished executing translate_all(). Total time used: {end - start} seconds.")
-            except Exception as e:
-                logger.error(e)
-
     # Used by full reindex scripts only.
     # Assumes the index named indices are already created and empty.
     # Require Data Admin privileges to execute.
@@ -1367,13 +1299,13 @@ class Translator(TranslatorInterface):
                 raise YAMLError(ye)
         else:
             msg = f"Unable to retrieve public index field exclusion information"
-            self.logger.error(  f"{msg}."
+            logger.error(  f"{msg}."
                                 f" Got an HTTP {response.status_code}"
                                 f" retrieving {self.indices['entity_api_prov_schema_raw_url']}")
             raise HTTPException(f"{msg}. See logs.")
         if not provenance_schema_dict or 'ENTITIES' not in provenance_schema_dict:
             msg = f"Unable retrieve Entity API's provenance_schema.yaml information"
-            self.logger.error(  f"{msg}."
+            logger.error(  f"{msg}."
                                 f" Not expected content using the translator's"
                                 f" self.indices['entity_api_prov_schema_raw_url']={self.indices['entity_api_prov_schema_raw_url']}.")
             raise Exception(f"{msg}. See logs.")
@@ -1834,8 +1766,12 @@ class Translator(TranslatorInterface):
             # Can't reuse call_entity_api() here due to the response data type
             # Making a call against entity-api/entities/<next_revision_uuid>?property=status
             url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
-            response = requests.get(url, headers=self.request_headers, verify=False)
-            
+            try:
+                response = requests.get(url, headers=self.request_headers, verify=False)
+            except Exception as e:
+                msg = f"_generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
+                logger.error(msg)
+                raise Exception(msg)
             if response.status_code != 200:
                 logger.error(f"_generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}")
 
@@ -1951,9 +1887,19 @@ class Translator(TranslatorInterface):
             url = f"{url}/{endpoint_suffix}"
         if url_property:
             url = f"{url}?property={url_property}"
+        try:
+            response = requests.get(url, headers=self.request_headers, verify=False)
+        except Exception as e: 
+            msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
+            logger.exception(msg)
+            # Add this uuid to the failed list
+            self.failed_entity_api_calls.append(url)
+            self.failed_entity_ids.append(entity_id)
 
-        response = requests.get(url, headers=self.request_headers, verify=False)
-
+            # Bubble up the error message from entity-api instead of sys.exit(msg)
+            # The caller will need to handle this exception
+            raise requests.exceptions.RequestException(msg)
+            
         if response.status_code != 200:
             msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
 
@@ -1986,8 +1932,13 @@ class Translator(TranslatorInterface):
         # - a valid token but not in HuBMAP-Read group or
         # - no token at all
         # Here we do NOT send over the token
-        url = self.entity_api_url + "/documents/" + entity_id
-        response = requests.get(url, headers=self.request_headers, verify=False)
+        try:
+            url = self.entity_api_url + "/documents/" + entity_id
+            response = requests.get(url, headers=self.request_headers, verify=False)
+        except Exception as e:
+            msg = f"get_collection_doc() failed to get entity of uuid {entity_id} via entity-api"
+            logger.error(msg)
+            raise
 
         if response.status_code != 200:
             msg = f"get_collection_doc() failed to get entity of uuid {entity_id} via entity-api"
