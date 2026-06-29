@@ -363,7 +363,7 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
             destination_index=index_info_dict[source_index]['destination']
             flush_index=destination_index.replace('fill','flush')
 
-            # Block writing on the indices, even though services which write to them should probably be down.
+            # Block writing on the indices temporarily during the index swap operation.
             logger.debug(f"Set {IndexBlockType.WRITE.value} block on source_index={source_index}.")
             es_mgr.set_index_block(index_name=source_index
                                    , block_type_enum=IndexBlockType.WRITE)
@@ -430,10 +430,9 @@ def swap_index_names_per_strategy(es_mgr:ESManager, fill_strategy:FillStrategyTy
                 f" #############")
 
 
-# Read the op_data file from the last 'create' command.  Read each document from
-# the flush index which was created or updated after the 'create' command started.
-# Re-index those entities into the new index, even though re-indexing is a more
-# expensive operations, so that the new index has everything the flush index had.
+# Read the op_data file from the last 'create' command. Identify documents in the flush index
+# which were modified after the 'create' command started, and enqueue them for re-indexing
+# into the now-live indices via background workers.
 def catch_up_live_index(es_mgr:ESManager)->None:
     global op_data
     global op_data_supplement
@@ -534,10 +533,9 @@ def catch_up_live_index(es_mgr:ESManager)->None:
 
     end_time = time.time()
     # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
-    logger.info(f"############# Re-indexing entities of recently touch documents via script complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
-
+    logger.info(f"############# Re-indexing entities of recently touched documents enqueuing complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
     elapsed_seconds = end_time-start_time
-    logger.info(f"############# Re-indexing via script took"
+    logger.info(f"############# Re-indexing entity enqueuing took"
                 f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
                 f" #############")
 
@@ -571,10 +569,9 @@ def create_new_indices():
 
     end_time = time.time()
     # KBKBKB @TODO check in with Joe if it is worth it to try determining if threads err'ed and pointing that out here...
-    logger.info(f"############# Full index via script complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
-
+    logger.info(f"############# Full index job enqueuing complete at {time.strftime('%H:%M:%S',time.localtime(end_time))} #############")
     elapsed_seconds = end_time-start_time
-    logger.info(f"############# Full index via script took"
+    logger.info(f"############# Full index job enqueuing took"
                 f" {time.strftime('%H:%M:%S', time.gmtime(elapsed_seconds))}."
                 f" #############")
 
@@ -657,10 +654,8 @@ if __name__ == "__main__":
         create_new_indices()
         print('#############')
         print('Completed create command.')
-        print(f"Next either take down the service and execute the 'catch-up'"
-              f" command, or execute 'catch-up' with the service up, knowing"
-              f" is may need to be executed again if documents are being"
-              f" written to the indices right now.")
+        print(f"All entities have been enqueued for indexing. Wait for workers to finish"
+              f" filling the indices before executing the 'catch-up' command.")
         print('#############')
     elif command == 'catch-up':
         op_data_supplement['catchup']={}
@@ -669,9 +664,8 @@ if __name__ == "__main__":
         catch_up_live_index(es_mgr=esmanager)
         print('#############')
         print('Completed catch-up command.')
-        print(f"Next either take down the service and catch-up again before"
-              f" executing 'go-live', or proceed to execute 'go-live' if"
-              f" no new documents are being written to the indices right now.")
+        print(f"Catch-up entities have been enqueued for indexing via background workers."
+              f" Workers will re-index recently modified entities into the live indices.")
         print('#############')
     elif command == 'go-live':
         op_data_supplement['golive']={}
@@ -681,7 +675,7 @@ if __name__ == "__main__":
         print('#############')
         print('Completed go-live command.')
         print(f"You may want to visually verify all ElasticSearch indices have 'green health' in AWS."
-              f" If services were brought down to execute this command, they can be brought back up.")
+              f" Run 'catch-up' next to re-index any entities modified since the 'create' command started.")
         print('#############')
 
     # If executing the preceding commands generated any extra operational data to be externalized for
