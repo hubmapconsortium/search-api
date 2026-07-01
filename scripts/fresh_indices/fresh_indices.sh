@@ -24,7 +24,7 @@ Help()
    echo "Script to initialize a fresh ElasticSearch index using Neo4j data."
    echo
    echo "A new ElasticSearch index is created using the strategy specified in the fresh_index.ini file."
-   echo "The new index is created and mostly filled without taking the search-api offline. During"
+   echo "The new index is created and filled without taking the search-api offline. During"
    echo "this time, the new index has a temporary name, and the existing index continues supporting"
    echo "Production."
    echo
@@ -32,27 +32,29 @@ Help()
    echo "documents in the ElasticSearch index with every document. This index is configured in"
    echo "search-config.yaml as 'entities'->default_index->'private' i.e. typically hm_*_consortium_entities."
    echo
-   echo "After the new index is filled, the search-api service must be taken offline.  Then, any documents"
-   echo "modified after the captured timestamps are 're-indexed' in the new index. After those documents"
-   echo "are refreshed to reflect activity that happened after the timestamps were captured, the existing"
-   echo "index is renamed and can be manually deleted.  The new index is renamed to support Production."
+   echo "The 'create' command enqueues all indexing jobs to background workers via a Redis job queue."
+   echo "The script returns once enqueuing is complete; workers fill the new index in the background."
+   echo "Monitor the reindex-status endpoint to determine when workers have finished."
+   echo
+   echo "Once workers have finished, run 'go-live' to swap the new index into production."
+   echo "Then run 'catch-up' to re-enqueue any entities that were modified during the fill period."
+   echo "Workers will process the catch-up jobs against the now-live indices. The search-api"
+   echo "does not need to be taken offline at any point in this workflow."
    echo
    echo "When the index renaming activity is compete, this script will wait for the ElasticSearch index health to"
    echo "become green.  After that, the search-api can be returned to service, and will use the fresh index."
    echo
    echo "Syntax: $0 [-option] [command]"
    echo "[command]"
-   echo "create - Create a new ElasticSearch index with a temporary name, filled with documents indexed from Neo4j data."
-   echo "catch-up - While search-api is down"
-   echo "            * re-index documents which were modified after the create started,"
-   echo "            * rename the old index so it can be deleted,"
-   echo "            * rename the new index for use by Production,"
-   echo "            * and wait for the new index to have green health."
-   echo "go-live - Swap indices around so the results of 'create' and 'catch-up' commands becomes the indices used by the Search API."
+   echo "create - Create new ElasticSearch indices with temporary names, and enqueue all indexing jobs"
+   echo "          to background workers. Returns when enqueuing is complete; workers fill indices in background."
+   echo "go-live - Swap the filled temporary indices into production once workers have finished filling them."
    echo "            * Names of current and new indices are taken from the newest exec_info/op_data*.json file."
    echo "            * The current indices will be renamed with a 'flush' prefix."
    echo "            * The new indices will taken on the name expected by Search API."
    echo "            * The script will wait for 'green health' on each renamed index."
+   echo "catch-up - After go-live, identify any entities modified since the 'create' command started"
+   echo "            and enqueue them for re-indexing against the now-live indices via background workers."
    echo
    echo "[-option]"
    echo "-h Display this help"
@@ -248,7 +250,7 @@ if [[ "$cmd" == "create" ]]; then
     echo -e "\t$index "
   done
 elif [[ "$cmd" == "catch-up" ]]; then
-  echo "Using op_data from the most current $arg_output_dir/op_data*.json file to re-index any entities touch since the 'create' command."
+  echo "Using op_data from the most current $arg_output_dir/op_data*.json file to enqueue re-indexing of any entities modified since the 'create' command."
 elif [[ "$cmd" == "go-live" ]]; then
   echo "Using op_data from the most current $arg_output_dir/op_data*.json file, swapping index names so Search API can use new indices, "
 else
