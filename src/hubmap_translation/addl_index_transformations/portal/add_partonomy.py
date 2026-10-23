@@ -5,6 +5,7 @@ from pathlib import Path
 from json import loads, dumps
 
 from hubmap_translation.addl_index_transformations.portal.translate import TranslationException
+from hubmap_translation.addl_index_transformations.portal.utils import REQUEST_TIMEOUT
 
 
 def _get_organ_iri(doc, organ_map):
@@ -153,7 +154,9 @@ def _build_tree_index():
     partonomy_path = parent_path / f'cache/partonomy-{version}.jsonld'
     if not partonomy_path.exists():
         partonomy_url = f'https://cdn.jsdelivr.net/gh/hubmapconsortium/hubmap-ontology@{version}/ccf-partonomy.jsonld'
-        partonomy_path.write_text(requests.get(partonomy_url).text)
+        response = requests.get(partonomy_url, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
+        partonomy_path.write_text(response.text)
 
     partonomy_ld = loads(partonomy_path.read_text())
     simplified = {

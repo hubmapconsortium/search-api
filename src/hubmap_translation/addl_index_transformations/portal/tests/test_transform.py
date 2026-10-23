@@ -223,7 +223,7 @@ def mock_response(response_to_mock, status_code=200, text="Logger call requires 
     return MockResponse()
 
 
-def mock_soft_assay(uuid=None, headers=None):
+def mock_soft_assay(uuid=None, headers=None, timeout=None):
     return mock_response(
         {
             "assaytype": "salmon_rnaseq_10x",
