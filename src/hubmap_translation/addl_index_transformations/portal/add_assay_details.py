@@ -6,7 +6,8 @@ from enum import Enum
 from portal_visualization.builder_factory import has_visualization
 
 from hubmap_translation.addl_index_transformations.portal.utils import (
-    _log_transformation_error
+    _log_transformation_error,
+    REQUEST_TIMEOUT
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,8 @@ def _get_assay_details(doc, transformation_resources):
 
     try:
         response = requests.get(
-            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'},
+            timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         json = response.json()
         if not json:
@@ -53,7 +55,8 @@ def _get_assay_details_by_uuid(uuid, transformation_resources):
     token = transformation_resources.get('token')
     try:
         response = requests.get(
-            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+            f'{soft_assay_url}/{uuid}', headers={'Authorization': f'Bearer {token}'},
+            timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         json = response.json()
         return json
@@ -120,7 +123,8 @@ def _get_descendants(doc, transformation_resources):
 
     try:
         response = requests.get(
-            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+            f'{descendants_url}/{uuid}', headers={'Authorization': f'Bearer {token}'},
+            timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -136,7 +140,8 @@ def _get_parents(doc, transformation_resources):
 
     try:
         response = requests.get(
-            f'{parents_url}/{uuid}', headers={'Authorization': f'Bearer {token}'})
+            f'{parents_url}/{uuid}', headers={'Authorization': f'Bearer {token}'},
+            timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:

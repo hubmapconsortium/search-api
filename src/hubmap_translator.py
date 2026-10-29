@@ -1,6 +1,7 @@
 import concurrent.futures
 import copy
 import contextvars
+import functools
 import importlib
 import requests
 import json
@@ -40,6 +41,20 @@ class JobContextFilter(logging.Filter):
         return True
 
 logger.addFilter(JobContextFilter())
+
+# (connect, read) timeout in seconds for every call to another service. The read timeout is the
+# longest wait between bytes, not for the whole response.
+REQUEST_TIMEOUT = (10, 120)
+
+# A Translator is built for every request and every reindex job. Fetch content that does not change while
+# the process runs (the provenance schema, the organ types) once per process. Failures are not cached.
+# Restart search-api to pick up a changed provenance schema or organ list.
+@functools.lru_cache(maxsize=None)
+def _get_text_once_per_process(url):
+    response = requests.get(url=url, verify=False, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
+    return response.text
+
 config = {}
 app = Flask(__name__, instance_path=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance'),
             instance_relative_config=True)
@@ -602,10 +617,9 @@ class Translator(TranslatorInterface):
         for index_name in docs_to_write_dict.keys():
             if docs_to_write_dict[index_name] is None:
                 continue
-            self.indexer.index(entity_id=entity['uuid']
-                            , document=docs_to_write_dict[index_name]
-                            , index_name=index_name
-                            , reindex=True)
+            self._index_doc_directly_to_es_index(entity=entity
+                                                 , document=docs_to_write_dict[index_name]
+                                                 , es_index=index_name)
             logger.info(f"Finished executing indexer.index() during direct '{index_group}' reindexing with"
                         f" entity['uuid']={entity['uuid']},"
                         f" entity['entity_type']={entity['entity_type']},"
@@ -721,7 +735,7 @@ class Translator(TranslatorInterface):
             url = f"{self.entity_api_url}/entities/batch-ids"
             associated_metadata = {}
             try:
-                response = requests.post(url, headers=self.request_headers, json=list(target_ids))
+                response = requests.post(url, headers=self.request_headers, json=list(target_ids), timeout=REQUEST_TIMEOUT)
                 if response.status_code == 200:
                     associated_metadata = response.json()
                 else:
@@ -1000,14 +1014,9 @@ class Translator(TranslatorInterface):
                 response += self.indexer.index(entity_id, json.dumps(document), target_index, True)
                 response += '. '
         else:
-            for index in self.indices.keys():
-                public_index = self.INDICES['indices'][index]['public']
-                private_index = self.INDICES['indices'][index]['private']
-
-                if self.is_public(document):
-                    response = self.indexer.index(entity_id, json.dumps(document), public_index, True)
-
-                response += self.indexer.index(entity_id, json.dumps(document), private_index, True)
+            # Documents for the other indices are generated from entity-api by the reindex calls. Never
+            # write a document from the request body to them, because the route does not validate the token.
+            raise ValueError(f"Documents can only be written directly to the 'files' index, not index '{index}'.")
         return response
 
     def add(self, entity_id, document, index=None, scope=None):
@@ -1028,14 +1037,9 @@ class Translator(TranslatorInterface):
                 response += self.indexer.index(entity_id, json.dumps(document), target_index, False)
                 response += '. '
         else:
-            for index in self.indices.keys():
-                public_index = self.INDICES['indices'][index]['public']
-                private_index = self.INDICES['indices'][index]['private']
-
-                if self.is_public(document):
-                    response = self.indexer.index(entity_id, json.dumps(document), public_index, False)
-
-                response += self.indexer.index(entity_id, json.dumps(document), private_index, False)
+            # Documents for the other indices are generated from entity-api by the reindex calls. Never
+            # write a document from the request body to them, because the route does not validate the token.
+            raise ValueError(f"Documents can only be written directly to the 'files' index, not index '{index}'.")
         return response
 
     # This method is only applied to Collection/Donor/Sample/Dataset/File
@@ -1182,12 +1186,12 @@ class Translator(TranslatorInterface):
 
             self._index_doc_directly_to_es_index(   entity=upload
                                                     , document=json.dumps(upload)
-                                                    , es_index=default_private_index
-                                                    , delete_existing_doc_first=reindex)
+                                                    , es_index=default_private_index)
 
             logger.info(f"Finished executing translate_upload() for {entity.get('uuid')}")
         except Exception as e:
             logger.error(e)
+            raise
 
     def translate_collection(self, entity, reindex=False):
         if isinstance(entity, str):
@@ -1231,20 +1235,20 @@ class Translator(TranslatorInterface):
                                                      , obj_to_remove=self.public_doc_exclusion_dict[pub_coll_data['entity_type']])
                     self._index_doc_directly_to_es_index(entity=pub_coll_data
                                                          , document=json.dumps(pub_coll_data)
-                                                         , es_index=public_index
-                                                         , delete_existing_doc_first=reindex)
+                                                         , es_index=public_index)
                 self._index_doc_directly_to_es_index(entity=coll_data
                                                      , document=json.dumps(coll_data)
-                                                     , es_index=private_index
-                                                     , delete_existing_doc_first=reindex)
+                                                     , es_index=private_index)
 
             logger.info(f"Finished executing translate_collection() for {entity.get('uuid')}")
         except requests.exceptions.RequestException as e:
             logger.exception(e)
             # Log the error and will need fix later and reindex, rather than sys.exit()
             logger.error(f"translate_collection() failed to get collection of uuid: {entity.get('uuid')} via entity-api")
+            raise
         except Exception as e:
             logger.error(e)
+            raise
 
     def translate_donor_tree(self, entity_id):
         try:
@@ -1289,25 +1293,25 @@ class Translator(TranslatorInterface):
     def load_public_doc_exclusion_dict(self, entity_api_prov_schema_raw_url):
         # Keep a semi-immutable dictionary of fields to exclude from public indices, using the
         # same information entity-api uses for excluding fields for public entities.
-        response = requests.get(    url=entity_api_prov_schema_raw_url
-                                    , verify=False)
-        if response.status_code == 200:
-            yaml_contents = response.text
-            try:
-                provenance_schema_dict = MappingProxyType(safe_load(yaml_contents))
-            except YAMLError as ye:
-                raise YAMLError(ye)
-        else:
+        try:
+            yaml_contents = _get_text_once_per_process(entity_api_prov_schema_raw_url)
+        except requests.exceptions.RequestException as e:
             msg = f"Unable to retrieve public index field exclusion information"
             logger.error(  f"{msg}."
-                                f" Got an HTTP {response.status_code}"
-                                f" retrieving {self.indices['entity_api_prov_schema_raw_url']}")
+                                f" Got {e}"
+                                f" retrieving {entity_api_prov_schema_raw_url}")
             raise HTTPException(f"{msg}. See logs.")
+        # Parse the cached text for each Translator, because supplement_public_doc_exclusion_dict()
+        # appends to the parsed lists.
+        try:
+            provenance_schema_dict = MappingProxyType(safe_load(yaml_contents))
+        except YAMLError as ye:
+            raise YAMLError(ye)
         if not provenance_schema_dict or 'ENTITIES' not in provenance_schema_dict:
             msg = f"Unable retrieve Entity API's provenance_schema.yaml information"
             logger.error(  f"{msg}."
                                 f" Not expected content using the translator's"
-                                f" self.indices['entity_api_prov_schema_raw_url']={self.indices['entity_api_prov_schema_raw_url']}.")
+                                f" entity_api_prov_schema_raw_url={entity_api_prov_schema_raw_url}.")
             raise Exception(f"{msg}. See logs.")
         self.public_doc_exclusion_dict={}
         for k,v in provenance_schema_dict['ENTITIES'].items():
@@ -1330,21 +1334,17 @@ class Translator(TranslatorInterface):
         # excluded for the Sample entity's base fields
         self.public_doc_exclusion_dict['Sample'].append({'origin_samples': base_entity_exclusions['Sample']})
 
-        # For Samples, exclude the same fields under "donor" which are
-        # excluded for Donor entities.
-        self.public_doc_exclusion_dict['Sample'].append({'donor': base_entity_exclusions['Donor']})
+        # For Samples, Datasets, and Publications, exclude the same fields under "donor" and "donors"
+        # which are excluded for Donor entities. _generate_doc() puts every ancestor Donor in "donors".
+        for entity_type in ['Sample', 'Dataset', 'Publication']:
+            self.public_doc_exclusion_dict[entity_type].append({'donor': base_entity_exclusions['Donor']})
+            self.public_doc_exclusion_dict[entity_type].append({'donors': base_entity_exclusions['Donor']})
 
-        # For Datasets, exclude the same fields under "donor" which are
-        # excluded for Donor entities.
-        self.public_doc_exclusion_dict['Dataset'].append({'donor': base_entity_exclusions['Donor']})
-
-        # For Datasets, exclude the same fields under "origin_samples" which are
-        # excluded for the Sample entity's base fields
-        self.public_doc_exclusion_dict['Dataset'].append({'origin_samples': base_entity_exclusions['Sample']})
-
-        # For Datasets, exclude the same fields under "source_samples" which are
-        # excluded for the Sample entity's base fields
-        self.public_doc_exclusion_dict['Dataset'].append({'source_samples': base_entity_exclusions['Sample']})
+        # For Datasets and Publications, exclude the same fields under "origin_samples" and
+        # "source_samples" which are excluded for the Sample entity's base fields
+        for entity_type in ['Dataset', 'Publication']:
+            self.public_doc_exclusion_dict[entity_type].append({'origin_samples': base_entity_exclusions['Sample']})
+            self.public_doc_exclusion_dict[entity_type].append({'source_samples': base_entity_exclusions['Sample']})
 
         # For EPICollection, Collection, and Upload entities, exclude the same fields under "datasets" which are
         # excluded for Dataset entities
@@ -1434,19 +1434,17 @@ class Translator(TranslatorInterface):
 
     # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
-    def _index_doc_directly_to_es_index(self, entity:dict, document:json, es_index:str, delete_existing_doc_first:bool=False):
+    def _index_doc_directly_to_es_index(self, entity:dict, document:json, es_index:str):
         logger.info(f"Start executing _index_doc_directly_to_es_index() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
 
-        try:
-            self.indexer.index(entity['uuid'], document, es_index, reindex=delete_existing_doc_first)
-            logger.info(f"Finished executing _index_doc_directly_to_es_index() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
-        except Exception as e:
-            msg =   f"Encountered exception e={str(e)}" \
-                    f" executing _index_doc_directly_to_es_index() with" \
-                    f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}" \
-                    f" es_index={es_index}"
-            # Log the full stack trace, prepend a line with our message
-            logger.exception(msg)
+        # The PUT to <es_index>/_doc/<uuid> replaces any existing document, so do not ask the Indexer to
+        # delete it first. If the write is rejected, e.g. by a mapping conflict, the existing document stays.
+        result = self.indexer.index(entity['uuid'], document, es_index, reindex=False)
+        # Indexer.index() reports a failed write in its return value instead of raising.
+        if not result.startswith('Added doc'):
+            raise Exception(f"Failed to index uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
+                            f" into es_index={es_index}. {result}")
+        logger.info(f"Finished executing _index_doc_directly_to_es_index() on uuid: {entity['uuid']}, entity_type: {entity['entity_type']}")
 
     # Note: this entity dict input (if Dataset) has already removed ingest_metadata.files and
     # ingest_metadata.metadata sub fields with empty string values from previous call
@@ -1461,6 +1459,7 @@ class Translator(TranslatorInterface):
                 f" executing _call_indexer() with" \
                 f" uuid: {entity['uuid']}, entity_type: {entity['entity_type']}"
             logger.exception(msg)
+            raise
 
 
     
@@ -1512,13 +1511,13 @@ class Translator(TranslatorInterface):
         included_fields = ','.join(ig_doc_fields.keys())
         try:
             url = f"{self.entity_api_url}/entities/{entity['uuid']}/dataset-documents?include={included_fields}"
-            response = requests.get(url, headers=self.request_headers, verify=False)
+            response = requests.get(url, headers=self.request_headers, verify=False, timeout=REQUEST_TIMEOUT)
             if response.status_code == 200:
                 batch_docs = response.json()
             elif response.status_code == 303:
                 s3_url = response.text
                 logger.info(f"dataset-documents for {entity['uuid']} redirected to S3: {s3_url}")
-                s3_response = requests.get(s3_url, verify=False)
+                s3_response = requests.get(s3_url, verify=False, timeout=REQUEST_TIMEOUT)
                 if s3_response.status_code == 200:
                     batch_docs = s3_response.json()
                 else:
@@ -1767,7 +1766,7 @@ class Translator(TranslatorInterface):
             # Making a call against entity-api/entities/<next_revision_uuid>?property=status
             url = self.entity_api_url + "/entities/" + next_revision_uuid + "?property=status"
             try:
-                response = requests.get(url, headers=self.request_headers, verify=False)
+                response = requests.get(url, headers=self.request_headers, verify=False, timeout=REQUEST_TIMEOUT)
             except Exception as e:
                 msg = f"_generate_public_doc() failed to get Dataset/Publication status of next_revision_uuid via entity-api for uuid: {next_revision_uuid}"
                 logger.error(msg)
@@ -1888,7 +1887,7 @@ class Translator(TranslatorInterface):
         if url_property:
             url = f"{url}?property={url_property}"
         try:
-            response = requests.get(url, headers=self.request_headers, verify=False)
+            response = requests.get(url, headers=self.request_headers, verify=False, timeout=REQUEST_TIMEOUT)
         except Exception as e: 
             msg = f"call_entity_api() failed to get entity of uuid {entity_id} via entity-api"
             logger.exception(msg)
@@ -1934,7 +1933,7 @@ class Translator(TranslatorInterface):
         # Here we do NOT send over the token
         try:
             url = self.entity_api_url + "/documents/" + entity_id
-            response = requests.get(url, headers=self.request_headers, verify=False)
+            response = requests.get(url, headers=self.request_headers, verify=False, timeout=REQUEST_TIMEOUT)
         except Exception as e:
             msg = f"get_collection_doc() failed to get entity of uuid {entity_id} via entity-api"
             logger.error(msg)
@@ -2031,27 +2030,9 @@ class Translator(TranslatorInterface):
     def get_organ_types(self):
         target_url = f"{self._ontology_api_base_url}{self.ONTOLOGY_API_ORGAN_TYPES_ENDPOINT}"
 
-        # Disable ssl certificate verification, and use the read-only ontology-api without authentication.
-        response = requests.get(url=target_url, verify=False)
-
-        # Invoke .raise_for_status(), an HTTPError will be raised with certain status codes
-        response.raise_for_status()
-
-        if response.status_code == 200:
-            organ_json = response.json()
-            return {o['rui_code']: o for o in organ_json}
-        else:
-            # Log the full stack trace, prepend a line with our message
-            logger.exception("Unable to make a request to query the organ types via ontology-api")
-
-            logger.debug("======get_organ_types() status code from ontology-api======")
-            logger.debug(response.status_code)
-
-            logger.debug("======get_organ_types() response text from ontology-api======")
-            logger.debug(response.text)
-
-            # Also bubble up the error message from ontology-api
-            raise requests.exceptions.RequestException(response.text)
+        # Use the read-only ontology-api without authentication. An HTTPError is raised on a 4xx or 5xx response.
+        organ_json = json.loads(_get_text_once_per_process(target_url))
+        return {o['rui_code']: o for o in organ_json}
 
 # Running full reindex script in command line
 # This approach is different from the live /reindex-all PUT call
